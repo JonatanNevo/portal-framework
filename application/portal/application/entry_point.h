@@ -9,17 +9,17 @@ bool g_application_running = true;
 
 namespace portal
 {
-    int main(int argc, char** argv)
+int main(int argc, char** argv)
+{
+    while (g_application_running)
     {
-        while (g_application_running)
-        {
-            Application* app = create_application(argc, argv);
-            app->run();
-            delete app;
-        }
-
-        return 0;
+        Application* app = create_application(argc, argv);
+        app->run();
+        delete app;
     }
+
+    return 0;
+}
 }
 
 #if defined(PORTAL_PLATFORM_WINDOWS) && !defined(PORTAL_HEADLESS) && defined(PORTAL_DIST)

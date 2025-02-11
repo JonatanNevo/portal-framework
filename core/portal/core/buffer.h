@@ -10,103 +10,108 @@
 
 namespace portal
 {
-    // A non owning buffer
-    struct Buffer
+// A non owning buffer
+struct Buffer
+{
+    void* data;
+    size_t size;
+
+    Buffer():
+        data(nullptr), size(0) {}
+
+    Buffer(void* data, const size_t size):
+        data(data), size(size) {}
+
+    Buffer(const Buffer& other, const size_t size):
+        data(other.data), size(size) {}
+
+    static Buffer copy(const Buffer& other)
     {
-        void* data;
-        size_t size;
+        Buffer buffer;
+        buffer.allocate(other.size);
+        memcpy(buffer.data, other.data, other.size);
+        return buffer;
+    }
 
-        Buffer(): data(nullptr), size(0) {}
-        Buffer(void* data, const size_t size): data(data), size(size) {}
-        Buffer(const Buffer& other, const size_t size): data(other.data), size(size) {}
+    static Buffer copy(const void* data, const size_t size)
+    {
+        Buffer buffer;
+        buffer.allocate(size);
+        memcpy(buffer.data, data, size);
+        return buffer;
+    }
 
-        static Buffer copy(const Buffer& other)
-        {
-            Buffer buffer;
-            buffer.allocate(other.size);
-            memcpy(buffer.data, other.data, other.size);
-            return buffer;
-        }
+    void allocate(const size_t new_size)
+    {
+        delete[] static_cast<uint8_t*>(data);
+        data = nullptr;
 
-        static Buffer copy(const void* data, const size_t size)
-        {
-            Buffer buffer;
-            buffer.allocate(size);
-            memcpy(buffer.data, data, size);
-            return buffer;
-        }
+        if (new_size == 0)
+            return;
 
-        void allocate(const size_t new_size)
-        {
-            delete[] static_cast<uint8_t*>(data);
-            data = nullptr;
+        data = new uint8_t[new_size];
+        this->size = new_size;
+    }
 
-            if (new_size == 0)
-                return;
+    void release()
+    {
+        delete[] static_cast<uint8_t*>(data);
+        data = nullptr;
+        size = 0;
+    }
 
-            data = new uint8_t[new_size];
-            this->size = new_size;
-        }
+    void zero_initialize() const
+    {
+        if (data)
+            memset(data, 0, size);
+    }
 
-        void release()
-        {
-            delete[] static_cast<uint8_t*>(data);
-            data = nullptr;
-            size = 0;
-        }
+    template <typename T>
+    T& read(const size_t offset = 0)
+    {
+        PORTAL_CORE_ASSERT(offset >= size, "Buffer overflow");
+        return *reinterpret_cast<T*>(static_cast<uint8_t*>(data) + offset);
+    }
 
-        void zero_initialize() const
-        {
-            if(data)
-                memset(data, 0, size);
-        }
+    template <typename T>
+    const T& read(const size_t offset = 0) const
+    {
+        PORTAL_CORE_ASSERT(offset >= size, "Buffer overflow");
+        return *reinterpret_cast<T*>(static_cast<uint8_t*>(data) + offset);
+    }
 
-        template <typename T>
-        T& read(const size_t offset = 0)
-        {
-            PORTAL_CORE_ASSERT(offset >= size, "Buffer overflow");
-            return *reinterpret_cast<T*>(static_cast<uint8_t*>(data) + offset);
-        }
+    [[nodiscard]] uint8_t* read_bytes(const size_t bytes_size, const size_t offset) const
+    {
+        PORTAL_ASSERT(offset + bytes_size > size, "Buffer overflow");
+        auto* buffer = new uint8_t[bytes_size];
+        memcpy(buffer, static_cast<uint8_t*>(data) + offset, bytes_size);
+        return buffer;
+    }
 
-        template <typename T>
-        const T& read(const size_t offset = 0) const
-        {
-            PORTAL_CORE_ASSERT(offset >= size, "Buffer overflow");
-            return *reinterpret_cast<T*>(static_cast<uint8_t*>(data) + offset);
-        }
+    void write(const void* new_data, size_t data_size, size_t offset = 0) const
+    {
+        memcpy(static_cast<uint8_t*>(data) + offset, new_data, data_size);
+    }
 
-        [[nodiscard]] uint8_t* read_bytes(const size_t bytes_size, const size_t offset) const
-        {
-            PORTAL_ASSERT(offset + bytes_size > size, "Buffer overflow");
-            auto* buffer = new uint8_t[bytes_size];
-            memcpy(buffer, static_cast<uint8_t*>(data) + offset, bytes_size);
-            return buffer;
-        }
+    explicit operator bool() const
+    {
+        return data;
+    }
 
-        void write(const void* new_data, size_t data_size, size_t offset = 0) const
-        {
-            memcpy(static_cast<uint8_t*>(data) + offset, new_data, data_size);
-        }
+    uint8_t& operator[](size_t index) const
+    {
+        return static_cast<uint8_t*>(data)[index];
+    }
 
-        explicit operator bool() const
-        {
-            return data;
-        }
+    template <typename T>
+    T* as() const
+    {
+        return static_cast<T*>(data);
+    }
 
-        uint8_t& operator[](size_t index) const
-        {
-            return static_cast<uint8_t*>(data)[index];
-        }
-
-        template <typename T>
-        T* as() const
-        {
-            return static_cast<T*>(data);
-        }
-
-        [[nodiscard]] inline size_t get_size() const
-        {
-            return size;
-        }
-    };
+    [[nodiscard]] inline size_t get_size() const
+    {
+        return size;
+    }
+};
 }

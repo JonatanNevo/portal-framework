@@ -7,9 +7,11 @@
 #include <glm/vec3.hpp>
 #include <random>
 
-namespace portal {
+namespace portal
+{
 
-class Random {
+class Random
+{
 public:
     static void init();
     static void init(uint32_t seed);

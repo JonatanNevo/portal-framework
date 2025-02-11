@@ -62,6 +62,7 @@ public:
     {
         m_AboutModalOpen = true;
     }
+
 private:
     bool m_AboutModalOpen = false;
 };
@@ -76,25 +77,27 @@ portal::Application* portal::create_application(int argc, char** argv)
     auto* app = new GUIApplication(specs);
     std::shared_ptr<TestLayer> layer = std::make_shared<TestLayer>();
     app->push_layer(layer);
-    app->set_menubar_callback([app, layer]()
-    {
-        if (ImGui::BeginMenu("File"))
+    app->set_menubar_callback(
+        [app, layer]()
         {
-            if (ImGui::MenuItem("Exit"))
+            if (ImGui::BeginMenu("File"))
             {
-                app->close();
+                if (ImGui::MenuItem("Exit"))
+                {
+                    app->close();
+                }
+                ImGui::EndMenu();
             }
-            ImGui::EndMenu();
-        }
 
-        if (ImGui::BeginMenu("Help"))
-        {
-            if (ImGui::MenuItem("About"))
+            if (ImGui::BeginMenu("Help"))
             {
-                layer->ShowAboutModal();
+                if (ImGui::MenuItem("About"))
+                {
+                    layer->ShowAboutModal();
+                }
+                ImGui::EndMenu();
             }
-            ImGui::EndMenu();
         }
-    });
+        );
     return app;
 }

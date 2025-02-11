@@ -18,6 +18,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "portal/application/gui/image.h"
+#include "portal/application/gui/ui/utils.h"
 #include "portal/core/assert.h"
 #include "portal/core/log.h"
 
@@ -701,9 +702,9 @@ namespace portal
 
                 {
                     ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(50, 50, 50, 255));
-                    // // Draw window border if the window is not maximized
-                    // if (!maximized)
-                    //     UI::RenderWindowOuterBorders(ImGui::GetCurrentWindow());
+                    // Draw window border if the window is not maximized
+                    if (!maximized)
+                        ui::render_window_outer_bounds(ImGui::GetCurrentWindow());
 
                     ImGui::PopStyleColor(); // ImGuiCol_Border
                 }

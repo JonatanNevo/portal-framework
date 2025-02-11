@@ -4,6 +4,8 @@ file(GLOB_RECURSE HEADLESS_SOURCES CONFIGURE_DEPENDS "portal/headless/*.cpp")
 file(GLOB_RECURSE HEADLESS_HEADERS CONFIGURE_DEPENDS "portal/headless/*.h")
 file(GLOB_RECURSE GUI_SOURCES CONFIGURE_DEPENDS "portal/gui/*.cpp")
 file(GLOB_RECURSE GUI_HEADERS CONFIGURE_DEPENDS "portal/gui/*.h")
+file(GLOB_RECURSE GUI_UI_SOURCES CONFIGURE_DEPENDS "portal/ui/*.cpp")
+file(GLOB_RECURSE GUI_UI_HEADERS CONFIGURE_DEPENDS "portal/ui/*.h")
 
 find_package(imgui CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
@@ -21,11 +23,11 @@ if (PORTAL_HEADLESS)
     )
     add_compile_definitions(PORTAL_HEADLESS)
 else ()
-    add_library(portal_application STATIC ${APP_SOURCES} ${GUI_SOURCES})
+    add_library(portal_application STATIC ${APP_SOURCES} ${GUI_SOURCES} ${GUI_UI_SOURCES})
     target_sources(portal_application PUBLIC
             FILE_SET HEADERS
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-            FILES ${GUI_HEADERS}
+            FILES ${GUI_HEADERS} ${GUI_UI_HEADERS}
     )
 endif ()
 
