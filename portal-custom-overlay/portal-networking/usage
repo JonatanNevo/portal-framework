@@ -1,0 +1,4 @@
+portal-core provides CMake targets:
+
+    find_package(portal-networking CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE portal::networking)
