@@ -1,0 +1,9 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(portal-core)
+find_dependency(GameNetworkingSockets)
+
+include("${CMAKE_CURRENT_LIST_DIR}/portal-networking-targets.cmake")
+
+check_required_components(portal-networking)
