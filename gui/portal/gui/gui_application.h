@@ -37,7 +37,7 @@ namespace portal
         std::shared_ptr<Image> get_application_icon() const { return app_header_icon; }
 
         float get_time() override;
-        GLFWwindow* get_window_handle() const { return window_handle; }
+        static GLFWwindow* get_window_handle();
         bool is_title_bar_hovered() const { return title_bar_hovered; }
 
         static vk::Instance get_instance();

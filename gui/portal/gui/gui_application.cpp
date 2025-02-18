@@ -336,532 +336,513 @@ static void glfw_error_callback(int error, const char* description) { fprintf(st
 
 namespace portal
 {
-    GUIApplication::GUIApplication(const ApplicationSpecs& specs) : specs(specs)
+GUIApplication::GUIApplication(const ApplicationSpecs& specs) : specs(specs)
+{
+    s_instance = this;
+    init();
+}
+
+GUIApplication::~GUIApplication()
+{
+    shutdown();
+    s_instance = nullptr;
+}
+
+GUIApplication& GUIApplication::get() { return *s_instance; }
+
+void GUIApplication::init()
+{
+    // Intialize logging
+    Log::init();
+
+    // Setup GLFW window
+    glfwSetErrorCallback(glfw_error_callback);
+    if (!glfwInit())
     {
-        s_instance = this;
-        init();
+        std::cerr << "Could not initalize GLFW!\n";
+        return;
     }
 
-    GUIApplication::~GUIApplication()
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+    GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(primary_monitor);
+
+    int monitorx, monitory;
+    glfwGetMonitorPos(primary_monitor, &monitorx, &monitory);
+
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
+    window_handle = glfwCreateWindow(specs.width, specs.height, specs.name.c_str(), nullptr, nullptr);
+
+    if (specs.center_window)
     {
-        shutdown();
-        s_instance = nullptr;
+        glfwSetWindowPos(window_handle, monitorx + (mode->width - specs.width) / 2, monitory + (mode->height - specs.height) / 2);
+        glfwSetWindowAttrib(window_handle, GLFW_RESIZABLE, specs.resizeable ? GLFW_TRUE : GLFW_FALSE);
     }
 
-    GUIApplication& GUIApplication::get() { return *s_instance; }
+    glfwShowWindow(window_handle);
 
-    void GUIApplication::init()
+    if (!glfwVulkanSupported())
     {
-        // Intialize logging
-        Log::init();
+        LOG_CORE_ERROR_TAG("App", "Vulkan not supported!");
+        return;
+    }
 
-        // Setup GLFW window
-        glfwSetErrorCallback(glfw_error_callback);
-        if (!glfwInit())
-        {
-            std::cerr << "Could not initalize GLFW!\n";
-            return;
-        }
+    GLFWimage icon;
+    int channels;
+    if (!specs.icon_path.empty())
+    {
+        std::string icon_path_string = specs.icon_path.string();
+        icon.pixels = stbi_load(icon_path_string.c_str(), &icon.width, &icon.height, &channels, STBI_rgb_alpha);
+        glfwSetWindowIcon(window_handle, 1, &icon);
+        stbi_image_free(icon.pixels);
+    }
 
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwSetWindowUserPointer(window_handle, this);
 
-        GLFWmonitor* primary_monitor = glfwGetPrimaryMonitor();
-        const GLFWvidmode* mode = glfwGetVideoMode(primary_monitor);
+    uint32_t extension_count = 0;
+    const char** extensions = glfwGetRequiredInstanceExtensions(&extension_count);
+    setup_vulkan(extensions, extension_count);
 
-        int monitorx, monitory;
-        glfwGetMonitorPos(primary_monitor, &monitorx, &monitory);
+    // Create Window Surface
+    VkSurfaceKHR surface;
+    VkResult err = glfwCreateWindowSurface(g_instance, window_handle, nullptr, &surface);
+    check_vk_result(err);
 
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    int w, h;
+    glfwGetFramebufferSize(window_handle, &w, &h);
+    ImGui_ImplVulkanH_Window* window = &g_main_window_data;
+    setup_vulkan_window(window, surface, w, h);
 
-        window_handle = glfwCreateWindow(specs.width, specs.height, specs.name.c_str(), nullptr, nullptr);
+    s_allocated_command_buffers.resize(window->ImageCount);
+    s_resource_free_queue.resize(window->ImageCount);
 
-        if (specs.center_window)
-        {
-            glfwSetWindowPos(window_handle, monitorx + (mode->width - specs.width) / 2, monitory + (mode->height - specs.height) / 2);
-            glfwSetWindowAttrib(window_handle, GLFW_RESIZABLE, specs.resizeable ? GLFW_TRUE : GLFW_FALSE);
-        }
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;   // Enable Multi-Viewport / Platform Windows
 
-        glfwShowWindow(window_handle);
-
-        if (!glfwVulkanSupported())
-        {
-            LOG_CORE_ERROR_TAG("App", "Vulkan not supported!");
-            return;
-        }
-
-        GLFWimage icon;
-        int channels;
-        if (!specs.icon_path.empty())
-        {
-            std::string icon_path_string = specs.icon_path.string();
-            icon.pixels = stbi_load(icon_path_string.c_str(), &icon.width, &icon.height, &channels, STBI_rgb_alpha);
-            glfwSetWindowIcon(window_handle, 1, &icon);
-            stbi_image_free(icon.pixels);
-        }
-
-        glfwSetWindowUserPointer(window_handle, this);
-
-        uint32_t extension_count = 0;
-        const char** extensions = glfwGetRequiredInstanceExtensions(&extension_count);
-        setup_vulkan(extensions, extension_count);
-
-        // Create Window Surface
-        VkSurfaceKHR surface;
-        VkResult err = glfwCreateWindowSurface(g_instance, window_handle, nullptr, &surface);
-        check_vk_result(err);
-
-        int w, h;
-        glfwGetFramebufferSize(window_handle, &w, &h);
-        ImGui_ImplVulkanH_Window* window = &g_main_window_data;
-        setup_vulkan_window(window, surface, w, h);
-
-        s_allocated_command_buffers.resize(window->ImageCount);
-        s_resource_free_queue.resize(window->ImageCount);
-
-        // Setup Dear ImGui context
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
-        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
-
-        // Set custom themes
-        // UI::SetHazelTheme();
+    // Set custom themes
+    // UI::SetHazelTheme();
 
 
+    // Style
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowPadding = ImVec2(10.0f, 10.0f);
+    style.FramePadding = ImVec2(8.0f, 6.0f);
+    style.ItemSpacing = ImVec2(6.0f, 6.0f);
+    style.ChildRounding = 6.0f;
+    style.PopupRounding = 6.0f;
+    style.FrameRounding = 6.0f;
+    style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
 
-        // Style
-        ImGuiStyle& style = ImGui::GetStyle();
-        style.WindowPadding = ImVec2(10.0f, 10.0f);
-        style.FramePadding = ImVec2(8.0f, 6.0f);
-        style.ItemSpacing = ImVec2(6.0f, 6.0f);
-        style.ChildRounding = 6.0f;
-        style.PopupRounding = 6.0f;
-        style.FrameRounding = 6.0f;
-        style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
-
-        // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-        {
-            style.WindowRounding = 0.0f;
-            style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-        }
-
-
-        // Setup Platform/Renderer backends
-        ImGui_ImplGlfw_InitForVulkan(window_handle, true);
-
-        ImGui_ImplVulkan_InitInfo init_info{};
-        init_info.Instance = g_instance;
-        init_info.PhysicalDevice = g_physical_device;
-        init_info.Device = g_device;
-        init_info.QueueFamily = g_queue_family;
-        init_info.Queue = g_queue;
-        init_info.PipelineCache = g_pipeline_cache;
-        init_info.DescriptorPool = g_descriptor_pool;
-        init_info.Subpass = 0;
-        init_info.MinImageCount = g_min_image_count;
-        init_info.ImageCount = window->ImageCount;
-        init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        init_info.Allocator = nullptr;
-        init_info.CheckVkResultFn = check_vk_result;
-        init_info.RenderPass = window->RenderPass;
-        ImGui_ImplVulkan_Init(&init_info);
-
-        // Load default font'
-        // ImFontConfig fontConfig;
-        // fontConfig.FontDataOwnedByAtlas = false;
-        // ImFont* robotoFont = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoRegular, sizeof(g_RobotoRegular), 20.0f, &fontConfig);
-        // s_Fonts["Default"] = robotoFont;
-        // s_Fonts["Bold"] = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoBold, sizeof(g_RobotoBold), 20.0f, &fontConfig);
-        // s_Fonts["Italic"] = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoItalic, sizeof(g_RobotoItalic), 20.0f, &fontConfig);
-        // io.FontDefault = robotoFont;
-
-        // // Upload Fonts
-        // {
-        //     // Use any command queue
-        //     VkCommandPool command_pool = wd->Frames[wd->FrameIndex].CommandPool;
-        //     VkCommandBuffer command_buffer = wd->Frames[wd->FrameIndex].CommandBuffer;
-        //
-        //     err = vkResetCommandPool(g_Device, command_pool, 0);
-        //     check_vk_result(err);
-        //     VkCommandBufferBeginInfo begin_info = {};
-        //     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        //     begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        //     err = vkBeginCommandBuffer(command_buffer, &begin_info);
-        //     check_vk_result(err);
-        //
-        //     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-        //
-        //     VkSubmitInfo end_info = {};
-        //     end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        //     end_info.commandBufferCount = 1;
-        //     end_info.pCommandBuffers = &command_buffer;
-        //     err = vkEndCommandBuffer(command_buffer);
-        //     check_vk_result(err);
-        //     err = vkQueueSubmit(g_Queue, 1, &end_info, VK_NULL_HANDLE);
-        //     check_vk_result(err);
-        //
-        //     err = vkDeviceWaitIdle(g_Device);
-        //     check_vk_result(err);
-        //     ImGui_ImplVulkan_DestroyFontUploadObjects();
-        // }
-
-        // Load images
-        // {
-        //     uint32_t w, h;
-        //     void* data = Image::Decode(g_WalnutIcon, sizeof(g_WalnutIcon), w, h);
-        //     m_AppHeaderIcon = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
-        //     free(data);
-        // }
-        // {
-        //     uint32_t w, h;
-        //     void* data = Image::Decode(g_WindowMinimizeIcon, sizeof(g_WindowMinimizeIcon), w, h);
-        //     m_IconMinimize = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
-        //     free(data);
-        // }
-        // {
-        //     uint32_t w, h;
-        //     void* data = Image::Decode(g_WindowMaximizeIcon, sizeof(g_WindowMaximizeIcon), w, h);
-        //     m_IconMaximize = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
-        //     free(data);
-        // }
-        // {
-        //     uint32_t w, h;
-        //     void* data = Image::Decode(g_WindowRestoreIcon, sizeof(g_WindowRestoreIcon), w, h);
-        //     m_IconRestore = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
-        //     free(data);
-        // }
-        // {
-        //     uint32_t w, h;
-        //     void* data = Image::Decode(g_WindowCloseIcon, sizeof(g_WindowCloseIcon), w, h);
-        //     m_IconClose = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
-        //     free(data);
-        // }
+    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
 
 
-    void GUIApplication::shutdown()
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForVulkan(window_handle, true);
+
+    ImGui_ImplVulkan_InitInfo init_info{};
+    init_info.Instance = g_instance;
+    init_info.PhysicalDevice = g_physical_device;
+    init_info.Device = g_device;
+    init_info.QueueFamily = g_queue_family;
+    init_info.Queue = g_queue;
+    init_info.PipelineCache = g_pipeline_cache;
+    init_info.DescriptorPool = g_descriptor_pool;
+    init_info.Subpass = 0;
+    init_info.MinImageCount = g_min_image_count;
+    init_info.ImageCount = window->ImageCount;
+    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    init_info.Allocator = nullptr;
+    init_info.CheckVkResultFn = check_vk_result;
+    init_info.RenderPass = window->RenderPass;
+    ImGui_ImplVulkan_Init(&init_info);
+
+    // Load default font'
+    // ImFontConfig fontConfig;
+    // fontConfig.FontDataOwnedByAtlas = false;
+    // ImFont* robotoFont = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoRegular, sizeof(g_RobotoRegular), 20.0f, &fontConfig);
+    // s_Fonts["Default"] = robotoFont;
+    // s_Fonts["Bold"] = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoBold, sizeof(g_RobotoBold), 20.0f, &fontConfig);
+    // s_Fonts["Italic"] = io.Fonts->AddFontFromMemoryTTF((void*)g_RobotoItalic, sizeof(g_RobotoItalic), 20.0f, &fontConfig);
+    // io.FontDefault = robotoFont;
+
+    // // Upload Fonts
+    // {
+    //     // Use any command queue
+    //     VkCommandPool command_pool = wd->Frames[wd->FrameIndex].CommandPool;
+    //     VkCommandBuffer command_buffer = wd->Frames[wd->FrameIndex].CommandBuffer;
+    //
+    //     err = vkResetCommandPool(g_Device, command_pool, 0);
+    //     check_vk_result(err);
+    //     VkCommandBufferBeginInfo begin_info = {};
+    //     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    //     begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    //     err = vkBeginCommandBuffer(command_buffer, &begin_info);
+    //     check_vk_result(err);
+    //
+    //     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
+    //
+    //     VkSubmitInfo end_info = {};
+    //     end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    //     end_info.commandBufferCount = 1;
+    //     end_info.pCommandBuffers = &command_buffer;
+    //     err = vkEndCommandBuffer(command_buffer);
+    //     check_vk_result(err);
+    //     err = vkQueueSubmit(g_Queue, 1, &end_info, VK_NULL_HANDLE);
+    //     check_vk_result(err);
+    //
+    //     err = vkDeviceWaitIdle(g_Device);
+    //     check_vk_result(err);
+    //     ImGui_ImplVulkan_DestroyFontUploadObjects();
+    // }
+
+    // Load images
+    // {
+    //     uint32_t w, h;
+    //     void* data = Image::Decode(g_WalnutIcon, sizeof(g_WalnutIcon), w, h);
+    //     m_AppHeaderIcon = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
+    //     free(data);
+    // }
+    // {
+    //     uint32_t w, h;
+    //     void* data = Image::Decode(g_WindowMinimizeIcon, sizeof(g_WindowMinimizeIcon), w, h);
+    //     m_IconMinimize = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
+    //     free(data);
+    // }
+    // {
+    //     uint32_t w, h;
+    //     void* data = Image::Decode(g_WindowMaximizeIcon, sizeof(g_WindowMaximizeIcon), w, h);
+    //     m_IconMaximize = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
+    //     free(data);
+    // }
+    // {
+    //     uint32_t w, h;
+    //     void* data = Image::Decode(g_WindowRestoreIcon, sizeof(g_WindowRestoreIcon), w, h);
+    //     m_IconRestore = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
+    //     free(data);
+    // }
+    // {
+    //     uint32_t w, h;
+    //     void* data = Image::Decode(g_WindowCloseIcon, sizeof(g_WindowCloseIcon), w, h);
+    //     m_IconClose = std::make_shared<Walnut::Image>(w, h, ImageFormat::RGBA, data);
+    //     free(data);
+    // }
+}
+
+
+void GUIApplication::shutdown()
+{
+    for (auto& layer : layer_stack)
+        layer->on_detach();
+
+    layer_stack.clear();
+
+    app_header_icon.reset();
+    icon_close.reset();
+    icon_minimize.reset();
+    icon_maximize.reset();
+    icon_restore.reset();
+
+    g_device.waitIdle();
+
+    for (auto& queue : s_resource_free_queue)
     {
-        for (auto& layer : layer_stack)
-            layer->on_detach();
+        for (auto& callback : queue)
+            callback();
+    }
+    s_resource_free_queue.clear();
 
-        layer_stack.clear();
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
-        app_header_icon.reset();
-        icon_close.reset();
-        icon_minimize.reset();
-        icon_maximize.reset();
-        icon_restore.reset();
+    cleanup_vulkan_window();
+    cleanup_vulkan();
 
-        g_device.waitIdle();
+    glfwDestroyWindow(window_handle);
+    glfwTerminate();
 
-        for (auto& queue : s_resource_free_queue)
+    g_application_running = false;
+
+    Log::shutdown();
+}
+
+void GUIApplication::ui_draw_title_bar(float& out_height)
+{
+    const float title_bar_height = 58.0f;
+    const bool maximised = is_maximized();
+    float title_bar_vertical_offset = maximised ? -6.f : 0.f;
+    const ImVec2 window_padding = ImGui::GetCurrentWindow()->WindowPadding;
+
+    ImGui::SetCursorPos(ImVec2(window_padding.x, window_padding.y + title_bar_vertical_offset));
+    const ImVec2 title_bar_min = ImGui::GetCursorScreenPos();
+    const ImVec2 title_bar_max = {
+        ImGui::GetCursorScreenPos().x + ImGui::GetWindowWidth() - window_padding.y * 2.0f, ImGui::GetCursorScreenPos().y + title_bar_height};
+
+    auto* bg_draw_list = ImGui::GetBackgroundDrawList();
+    auto* fg_draw_list = ImGui::GetForegroundDrawList();
+    bg_draw_list->AddRectFilled(title_bar_min, title_bar_max, IM_COL32(0, 0, 0, 255)); // UI::Colors::Theme::titlebar
+
+    {
+        const int logo_width = 48;
+        const int logo_height = 48;
+        const ImVec2 logo_offset(16.f + window_padding.x, 5.f + window_padding.y + title_bar_vertical_offset);
+        const ImVec2 logo_rect_start = {ImGui::GetItemRectMin().x + logo_offset.x, ImGui::GetItemRectMin().y + logo_offset.y};
+        const ImVec2 logo_rect_max = {logo_rect_start.x + logo_width, logo_rect_start.y + logo_height};
+        fg_draw_list->AddImage(reinterpret_cast<ImU64>(app_header_icon->get_descriptor_set()), logo_rect_start, logo_rect_max);
+    }
+
+    out_height = title_bar_height;
+}
+
+void GUIApplication::ui_draw_menu_bar()
+{
+    if (!menu_bar_callback)
+        return;
+
+    if (ImGui::BeginMenuBar())
+    {
+        menu_bar_callback();
+        ImGui::EndMenuBar();
+    }
+}
+
+void GUIApplication::run()
+{
+    running = true;
+
+    ImGui_ImplVulkanH_Window* window = &g_main_window_data;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImGuiIO& io = ImGui::GetIO();
+
+    while (!glfwWindowShouldClose(window_handle) && running)
+    {
+        // Poll and handle events (inputs, window resize, etc.)
+        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+        glfwPollEvents();
+
         {
-            for (auto& callback : queue)
+            std::scoped_lock lock(event_queue_mutex);
+            while (!event_queue.empty())
+            {
+                auto callback = event_queue.front();
                 callback();
-        }
-        s_resource_free_queue.clear();
-
-        ImGui_ImplVulkan_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
-
-        cleanup_vulkan_window();
-        cleanup_vulkan();
-
-        glfwDestroyWindow(window_handle);
-        glfwTerminate();
-
-        g_application_running = false;
-
-        Log::shutdown();
-    }
-
-    void GUIApplication::ui_draw_title_bar(float& out_height)
-    {
-        const float title_bar_height = 58.0f;
-        const bool maximised = is_maximized();
-        float title_bar_vertical_offset = maximised ? -6.f : 0.f;
-        const ImVec2 window_padding = ImGui::GetCurrentWindow()->WindowPadding;
-
-        ImGui::SetCursorPos(ImVec2(window_padding.x, window_padding.y + title_bar_vertical_offset));
-        const ImVec2 title_bar_min = ImGui::GetCursorScreenPos();
-        const ImVec2 title_bar_max = {ImGui::GetCursorScreenPos().x + ImGui::GetWindowWidth() - window_padding.y * 2.0f,
-        ImGui::GetCursorScreenPos().y + title_bar_height};
-
-        auto* bg_draw_list = ImGui::GetBackgroundDrawList();
-        auto* fg_draw_list = ImGui::GetForegroundDrawList();
-        bg_draw_list->AddRectFilled(title_bar_min, title_bar_max, IM_COL32(0, 0, 0, 255)); //UI::Colors::Theme::titlebar
-
-        {
-            const int logo_width = 48;
-            const int logo_height = 48;
-            const ImVec2 logo_offset(16.f + window_padding.x, 5.f + window_padding.y + title_bar_vertical_offset);
-            const ImVec2 logo_rect_start = {ImGui::GetItemRectMin().x + logo_offset.x, ImGui::GetItemRectMin().y + logo_offset.y};
-            const ImVec2 logo_rect_max = {logo_rect_start.x + logo_width, logo_rect_start.y + logo_height};
-            fg_draw_list->AddImage(reinterpret_cast<ImU64>(app_header_icon->get_descriptor_set()), logo_rect_start, logo_rect_max);
+                event_queue.pop();
+            }
         }
 
-        out_height = title_bar_height;
-    }
+        for (auto& layer : layer_stack)
+            layer->on_update(time_step);
 
-    void GUIApplication::ui_draw_menu_bar()
-    {
-        if (!menu_bar_callback)
-            return;
-
-        if (ImGui::BeginMenuBar())
+        // Resize swap chain?
+        if (g_swap_chain_rebuild)
         {
-            menu_bar_callback();
-            ImGui::EndMenuBar();
+            int width, height;
+            glfwGetFramebufferSize(window_handle, &width, &height);
+            if (width > 0 && height > 0)
+            {
+                ImGui_ImplVulkan_SetMinImageCount(g_min_image_count);
+                ImGui_ImplVulkanH_CreateOrResizeWindow(
+                    g_instance, g_physical_device, g_device, &g_main_window_data, g_queue_family, nullptr, width, height, g_min_image_count);
+                g_main_window_data.FrameIndex = 0;
+
+                // Clear allocated command buffers from here since entire pool is destroyed
+                s_allocated_command_buffers.clear();
+                s_allocated_command_buffers.resize(g_main_window_data.ImageCount);
+
+                g_swap_chain_rebuild = false;
+            }
         }
-    }
 
-    void GUIApplication::run()
-    {
-        running = true;
+        // Start the Dear ImGui frame
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
-        ImGui_ImplVulkanH_Window* window = &g_main_window_data;
-        ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-        ImGuiIO& io = ImGui::GetIO();
-
-        while (!glfwWindowShouldClose(window_handle) && running)
+        if (specs.use_dock_space)
         {
-            // Poll and handle events (inputs, window resize, etc.)
-            // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-            // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-            // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-            // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-            glfwPollEvents();
+            // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+            // because it would be confusing to have two docking targets within each others.
+            ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
+
+            ImGuiViewport* viewport = ImGui::GetMainViewport();
+            ImGui::SetNextWindowPos(viewport->Pos);
+            ImGui::SetNextWindowSize(viewport->Size);
+            ImGui::SetNextWindowViewport(viewport->ID);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+            window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+            window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+            if (!specs.custom_titlebar && menu_bar_callback)
+                window_flags |= ImGuiWindowFlags_MenuBar;
+
+            const bool maximized = is_maximized();
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, maximized ? ImVec2(6.0f, 6.0f) : ImVec2(1.0f, 1.0f));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
+
+            ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4{0.0f, 0.0f, 0.0f, 0.0f});
+            ImGui::Begin("DockSpaceWindow", nullptr, window_flags);
+            ImGui::PopStyleColor(); // MenuBarBg
+            ImGui::PopStyleVar(2);
+
+            ImGui::PopStyleVar(2);
 
             {
-                std::scoped_lock lock(event_queue_mutex);
-                while (!event_queue.empty())
-                {
-                    auto callback = event_queue.front();
-                    callback();
-                    event_queue.pop();
-                }
+                ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(50, 50, 50, 255));
+                // Draw window border if the window is not maximized
+                if (!maximized)
+                    ui::render_window_outer_bounds(ImGui::GetCurrentWindow());
+
+                ImGui::PopStyleColor(); // ImGuiCol_Border
             }
+
+            if (specs.custom_titlebar)
+            {
+                float titleBarHeight;
+                ui_draw_title_bar(titleBarHeight);
+                ImGui::SetCursorPosY(titleBarHeight);
+            }
+
+            // Dockspace
+            ImGuiStyle& style = ImGui::GetStyle();
+            float minWinSizeX = style.WindowMinSize.x;
+            style.WindowMinSize.x = 370.0f;
+            ImGui::DockSpace(ImGui::GetID("MyDockspace"));
+            style.WindowMinSize.x = minWinSizeX;
+
+            if (!specs.custom_titlebar)
+                ui_draw_menu_bar();
 
             for (auto& layer : layer_stack)
-                layer->on_update(time_step);
+                layer->on_ui_render();
 
-            // Resize swap chain?
-            if (g_swap_chain_rebuild)
-            {
-                int width, height;
-                glfwGetFramebufferSize(window_handle, &width, &height);
-                if (width > 0 && height > 0)
-                {
-                    ImGui_ImplVulkan_SetMinImageCount(g_min_image_count);
-                    ImGui_ImplVulkanH_CreateOrResizeWindow(g_instance, g_physical_device, g_device, &g_main_window_data, g_queue_family, nullptr, width, height, g_min_image_count);
-                    g_main_window_data.FrameIndex = 0;
-
-                    // Clear allocated command buffers from here since entire pool is destroyed
-                    s_allocated_command_buffers.clear();
-                    s_allocated_command_buffers.resize(g_main_window_data.ImageCount);
-
-                    g_swap_chain_rebuild = false;
-                }
-            }
-
-            // Start the Dear ImGui frame
-            ImGui_ImplVulkan_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
-            if (specs.use_dock_space)
-            {
-                // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-                // because it would be confusing to have two docking targets within each others.
-                ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking;
-
-                ImGuiViewport* viewport = ImGui::GetMainViewport();
-                ImGui::SetNextWindowPos(viewport->Pos);
-                ImGui::SetNextWindowSize(viewport->Size);
-                ImGui::SetNextWindowViewport(viewport->ID);
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-                window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-                window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-                if (!specs.custom_titlebar && menu_bar_callback)
-                    window_flags |= ImGuiWindowFlags_MenuBar;
-
-                const bool maximized = is_maximized();
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, maximized ? ImVec2(6.0f, 6.0f) : ImVec2(1.0f, 1.0f));
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
-
-                ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f });
-                ImGui::Begin("DockSpaceWindow", nullptr, window_flags);
-                ImGui::PopStyleColor(); // MenuBarBg
-                ImGui::PopStyleVar(2);
-
-                ImGui::PopStyleVar(2);
-
-                {
-                    ImGui::PushStyleColor(ImGuiCol_Border, IM_COL32(50, 50, 50, 255));
-                    // Draw window border if the window is not maximized
-                    if (!maximized)
-                        ui::render_window_outer_bounds(ImGui::GetCurrentWindow());
-
-                    ImGui::PopStyleColor(); // ImGuiCol_Border
-                }
-
-                if (specs.custom_titlebar)
-                {
-                    float titleBarHeight;
-                    ui_draw_title_bar(titleBarHeight);
-                    ImGui::SetCursorPosY(titleBarHeight);
-                }
-
-                // Dockspace
-                ImGuiStyle& style = ImGui::GetStyle();
-                float minWinSizeX = style.WindowMinSize.x;
-                style.WindowMinSize.x = 370.0f;
-                ImGui::DockSpace(ImGui::GetID("MyDockspace"));
-                style.WindowMinSize.x = minWinSizeX;
-
-                if (!specs.custom_titlebar)
-                    ui_draw_menu_bar();
-
-                for (auto& layer : layer_stack)
-                    layer->on_ui_render();
-
-                ImGui::End();
-            }
-            else
-            {
-                // No dockspace - just render windows
-                for (auto& layer : layer_stack)
-                    layer->on_ui_render();
-            }
-
-            // Rendering
-            ImGui::Render();
-            ImDrawData* main_draw_data = ImGui::GetDrawData();
-            const bool main_is_minimized = (main_draw_data->DisplaySize.x <= 0.0f || main_draw_data->DisplaySize.y <= 0.0f);
-            window->ClearValue.color.float32[0] = clear_color.x * clear_color.w;
-            window->ClearValue.color.float32[1] = clear_color.y * clear_color.w;
-            window->ClearValue.color.float32[2] = clear_color.z * clear_color.w;
-            window->ClearValue.color.float32[3] = clear_color.w;
-            if (!main_is_minimized)
-                frame_render(this, window, main_draw_data);
-
-            // Update and Render additional Platform Windows
-            if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-            {
-                ImGui::UpdatePlatformWindows();
-                ImGui::RenderPlatformWindowsDefault();
-            }
-
-            // Present Main Platform Window
-            if (!main_is_minimized)
-                frame_resent(window);
-            else
-                std::this_thread::sleep_for(std::chrono::milliseconds(5));
-
-            float time = get_time();
-            frame_time = time - last_frame_time;
-            time_step = glm::min<float>(frame_time, 0.0333f);
-            last_frame_time = time;
+            ImGui::End();
         }
-    }
-
-
-    void GUIApplication::set_menubar_callback(const std::function<void()>& callback)
-    {
-        if (!specs.use_dock_space)
+        else
         {
-            LOG_CORE_WARN_TAG("App", "Application::set_menubar_callback - ApplicationSpecification::use_dock_space is false so menubar will not be visible.");
+            // No dockspace - just render windows
+            for (auto& layer : layer_stack)
+                layer->on_ui_render();
         }
-        menu_bar_callback = callback;
+
+        // Rendering
+        ImGui::Render();
+        ImDrawData* main_draw_data = ImGui::GetDrawData();
+        const bool main_is_minimized = (main_draw_data->DisplaySize.x <= 0.0f || main_draw_data->DisplaySize.y <= 0.0f);
+        window->ClearValue.color.float32[0] = clear_color.x * clear_color.w;
+        window->ClearValue.color.float32[1] = clear_color.y * clear_color.w;
+        window->ClearValue.color.float32[2] = clear_color.z * clear_color.w;
+        window->ClearValue.color.float32[3] = clear_color.w;
+        if (!main_is_minimized)
+            frame_render(this, window, main_draw_data);
+
+        // Update and Render additional Platform Windows
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+        }
+
+        // Present Main Platform Window
+        if (!main_is_minimized)
+            frame_resent(window);
+        else
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+        float time = get_time();
+        frame_time = time - last_frame_time;
+        time_step = glm::min<float>(frame_time, 0.0333f);
+        last_frame_time = time;
     }
+}
 
 
-    void GUIApplication::close()
+void GUIApplication::set_menubar_callback(const std::function<void()>& callback)
+{
+    if (!specs.use_dock_space)
     {
-        running = false;
+        LOG_CORE_WARN_TAG(
+            "App", "Application::set_menubar_callback - ApplicationSpecification::use_dock_space is false so menubar will not be visible.");
     }
+    menu_bar_callback = callback;
+}
 
-    bool GUIApplication::is_maximized() const
-    {
-        return glfwGetWindowAttrib(window_handle, GLFW_MAXIMIZED);
-    }
 
-    float GUIApplication::get_time()
-    {
-        return static_cast<float>(glfwGetTime());
-    }
+void GUIApplication::close() { running = false; }
 
-    vk::Instance GUIApplication::get_instance() {
-    return g_instance;
-    }
+bool GUIApplication::is_maximized() const { return glfwGetWindowAttrib(window_handle, GLFW_MAXIMIZED); }
 
-    vk::PhysicalDevice GUIApplication::get_physical_device()
-    {
-         return g_physical_device;
-    }
+float GUIApplication::get_time() { return static_cast<float>(glfwGetTime()); }
 
-    vk::Device GUIApplication::get_device()
-    {
-        return g_device;
-    }
+vk::Instance GUIApplication::get_instance() { return g_instance; }
 
-    vk::CommandBuffer GUIApplication::get_command_buffer()
-    {
-        const ImGui_ImplVulkanH_Window* window = &g_main_window_data;
-        const vk::CommandPool command_pool = window->Frames[window->FrameIndex].CommandPool;
+GLFWwindow* GUIApplication::get_window_handle() { return s_instance->window_handle; }
 
-        const vk::CommandBufferAllocateInfo info(command_pool, vk::CommandBufferLevel::ePrimary, 1);
-        vk::CommandBuffer buffer = s_allocated_command_buffers[window->FrameIndex].emplace_back();
-        buffer = g_device.allocateCommandBuffers(info)[0];
+vk::PhysicalDevice GUIApplication::get_physical_device() { return g_physical_device; }
 
-        const vk::CommandBufferBeginInfo begin_info(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-        buffer.begin(begin_info);
+vk::Device GUIApplication::get_device() { return g_device; }
 
-        return buffer;
-    }
+vk::CommandBuffer GUIApplication::get_command_buffer()
+{
+    const ImGui_ImplVulkanH_Window* window = &g_main_window_data;
+    const vk::CommandPool command_pool = window->Frames[window->FrameIndex].CommandPool;
 
-    void GUIApplication::flush_command_buffer(vk::CommandBuffer command_buffer)
-    { constexpr uint64_t DEFAULT_FENCE_TIMEOUT = 100000000000;
-        vk::SubmitInfo end_info{{}, {}, command_buffer};
-        command_buffer.end();
+    const vk::CommandBufferAllocateInfo info(command_pool, vk::CommandBufferLevel::ePrimary, 1);
+    vk::CommandBuffer buffer = s_allocated_command_buffers[window->FrameIndex].emplace_back();
+    buffer = g_device.allocateCommandBuffers(info)[0];
 
-        vk::Fence fence = g_device.createFence({});
-        g_queue.submit(end_info, fence);
+    const vk::CommandBufferBeginInfo begin_info(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+    buffer.begin(begin_info);
 
-        auto result = g_device.waitForFences(fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT);
-        if (result != vk::Result::eSuccess)
-            std::cerr << "Error: Failed to wait for fence" << std::endl;
+    return buffer;
+}
 
-        g_device.destroyFence(fence);
-    }
+void GUIApplication::flush_command_buffer(vk::CommandBuffer command_buffer)
+{
+    constexpr uint64_t DEFAULT_FENCE_TIMEOUT = 100000000000;
+    vk::SubmitInfo end_info{{}, {}, command_buffer};
+    command_buffer.end();
 
-    void GUIApplication::submit_resource_free(std::function<void()>&& func)
-    {
-        s_resource_free_queue[s_current_frame_index].emplace_back(std::move(func));
-    }
+    vk::Fence fence = g_device.createFence({});
+    g_queue.submit(end_info, fence);
 
-    ImFont* GUIApplication::get_font(const std::string& string)
-    {
-        if (!s_fonts.contains(string))
-            return nullptr;
+    auto result = g_device.waitForFences(fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT);
+    if (result != vk::Result::eSuccess)
+        std::cerr << "Error: Failed to wait for fence" << std::endl;
 
-        return &s_fonts[string];
-    }
+    g_device.destroyFence(fence);
+}
 
-    ImGui_ImplVulkanH_Window* GUIApplication::get_main_window_data()
-    {
-        return &g_main_window_data;
-    }
+void GUIApplication::submit_resource_free(std::function<void()>&& func)
+{
+    s_resource_free_queue[s_current_frame_index].emplace_back(std::move(func));
+}
 
-    vk::CommandBuffer GUIApplication::get_active_command_buffer()
-    {
-        return s_active_command_buffer;
-    }
+ImFont* GUIApplication::get_font(const std::string& string)
+{
+    if (!s_fonts.contains(string))
+        return nullptr;
+
+    return &s_fonts[string];
+}
+
+ImGui_ImplVulkanH_Window* GUIApplication::get_main_window_data() { return &g_main_window_data; }
+
+vk::CommandBuffer GUIApplication::get_active_command_buffer() { return s_active_command_buffer; }
 
 } // namespace portal
