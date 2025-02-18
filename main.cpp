@@ -6,7 +6,7 @@
 #include "portal/application/application.h"
 #include <portal/application/entry_point.h>
 
-#include "portal/application/gui/gui_application.h"
+#include "portal/gui/gui_application.h"
 
 
 class TestLayer : public portal::Layer

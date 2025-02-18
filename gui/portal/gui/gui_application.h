@@ -14,6 +14,8 @@
 
 #include "portal/application/application.h"
 
+#define PORTAL_GUI
+
 namespace portal
 {
     class Image;

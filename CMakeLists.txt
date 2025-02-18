@@ -27,6 +27,7 @@ add_subdirectory(core)
 add_subdirectory(networking)
 add_subdirectory(application)
 add_subdirectory(input)
+add_subdirectory(gui)
 
 add_executable(portal main.cpp)
-target_link_libraries(portal PUBLIC portal::networking portal::application)
+target_link_libraries(portal PUBLIC portal::networking portal::gui)

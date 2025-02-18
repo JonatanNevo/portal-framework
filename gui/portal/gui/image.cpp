@@ -7,7 +7,7 @@
 #include "imgui.h"
 #include "imgui_impl_vulkan.h"
 
-#include "portal/application/gui/gui_application.h"
+#include "portal/gui/gui_application.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"

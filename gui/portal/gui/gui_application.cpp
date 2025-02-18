@@ -17,10 +17,12 @@
 #include <stb_image.h>
 #include <vulkan/vulkan.hpp>
 
-#include "portal/application/gui/image.h"
-#include "portal/application/gui/ui/utils.h"
 #include "portal/core/assert.h"
 #include "portal/core/log.h"
+
+#include "portal/gui/image.h"
+#include "portal/gui/ui/utils.h"
+
 
 extern bool g_application_running;
 
@@ -581,27 +583,27 @@ namespace portal
     void GUIApplication::ui_draw_title_bar(float& out_height)
     {
         const float title_bar_height = 58.0f;
-        // const bool is_maximized = is_maximized();
-        // float title_bar_vertical_offset = is_maximized ? -6.f : 0.f;
-        // const ImVec2 window_padding = ImGui::GetCurrentWindow()->WindowPadding;
-        //
-        // ImGui::SetCursorPos(ImVec2(window_padding.x, window_padding.y + title_bar_vertical_offset));
-        // const ImVec2 title_bar_min = ImGui::GetCursorScreenPos();
-        // const ImVec2 title_bar_max = {ImGui::GetCursorScreenPos().x + ImGui::GetWindowWidth() - window_padding.y * 2.0f,
-        // ImGui::GetCursorScreenPos().y + title_bar_height};
-        //
-        // auto* bg_draw_list = ImGui::GetBackgroundDrawList();
-        // auto* fg_draw_list = ImGui::GetForegroundDrawList();
-        // bg_draw_list->AddRectFilled(title_bar_min, title_bar_max, IM_COL32(0, 0, 0, 255)); //UI::Colors::Theme::titlebar
-        //
-        // {
-        //     const int logo_width = 48;
-        //     const int logo_height = 48;
-        //     const ImVec2 logo_offset(16.f + window_padding.x, 5.f + window_padding.y + title_bar_vertical_offset);
-        //     const ImVec2 logo_rect_start = {ImGui::GetItemRectMin().x + logo_offset.x, ImGui::GetItemRectMin().y + logo_offset.y};
-        //     const ImVec2 logo_rect_max = {logo_rect_start.x + logo_width, logo_rect_start.y + logo_height};
-        //     fg_draw_list->AddImage(reinterpret_cast<ImU64>(app_header_icon->get_descriptor_set()), logo_rect_start, logo_rect_max);
-        // }
+        const bool maximised = is_maximized();
+        float title_bar_vertical_offset = maximised ? -6.f : 0.f;
+        const ImVec2 window_padding = ImGui::GetCurrentWindow()->WindowPadding;
+
+        ImGui::SetCursorPos(ImVec2(window_padding.x, window_padding.y + title_bar_vertical_offset));
+        const ImVec2 title_bar_min = ImGui::GetCursorScreenPos();
+        const ImVec2 title_bar_max = {ImGui::GetCursorScreenPos().x + ImGui::GetWindowWidth() - window_padding.y * 2.0f,
+        ImGui::GetCursorScreenPos().y + title_bar_height};
+
+        auto* bg_draw_list = ImGui::GetBackgroundDrawList();
+        auto* fg_draw_list = ImGui::GetForegroundDrawList();
+        bg_draw_list->AddRectFilled(title_bar_min, title_bar_max, IM_COL32(0, 0, 0, 255)); //UI::Colors::Theme::titlebar
+
+        {
+            const int logo_width = 48;
+            const int logo_height = 48;
+            const ImVec2 logo_offset(16.f + window_padding.x, 5.f + window_padding.y + title_bar_vertical_offset);
+            const ImVec2 logo_rect_start = {ImGui::GetItemRectMin().x + logo_offset.x, ImGui::GetItemRectMin().y + logo_offset.y};
+            const ImVec2 logo_rect_max = {logo_rect_start.x + logo_width, logo_rect_start.y + logo_height};
+            fg_draw_list->AddImage(reinterpret_cast<ImU64>(app_header_icon->get_descriptor_set()), logo_rect_start, logo_rect_max);
+        }
 
         out_height = title_bar_height;
     }
@@ -712,7 +714,7 @@ namespace portal
                 if (specs.custom_titlebar)
                 {
                     float titleBarHeight;
-                    // UI_DrawTitlebar(titleBarHeight);
+                    ui_draw_title_bar(titleBarHeight);
                     ImGui::SetCursorPosY(titleBarHeight);
                 }
 
@@ -801,7 +803,7 @@ namespace portal
 
     vk::PhysicalDevice GUIApplication::get_physical_device()
     {
-         return get_physical_device();
+         return g_physical_device;
     }
 
     vk::Device GUIApplication::get_device()

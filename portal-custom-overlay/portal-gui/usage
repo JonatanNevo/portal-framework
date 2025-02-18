@@ -1,0 +1,4 @@
+portal-gui provides CMake targets:
+
+    find_package(portal-gui CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE portal::gui)

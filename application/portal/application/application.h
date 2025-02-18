@@ -22,11 +22,8 @@ namespace portal
         std::filesystem::path icon_path;
 
         bool resizeable = true;
-
         bool custom_titlebar = false;
-
         bool use_dock_space = true;
-
         bool center_window = false;
     };
 

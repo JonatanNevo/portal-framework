@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 }
 }
 
-#if defined(PORTAL_PLATFORM_WINDOWS) && !defined(PORTAL_HEADLESS) && defined(PORTAL_DIST)
+#if defined(PORTAL_PLATFORM_WINDOWS) && defined(PORTAL_GUI) && defined(PORTAL_DIST)
 
 #include <Windows.h>
 

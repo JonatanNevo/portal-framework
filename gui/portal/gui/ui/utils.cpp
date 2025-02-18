@@ -3,7 +3,7 @@
 //
 
 #include "utils.h"
-#include "portal/application/gui/image.h"
+#include "portal/gui/image.h"
 
 namespace portal::ui
 {
