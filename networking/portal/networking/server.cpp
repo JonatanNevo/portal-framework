@@ -2,7 +2,7 @@
 // Created by Jonatan Nevo on 31/01/2025.
 //
 
-#include "host.h"
+#include "server.h"
 
 #include <ranges>
 #include <steam/steamnetworkingsockets.h>
@@ -15,24 +15,24 @@
 
 namespace portal::network
 {
-Host::Host(const int port) :
+Server::Server(const int port) :
     port(port), manager(ConnectionManager::get_instance()), sockets(manager->get_sockets()) {}
 
-Host::Host(ConnectionManager* manager, int port) :
+Server::Server(ConnectionManager* manager, int port) :
     port(port), manager(manager), sockets(manager->get_sockets()) {}
 
-Host::~Host()
+Server::~Server()
 {
     stop();
     if (polling_thread.joinable())
         polling_thread.join();
 }
 
-void Host::start()
+void Server::start()
 {
     if (running)
     {
-        LOG_CORE_WARN_TAG("Networking", "Host - {} is already running", port);
+        LOG_CORE_WARN_TAG("Networking", "Server - {} is already running", port);
         return;
     }
 
@@ -41,7 +41,7 @@ void Host::start()
     local_address.m_port = port;
 
     SteamNetworkingConfigValue_t options{};
-    options.SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, reinterpret_cast<void*>(Host::on_status_changed_callback));
+    options.SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, reinterpret_cast<void*>(Server::on_status_changed_callback));
 
     listen_socket = sockets->CreateListenSocketIP(local_address, 1, &options);
     if (listen_socket == k_HSteamListenSocket_Invalid)
@@ -58,21 +58,21 @@ void Host::start()
     }
 
     running = true;
-    manager->add_host(listen_socket, this);
-    polling_thread = std::thread(&Host::thread_loop, this);
+    manager->add_server(listen_socket, this);
+    polling_thread = std::thread(&Server::thread_loop, this);
 }
 
-void Host::stop()
+void Server::stop()
 {
     running = false;
 
     if (polling_thread.joinable())
         polling_thread.join();
 
-    LOG_CORE_INFO_TAG("Networking", "Host {} - Closing connections", port);
+    LOG_CORE_INFO_TAG("Networking", "Server {} - Closing connections", port);
     for (const auto& id : connections | std::views::keys)
     {
-        sockets->CloseConnection(id, static_cast<int>(ConnectionEnd::AppConnectionClosed), "Host closing", false);
+        sockets->CloseConnection(id, static_cast<int>(ConnectionEnd::AppConnectionClosed), "Server closing", false);
     }
 
     connections.clear();
@@ -84,11 +84,11 @@ void Host::stop()
     poll_group = k_HSteamNetPollGroup_Invalid;
 }
 
-void Host::thread_loop()
+void Server::thread_loop()
 {
     using namespace std::chrono_literals;
 
-    LOG_CORE_INFO_TAG("Networking", "Host {} - Starting to host", port);
+    LOG_CORE_INFO_TAG("Networking", "Server {} - Starting to host", port);
     while (running)
     {
         poll_incoming_messages();
@@ -97,15 +97,15 @@ void Host::thread_loop()
     }
 }
 
-void Host::on_status_changed_callback(SteamNetConnectionStatusChangedCallback_t* info)
+void Server::on_status_changed_callback(SteamNetConnectionStatusChangedCallback_t* info)
 {
-    const auto host = ConnectionManager::get_instance()->get_host(info->m_info.m_hListenSocket);
-    PORTAL_CORE_ASSERT(host != nullptr, "Host not found in manager");
-    if (host)
-        host->on_status_changed(info);
+    const auto server = ConnectionManager::get_instance()->get_server(info->m_info.m_hListenSocket);
+    PORTAL_CORE_ASSERT(server != nullptr, "Server not found in manager");
+    if (server)
+        server->on_status_changed(info);
 }
 
-void Host::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
+void Server::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
 {
     switch (info->m_info.m_eState)
     {
@@ -119,9 +119,9 @@ void Host::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
         {
             // Locate the client
             const auto& connection = connections.find(info->m_hConn);
-            PORTAL_CORE_ASSERT(connection != connections.end(), "Client not found in host");
+            PORTAL_CORE_ASSERT(connection != connections.end(), "Client not found in server");
 
-            LOG_CORE_INFO_TAG("Networking", "Host {} - Connection closed: {}", port, connection->second.connection_description);
+            LOG_CORE_INFO_TAG("Networking", "Server {} - Connection closed: {}", port, connection->second.connection_description);
 
             for (const auto& callback : on_connection_disconnect_callbacks)
                 callback(connection->second);
@@ -134,11 +134,11 @@ void Host::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
     case k_ESteamNetworkingConnectionState_Connecting:
     {
         // This must be a new connection
-        PORTAL_CORE_ASSERT(!connections.contains(info->m_hConn), "Client already exists in host");
+        PORTAL_CORE_ASSERT(!connections.contains(info->m_hConn), "Client already exists in server");
 
         if (sockets->AcceptConnection(info->m_hConn) != k_EResultOK)
         {
-            LOG_CORE_ERROR_TAG("Networking", "Host {} - Failed to accept connection: {}", port, info->m_info.m_szConnectionDescription);
+            LOG_CORE_ERROR_TAG("Networking", "Server {} - Failed to accept connection: {}", port, info->m_info.m_szConnectionDescription);
             sockets->CloseConnection(info->m_hConn, static_cast<int>(ConnectionEnd::AppExceptionGeneric), "Failed to accept connection", false);
             break;
         }
@@ -147,7 +147,7 @@ void Host::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
         {
             LOG_CORE_ERROR_TAG(
                 "Networking",
-                "Host {} - Failed to set poll group for connection: {}",
+                "Server {} - Failed to set poll group for connection: {}",
                 port,
                 info->m_info.m_szConnectionDescription
                 );
@@ -164,7 +164,7 @@ void Host::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
         };
         connections[info->m_hConn] = connection;
 
-        LOG_CORE_INFO_TAG("Networking", "Host {} - New connection: {}", port, connection.connection_description);
+        LOG_CORE_INFO_TAG("Networking", "Server {} - New connection: {}", port, connection.connection_description);
         for (const auto& callback : on_connection_connect_callbacks)
             callback(connection);
         break;
@@ -175,27 +175,27 @@ void Host::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
 }
 
 
-void Host::send_buffer(const HSteamNetConnection id, const Buffer buffer, const bool reliable) const
+void Server::send_buffer(const HSteamNetConnection id, const Buffer buffer, const bool reliable) const
 {
     send_raw(id, buffer.data, buffer.size, reliable);
 }
 
-void Host::send_buffer_to_all(const Buffer buffer, const HSteamNetConnection exclude, const bool reliable)
+void Server::send_buffer_to_all(const Buffer buffer, const HSteamNetConnection exclude, const bool reliable)
 {
     send_raw_to_all(buffer.data, buffer.size, exclude, reliable);
 }
 
-void Host::send_string(const HSteamNetConnection id, const std::string& string, const bool reliable) const
+void Server::send_string(const HSteamNetConnection id, const std::string& string, const bool reliable) const
 {
     send_raw(id, string.data(), string.size(), reliable);
 }
 
-void Host::send_string_to_all(const std::string& string, const HSteamNetConnection exclude, const bool reliable)
+void Server::send_string_to_all(const std::string& string, const HSteamNetConnection exclude, const bool reliable)
 {
     send_raw_to_all(string.data(), string.size(), exclude, reliable);
 }
 
-void Host::send_raw(HSteamNetConnection id, const void* data, const size_t size, const bool reliable) const
+void Server::send_raw(HSteamNetConnection id, const void* data, const size_t size, const bool reliable) const
 {
     const auto flags = reliable ? k_nSteamNetworkingSend_Reliable : k_nSteamNetworkingSend_Unreliable;
     const auto result = sockets->SendMessageToConnection(id, data, size, flags, nullptr);
@@ -223,7 +223,7 @@ void Host::send_raw(HSteamNetConnection id, const void* data, const size_t size,
     }
 }
 
-void Host::send_raw_to_all(const void* data, size_t size, HSteamNetConnection exclude, bool reliable)
+void Server::send_raw_to_all(const void* data, size_t size, HSteamNetConnection exclude, bool reliable)
 {
     for (const auto& key : connections | std::views::keys)
     {
@@ -233,12 +233,12 @@ void Host::send_raw_to_all(const void* data, size_t size, HSteamNetConnection ex
     }
 }
 
-void Host::kick_client(const HSteamNetConnection id) const
+void Server::kick_client(const HSteamNetConnection id) const
 {
-    sockets->CloseConnection(id, static_cast<int>(ConnectionEnd::AppKickedByHost), "Kicked by host", false);
+    sockets->CloseConnection(id, static_cast<int>(ConnectionEnd::AppKickedByServer), "Kicked by server", false);
 }
 
-void Host::poll_incoming_messages()
+void Server::poll_incoming_messages()
 {
     ISteamNetworkingMessage* incoming_message = nullptr;
     const int message_count = sockets->ReceiveMessagesOnPollGroup(poll_group, &incoming_message, 1);
@@ -247,7 +247,7 @@ void Host::poll_incoming_messages()
 
     if (message_count < 0)
     {
-        LOG_CORE_ERROR_TAG("Networking", "Host - {} Failed to receive message", port);
+        LOG_CORE_ERROR_TAG("Networking", "Server - {} Failed to receive message", port);
         running = false;
         return;
     }
@@ -255,7 +255,7 @@ void Host::poll_incoming_messages()
     const auto client = connections.find(incoming_message->m_conn);
     if (client == connections.end())
     {
-        LOG_CORE_ERROR_TAG("Networking", "Host - {} Client not found", port);
+        LOG_CORE_ERROR_TAG("Networking", "Server - {} Client not found", port);
         incoming_message->Release();
         return;
     }
@@ -272,8 +272,8 @@ void Host::poll_incoming_messages()
     incoming_message->Release();
 }
 
-void Host::poll_connection_state_changes() const { sockets->RunCallbacks(); }
-void Host::set_client_nick(const HSteamNetConnection id, const char* nick) const { sockets->SetConnectionName(id, nick); }
-void Host::on_fatal_error(const std::string& message) {}
+void Server::poll_connection_state_changes() const { sockets->RunCallbacks(); }
+void Server::set_client_nick(const HSteamNetConnection id, const char* nick) const { sockets->SetConnectionName(id, nick); }
+void Server::on_fatal_error(const std::string& message) {}
 
 } // namespace portal::network

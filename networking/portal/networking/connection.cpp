@@ -191,7 +191,7 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
         else
             LOG_CORE_ERROR_TAG(
             "Networking",
-            "Connection {} - Disconnected from host: {}",
+            "Connection {} - Disconnected from server: {}",
             info->m_info.m_szConnectionDescription,
             info->m_info.m_szEndDebug
             );

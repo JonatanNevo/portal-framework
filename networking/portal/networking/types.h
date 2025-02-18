@@ -31,7 +31,7 @@ enum class ConnectionEnd
     AppGeneric          = 1000,
     AppFinished         = 1001,
     AppConnectionClosed = 1002,
-    AppKickedByHost     = 1003,
+    AppKickedByServer     = 1003,
 
     // 2xxx: Application ended the connection in some sort of exceptional
     //       or unusual manner that might indicate a bug or configuration

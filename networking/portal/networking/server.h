@@ -23,12 +23,12 @@ struct ConnectionInfo
 };
 
 
-class Host
+class Server
 {
 public:
-    Host(int port);
-    Host(ConnectionManager* manager, int port);
-    ~Host();
+    Server(int port);
+    Server(ConnectionManager* manager, int port);
+    ~Server();
 
     void start();
     void stop();

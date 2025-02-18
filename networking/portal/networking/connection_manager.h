@@ -12,7 +12,7 @@ class ISteamNetworkingSockets;
 
 namespace portal::network
 {
-class Host;
+class Server;
 class Connection;
 
 class ConnectionManager
@@ -28,9 +28,9 @@ public:
     void remove_connection(HSteamNetConnection connection);
     Connection* get_connection(HSteamNetConnection connection);
 
-    void add_host(HSteamListenSocket host, Host* host_object);
-    void remove_host(HSteamListenSocket host);
-    Host* get_host(HSteamListenSocket host);
+    void add_server(HSteamListenSocket server, Server* server_object);
+    void remove_server(HSteamListenSocket server);
+    Server* get_server(HSteamListenSocket server);
 
 protected:
     ConnectionManager();
@@ -41,7 +41,7 @@ private:
     static std::mutex instance_mutex;
     ISteamNetworkingSockets* sockets;
     std::map<HSteamNetConnection, Connection*> connections;
-    std::map<HSteamListenSocket, Host*> hosts;
+    std::map<HSteamListenSocket, Server*> servers;
 };
 
 } // namespace portal::network

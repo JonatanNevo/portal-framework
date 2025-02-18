@@ -56,25 +56,25 @@ Connection* ConnectionManager::get_connection(const HSteamNetConnection connecti
     return connections[connection];
 }
 
-void ConnectionManager::add_host(const HSteamListenSocket host, Host* host_object)
+void ConnectionManager::add_server(const HSteamListenSocket server, Server* server_object)
 {
-    if (hosts.contains(host))
-        throw std::runtime_error("Host already exists");
-    hosts[host] = host_object;
+    if (servers.contains(server))
+        throw std::runtime_error("Server already exists");
+    servers[server] = server_object;
 }
 
-void ConnectionManager::remove_host(const HSteamListenSocket host)
+void ConnectionManager::remove_server(const HSteamListenSocket server)
 {
-    if (!hosts.contains(host))
+    if (!servers.contains(server))
         return;
-    hosts.erase(host);
+    servers.erase(server);
 }
 
-Host* ConnectionManager::get_host(const HSteamListenSocket host)
+Server* ConnectionManager::get_server(const HSteamListenSocket server)
 {
-    if (!hosts.contains(host))
+    if (!servers.contains(server))
         return nullptr;
-    return hosts[host];
+    return servers[server];
 }
 
 void ConnectionManager::remove_connection(const HSteamNetConnection connection)
