@@ -14,22 +14,16 @@ if(PORTAL_FIND_PACAKGE)
 endif ()
 unset(PORTAL_FIND_PACAKGE CACHE)
 
-add_library(portal-application STATIC ${APP_SOURCES} ${HEADLESS_SOURCES})
-target_sources(portal-application PUBLIC
-        FILE_SET HEADERS
-        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES ${HEADLESS_HEADERS}
-)
-
-set_target_properties(portal-application PROPERTIES EXPORT_NAME application)
-
-add_library(portal::application ALIAS portal-application)
-
+add_library(portal-application STATIC ${APP_SOURCES})
 target_sources(portal-application PUBLIC
         FILE_SET HEADERS
         BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         FILES ${APP_HEADERS}
 )
+
+set_target_properties(portal-application PROPERTIES EXPORT_NAME application)
+
+add_library(portal::application ALIAS portal-application)
 
 target_link_libraries(portal-application
         PUBLIC

@@ -28,6 +28,7 @@ add_subdirectory(networking)
 add_subdirectory(application)
 add_subdirectory(input)
 add_subdirectory(gui)
+add_subdirectory(serialization)
 
 add_executable(portal main.cpp)
-target_link_libraries(portal PUBLIC portal::networking portal::gui)
+target_link_libraries(portal PUBLIC portal::networking portal::gui portal::serialization)
