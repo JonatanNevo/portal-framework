@@ -108,45 +108,72 @@ inline std::ostream& operator<<(std::ostream& os, const glm::vec4 vec)
     return os;
 }
 
+struct TestClass
+{
+    int a;
+    float b;
+    std::vector<int> c;
+    std::string d;
+    glm::vec1 e;
+    glm::ivec2 f;
+    glm::dvec3 g;
+    glm::vec4 h;
+
+    void serialize(portal::OrderedSerializer& serializer)
+    {
+        serializer << a << b << c << d << e << f << g << h;
+    }
+
+    static TestClass deserialize(portal::OrderedDeserializer& deserializer)
+    {
+        TestClass test;
+        test.a = deserializer.get_property<int>();
+        test.b = deserializer.get_property<float>();
+        test.c = deserializer.get_property<std::vector<int>>();
+        test.d = deserializer.get_property<std::string>();
+        test.e = deserializer.get_property<glm::vec1>();
+        test.f = deserializer.get_property<glm::ivec2>();
+        test.g = deserializer.get_property<glm::dvec3>();
+        test.h = deserializer.get_property<glm::vec4>();
+        return test;
+    }
+};
+
 
 portal::Application* portal::create_application(int argc, char** argv)
 {
     Log::init();
 
+    TestClass test = {
+        5,
+        3.14f,
+        {1, 2, 3},
+        "hello",
+        glm::vec1{1.0f},
+        glm::ivec2{1, 2},
+        glm::dvec3{1.0, 2.0, 3.0},
+        glm::vec4{1.0f, 2.0f, 3.0f, 4.0f}
+    };
     std::stringstream ss;
-    portal::BinarySerializationParams params { true, true };
-    portal::BinarySerializer serializer(ss, params);
-    int a = 5;
-    serializer.add_property(a);
-    float b = 3.14f;
-    serializer.add_property(b);
-    std::vector<int> c = {1, 2, 3};
-    serializer.add_property(c);
-    std::string d = "hello";
-    serializer.add_property(d);
-    glm::vec1 e{1.0f};
-    serializer.add_property(e);
-    glm::ivec2 f{1, 2};
-    serializer.add_property(f);
-    glm::dvec3 g{1.0, 2.0, 3.0};
-    serializer.add_property(g);
-    glm::vec4 h{1.0f, 2.0f, 3.0f, 4.0f};
-    serializer.add_property(h);
+    BinarySerializationParams params { true, true };
+    BinarySerializer serializer(ss, params);
+    serializer << test;
 
     serializer.serialize();
     std::string s = ss.str();
     std::cout << "size: " << s.size() << std::endl;
 
-    portal::BinaryDeserializer deserializer(s.data(), s.size());
+    BinaryDeserializer deserializer(s.data(), s.size());
     deserializer.deserialize();
-    std::cout << "a: " << deserializer.get_property<int>() << std::endl;
-    std::cout << "b: " << deserializer.get_property<float>() << std::endl;
-    std::cout << "c: " << deserializer.get_property<std::vector<int>>() << std::endl;;
-    std::cout << "d: " << deserializer.get_property<std::string>() << std::endl;
-    std::cout << "e: " << deserializer.get_property<glm::vec1>() << std::endl;
-    std::cout << "f: " << deserializer.get_property<glm::ivec2>() << std::endl;
-    std::cout << "g: " << deserializer.get_property<glm::dvec3>() << std::endl;
-    std::cout << "h: " << deserializer.get_property<glm::vec4>() << std::endl;
+    auto test2 = TestClass::deserialize(deserializer);
+    std::cout << "a: " << test2.a << std::endl;
+    std::cout << "b: " << test2.b << std::endl;
+    std::cout << "c: " << test2.c << std::endl;
+    std::cout << "d: " << test2.d << std::endl;
+    std::cout << "e: " << test2.e << std::endl;
+    std::cout << "f: " << test2.f << std::endl;
+    std::cout << "g: " << test2.g << std::endl;
+    std::cout << "h: " << test2.h << std::endl;
 
     exit(0);
 

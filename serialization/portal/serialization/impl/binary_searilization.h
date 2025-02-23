@@ -14,7 +14,7 @@ struct BinarySerializationParams
     bool large_element_size = false;
 };
 
-class BinarySerializer final : public serialization::OrderedSerializer
+class BinarySerializer final : public OrderedSerializer
 {
 public:
     BinarySerializer(std::ostream& output, std::optional<BinarySerializationParams> param = std::nullopt);
@@ -25,7 +25,7 @@ private:
     std::ostream& output;
 };
 
-class BinaryDeserializer final : public serialization::OrderedDeserializer
+class BinaryDeserializer final : public OrderedDeserializer
 {
 public:
     BinaryDeserializer(std::istream& input, std::optional<BinarySerializationParams> params = std::nullopt);

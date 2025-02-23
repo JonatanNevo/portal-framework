@@ -81,4 +81,9 @@ concept GlmVec4 = requires(T t) {
     requires std::same_as<T, glm::vec4> || std::same_as<T, glm::dvec4> || std::same_as<T, glm::ivec4>;
 };
 
+template <typename T>
+concept PropertyConcept = requires(T t) {
+    requires Vector<T> || String<T> || GlmVec1<T> || GlmVec2<T> || GlmVec3<T> || GlmVec4<T> || std::is_integral_v<T> || std::is_floating_point_v<T>;
+};
+
 } // namespace portal::serialization

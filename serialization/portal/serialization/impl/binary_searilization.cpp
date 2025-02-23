@@ -67,7 +67,7 @@ BinarySerializationParams from_params_header(const uint8_t header)
 {
     return BinarySerializationParams{
         .encode_params = static_cast<bool>(header >> 7),
-        .large_element_size = static_cast<bool>(header & 1),
+        .large_element_size = static_cast<bool>(header & 0b1),
     };
 }
 
