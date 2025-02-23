@@ -16,37 +16,19 @@ public:
     virtual ~Deserializer() = default;
     virtual void deserialize() = 0;
 
-    template <std::integral T>
+    template <typename  T> requires std::integral<T> || std::floating_point<T>
     T get_property(const std::string& name)
     {
         if (!properties.contains(name))
             throw std::runtime_error("Property not found");
 
         const auto& property = properties.at(name);
-        if (property.type != PropertyType::integer)
-            throw std::runtime_error("Property type mismatch");
 
         if (property.value.size != sizeof(T))
             throw std::runtime_error("Property size mismatch");
 
         return *static_cast<T*>(property.value.data);
 
-    }
-
-    template <std::floating_point T>
-    T get_property(const std::string& name)
-    {
-        if (!properties.contains(name))
-            throw std::runtime_error("Property not found");
-
-        const auto& property = properties.at(name);
-        if (property.type != PropertyType::floating)
-            throw std::runtime_error("Property type mismatch");
-
-        if (property.value.size != sizeof(T))
-            throw std::runtime_error("Property size mismatch");
-
-        return *static_cast<T*>(property.value.data);
     }
 
     template <Vector T>
@@ -73,10 +55,14 @@ public:
 
         const auto& property = properties.at(name);
 
-        if (property.container_type != PropertyContainerType::array)
-            throw std::runtime_error("Property container type mismatch");
+        size_t string_length;
+        if (property.container_type == PropertyContainerType::null_term_string)
+            string_length = property.value.size / sizeof(typename T::value_type) - 1;
+        else if (property.container_type == PropertyContainerType::string)
+            string_length = property.value.size / sizeof(typename T::value_type);
+        else
+            throw std::runtime_error("Property container type mismatch, expected string");
 
-        const auto string_length = property.value.size / sizeof(typename T::value_type) - 1;
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         return T(data, string_length);
     }

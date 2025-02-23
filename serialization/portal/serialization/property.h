@@ -13,9 +13,14 @@ namespace portal::serialization
 enum class PropertyType : uint8_t
 {
     binary = 0,
-    integer = 1,
-    floating = 2,
-    character = 4,
+    integer8 = 1,
+    integer16 = 2,
+    integer32 = 3,
+    integer64 = 4,
+    integer128 = 5,
+    floating32 = 6,
+    floating64 = 7,
+    character = 8,
     invalid = 255
 };
 
@@ -24,6 +29,8 @@ enum class PropertyContainerType : uint8_t
     scalar = 0,
     array = 1,
     vector = 2,
+    string = 3,
+    null_term_string = 4
 };
 
 struct Property
@@ -31,6 +38,7 @@ struct Property
     Buffer value;
     PropertyType type{};
     PropertyContainerType container_type = PropertyContainerType::scalar;
+    uint16_t elements_number = 0;
 };
 
 template <typename T>
