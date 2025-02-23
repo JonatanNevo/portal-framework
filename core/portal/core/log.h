@@ -54,7 +54,7 @@ public:
     inline static std::shared_ptr<spdlog::logger>& get_core_logger() { return core_logger; }
     inline static std::shared_ptr<spdlog::logger>& get_client_logger() { return client_logger; }
 
-    static bool has_tag(const std::string& tag) { return enabled_tags.find(tag) != enabled_tags.end(); }
+    static bool has_tag(const std::string& tag) { return enabled_tags.contains(tag); }
     static std::map<std::string, TagDetails>& get_enabled_tags() { return enabled_tags; }
 
     template <typename... Args>
@@ -214,10 +214,10 @@ void Log::print_assert_message(const Log::Type type, std::string_view prefix, st
 inline void Log::print_assert_message(const Log::Type type, std::string_view prefix, std::string_view message)
 {
     const auto logger = (type == Type::Core) ? core_logger : client_logger;
-    logger->error("{0}: {1}", prefix, message);
+    logger->critical("{0}: {1}", prefix, message);
 
 #if PORTAL_ASSERT_MESSAGE_BOX
-    MessageBoxA(nullptr, message.data(), "Walnut Assertion", MB_OK | MB_ICONERROR);
+    MessageBoxA(nullptr, message.data(), "Portal Assertion", MB_OK | MB_ICONERROR);
 #endif
 }
 

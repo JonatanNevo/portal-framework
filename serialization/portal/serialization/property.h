@@ -28,36 +28,57 @@ enum class PropertyContainerType : uint8_t
 {
     scalar = 0,
     array = 1,
-    vector = 2,
-    string = 3,
-    null_term_string = 4
+    string = 2,
+    null_term_string = 3,
+    vec1 = 4,
+    __vector_type_start = vec1,
+    vec2 = 5,
+    vec3 = 6,
+    vec4 = 7,
 };
+
+inline constexpr bool is_vector_type(const PropertyContainerType type)
+{
+    return type == PropertyContainerType::vec1 || type == PropertyContainerType::vec2 ||
+        type == PropertyContainerType::vec3 || type == PropertyContainerType::vec4;
+}
 
 struct Property
 {
     Buffer value;
     PropertyType type{};
     PropertyContainerType container_type = PropertyContainerType::scalar;
-    uint16_t elements_number = 0;
+    size_t elements_number = 0;
 };
 
 template <typename T>
-concept Vector = requires(T t) { requires std::same_as<T, std::vector<typename T::value_type, typename T::allocator_type>>; };
+concept Vector =
+    requires(T t) { requires std::same_as<T, std::vector<typename T::value_type, typename T::allocator_type>>; };
 
 template <typename T>
-concept String =
-    requires(T t) { requires std::same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>>; };
+concept String = requires(T t) {
+    requires std::
+        same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>>;
+};
 
 template <typename T>
-concept GlmVec1 = requires(T t) { requires std::same_as<T, glm::vec1> || std::same_as<T, glm::dvec1> || std::same_as<T, glm::ivec1>; };
+concept GlmVec1 = requires(T t) {
+    requires std::same_as<T, glm::vec1> || std::same_as<T, glm::dvec1> || std::same_as<T, glm::ivec1>;
+};
 
 template <typename T>
-concept GlmVec2 = requires(T t) { requires std::same_as<T, glm::vec2> || std::same_as<T, glm::dvec2> || std::same_as<T, glm::ivec2>; };
+concept GlmVec2 = requires(T t) {
+    requires std::same_as<T, glm::vec2> || std::same_as<T, glm::dvec2> || std::same_as<T, glm::ivec2>;
+};
 
 template <typename T>
-concept GlmVec3 = requires(T t) { requires std::same_as<T, glm::vec3> || std::same_as<T, glm::dvec3> || std::same_as<T, glm::ivec3>; };
+concept GlmVec3 = requires(T t) {
+    requires std::same_as<T, glm::vec3> || std::same_as<T, glm::dvec3> || std::same_as<T, glm::ivec3>;
+};
 
 template <typename T>
-concept GlmVec4 = requires(T t) { requires std::same_as<T, glm::vec4> || std::same_as<T, glm::dvec4> || std::same_as<T, glm::ivec4>; };
+concept GlmVec4 = requires(T t) {
+    requires std::same_as<T, glm::vec4> || std::same_as<T, glm::dvec4> || std::same_as<T, glm::ivec4>;
+};
 
 } // namespace portal::serialization
