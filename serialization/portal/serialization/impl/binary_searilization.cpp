@@ -39,140 +39,167 @@ uint8_t element_number_size(const BinarySerializationParams& params)
     return sizeof(uint16_t);
 }
 
-/**
- * Turns BinarySerializationParams to a binary header with the following format:
- * 0 - large element size flag
- * 1:6 - reserved
- * 7 - encode params header flag
- *
- * example:
- *  0b10000001
- *    s      l
- *
- *   s = header is encoded
- *   l = large element size
- *
- *   NOTE: the "encode_params" flag is always the 8th bit because no container type will reach this bit,
- *   allowing us to always know if it's an encoded header or not based on this bit
- */
-uint8_t to_params_header(const BinarySerializationParams& params)
+
+struct Header
 {
-    uint8_t header = 0;
-    header |= static_cast<uint8_t>(params.large_element_size);
-    header |= static_cast<uint8_t>(params.encode_params << 7);
-    return header;
+    using HeaderSizeT = uint32_t;
+
+    std::string_view magic = MAGIC;
+    uint8_t version = VERSION;
+    BinarySerializationParams params;
+
+    [[nodiscard]] HeaderSizeT serialize() const
+    {
+        HeaderSizeT header = 0;
+        header |= static_cast<uint8_t>(magic[0]);
+        header |= static_cast<uint8_t>(magic[1]) << 8;
+        header |= version << 16;
+        header |= encode_params() << 24;
+        return header;
+    }
+
+    static Header deserialize(const HeaderSizeT serialized)
+    {
+        char magic[2];
+        magic[0] = static_cast<char>(serialized & 0xFF);
+        magic[1] = static_cast<char>((serialized >> 8) & 0xFF);
+        const auto version = static_cast<uint8_t>((serialized >> 16) & 0xFF);
+        const auto params = decode_params(static_cast<uint8_t>((serialized >> 24) & 0xFF));
+        const auto header = Header{
+            .magic = std::string_view(magic, 2),
+            .version = version,
+            .params = params
+        };
+        validate_header(header);
+        return header;
+    }
+
+    static void validate_header(const Header& header)
+    {
+        PORTAL_CORE_ASSERT(header.magic == MAGIC, "Invalid serialized buffer magic number");
+        PORTAL_CORE_ASSERT(header.version == VERSION, "Invalid serialized buffer magic version");
+    }
+
+private:
+    /**
+     * Turns BinarySerializationParams to a binary with the following format:
+     * 0 - large element size flag
+     * 1:6 - reserved
+     * 7 - encode params header flag
+     *
+     * example:
+     *  0b10000001
+     *    s      l
+     *
+     *   s = header is encoded
+     *   l = large element size
+     *
+     *   NOTE: the "encode_params" flag is always the 8th bit because no container type will reach this bit,
+     *   allowing us to always know if it's an encoded header or not based on this bit
+     */
+    [[nodiscard]] uint8_t encode_params() const
+    {
+        uint8_t encoded = 0;
+        encoded |= static_cast<uint8_t>(params.large_element_size);
+        encoded |= static_cast<uint8_t>(params.encode_header << 7);
+        return encoded;
+    }
+
+    static BinarySerializationParams decode_params(const uint8_t header)
+    {
+        return BinarySerializationParams{
+            .encode_header = static_cast<bool>(header >> 7),
+            .large_element_size = static_cast<bool>(header & 0b1),
+        };
+    }
+};
+
+
+BinarySerializer::BinarySerializer(std::ostream& output) :
+    BinarySerializer(output, BinarySerializationParams{})
+{
 }
 
-BinarySerializationParams from_params_header(const uint8_t header)
+BinarySerializer::BinarySerializer(std::ostream& output, const BinarySerializationParams params) :
+    output(output), params(params)
 {
-    return BinarySerializationParams{
-        .encode_params = static_cast<bool>(header >> 7),
-        .large_element_size = static_cast<bool>(header & 0b1),
+    if (params.encode_header)
+    {
+        const auto header = Header{.params = params}.serialize();
+        output.write(reinterpret_cast<const char*>(&header), sizeof(Header::HeaderSizeT));
+    }
+}
+
+void BinarySerializer::add_property(serialization::Property property)
+{
+    output.write(reinterpret_cast<const char*>(&property.container_type), 1);
+    output.write(reinterpret_cast<const char*>(&property.type), 1);
+    if (property.container_type != serialization::PropertyContainerType::scalar &&
+        !is_vector_type(property.container_type))
+    {
+        output.write(reinterpret_cast<const char*>(&property.elements_number), element_number_size(params));
+    }
+    output.write(static_cast<const char*>(property.value.data), static_cast<int64_t>(property.value.size));
+}
+
+
+BinaryDeserializer::BinaryDeserializer(std::istream& input, const bool read_header) :
+    input(input)
+{
+    const auto size = input.seekg(0, std::ios::end).tellg();
+    input.seekg(0, std::ios::beg);
+
+    buffer.resize(size);
+
+    if (read_header)
+    {
+        Header::HeaderSizeT encoded_header;
+        input.read(reinterpret_cast<char*>(&encoded_header), sizeof(Header::HeaderSizeT));
+        const auto header = Header::deserialize(encoded_header);
+        params = header.params;
+    }
+    else
+        params = BinarySerializationParams{};
+}
+
+BinaryDeserializer::BinaryDeserializer(std::istream& input, const BinarySerializationParams params):
+    input(input), params(params)
+{
+    const auto size = input.seekg(0, std::ios::end).tellg();
+    input.seekg(0, std::ios::beg);
+
+    buffer.resize(size);
+}
+
+serialization::Property BinaryDeserializer::get_property()
+{
+    serialization::PropertyContainerType container_type;
+    serialization::PropertyType type;
+    input.read(reinterpret_cast<char*>(&container_type), 1);
+    input.read(reinterpret_cast<char*>(&type), 1);
+    const auto element_size = get_size(type);
+
+    size_t elements_number = 1;
+    if (container_type != serialization::PropertyContainerType::scalar)
+    {
+        if (is_vector_type(container_type))
+            elements_number = static_cast<uint8_t>(container_type) -
+                static_cast<uint8_t>(serialization::PropertyContainerType::__vector_type_start) + 1;
+        else
+            input.read(reinterpret_cast<char*>(&elements_number), element_number_size(params));
+    }
+
+    input.read(buffer.data() + cursor, static_cast<int64_t>(elements_number * element_size));
+    const Buffer value{buffer.data() + cursor, elements_number * element_size};
+    cursor += elements_number * element_size;
+
+    return {
+        .value = value,
+        .type = type,
+        .container_type = container_type,
+        .elements_number = elements_number
     };
 }
 
-
-BinarySerializer::BinarySerializer(std::ostream& output, const std::optional<BinarySerializationParams> params) :
-    params(params), output(output)
-{
-}
-
-void BinarySerializer::serialize()
-{
-    const auto params_value = params.value_or(BinarySerializationParams{});
-    if (params_value.encode_params)
-    {
-        const uint8_t header = to_params_header(params_value);
-        output.write(reinterpret_cast<const char*>(&header), 1);
-    }
-
-    for (const auto& [_, property] : properties)
-    {
-        output.write(reinterpret_cast<const char*>(&property.container_type), 1);
-        output.write(reinterpret_cast<const char*>(&property.type), 1);
-        if (property.container_type != serialization::PropertyContainerType::scalar &&
-            !is_vector_type(property.container_type))
-        {
-            output.write(reinterpret_cast<const char*>(&property.elements_number), element_number_size(params_value));
-        }
-        output.write(static_cast<const char*>(property.value.data), property.value.size);
-    }
-}
-
-BinaryDeserializer::BinaryDeserializer(std::istream& input, const std::optional<BinarySerializationParams> params) :
-    params(params)
-{
-    input.seekg(0, std::ios::end);
-    size = input.tellg();
-    input.seekg(0, std::ios::beg);
-    const auto new_buffer = new char[size];
-    input.read(new_buffer, size);
-    buffer = reinterpret_cast<uint8_t*>(new_buffer);
-    needs_free = true;
-}
-
-BinaryDeserializer::BinaryDeserializer(
-    void* buffer, const size_t size, const std::optional<BinarySerializationParams> params) :
-    params(params), buffer(static_cast<uint8_t*>(buffer)), size(size)
-{
-}
-
-BinaryDeserializer::~BinaryDeserializer()
-{
-    if (buffer != nullptr && needs_free)
-        delete[] buffer;
-}
-
-void BinaryDeserializer::deserialize()
-{
-    int i = 0;
-    const auto header = buffer[i];
-
-    BinarySerializationParams params_value;
-    if (params == std::nullopt)
-    {
-        params_value = from_params_header(header);
-        if (!params_value.encode_params)
-            params_value = BinarySerializationParams{.encode_params = false};
-    }
-    else
-        params_value = params.value();
-
-    i += params_value.encode_params;
-    while (i < size)
-    {
-        const auto container_type = static_cast<serialization::PropertyContainerType>(buffer[i++]);
-        const auto type = static_cast<serialization::PropertyType>(buffer[i++]);
-        const auto element_size = get_size(type);
-
-        uint16_t elements_number = 1;
-        if (container_type != serialization::PropertyContainerType::scalar)
-        {
-            if (is_vector_type(container_type))
-            {
-                elements_number = static_cast<uint8_t>(container_type) -
-                    static_cast<uint8_t>(serialization::PropertyContainerType::__vector_type_start) + 1;
-            }
-            else
-            {
-                if (element_number_size(params_value) == sizeof(size_t))
-                {
-                    elements_number = static_cast<size_t>(buffer[i]);
-                    i += sizeof(size_t);
-                }
-                else
-                {
-                    elements_number = static_cast<uint16_t>(buffer[i]);
-                    i += sizeof(uint16_t);
-                }
-            }
-        }
-
-        const Buffer value{buffer + i, elements_number * element_size};
-        i += static_cast<int>(elements_number * element_size);
-        properties[std::to_string(counter++)] = {value, type, container_type, elements_number};
-    }
-    counter = 0;
-}
-
 } // namespace portal
+

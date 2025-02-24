@@ -119,23 +119,23 @@ struct TestClass
     glm::dvec3 g;
     glm::vec4 h;
 
-    void serialize(portal::OrderedSerializer& serializer)
+    void serialize(portal::Serializer& serializer)
     {
         serializer << a << b << c << d << e << f << g << h;
     }
 
-    static TestClass deserialize(portal::OrderedDeserializer& deserializer)
+    static TestClass deserialize(portal::Deserializer& deserializer)
     {
-        TestClass test;
-        test.a = deserializer.get_property<int>();
-        test.b = deserializer.get_property<float>();
-        test.c = deserializer.get_property<std::vector<int>>();
-        test.d = deserializer.get_property<std::string>();
-        test.e = deserializer.get_property<glm::vec1>();
-        test.f = deserializer.get_property<glm::ivec2>();
-        test.g = deserializer.get_property<glm::dvec3>();
-        test.h = deserializer.get_property<glm::vec4>();
-        return test;
+        return {
+            .a = deserializer.get_value<int>(),
+            .b = deserializer.get_value<float>(),
+            .c = deserializer.get_value<std::vector<int>>(),
+            .d = deserializer.get_value<std::string>(),
+            .e = deserializer.get_value<glm::vec1>(),
+            .f = deserializer.get_value<glm::ivec2>(),
+            .g = deserializer.get_value<glm::dvec3>(),
+            .h = deserializer.get_value<glm::vec4>(),
+        };
     }
 };
 
@@ -159,12 +159,10 @@ portal::Application* portal::create_application(int argc, char** argv)
     BinarySerializer serializer(ss, params);
     serializer << test;
 
-    serializer.serialize();
     std::string s = ss.str();
     std::cout << "size: " << s.size() << std::endl;
 
-    BinaryDeserializer deserializer(s.data(), s.size());
-    deserializer.deserialize();
+    BinaryDeserializer deserializer(ss);
     auto test2 = TestClass::deserialize(deserializer);
     std::cout << "a: " << test2.a << std::endl;
     std::cout << "b: " << test2.b << std::endl;

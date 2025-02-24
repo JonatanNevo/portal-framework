@@ -3,42 +3,50 @@
 //
 
 #pragma once
-#include "portal/serialization/serialization.h"
+#include "portal/serialization/serialize.h"
 
 namespace portal
 {
 
+constexpr std::string_view MAGIC = "PS";
+constexpr uint8_t VERSION = 1;
+
 struct BinarySerializationParams
 {
-    bool encode_params = true;
+    bool encode_header = true;
     bool large_element_size = false;
 };
 
-class BinarySerializer final : public OrderedSerializer
+class BinarySerializer final : public Serializer
 {
 public:
-    BinarySerializer(std::ostream& output, std::optional<BinarySerializationParams> param = std::nullopt);
-    void serialize() override;
+    explicit BinarySerializer(std::ostream& output);
+    BinarySerializer(std::ostream& output, BinarySerializationParams params);
+
+protected:
+    void add_property(serialization::Property property) override;
 
 private:
-    std::optional<BinarySerializationParams> params;
+    BinarySerializationParams params;
     std::ostream& output;
 };
 
-class BinaryDeserializer final : public OrderedDeserializer
+class BinaryDeserializer final : public Deserializer
 {
 public:
-    BinaryDeserializer(std::istream& input, std::optional<BinarySerializationParams> params = std::nullopt);
-    BinaryDeserializer(void* buffer, size_t size, std::optional<BinarySerializationParams> params = std::nullopt);
+    explicit BinaryDeserializer(std::istream& input, bool read_header = true);
+    BinaryDeserializer(std::istream& input, BinarySerializationParams params);
 
-    ~BinaryDeserializer() override;
-    void deserialize() override;
+
+protected:
+    serialization::Property get_property() override;
 
 private:
-    std::optional<BinarySerializationParams> params;
-    bool needs_free = false;
-    uint8_t* buffer = nullptr;
-    size_t size = 0;
+    std::istream& input;
+    BinarySerializationParams params;
+
+    std::vector<char> buffer;
+    size_t cursor = 0;
 };
 
 } // namespace portal

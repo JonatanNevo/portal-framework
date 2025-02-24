@@ -9,32 +9,31 @@
 
 namespace portal::serialization
 {
-
 enum class PropertyType : uint8_t
 {
-    binary = 0,
-    integer8 = 1,
-    integer16 = 2,
-    integer32 = 3,
-    integer64 = 4,
+    binary     = 0,
+    integer8   = 1,
+    integer16  = 2,
+    integer32  = 3,
+    integer64  = 4,
     integer128 = 5,
     floating32 = 6,
     floating64 = 7,
-    character = 8,
-    invalid = 255
+    character  = 8,
+    invalid    = 255
 };
 
 enum class PropertyContainerType : uint8_t
 {
-    scalar = 0,
-    array = 1,
-    string = 2,
-    null_term_string = 3,
-    vec1 = 4,
+    scalar              = 0,
+    array               = 1,
+    string              = 2,
+    null_term_string    = 3,
+    vec1                = 4,
     __vector_type_start = vec1,
-    vec2 = 5,
-    vec3 = 6,
-    vec4 = 7,
+    vec2                = 5,
+    vec3                = 6,
+    vec4                = 7,
 };
 
 inline constexpr bool is_vector_type(const PropertyContainerType type)
@@ -91,8 +90,7 @@ concept Vector =
 
 template <typename T>
 concept String = requires(T t) {
-    requires std::
-        same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>>;
+    requires std::same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>>;
 };
 
 template <typename T>
@@ -118,7 +116,6 @@ concept GlmVec4 = requires(T t) {
 template <typename T>
 concept PropertyConcept = requires(T t) {
     requires Vector<T> || String<T> || GlmVec1<T> || GlmVec2<T> || GlmVec3<T> || GlmVec4<T> || std::is_integral_v<T> ||
-        std::is_floating_point_v<T>;
+    std::is_floating_point_v<T>;
 };
-
 } // namespace portal::serialization
