@@ -72,7 +72,7 @@ void check_vk_result(VkResult err)
     fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
     if (err < 0)
     {
-        PORTAL_DEBUG_BREAK;
+        PORTAL_DEBUG_BREAK();
         abort();
     }
 }

@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include <map>
+#include <thread>
+
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
-
-#include <map>
 
 #include "custom_logger_formatters.h"
 
@@ -21,99 +22,108 @@
 
 namespace portal
 {
-
 class Log
 {
 public:
-    enum class Type : uint8_t
+    enum class LoggerType : uint8_t
     {
         Core   = 0,
         Client = 1,
     };
 
-    enum class Level : uint8_t
+    enum class LogLevel : uint8_t
     {
-        Trace = 0,
-        Debug = 1,
-        Info  = 2,
-        Warn  = 3,
-        Error = 4,
-        Fatal = 5,
+        Trace = spdlog::level::trace,
+        Debug = spdlog::level::debug,
+        Info  = spdlog::level::info,
+        Warn  = spdlog::level::warn,
+        Error = spdlog::level::err,
+        Fatal = spdlog::level::critical,
     };
 
     struct TagDetails
     {
         bool enabled = true;
-        Level level_filter = Level::Trace;
+        LogLevel level_filter = LogLevel::Trace;
     };
 
 public:
     static void init();
     static void shutdown();
 
-    inline static std::shared_ptr<spdlog::logger>& get_core_logger() { return core_logger; }
-    inline static std::shared_ptr<spdlog::logger>& get_client_logger() { return client_logger; }
+    static bool is_main_thread()
+    {
+        return std::this_thread::get_id() == main_thread_id;
+    }
+
+    static std::shared_ptr<spdlog::logger>& get_core_logger() { return core_logger; }
+    static std::shared_ptr<spdlog::logger>& get_client_logger() { return client_logger; }
 
     static bool has_tag(const std::string& tag) { return enabled_tags.contains(tag); }
     static std::map<std::string, TagDetails>& get_enabled_tags() { return enabled_tags; }
 
     template <typename... Args>
-    static void print_message_tag(Log::Type type, Log::Level level, std::string_view tag, std::format_string<Args...> format, Args&&... args);
+    static void print_message_tag(LoggerType type, LogLevel level, std::string_view tag, std::format_string<Args...> format, Args&&... args);
 
-    static void print_message_tag(Log::Type type, Log::Level level, std::string_view tag, std::string_view message);
+    static void print_message_tag(LoggerType type, LogLevel level, std::string_view tag, std::string_view message);
 
     template <typename... Args>
-    static void print_assert_message(Log::Type type, std::string_view prefix, std::format_string<Args...> format, Args&&... args);
+    static bool print_assert_message(
+        LoggerType type,
+        std::string_view file,
+        int line,
+        std::string_view function,
+        std::format_string<Args...> format,
+        Args&&... args
+    );
 
-    static void print_assert_message(Log::Type type, std::string_view prefix, std::string_view message);
-
-    static void print_assert_message(Log::Type type, std::string_view prefix);
+    static bool print_assert_message(LoggerType type, std::string_view file, int line, std::string_view function, std::string_view message);
 
 public:
-    static const char* level_to_string(Level level)
+    static const char* level_to_string(const LogLevel level)
     {
         switch (level)
         {
-        case Level::Trace:
+        case LogLevel::Trace:
             return "TRACE";
-        case Level::Debug:
+        case LogLevel::Debug:
             return "DEBUG";
-        case Level::Info:
+        case LogLevel::Info:
             return "INFO";
-        case Level::Warn:
+        case LogLevel::Warn:
             return "WARN";
-        case Level::Error:
+        case LogLevel::Error:
             return "ERROR";
-        case Level::Fatal:
+        case LogLevel::Fatal:
             return "FATAL";
         }
         return "";
     }
 
-    static Level level_from_string(std::string_view string)
+    static LogLevel level_from_string(const std::string_view string)
     {
         if (string == "TRACE")
-            return Level::Trace;
+            return LogLevel::Trace;
         if (string == "DEBUG")
-            return Level::Debug;
+            return LogLevel::Debug;
         if (string == "INFO")
-            return Level::Info;
+            return LogLevel::Info;
         if (string == "WARN")
-            return Level::Warn;
+            return LogLevel::Warn;
         if (string == "ERROR")
-            return Level::Error;
+            return LogLevel::Error;
         if (string == "FATAL")
-            return Level::Fatal;
-        return Level::Trace;
+            return LogLevel::Fatal;
+        return LogLevel::Trace;
     }
 
 private:
+    static std::thread::id main_thread_id;
     static std::shared_ptr<spdlog::logger> core_logger;
     static std::shared_ptr<spdlog::logger> client_logger;
 
     inline static std::map<std::string, TagDetails> enabled_tags;
 };
-
 } // namespace portal
 
 
@@ -122,38 +132,38 @@ private:
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Core logging
-#define LOG_CORE_TRACE_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Trace, tag, __VA_ARGS__)
-#define LOG_CORE_DEBUG_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Debug, tag, __VA_ARGS__)
-#define LOG_CORE_INFO_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Info, tag, __VA_ARGS__)
-#define LOG_CORE_WARN_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Warn, tag, __VA_ARGS__)
-#define LOG_CORE_ERROR_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Error, tag, __VA_ARGS__)
-#define LOG_CORE_FATAL_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Fatal, tag, __VA_ARGS__)
+#define LOG_CORE_TRACE_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Trace, tag, __VA_ARGS__)
+#define LOG_CORE_DEBUG_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Debug, tag, __VA_ARGS__)
+#define LOG_CORE_INFO_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Info, tag, __VA_ARGS__)
+#define LOG_CORE_WARN_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Warn, tag, __VA_ARGS__)
+#define LOG_CORE_ERROR_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Error, tag, __VA_ARGS__)
+#define LOG_CORE_FATAL_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Fatal, tag, __VA_ARGS__)
 
 // Client logging
-#define LOG_TRACE_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Trace, tag, __VA_ARGS__)
-#define LOG_DEBUG_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Debug, tag, __VA_ARGS__)
-#define LOG_INFO_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Info, tag, __VA_ARGS__)
-#define LOG_WARN_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Warn, tag, __VA_ARGS__)
-#define LOG_ERROR_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Error, tag, __VA_ARGS__)
-#define LOG_FATAL_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Fatal, tag, __VA_ARGS__)
+#define LOG_TRACE_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Trace, tag, __VA_ARGS__)
+#define LOG_DEBUG_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Debug, tag, __VA_ARGS__)
+#define LOG_INFO_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Info, tag, __VA_ARGS__)
+#define LOG_WARN_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Warn, tag, __VA_ARGS__)
+#define LOG_ERROR_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Error, tag, __VA_ARGS__)
+#define LOG_FATAL_TAG(tag, ...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Fatal, tag, __VA_ARGS__)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Core logging
-#define LOG_CORE_TRACE(...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Trace, "CORE", __VA_ARGS__)
-#define LOG_CORE_DEBUG(...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Debug, "CORE", __VA_ARGS__)
-#define LOG_CORE_INFO(...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Info, "CORE", __VA_ARGS__)
-#define LOG_CORE_WARN(...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Warn, "CORE", __VA_ARGS__)
-#define LOG_CORE_ERROR(...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Error, "CORE", __VA_ARGS__)
-#define LOG_CORE_FATAL(...) ::portal::Log::print_message_tag(::portal::Log::Type::Core, ::portal::Log::Level::Fatal, "CORE", __VA_ARGS__)
+#define LOG_CORE_TRACE(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Trace, "CORE", __VA_ARGS__)
+#define LOG_CORE_DEBUG(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Debug, "CORE", __VA_ARGS__)
+#define LOG_CORE_INFO(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Info, "CORE", __VA_ARGS__)
+#define LOG_CORE_WARN(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Warn, "CORE", __VA_ARGS__)
+#define LOG_CORE_ERROR(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Error, "CORE", __VA_ARGS__)
+#define LOG_CORE_FATAL(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Core, ::portal::Log::LogLevel::Fatal, "CORE", __VA_ARGS__)
 
 // Client logging
-#define LOG_TRACE(...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Trace, "CLIENT", __VA_ARGS__)
-#define LOG_DEBUG(...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Debug, "CLIENT", __VA_ARGS__)
-#define LOG_INFO(...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Info, "CLIENT", __VA_ARGS__)
-#define LOG_WARN(...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Warn, "CLIENT", __VA_ARGS__)
-#define LOG_ERROR(...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Error, "CLIENT", __VA_ARGS__)
-#define LOG_FATAL(...) ::portal::Log::print_message_tag(::portal::Log::Type::Client, ::portal::Log::Level::Fatal, "CLIENT", __VA_ARGS__)
+#define LOG_TRACE(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Trace, "CLIENT", __VA_ARGS__)
+#define LOG_DEBUG(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Debug, "CLIENT", __VA_ARGS__)
+#define LOG_INFO(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Info, "CLIENT", __VA_ARGS__)
+#define LOG_WARN(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Warn, "CLIENT", __VA_ARGS__)
+#define LOG_ERROR(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Error, "CLIENT", __VA_ARGS__)
+#define LOG_FATAL(...) ::portal::Log::print_message_tag(::portal::Log::LoggerType::Client, ::portal::Log::LogLevel::Fatal, "CLIENT", __VA_ARGS__)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -161,70 +171,39 @@ namespace portal
 {
 template <typename... Args>
 void Log::print_message_tag(
-    const Log::Type type,
-    const Log::Level level,
+    const LoggerType type,
+    const LogLevel level,
     const std::string_view tag,
     std::format_string<Args...> format,
     Args&&... args
-    )
+)
 {
     const std::string formatted = std::format(format, std::forward<Args>(args)...);
     print_message_tag(type, level, tag, formatted);
 }
 
-inline void Log::print_message_tag(const Log::Type type, const Log::Level level, std::string_view tag, std::string_view message)
+inline void Log::print_message_tag(const LoggerType type, const LogLevel level, std::string_view tag, std::string_view message)
 {
     const auto [enabled, level_filter] = enabled_tags[std::string(tag)];
     if (enabled && level_filter <= level)
     {
-        const auto logger = (type == Type::Core) ? core_logger : client_logger;
-        switch (level)
-        {
-        case Level::Trace:
-            logger->trace("[{}] {}", tag, message);
-            break;
-        case Level::Debug:
-            logger->debug("[{}] {}", tag, message);
-            break;
-        case Level::Info:
-            logger->info("[{}] {}", tag, message);
-            break;
-        case Level::Warn:
-            logger->warn("[{}] {}", tag, message);
-            break;
-        case Level::Error:
-            logger->error("[{}] {}", tag, message);
-            break;
-        case Level::Fatal:
-            logger->critical("[{}] {}", tag, message);
-            break;
-        }
+        const auto logger = (type == LoggerType::Core) ? core_logger : client_logger;
+        logger->log(static_cast<spdlog::level::level_enum>(level), "[{}] {}", tag, message);
     }
 }
 
 
 template <typename... Args>
-void Log::print_assert_message(const Log::Type type, std::string_view prefix, std::format_string<Args...> format, Args&&... args)
+bool Log::print_assert_message(
+    const LoggerType type,
+    const std::string_view file,
+    const int line,
+    const std::string_view function,
+    std::format_string<Args...> format,
+    Args&&... args
+)
 {
-
     const std::string formatted = std::format(format, std::forward<Args>(args)...);
-    print_assert_message(type, prefix, formatted);
+    return print_assert_message(type, file, line, function, formatted);
 }
-
-inline void Log::print_assert_message(const Log::Type type, std::string_view prefix, std::string_view message)
-{
-    const auto logger = (type == Type::Core) ? core_logger : client_logger;
-    logger->critical("{0}: {1}", prefix, message);
-
-#if PORTAL_ASSERT_MESSAGE_BOX
-    MessageBoxA(nullptr, message.data(), "Portal Assertion", MB_OK | MB_ICONERROR);
-#endif
-}
-
-inline void Log::print_assert_message(const Log::Type type, std::string_view prefix)
-{
-    print_assert_message(type, prefix, "No message :(");
-}
-
-
 } // namespace portal

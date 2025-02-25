@@ -8,8 +8,12 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <filesystem>
+#include <map>
+#include <utility>
 
 #define PORTAL_HAS_CONSOLE !PORTAL_DIST
+
+std::thread::id portal::Log::main_thread_id;
 
 namespace portal
 {
@@ -18,6 +22,8 @@ std::shared_ptr<spdlog::logger> Log::client_logger;
 
 void Log::init()
 {
+    main_thread_id = std::this_thread::get_id();
+
     std::string log_directory = "logs";
     if (!std::filesystem::exists(log_directory))
         std::filesystem::create_directory(log_directory);
@@ -58,5 +64,62 @@ void Log::shutdown()
     spdlog::drop_all();
 }
 
+bool Log::print_assert_message(
+    const LoggerType type,
+    std::string_view file,
+    int line,
+    std::string_view function,
+    const std::string_view message
+)
+{
+    volatile static bool do_assert = true;
+    typedef std::pair<int, std::string> AssertLocation;
+    static std::map<AssertLocation, bool> assertion_map;
 
+    print_message_tag(type, LogLevel::Error, "ASSERTION", std::format("assert ({}) failed", message));
+
+    const AssertLocation assert_location = std::make_pair(line, std::string(file));
+    if (assertion_map[assert_location])
+        return false;
+
+#ifdef PORTAL_PLATFORM_WINDOWS
+    if (do_assert && IsDebuggerPresent())
+    {
+        int res = IDTRYAGAIN;
+        EndMenu();
+        {
+            std::thread assert_dialog(
+                [&]()
+                {
+                    res = MessageBoxA(
+                        nullptr,
+                        std::format(
+                            "Assert failed at:\n{}({})\n{}()\n{}\nTry again to debug, Cancel to ignore this assert in the future",
+                            file,
+                            line,
+                            function,
+                            message
+                        ).c_str(),
+                        "ASSERTION",
+                        MB_CANCELTRYCONTINUE | MB_ICONERROR | MB_TOPMOST
+                    );
+                }
+            );
+            assert_dialog.join();
+        }
+
+        if (res == IDCANCEL)
+            // ignore this assert in the future
+            assertion_map[assert_location] = true;
+        else if (res == IDTRYAGAIN)
+            return true; // break at outer context only if got option to select IDCANCEL
+    }
+
+    return false;
+
+#else
+    // TODO: use mac and linux windowing systems to display a message box
+    return true;
+#endif
+}
 } // namespace portal
