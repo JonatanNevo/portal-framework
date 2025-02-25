@@ -115,7 +115,7 @@ concept GlmVec4 = requires(T t) {
 
 template <typename T>
 concept PropertyConcept = requires(T t) {
-    requires Vector<T> || String<T> || GlmVec1<T> || GlmVec2<T> || GlmVec3<T> || GlmVec4<T> || std::is_integral_v<T> ||
-    std::is_floating_point_v<T>;
+    requires Vector<T> || String<T> || GlmVec1<T> || GlmVec2<T> || GlmVec3<T> || GlmVec4<T> || std::integral<T> ||
+    std::floating_point<T>;
 };
 } // namespace portal::serialization

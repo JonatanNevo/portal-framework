@@ -1,6 +1,6 @@
 {
   "name": "portal-serialization",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "description": "Serialization library for Portal",
   "license": "MIT",
   "dependencies": [

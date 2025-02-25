@@ -233,6 +233,15 @@ public:
         return true;
     }
 
+    // Copy override for all types
+    template <typename T>
+    T get_property(const std::string& name)
+    {
+        T out;
+        get_property<T>(name, out);
+        return out;
+    }
+
 protected:
     virtual bool get_property(const std::string& name, serialization::Property& out) = 0;
 };

@@ -116,7 +116,7 @@ public:
     virtual ~Deserializer() = default;
 
     template <typename T> requires std::integral<T> || std::floating_point<T>
-    T get_value()
+    void get_value(T& t)
     {
         const auto property = get_property();
 
@@ -124,11 +124,11 @@ public:
         PORTAL_CORE_ASSERT(property.type == serialization::get_property_type<T>(), "Property type mismatch");
         PORTAL_CORE_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
-        return *static_cast<T*>(property.value.data);
+        t = *static_cast<T*>(property.value.data);
     }
 
     template <serialization::Vector T>
-    T get_value()
+    void get_value(T& t)
     {
         const auto property = get_property();
 
@@ -137,11 +137,11 @@ public:
 
         auto array_length = property.elements_number;
         auto* data = static_cast<typename T::value_type*>(property.value.data);
-        return T(data, data + array_length);
+        t = T(data, data + array_length);
     }
 
     template <serialization::String T>
-    T get_value()
+    void get_value(T& t)
     {
         const auto property = get_property();
 
@@ -154,22 +154,22 @@ public:
             string_length = property.elements_number;
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
-        return T(data, string_length);
+        t = T(data, string_length);
     }
 
     template <serialization::GlmVec1 T>
-    T get_value()
+    void get_value(T& t)
     {
         const auto property = get_property();
 
         PORTAL_CORE_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::vec1, "Property container type mismatch");
 
-        return T(*static_cast<typename T::value_type*>(property.value.data));
+        t = T(*static_cast<typename T::value_type*>(property.value.data));
     }
 
     template <serialization::GlmVec2 T>
-    T get_value()
+    void get_value(T& t)
     {
         const auto property = get_property();
 
@@ -177,11 +177,11 @@ public:
         PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::vec2, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
-        return T(data[0], data[1]);
+        t = T(data[0], data[1]);
     }
 
     template <serialization::GlmVec3 T>
-    T get_value()
+    void get_value(T& t)
     {
         const auto property = get_property();
 
@@ -189,11 +189,11 @@ public:
         PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::vec3, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
-        return T(data[0], data[1], data[2]);
+        t = T(data[0], data[1], data[2]);
     }
 
     template <serialization::GlmVec4 T>
-    T get_value()
+    void get_value(T& t)
     {
         const auto property = get_property();
 
@@ -201,7 +201,15 @@ public:
         PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::vec4, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
-        return T(data[0], data[1], data[2], data[3]);
+        t = T(data[0], data[1], data[2], data[3]);
+    }
+
+    template <typename T>
+    T get_value()
+    {
+        T t;
+        get_value<T>(t);
+        return t;
     }
 
 protected:
@@ -230,5 +238,13 @@ template <portal::serialization::PropertyConcept T>
 portal::Serializer& operator<<(portal::Serializer& s, T& t)
 {
     s.add_value<T>(t);
+    return s;
+}
+
+template <typename T> requires std::is_enum_v<T>
+portal::Serializer& operator<<(portal::Serializer& s, const T& value)
+{
+    using underlying_t = std::underlying_type_t<T>;
+    s.add_value<underlying_t>(static_cast<underlying_t>(value));
     return s;
 }
