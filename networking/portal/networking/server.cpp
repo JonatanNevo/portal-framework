@@ -40,10 +40,10 @@ void Server::start()
     local_address.Clear();
     local_address.m_port = port;
 
-    SteamNetworkingConfigValue_t options{};
-    options.SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, reinterpret_cast<void*>(Server::on_status_changed_callback));
+    SteamNetworkingConfigValue_t options[1];
+    options[0].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, reinterpret_cast<void*>(Server::on_status_changed_callback));
 
-    listen_socket = sockets->CreateListenSocketIP(local_address, 1, &options);
+    listen_socket = sockets->CreateListenSocketIP(local_address, 1, options);
     if (listen_socket == k_HSteamListenSocket_Invalid)
     {
         on_fatal_error("Failed to create listen socket");
@@ -93,7 +93,6 @@ void Server::thread_loop()
     {
         poll_incoming_messages();
         poll_connection_state_changes();
-        std::this_thread::sleep_for(10ms);
     }
 }
 

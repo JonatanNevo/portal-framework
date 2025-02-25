@@ -52,7 +52,7 @@ install(EXPORT portal-networking-targets
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-config-version.cmake"
-        VERSION 1.0.0
+        VERSION 0.0.2
         COMPATIBILITY SameMajorVersion
 )
 
