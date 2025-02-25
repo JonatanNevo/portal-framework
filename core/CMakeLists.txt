@@ -47,7 +47,7 @@ install(EXPORT portal-core-targets
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/portal-core-config-version.cmake"
-        VERSION 1.0.4
+        VERSION 1.0.5
         COMPATIBILITY SameMajorVersion
 )
 

@@ -33,7 +33,7 @@ enum class PropertyContainerType : uint8_t
     __vector_type_start = vec1,
     vec2                = 5,
     vec3                = 6,
-    vec4                = 7,
+    vec4                = 7
 };
 
 inline constexpr bool is_vector_type(const PropertyContainerType type)
@@ -114,8 +114,20 @@ concept GlmVec4 = requires(T t) {
 };
 
 template <typename T>
+concept Map = requires(T t) {
+    typename T::key_type;
+    typename T::mapped_type;
+    typename T::value_type;
+    { t.size() } -> std::same_as<size_t>;
+    { t.begin() } -> std::same_as<typename T::iterator>;
+    { t.end() } -> std::same_as<typename T::iterator>;
+    { t.clear() } -> std::same_as<void>;
+    { t.insert_or_assign(std::declval<typename T::key_type>(), std::declval<typename T::mapped_type>()) };
+};
+
+template <typename T>
 concept PropertyConcept = requires(T t) {
-    requires Vector<T> || String<T> || GlmVec1<T> || GlmVec2<T> || GlmVec3<T> || GlmVec4<T> || std::integral<T> ||
+    requires Vector<T> || String<T> || GlmVec1<T> || GlmVec2<T> || GlmVec3<T> || GlmVec4<T> || Map<T> || std::integral<T> ||
     std::floating_point<T>;
 };
 } // namespace portal::serialization

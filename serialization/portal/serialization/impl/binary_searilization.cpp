@@ -130,7 +130,7 @@ BinarySerializer::BinarySerializer(std::ostream& output, const BinarySerializati
     }
 }
 
-void BinarySerializer::add_property(serialization::Property property)
+void BinarySerializer::add_property(const serialization::Property property)
 {
     output.write(reinterpret_cast<const char*>(&property.container_type), 1);
     output.write(reinterpret_cast<const char*>(&property.type), 1);

@@ -5,11 +5,15 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 
 #include <portal/gui/gui_application.h>
 #include <portal/application/entry_point.h>
 
 #include "portal/core/assert.h"
+#include "portal/core/buffer.h"
+#include "portal/core/buffer_stream.h"
+#include "portal/serialization/impl/binary_searilization.h"
 
 
 class TestLayer : public portal::Layer
@@ -73,9 +77,26 @@ private:
 
 portal::Application* portal::create_application(int argc, char** argv)
 {
-    portal::ApplicationSpecs specs{
+    Log::init();
+    ApplicationSpecs specs{
         .name = "Example App"
     };
+
+    std::vector<uint8_t> data(100);
+    Buffer buffer(data.data(), data.size());
+    BufferStreamWriter writer(buffer);
+    std::map<int, std::string> mapping = {
+        {1, "one"},
+        {2, "two"},
+        {3, "three"}
+    };
+    BinarySerializer serializer(writer);
+    serializer << mapping;
+
+    BufferStreamReader reader(buffer);
+    BinaryDeserializer deserializer(reader);
+    std::map<int, std::string> deserialized;
+    deserializer >> deserialized;
 
     auto* app = new GUIApplication(specs);
     std::shared_ptr<TestLayer> layer = std::make_shared<TestLayer>();
@@ -101,6 +122,6 @@ portal::Application* portal::create_application(int argc, char** argv)
                 ImGui::EndMenu();
             }
         }
-        );
+    );
     return app;
 }

@@ -50,7 +50,7 @@ install(EXPORT portal-serialization-targets
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-config-version.cmake"
-        VERSION 1.0.6
+        VERSION 1.0.10
         COMPATIBILITY SameMajorVersion
 )
 

@@ -5,9 +5,9 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "spdlog/fmt/bin_to_hex.h"
+#include <format>
 
-namespace fmt
+namespace std
 {
 template <>
 struct formatter<glm::vec2>
