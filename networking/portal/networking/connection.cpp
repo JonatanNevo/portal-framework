@@ -14,6 +14,7 @@
 #endif
 
 #include "portal/core/assert.h"
+#include "portal/networking/utils.h"
 
 namespace portal::network
 {
@@ -37,12 +38,8 @@ void Connection::connect(const std::string& address)
     }
 
     SteamNetworkingIPAddr ip_address{};
-    if (!ip_address.ParseString(address.c_str()))
-    {
-        on_fatal_error(std::format("Failed to parse IP address {}", address));
-        state = ConnectionState::ProblemDetectedLocally;
-        return;
-    }
+    if (!is_valid_id_address(address))
+        ip_address = resolve_address(address)[0];
 
     SteamNetworkingConfigValue_t options{};
     options.SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, reinterpret_cast<void*>(Connection::on_status_changed_callback));

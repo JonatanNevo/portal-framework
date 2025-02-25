@@ -55,11 +55,15 @@ public:
     }
 
     template <serialization::String T>
-    void add_value(T& t)
+    void add_value(const T& t)
     {
+        Buffer{
+            const_cast<void*>(static_cast<const void*>(t.data())),
+            (t.size() * sizeof(typename T::value_type)) + 1
+        };
         add_property(
             serialization::Property{
-                Buffer{t.data(), (t.size() * sizeof(typename T::value_type)) + 1},
+                Buffer{const_cast<void*>(static_cast<const void*>(t.data())), (t.size() * sizeof(typename T::value_type)) + 1},
                 serialization::PropertyType::character,
                 serialization::PropertyContainerType::null_term_string,
                 t.size() + 1
@@ -127,8 +131,11 @@ public:
 
         for (const auto& [key, value] : t)
         {
-            add_value(key);
-            add_value(value);
+            using KeyType = std::remove_const_t<typename T::key_type>;
+            using ValueType = std::remove_const_t<typename T::mapped_type>;
+
+            add_value<KeyType>(key);
+            add_value<ValueType>(value);
         }
     }
 

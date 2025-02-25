@@ -13,6 +13,7 @@
 #include "portal/core/assert.h"
 #include "portal/core/buffer.h"
 #include "portal/core/buffer_stream.h"
+#include "portal/networking/connection.h"
 #include "portal/serialization/impl/binary_searilization.h"
 
 
@@ -81,6 +82,9 @@ portal::Application* portal::create_application(int argc, char** argv)
     ApplicationSpecs specs{
         .name = "Example App"
     };
+
+    portal::network::Connection connection;
+    connection.connect("google.com:1234");
 
     std::vector<uint8_t> data(100);
     Buffer buffer(data.data(), data.size());
