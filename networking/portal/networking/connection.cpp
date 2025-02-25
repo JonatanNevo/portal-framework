@@ -127,8 +127,6 @@ void Connection::thread_loop()
     {
         poll_incoming_messages();
         poll_connection_state_changes();
-        // TODO: make this dynamic
-        std::this_thread::sleep_for(10ms);
     }
 }
 
