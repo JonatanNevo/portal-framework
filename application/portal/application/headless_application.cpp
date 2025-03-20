@@ -10,7 +10,6 @@
 
 namespace portal
 {
-
 static HeadlessApplication* s_instance = nullptr;
 
 HeadlessApplication::HeadlessApplication(ApplicationSpecs specs) : specs(std::move(specs))
@@ -27,7 +26,12 @@ HeadlessApplication::~HeadlessApplication()
 
 HeadlessApplication& HeadlessApplication::get() { return *s_instance; }
 
-void HeadlessApplication::init() { Log::init(); }
+void HeadlessApplication::init()
+{
+    Log::init();
+    app_timer.start();
+    running = true;
+}
 
 void HeadlessApplication::shutdown()
 {
@@ -42,8 +46,6 @@ void HeadlessApplication::shutdown()
 
 void HeadlessApplication::run()
 {
-    running = true;
-
     while (running)
     {
         for (const auto& layer : layer_stack)
@@ -62,5 +64,4 @@ void HeadlessApplication::run()
 void HeadlessApplication::close() { running = false; }
 
 float HeadlessApplication::get_time() { return app_timer.elapsed(); }
-
 } // namespace portal
