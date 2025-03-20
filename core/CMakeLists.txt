@@ -21,12 +21,44 @@ target_sources(portal-core PUBLIC
 )
 
 set_target_properties(portal-core PROPERTIES EXPORT_NAME core)
-
 target_link_libraries(portal-core
         PUBLIC
         spdlog::spdlog
         glm::glm
 )
+
+if(WIN32)
+    set(PORTAL_PLATFORM_WINDOWS ON CACHE BOOL "Windows platform" FORCE)
+    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_WINDOWS)
+elseif (APPLE)
+    set(PORTAL_PLATFORM_MACOS ON CACHE BOOL "MacOS platform" FORCE)
+    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_MACOS)
+elseif(UNIX)
+    set(PORTAL_PLATFORM_LINUX ON CACHE BOOL "Linux platform" FORCE)
+    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_LINUX)
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(portal-core PUBLIC PORTAL_DEBUG)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_definitions(portal-core PUBLIC PORTAL_RELEASE)
+else()
+    target_compile_definitions(portal-core PUBLIC PORTAL_DIST)
+endif()
+
+target_compile_definitions(portal-core PUBLIC
+        GLM_FORCE_SWIZZLE
+        GLM_FORCE_RADIANS
+        GLM_FORCE_CTOR_INIT
+        GLM_ENABLE_EXPERIMENTAL
+        GLM_FORCE_CXX20
+)
+
+if(MSVC)
+    target_compile_options(portal-core PUBLIC "/Zc:__cplusplus")
+endif()
 
 install(TARGETS portal-core
         EXPORT portal-core-targets

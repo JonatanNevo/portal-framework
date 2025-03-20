@@ -13,6 +13,14 @@
 
 #define PORTAL_HAS_CONSOLE !PORTAL_DIST
 
+
+#if defined(PORTAL_ASSERT_MESSAGE_BOX) && !defined(PORTAL_DIST)
+#ifdef PORTAL_PLATFORM_WINDOWS
+#include <windows.h>
+#endif
+#endif
+
+
 std::thread::id portal::Log::main_thread_id;
 
 namespace portal
@@ -118,7 +126,7 @@ bool Log::print_assert_message(
     return false;
 
 #else
-    // TODO: use mac and linux windowing systems to display a message box
+    // TODO: use macos and linux windowing systems to display a message box
     return true;
 #endif
 }

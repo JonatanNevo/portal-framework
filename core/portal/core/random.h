@@ -4,8 +4,9 @@
 
 #pragma once
 #include <cstdint>
-#include <glm/vec3.hpp>
 #include <random>
+
+#include "portal/core/glm.h"
 
 namespace portal
 {

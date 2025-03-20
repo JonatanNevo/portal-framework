@@ -98,7 +98,7 @@ struct Buffer
         return data;
     }
 
-    uint8_t& operator[](size_t index) const
+    uint8_t& operator[](const size_t index) const
     {
         return static_cast<uint8_t*>(data)[index];
     }

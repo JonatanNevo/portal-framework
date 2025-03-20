@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <glm/glm.hpp>
 #include <format>
+#include "portal/core/glm.h"
 
 namespace std
 {

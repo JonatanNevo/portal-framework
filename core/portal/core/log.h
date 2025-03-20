@@ -14,12 +14,6 @@
 
 #define PORTAL_ASSERT_MESSAGE_BOX (!PORTAL_DIST && PORTAL_PLATFORM_WINDOWS)
 
-#if defined(PORTAL_ASSERT_MESSAGE_BOX) && !defined(PORTAL_DIST)
-#ifdef PORTAL_PLATFORM_WINDOWS
-#include <windows.h>
-#endif
-#endif
-
 namespace portal
 {
 class Log
