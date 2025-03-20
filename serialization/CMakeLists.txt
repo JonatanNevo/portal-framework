@@ -10,6 +10,8 @@ file(GLOB_RECURSE SER_HEADERS CONFIGURE_DEPENDS "portal/serialization/*.h")
 file(GLOB_RECURSE SER_IMP_SOURCES CONFIGURE_DEPENDS "portal/serialization/impl/*.cpp")
 file(GLOB_RECURSE SER_IMP_HEADERS CONFIGURE_DEPENDS "portal/serialization/impl/*.h")
 
+find_package(nlohmann_json CONFIG REQUIRED)
+
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
     find_package(portal-core CONFIG REQUIRED)
@@ -29,6 +31,7 @@ add_library(portal::serialization ALIAS portal-serialization)
 target_link_libraries(portal-serialization
         PUBLIC
         portal::core
+        nlohmann_json::nlohmann_json
 )
 
 install(TARGETS portal-serialization

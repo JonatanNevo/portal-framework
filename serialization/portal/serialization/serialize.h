@@ -14,7 +14,7 @@ class Serializer;
 class Deserializer;
 
 template <typename T>
-concept Serializable = requires(T t, Serializer& s) {
+concept Serializable = requires(const T t, Serializer& s) {
     { t.serialize(s) } -> std::same_as<void>;
 };
 
@@ -41,12 +41,13 @@ public:
         );
     }
 
-    template <serialization::Vector T>
-    void add_value(T& t)
+
+    template <serialization::Vector T> requires !Serializable<typename T::value_type>
+    void add_value(const T& t)
     {
         add_property(
             serialization::Property{
-                Buffer{t.data(), t.size() * sizeof(typename T::value_type)},
+                Buffer{const_cast<void*>(static_cast<const void*>(t.data())), t.size() * sizeof(typename T::value_type)},
                 serialization::get_property_type<typename T::value_type>(),
                 serialization::PropertyContainerType::array,
                 t.size()
@@ -124,9 +125,9 @@ public:
     }
 
     template <serialization::Map T>
-    void add_value(T& t)
+    void add_value(const T& t)
     {
-        size_t size = t.size();
+        const size_t size = t.size();
         add_value(size);
 
         for (const auto& [key, value] : t)
@@ -139,8 +140,27 @@ public:
         }
     }
 
+    template <serialization::Vector T> requires Serializable<typename T::value_type>
+    void add_value(const T& t)
+    {
+        const size_t size = t.size();
+        add_value(size);
+
+        for (const auto& value : t)
+        {
+            using ValueType = std::remove_const_t<typename T::value_type>;
+            add_value<ValueType>(value);
+        }
+    }
+
+    template <typename T> requires std::is_enum_v<T>
+    void add_value(const T& t)
+    {
+        add_value<std::underlying_type_t<T>>(static_cast<std::underlying_type_t<T>>(t));
+    }
+
     template <Serializable T>
-    void add_value(T& t)
+    void add_value(const T& t)
     {
         t.serialize(*this);
     }
@@ -186,7 +206,7 @@ public:
         t = *static_cast<T*>(property.value.data);
     }
 
-    template <serialization::Vector T>
+    template <serialization::Vector T> requires !Serializable<typename T::value_type>
     void get_value(T& t)
     {
         const auto property = get_property();
@@ -267,7 +287,7 @@ public:
     void get_value(T& t)
     {
         size_t size;
-        get_value(size);
+        get_value<size_t>(size);
 
         t.clear();
         if constexpr (requires { t.reserve(size); })
@@ -283,6 +303,33 @@ public:
             get_value(value);
             t.insert_or_assign(std::move(key), std::move(value));
         }
+    }
+
+    template <serialization::Vector T> requires Serializable<typename T::value_type>
+    void get_value(T& t)
+    {
+        size_t size;
+        get_value<size_t>(size);
+
+        if constexpr (requires { t.reserve(size); })
+        {
+            t.reserve(size);
+        }
+
+        for (size_t i = 0; i < size; ++i)
+        {
+            typename T::value_type value;
+            get_value<typename T::value_type>(value);
+            t.push_back(std::move(value));
+        }
+    }
+
+    template <typename T> requires std::is_enum_v<T>
+    T get_value()
+    {
+        std::underlying_type_t<T> underlying;
+        get_value(underlying);
+        return static_cast<T>(underlying);
     }
 
     template <Deserializable T>
@@ -315,7 +362,7 @@ protected:
 } // namespace portal
 
 template <portal::Serializable T>
-portal::Serializer& operator<<(portal::Serializer& s, T& t)
+portal::Serializer& operator<<(portal::Serializer& s, const T& t)
 {
     t.serialize(s);
     return s;
@@ -346,6 +393,12 @@ inline portal::Serializer& operator<<(portal::Serializer& s, const char* str)
 {
     s.add_value(str);
     return s;
+}
+
+template <typename T>
+portal::Serializer* operator<<(portal::Serializer* s, const T& t)
+{
+    return &(*s << t);
 }
 
 
