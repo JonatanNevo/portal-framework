@@ -1,131 +1,40 @@
-//
-// Created by Jonatan Nevo on 31/01/2025.
-//
-
-
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-
-#include <portal/gui/gui_application.h>
+#include <portal/application/module/module_base.h>
+#include <portal/application/application.h>
 #include <portal/application/entry_point.h>
 
-#include "portal/core/assert.h"
-#include "portal/core/buffer.h"
-#include "portal/core/buffer_stream.h"
-#include "portal/networking/connection.h"
-#include "portal/serialization/impl/binary_searilization.h"
-
-
-class TestLayer : public portal::Layer
+class TestModule: public portal::ModuleBase<portal::tags::Rendering>
 {
 public:
-    virtual void on_ui_render() override
+    TestModule(): ModuleBase("TestModule", {Hook::OnUpdate, Hook::OnAppStart, Hook::OnAppClose})
+    {}
+
+    void on_start(const portal::Configuration& config, portal::debug::DebugInfo& debug_info) override
     {
-        ImGui::Begin("Hello");
-        ImGui::Button("Button");
-        ImGui::End();
-
-        ImGui::ShowDemoWindow();
-
-        UI_DrawAboutModal();
+        this->debug_info = &debug_info;
+        LOG_WARN("TestModule::on_start");
     }
 
-    void UI_DrawAboutModal()
+    void on_update(float delta_time) override
     {
-        if (!m_AboutModalOpen)
-            return;
-
-        ImGui::OpenPopup("About");
-        m_AboutModalOpen = ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-        if (m_AboutModalOpen)
+        for (const auto& field: debug_info->get_fields())
         {
-            ImGui::SameLine();
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 20.0f);
-
-            ImGui::BeginGroup();
-            ImGui::Text("Portal application framework");
-            ImGui::EndGroup();
-
-            ImGuiStyle& style = ImGui::GetStyle();
-
-            float actualSize = ImGui::CalcTextSize("Close").x + style.FramePadding.x * 2.0f;
-            float avail = ImGui::GetContentRegionAvail().x;
-
-            float off = (avail - actualSize) * 0.5f;
-            if (off > 0.0f)
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + off);
-
-            if (ImGui::Button("Close"))
-            {
-                m_AboutModalOpen = false;
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
+            LOG_INFO("{}: {}", field->label, field->to_string());
         }
     }
 
-    void ShowAboutModal()
+    void on_close() override
     {
-        m_AboutModalOpen = true;
+        LOG_WARN("TestModule::on_close");
     }
 
-private:
-    bool m_AboutModalOpen = false;
+protected:
+    portal::debug::DebugInfo* debug_info;
 };
 
-
-portal::Application* portal::create_application(int argc, char** argv)
+std::unique_ptr<portal::Application> create_application()
 {
-    Log::init();
-    ApplicationSpecs specs{
-        .name = "Example App"
-    };
-
-    portal::network::Connection connection;
-    connection.connect("google.com:1234");
-
-    std::vector<uint8_t> data(100);
-    Buffer buffer(data.data(), data.size());
-    BufferStreamWriter writer(buffer);
-    std::map<int, std::string> mapping = {
-        {1, "one"},
-        {2, "two"},
-        {3, "three"}
-    };
-    BinarySerializer serializer(writer);
-    serializer << mapping;
-
-    BufferStreamReader reader(buffer);
-    BinaryDeserializer deserializer(reader);
-    std::map<int, std::string> deserialized;
-    deserializer >> deserialized;
-
-    auto* app = new GUIApplication(specs);
-    std::shared_ptr<TestLayer> layer = std::make_shared<TestLayer>();
-    app->push_layer(layer);
-    app->set_menubar_callback(
-        [app, layer]()
-        {
-            if (ImGui::BeginMenu("File"))
-            {
-                if (ImGui::MenuItem("Exit"))
-                {
-                    app->close();
-                }
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Help"))
-            {
-                if (ImGui::MenuItem("About"))
-                {
-                    layer->ShowAboutModal();
-                }
-                ImGui::EndMenu();
-            }
-        }
-    );
-    return app;
+    const auto module = std::make_shared<TestModule>();
+    auto application = std::make_unique<portal::Application>();
+    application->add_module(module);
+    return std::move(application);
 }

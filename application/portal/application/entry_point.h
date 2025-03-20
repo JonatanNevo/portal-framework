@@ -4,23 +4,28 @@
 
 #pragma once
 
-extern portal::Application* portal::create_application(int arc, char** argv);
-bool g_application_running = true;
+#include "platform/platform.h"
+
+extern std::unique_ptr<portal::Platform> create_platform();
+extern std::unique_ptr<portal::Application> create_application();
 
 namespace portal
 {
-int main(int argc, char** argv)
+int platform_main(int argc, char** argv)
 {
-    while (g_application_running)
+    const auto platform = create_platform();
+    auto code = platform->initialize(create_application);
+
+    if (code == ExitCode::Success)
     {
-        Application* app = create_application(argc, argv);
-        app->run();
-        delete app;
+        code = platform->main_loop();
     }
 
+    platform->terminate(code);
     return 0;
 }
 }
+
 
 #if defined(PORTAL_PLATFORM_WINDOWS) && defined(PORTAL_GUI) && defined(PORTAL_DIST)
 
@@ -35,7 +40,7 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmd
 
 int main(int argc, char** argv)
 {
-    return portal::main(argc, argv);
+    return portal::platform_main(argc, argv);
 }
 
 #endif

@@ -4,59 +4,110 @@
 
 #pragma once
 #include <filesystem>
-#include <memory>
 #include <string>
-#include <type_traits>
-#include <vector>
 
-#include "portal/application/layer.h"
+#include "portal/application/configuration.h"
+#include "portal/application/input_events.h"
+#include "portal/application/debug/debug_info.h"
+#include "portal/application/module/module.h"
+#include "portal/application/window/window.h"
 
 namespace portal
 {
-    struct ApplicationSpecs
-    {
-        std::string name = "Portal Application";
-        size_t width = 1920;
-        size_t height = 1080;
-        uint64_t sleep_duration = 0;
-        std::filesystem::path icon_path;
+namespace gui
+{
+    class Drawer;
+}
 
-        bool resizeable = true;
-        bool custom_titlebar = false;
-        bool use_dock_space = true;
-        bool center_window = false;
-    };
+class Module;
 
+class Application
+{
+public:
+    explicit Application();
+    virtual ~Application() = default;
 
-    class Application
-    {
-    public:
-        virtual ~Application() = default;
+    virtual void add_module(std::shared_ptr<Module> module);
 
-        virtual void run() = 0;
+    /**
+     * @brief Prepares the application for execution
+     */
+    virtual bool prepare(const Configuration& config);
 
-        template <typename T>
-            requires std::is_base_of_v<Layer, T>
-        void push_layer()
-        {
-            layer_stack.emplace_back(std::make_shared<T>())->on_attach();
-        }
+    /**
+     * @brief Updates the application
+     * @param delta_time The time since the last update
+     */
+    virtual void update(float delta_time);
 
-        void push_layer(const std::shared_ptr<Layer>& layer)
-        {
-            layer_stack.emplace_back(layer);
-            layer->on_attach();
-        }
+    /**
+     * @brief Handles cleaning up the application
+     */
+    virtual void finish();
 
-        std::vector<std::shared_ptr<Layer>>& get_layer_stack() { return layer_stack; }
+    /**
+     * @brief Handles resizing of the window
+     * @param width New width of the window
+     * @param height New height of the window
+     */
+    virtual void resize(const uint32_t width, const uint32_t height);
 
-        virtual void close() = 0;
-        virtual float get_time() = 0;
+    /**
+     * @brief Handles input events of the window
+     * @param input_event The input event object
+     */
+    virtual void input_event(const InputEvent& input_event);
 
-    protected:
-        std::vector<std::shared_ptr<Layer>> layer_stack;
-    };
+    [[nodiscard]] const std::string& get_name() const { return name; }
+    void set_name(const std::string& name) { this->name = name; }
+    debug::DebugInfo& get_debug_info() { return debug_info; }
 
-    Application* create_application(int argc, char** argv);
+    template <class T>
+    T* get_module() const;
 
+    template <class T>
+    bool using_module() const;
+
+    [[nodiscard]] bool should_close() const { return requested_close; }
+
+    // request the app to close
+    // does not guarantee that the app will close immediately
+    void close() { requested_close = true; }
+
+    /**
+     * @brief Calles when an application error occurs
+     */
+    void on_error();
+
+protected:
+    float fps{0.0f};
+    float frame_time{0.0f}; // In ms
+    uint32_t frame_count{0};
+    uint32_t last_frame_count{0};
+    bool lock_simulation_speed{false};
+    Window* window{nullptr};
+
+private:
+    std::string name;
+
+    std::vector<std::shared_ptr<Module>> modules;
+    std::unordered_map<Module::Hook, std::vector<Module*>> hooks;
+
+    debug::DebugInfo debug_info;
+    bool requested_close{false};
+};
+
+template <class T>
+bool Application::using_module() const
+{
+    return !modules::with_tags<T>(modules).empty();
+}
+
+template <class T>
+T* Application::get_module() const
+{
+    PORTAL_CORE_ASSERT(using_module<T>(), "Module is not enabled but was requested");
+    const auto modules = modules::with_tags<T>(modules);
+    return dynamic_cast<T*>(modules[0]);
+}
 } // namespace portal
