@@ -13,6 +13,7 @@ add_subdirectory(application)
 add_subdirectory(input)
 add_subdirectory(gui)
 add_subdirectory(serialization)
+add_subdirectory(assets)
 
 add_executable(portal main.cpp)
-target_link_libraries(portal PUBLIC portal::networking portal::gui portal::serialization)
+target_link_libraries(portal PUBLIC portal::networking portal::gui portal::serialization portal::assets)
