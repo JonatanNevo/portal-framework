@@ -45,5 +45,8 @@
   }, {
     "name" : "shaderc",
     "version>=" : "2023.8"
+  }, {
+    "name" : "benchmark",
+    "version>=" : "1.9.1"
   } ]
 }
