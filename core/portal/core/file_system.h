@@ -74,9 +74,9 @@ public:
     static FileStatus try_open_file(const std::filesystem::path& path);
     static FileStatus try_open_file_and_wait(const std::filesystem::path& path, uint64_t wait_ms = 100);
 
-    static std::filesystem::path open_file_dialog(const std::initializer_list<FileDialogFilterItem> in_filters = {});
+    static std::filesystem::path open_file_dialog(std::initializer_list<FileDialogFilterItem> in_filters = {});
     static std::filesystem::path open_folder_dialog(const char* initial_folder = "");
-    static std::filesystem::path save_file_dialog(const std::initializer_list<FileDialogFilterItem> in_filters = {});
+    static std::filesystem::path save_file_dialog(std::initializer_list<FileDialogFilterItem> in_filters = {});
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////// Platform Specific Functions ////////////////////////////////////////////////////////////////////////////////

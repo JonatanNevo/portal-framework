@@ -22,6 +22,8 @@ file(GLOB_RECURSE MACOS_HEADER CONFIGURE_DEPENDS "portal/platform/macos/*.h")
 file(GLOB_RECURSE LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/linux/*.cpp")
 file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/linux/*.h")
 
+option(PORTAL_BUILD_TESTS "Whether or not to build the tests" OFF)
+
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
@@ -78,13 +80,11 @@ else()
     message(FATAL_ERROR "Unsupported platform")
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(portal-core PUBLIC PORTAL_DEBUG)
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_definitions(portal-core PUBLIC PORTAL_RELEASE)
-else()
-    target_compile_definitions(portal-core PUBLIC PORTAL_DIST)
-endif()
+target_compile_definitions(portal-core PUBLIC
+        $<$<CONFIG:Debug>:PORTAL_DEBUG>
+        $<$<CONFIG:Release>:PORTAL_RELEASE>
+        $<$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:Release>>>:PORTAL_DIST>
+)
 
 target_compile_definitions(portal-core PUBLIC
         GLM_FORCE_SWIZZLE
@@ -95,8 +95,25 @@ target_compile_definitions(portal-core PUBLIC
 )
 
 if(MSVC)
-    target_compile_options(portal-core PUBLIC "/Zc:__cplusplus")
+    target_compile_options(portal-core PUBLIC
+            "/Zc:__cplusplus"
+            "$<$<CONFIG:Release>:/Zi>"
+    )
+
+    target_link_options(portal-core PUBLIC
+            "$<$<CONFIG:Release>:/DEBUG /OPT:REF /OPT:ICF>"
+    )
+else()
+    target_compile_options(portal-core PUBLIC
+            "$<$<CONFIG:Release>:-g>"
+    )
 endif()
+
+
+if(PORTAL_BUILD_TESTS)
+    add_subdirectory(tests)
+endif ()
+unset(PORTAL_BUILD_TESTS CACHE)
 
 install(TARGETS portal-core
         EXPORT portal-core-targets
