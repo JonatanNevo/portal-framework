@@ -10,8 +10,17 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
-file(GLOB_RECURSE CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
+file(GLOB CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
+file(GLOB CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
+
+file(GLOB_RECURSE WINDOWS_SOURCES CONFIGURE_DEPENDS "portal/platform/windows/*.cpp")
+file(GLOB_RECURSE WINDOWS_HEADER CONFIGURE_DEPENDS "portal/platform/windows/*.h")
+
+file(GLOB_RECURSE MACOS_SOURCES CONFIGURE_DEPENDS "portal/platform/macos/*.cpp")
+file(GLOB_RECURSE MACOS_HEADER CONFIGURE_DEPENDS "portal/platform/macos/*.h")
+
+file(GLOB_RECURSE LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/linux/*.cpp")
+file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/linux/*.h")
 
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
@@ -35,12 +44,36 @@ target_link_libraries(portal-core
 if(WIN32)
     set(PORTAL_PLATFORM_WINDOWS ON CACHE BOOL "Windows platform" FORCE)
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_WINDOWS)
+    target_sources(portal-core
+            PRIVATE ${WINDOWS_SOURCES}
+            PUBLIC
+            FILE_SET HEADERS
+            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+            FILES ${WINDOWS_HEADER}
+    )
+
 elseif (APPLE)
     set(PORTAL_PLATFORM_MACOS ON CACHE BOOL "MacOS platform" FORCE)
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_MACOS)
+    target_sources(portal-core
+            PRIVATE ${MACOS_SOURCES}
+            PUBLIC
+            FILE_SET HEADERS
+            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+            FILES ${MACOS_HEADER}
+    )
+
 elseif(UNIX)
     set(PORTAL_PLATFORM_LINUX ON CACHE BOOL "Linux platform" FORCE)
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_LINUX)
+    target_sources(portal-core
+            PRIVATE ${LINUX_SOURCES}
+            PUBLIC
+            FILE_SET HEADERS
+            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+            FILES ${LINUX_HEADER}
+    )
+
 else()
     message(FATAL_ERROR "Unsupported platform")
 endif()

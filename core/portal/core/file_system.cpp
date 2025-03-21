@@ -6,36 +6,93 @@
 
 #include "portal/core/assert.h"
 
-namespace portal::filesystem
+namespace portal
 {
-static std::shared_ptr<FileSystem> fs = nullptr;
-
-void init()
+std::filesystem::path FileSystem::get_working_directory()
 {
-    fs = std::make_shared<FileSystem>();
+    return std::filesystem::current_path();
 }
 
-std::shared_ptr<FileSystem> get()
+void FileSystem::set_working_directory(const std::filesystem::path& path)
 {
-    PORTAL_CORE_ASSERT(fs, "Filesystem not initialized");
-    return fs;
+    std::filesystem::current_path(path);
 }
 
-void FileSystem::write_file(const std::filesystem::path& path, const std::string& data)
+bool FileSystem::create_directory(const std::filesystem::path& path)
 {
-    write_file(path, std::vector<uint8_t>(data.begin(), data.end()));
+    std::error_code ec;
+    std::filesystem::create_directory(path, ec);
+    if (ec)
+        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to create directory: {}", path.string(), ec.message());
+    return !ec;
 }
 
-std::string FileSystem::read_file_string(const std::filesystem::path& path)
+bool FileSystem::create_directory(const std::string& file_path)
 {
-    auto binary = read_file_binary(path);
-    return {binary.begin(), binary.end()};
+    return create_directory(std::filesystem::path(file_path));
 }
 
-std::vector<uint8_t> FileSystem::read_file_binary(const std::filesystem::path& path)
+bool FileSystem::exists(const std::filesystem::path& path)
 {
-    const auto stat = stat_file(path);
-    return read_chunk(path, 0, stat.size);
+    return std::filesystem::exists(path);
+}
+
+bool FileSystem::exists(const std::string& file_path)
+{
+    return exists(std::filesystem::path(file_path));
+}
+
+bool FileSystem::remove(const std::filesystem::path& path)
+{
+    if (!FileSystem::exists(path))
+        return false;
+
+    std::error_code ec;
+    if (std::filesystem::is_directory(path))
+        std::filesystem::remove_all(path, ec);
+    else
+        std::filesystem::remove(path, ec);
+
+    if (ec)
+        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to remove file: {}", path.string(), ec.message());
+    return !ec;
+}
+
+bool FileSystem::move(const std::filesystem::path& from, const std::filesystem::path& to)
+{
+    if (FileSystem::exists(to))
+        return false;
+
+    std::error_code ec;
+    std::filesystem::rename(from, to, ec);
+
+    if (ec)
+        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to move file: {}", from.string(), ec.message());
+    return !ec;
+}
+
+bool FileSystem::copy(const std::filesystem::path& from, const std::filesystem::path& to)
+{
+    if (FileSystem::exists(to))
+        return false;
+
+    std::error_code ec;
+    std::filesystem::copy(from, to, ec);
+
+    if (ec)
+        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to copy file: {}", from.string(), ec.message());
+    return !ec;
+}
+
+bool FileSystem::rename(const std::filesystem::path& from, const std::filesystem::path& to)
+{
+    return move(from, to);
+}
+
+bool FileSystem::rename_filename(const std::filesystem::path& path, const std::string& new_name)
+{
+    const std::filesystem::path new_path = path.parent_path() / std::filesystem::path(new_name + path.extension().string());
+    return rename(path, new_path);
 }
 
 FileStat FileSystem::stat_file(const std::filesystem::path& path)
@@ -63,6 +120,7 @@ FileStat FileSystem::stat_file(const std::filesystem::path& path)
     return FileStat(
         std::filesystem::is_regular_file(fs_start),
         std::filesystem::is_directory(fs_start),
+        std::filesystem::last_write_time(path).time_since_epoch().count(),
         size
     );
 }
@@ -79,22 +137,82 @@ bool FileSystem::is_directory(const std::filesystem::path& path)
     return stat.is_directory;
 }
 
-bool FileSystem::exists(const std::filesystem::path& path)
+bool FileSystem::is_newer(const std::filesystem::path& path_a, const std::filesystem::path& path_b)
 {
-    return std::filesystem::exists(path);
+    return std::filesystem::last_write_time(path_a) > std::filesystem::last_write_time(path_b);
 }
 
-bool FileSystem::create_directory(const std::filesystem::path& path)
+uint64_t FileSystem::get_last_write_time(const std::filesystem::path& path)
 {
-    std::error_code ec;
-    std::filesystem::create_directory(path, ec);
-    if (ec)
-        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to create directory: {}", path.string(), ec.message());
-    return !ec;
+    if (path.filename().empty() || !FileSystem::exists(path))
+        return 0;
+
+    const auto stat = stat_file(path);
+    return stat.last_write_time;
 }
 
-std::vector<uint8_t> FileSystem::read_chunk(const std::filesystem::path& path, size_t offset, size_t count)
+std::filesystem::path FileSystem::get_unique_file_name(const std::filesystem::path& path)
 {
+    if (!FileSystem::exists(path))
+        return path;
+
+    int counter = 0;
+    while (true)
+    {
+        ++counter;
+        const std::string counter_str = [&counter]
+        {
+            if (counter < 10)
+                return "0" + std::to_string(counter);
+            else
+                return std::to_string(counter);
+        }();
+
+        std::string new_file_name = std::format("{} ({})", path.stem().string(), counter_str);
+
+        if (path.has_extension())
+            new_file_name = std::format("{}{}", new_file_name, path.extension().string());
+
+        if (!FileSystem::exists(path.parent_path() / new_file_name))
+            return path.parent_path() / new_file_name;
+    }
+}
+
+bool FileSystem::write_file(const std::filesystem::path& path, const Buffer& buffer)
+{
+    // create directory if it doesn't exist
+    const auto parent = path.parent_path();
+    if (!std::filesystem::exists(parent))
+        create_directory(parent);
+
+    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+
+    if (!file.is_open())
+    {
+        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to open file for writing", path.string());
+        return false;
+    }
+
+    file.write(static_cast<const char*>(buffer.data), static_cast<std::streamsize>(buffer.size));
+    file.close();
+
+    return true;
+}
+
+bool FileSystem::write_file(const std::filesystem::path& path, const std::string& data)
+{
+    return write_file(path, Buffer(const_cast<void*>(static_cast<const void*>(data.data())), data.size()));
+}
+
+bool FileSystem::write_file(const std::filesystem::path& path, const std::vector<uint8_t>& data)
+{
+    return write_file(path, Buffer(const_cast<void*>(static_cast<const void*>(data.data())), data.size()));
+}
+
+Buffer FileSystem::read_chunk(const std::filesystem::path& path, size_t offset, size_t count)
+{
+    Buffer buffer;
+
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file.is_open())
     {
@@ -109,68 +227,77 @@ std::vector<uint8_t> FileSystem::read_chunk(const std::filesystem::path& path, s
         return {};
     }
 
-    file.seekg(offset, std::ios::beg);
-    std::vector<uint8_t> data(count);
-    file.read(reinterpret_cast<char*>(data.data()), count);
-    return data;
+    buffer.allocate(count);
+    file.seekg(static_cast<std::streamsize>(offset), std::ios::beg);
+    file.read(static_cast<char*>(buffer.data), static_cast<std::streamsize>(count));
+    return buffer;
 }
 
-void FileSystem::write_file(const std::filesystem::path& path, const std::vector<uint8_t>& data)
+Buffer FileSystem::read_file_binary(const std::filesystem::path& path)
 {
-    // create directory if it doesn't exist
-    const auto parent = path.parent_path();
-    if (!std::filesystem::exists(parent))
-        create_directory(parent);
+    const auto stat = stat_file(path);
+    return read_chunk(path, 0, stat.size);
+}
 
-    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+
+std::string FileSystem::read_file_string(const std::filesystem::path& path)
+{
+    auto binary = read_file_binary(path);
+    return {static_cast<char*>(binary.data), binary.size};
+}
+
+FileStatus FileSystem::try_open_file(const std::filesystem::path& path)
+{
+    // First check if file exists
+    if (!std::filesystem::exists(path))
+        return FileStatus::Invalid;
+
+    // Try to open the file for reading
+    std::ifstream file(path, std::ios::binary);
 
     if (!file.is_open())
     {
-        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to open file for writing", path.string());
-        return;
+        // File exists but couldn't be opened - likely locked or permission issue
+        return FileStatus::Locked;
     }
 
-    file.write(reinterpret_cast<const char*>(data.data()), data.size());
+    // Test if we can actually read from it
+    char buffer;
+    if (file.read(&buffer, 0).fail() && !file.eof())
+    {
+        file.close();
+        return FileStatus::OtherError;
+    }
+
+    file.close();
+    return FileStatus::Success;
 }
 
-void FileSystem::remove(const std::filesystem::path& path)
+FileStatus FileSystem::try_open_file_and_wait(const std::filesystem::path& path, uint64_t wait_ms)
 {
-    std::error_code ec;
-    std::filesystem::remove_all(path, ec);
-
-    if (ec)
-        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to remove file: {}", path.string(), ec.message());
+    const auto status = try_open_file(path);
+    if (status == FileStatus::Locked)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(wait_ms));
+        return try_open_file(path);
+    }
+    return status;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TODO: Implement these
 
-FileStat stat_file(const std::filesystem::path& path) { return get()->stat_file(path); }
-
-bool is_file(const std::filesystem::path& path) { return get()->is_file(path); }
-
-bool is_directory(const std::filesystem::path& path) { return get()->is_directory(path); }
-
-bool exists(const std::filesystem::path& path) { return get()->exists(path); }
-
-bool create_directory(const std::filesystem::path& path) { return get()->create_directory(path); }
-
-std::vector<uint8_t> read_chunk(const std::filesystem::path& path, const size_t offset, const size_t count)
+std::filesystem::path FileSystem::open_file_dialog(const std::initializer_list<FileDialogFilterItem> in_filters)
 {
-    return get()->read_chunk(path, offset, count);
+    return {};
 }
 
-void write_file(const std::filesystem::path& path, std::vector<uint8_t>& data) { return get()->write_file(path, data); }
-
-void remove(const std::filesystem::path& path) { get()->remove(path); }
-
-void write_file(const std::filesystem::path& path, const std::string& data) { get()->write_file(path, data); }
-
-std::string read_file_string(const std::filesystem::path& path) { return get()->read_file_string(path); }
-
-std::vector<uint8_t> read_file_binary(const std::filesystem::path& path) { return get()->read_file_binary(path); }
-
-std::string get_file_extension(const std::filesystem::path& path)
+std::filesystem::path FileSystem::open_folder_dialog(const char* initial_folder)
 {
-    return path.extension().string();
+    return {};
+}
+
+std::filesystem::path FileSystem::save_file_dialog(const std::initializer_list<FileDialogFilterItem> in_filters)
+{
+    return {};
 }
 } // portal
