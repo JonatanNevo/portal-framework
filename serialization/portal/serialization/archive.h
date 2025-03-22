@@ -11,6 +11,19 @@
 
 namespace portal
 {
+class Archiver;
+class Dearchiver;
+
+template <typename T>
+concept Archiveable = requires(T t, Archiver& s) {
+    { t.archive(s) } -> std::same_as<void>;
+};
+
+template <typename T>
+concept Dearchiveable = requires(T t, Dearchiver& d) {
+    { T::dearchive(d) } -> std::same_as<T>;
+};
+
 class Archiver
 {
 public:
@@ -130,12 +143,17 @@ public:
     bool get_property(const std::string& name, T& out)
     {
         serialization::Property property;
+        property.type = serialization::get_property_type<T>();
         if (!get_property(name, property))
             return false;
 
         PORTAL_CORE_ASSERT(property.type == serialization::get_property_type<T>(), "Property {} type mismatch", name);
 
         out = *static_cast<T*>(property.value.data);
+
+        if (property.value.allocated)
+            property.value.release();
+
         return true;
     }
 
@@ -143,6 +161,7 @@ public:
     bool get_property(const std::string& name, T& out)
     {
         serialization::Property property;
+        property.type = serialization::get_property_type<T>();
         if (!get_property(name, property))
             return false;
 
@@ -152,6 +171,10 @@ public:
         auto array_length = property.elements_number;
         auto* data = static_cast<typename T::value_type*>(property.value.data);
         out = T(data, data + array_length);
+
+        if (property.value.allocated)
+            property.value.release();
+
         return true;
     }
 
@@ -159,6 +182,7 @@ public:
     bool get_property(const std::string& name, T& out)
     {
         serialization::Property property;
+        property.type = serialization::get_property_type<T>();
         if (!get_property(name, property))
             return false;
 
@@ -175,6 +199,10 @@ public:
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         out = T(data, string_length);
+
+        if (property.value.allocated)
+            property.value.release();
+
         return true;
     }
 
@@ -182,6 +210,7 @@ public:
     bool get_property(const std::string& name, T& out)
     {
         serialization::Property property;
+        property.type = serialization::get_property_type<T>();
         if (!get_property(name, property))
             return false;
 
@@ -195,6 +224,7 @@ public:
     bool get_property(const std::string& name, T& out)
     {
         serialization::Property property;
+        property.type = serialization::get_property_type<T>();
         if (!get_property(name, property))
             return false;
 
@@ -202,6 +232,10 @@ public:
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         out = T(data[0], data[1]);
+
+        if (property.value.allocated)
+            property.value.release();
+
         return true;
     }
 
@@ -209,6 +243,7 @@ public:
     bool get_property(const std::string& name, T& out)
     {
         serialization::Property property;
+        property.type = serialization::get_property_type<T>();
         if (!get_property(name, property))
             return false;
 
@@ -216,6 +251,10 @@ public:
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         out = T(data[0], data[1], data[2]);
+
+        if (property.value.allocated)
+            property.value.release();
+
         return true;
     }
 
@@ -223,6 +262,7 @@ public:
     bool get_property(const std::string& name, T& out)
     {
         serialization::Property property;
+        property.type = serialization::get_property_type<T>();
         if (!get_property(name, property))
             return false;
 
@@ -230,6 +270,10 @@ public:
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         out = T(data[0], data[1], data[2], data[3]);
+
+        if (property.value.allocated)
+            property.value.release();
+
         return true;
     }
 
@@ -246,15 +290,5 @@ protected:
     virtual bool get_property(const std::string& name, serialization::Property& out) = 0;
 };
 
-
-template <typename T>
-concept Archiveable = requires(T t, Archiver& s) {
-    { t.archive(s) } -> std::same_as<void>;
-};
-
-template <typename T>
-concept Dearchiveable = requires(T t, Dearchiver& d) {
-    { T::dearchive(d) } -> std::same_as<T>;
-};
 } // namespace portal
 
