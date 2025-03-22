@@ -15,6 +15,7 @@ struct Buffer
 {
     void* data;
     size_t size;
+    bool allocated = false;
 
     Buffer():
         data(nullptr), size(0) {}
@@ -51,6 +52,7 @@ struct Buffer
 
         data = new uint8_t[new_size];
         this->size = new_size;
+        allocated = true;
     }
 
     void release()

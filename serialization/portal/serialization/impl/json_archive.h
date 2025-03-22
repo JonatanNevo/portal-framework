@@ -8,7 +8,7 @@
 
 namespace portal
 {
-class JsonArchiver final : public Archiver
+class JsonArchiver : public Archiver
 {
 public:
     explicit JsonArchiver(std::ostream& output);
@@ -20,7 +20,7 @@ protected:
     void add_property(const std::string& name, const serialization::Property& property) override;
 };
 
-class JsonDearchiver final : public Dearchiver
+class JsonDearchiver : public Dearchiver
 {
 public:
     explicit JsonDearchiver(std::istream& input);
