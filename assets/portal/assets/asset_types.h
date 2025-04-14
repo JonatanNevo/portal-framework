@@ -9,11 +9,13 @@
 
 namespace portal
 {
-enum class AssetFlag: uint8_t
+
+enum class AssetState: uint8_t
 {
     Empty = 0,
-    Missing   = BIT(0),
-    Invalid   = BIT(1),
+    Loaded = BIT(0),
+    Missing = BIT(1),
+    Invalid = BIT(2),
 };
 
 enum class AssetType: uint16_t
@@ -26,7 +28,8 @@ namespace utils
 {
     inline AssetType from_string(const std::string_view asset_type)
     {
-        if (asset_type == "Texture") return AssetType::Texture;
+        if (asset_type == "Texture")
+            return AssetType::Texture;
         return AssetType::Undefined;
     }
 
@@ -34,8 +37,10 @@ namespace utils
     {
         switch (asset_type)
         {
-        case AssetType::Texture: return "Texture";
-        case AssetType::Undefined: return "Undefined";
+        case AssetType::Texture:
+            return "Texture";
+        case AssetType::Undefined:
+            return "Undefined";
         }
 
         PORTAL_CORE_ASSERT(false, "Undefined Asset Type");

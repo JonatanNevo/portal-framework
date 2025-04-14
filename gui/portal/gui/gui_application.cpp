@@ -344,6 +344,7 @@ GUIApplication::GUIApplication(const ApplicationSpecs& specs) : specs(specs)
 
 GUIApplication::~GUIApplication()
 {
+    asset_manager.stop();
     shutdown();
     s_instance = nullptr;
 }
@@ -649,6 +650,9 @@ void GUIApplication::run()
         for (auto& layer : layer_stack)
             layer->on_update(time_step);
 
+        // Update loaded assets
+        asset_manager.update_assets(time_step);
+
         // Resize swap chain?
         if (g_swap_chain_rebuild)
         {
@@ -830,7 +834,8 @@ void GUIApplication::flush_command_buffer(vk::CommandBuffer command_buffer)
 
 void GUIApplication::submit_resource_free(std::function<void()>&& func)
 {
-    s_resource_free_queue[s_current_frame_index].emplace_back(std::move(func));
+    if (!s_resource_free_queue.empty())
+        s_resource_free_queue[s_current_frame_index].emplace_back(std::move(func));
 }
 
 ImFont* GUIApplication::get_font(const std::string& string)

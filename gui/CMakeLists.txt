@@ -14,6 +14,7 @@ file(GLOB_RECURSE GUI_SOURCES CONFIGURE_DEPENDS "portal/gui/*.cpp")
 file(GLOB_RECURSE GUI_HEADERS CONFIGURE_DEPENDS "portal/gui/*.h")
 file(GLOB_RECURSE GUI_UI_SOURCES CONFIGURE_DEPENDS "portal/gui/ui/*.cpp")
 file(GLOB_RECURSE GUI_UI_HEADERS CONFIGURE_DEPENDS "portal/gui/ui/*.h")
+file(GLOB GUI_TEXTURES CONFIGURE_DEPENDS "resources/textures/*")
 
 find_package(imgui CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
@@ -21,33 +22,39 @@ find_package(Stb REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
-if(PORTAL_FIND_PACAKGE)
+if (PORTAL_FIND_PACAKGE)
     find_package(portal-application CONFIG REQUIRED)
+    find_package(portal-assets CONFIG REQUIRED)
 endif ()
 unset(PORTAL_FIND_PACAKGE CACHE)
 
+add_library(portal-gui STATIC ${APP_SOURCES} ${GUI_SOURCES} ${GUI_UI_SOURCES}
+        portal/gui/texture.cpp
+        portal/gui/texture.h)
 
-add_library(portal-gui STATIC ${APP_SOURCES} ${GUI_SOURCES} ${GUI_UI_SOURCES})
 target_sources(portal-gui PUBLIC
         FILE_SET HEADERS
         BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         FILES ${GUI_HEADERS} ${GUI_UI_HEADERS}
 )
+
+# TODO: Replace this with an archive file and include it somehow in the install folder
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/resources/textures)
+foreach(texture IN LISTS GUI_TEXTURES)
+    get_filename_component(texture_name ${texture} NAME)
+    file(COPY_FILE ${texture} ${CMAKE_BINARY_DIR}/resources/textures/${texture_name})
+endforeach()
+
 set_target_properties(portal-gui PROPERTIES EXPORT_NAME gui)
 
 add_library(portal::gui ALIAS portal-gui)
-
-target_sources(portal-gui PUBLIC
-        FILE_SET HEADERS
-        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES ${APP_HEADERS}
-)
 
 target_link_libraries(portal-gui
         PUBLIC
         imgui::imgui
         Vulkan::Vulkan
         portal::application
+        portal::assets
         glfw
 )
 

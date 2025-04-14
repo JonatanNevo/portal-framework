@@ -13,6 +13,7 @@
 #include "imgui_impl_vulkan.h"
 
 #include "portal/application/application.h"
+#include "portal/assets/asset_manager.h"
 
 #define PORTAL_GUI
 
@@ -39,6 +40,7 @@ namespace portal
         float get_time() override;
         static GLFWwindow* get_window_handle();
         bool is_title_bar_hovered() const { return title_bar_hovered; }
+        AssetManager& get_asset_manager() { return asset_manager; }
 
         static vk::Instance get_instance();
         static vk::PhysicalDevice get_physical_device();
@@ -76,6 +78,8 @@ namespace portal
         float frame_time = 0.0f;
 
         bool title_bar_hovered = false;
+
+        AssetManager asset_manager;
 
         std::function<void()> menu_bar_callback;
 

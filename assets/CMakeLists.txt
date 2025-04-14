@@ -9,13 +9,17 @@ file(GLOB_RECURSE ASSETS_SOURCES CONFIGURE_DEPENDS "portal/assets/*.cpp")
 file(GLOB_RECURSE ASSETS_HEADERS CONFIGURE_DEPENDS "portal/assets/*.h")
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
+
+find_package(unofficial-concurrentqueue CONFIG REQUIRED)
+
 if(PORTAL_FIND_PACAKGE)
     find_package(portal-core CONFIG REQUIRED)
     find_package(portal-serialization CONFIG REQUIRED)
 endif ()
 unset(PORTAL_FIND_PACAKGE CACHE)
 
-add_library(portal-assets STATIC ${ASSETS_SOURCES})
+add_library(portal-assets STATIC ${ASSETS_SOURCES}
+        portal/assets/asset_extensions.h)
 target_sources(portal-assets PUBLIC
         FILE_SET HEADERS
         BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
@@ -30,6 +34,7 @@ target_link_libraries(portal-assets
         PUBLIC
         portal::core
         portal::serialization
+        unofficial::concurrentqueue::concurrentqueue
 )
 
 install(TARGETS portal-assets
