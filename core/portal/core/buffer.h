@@ -20,6 +20,9 @@ struct Buffer
     Buffer():
         data(nullptr), size(0) {}
 
+    Buffer(nullptr_t):
+        data(nullptr), size(0) {}
+
     Buffer(void* data, const size_t size):
         data(data), size(size) {}
 
