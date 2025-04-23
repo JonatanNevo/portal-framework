@@ -22,6 +22,7 @@ public:
 
     explicit operator bool() const noexcept;
     auto operator<=>(const DelegateHandle& other) const;
+    bool operator==(const DelegateHandle& other) const noexcept;
 
     bool is_valid() const noexcept;
     void reset() noexcept;

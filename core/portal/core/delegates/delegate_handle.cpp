@@ -55,6 +55,11 @@ auto DelegateHandle::operator<=>(const DelegateHandle& other) const
     return id <=> other.id;
 }
 
+bool DelegateHandle::operator==(const DelegateHandle& other) const noexcept
+{
+    return id == other.id;
+}
+
 bool DelegateHandle::is_valid() const noexcept
 {
     return id != INVALID_ID;

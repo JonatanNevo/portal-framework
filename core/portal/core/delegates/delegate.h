@@ -21,60 +21,129 @@
 
 namespace portal
 {
-
 class DelegateBase
 {
 public:
-    constexpr DelegateBase() noexcept;
-    virtual ~DelegateBase() noexcept;
-    DelegateBase(const DelegateBase& other);
-    DelegateBase(DelegateBase&& other) noexcept;
-    DelegateBase& operator=(const DelegateBase& other);
-    DelegateBase& operator=(DelegateBase&& other) noexcept;
+    constexpr DelegateBase() noexcept = default;
+
+    virtual ~DelegateBase() noexcept
+    {
+        release();
+    }
+
+    DelegateBase(const DelegateBase& other)
+    {
+        if (other.allocator.has_allocation())
+        {
+            allocator.allocate(other.allocator.get_size());
+            other.get_delegate()->clone(allocator.get_allocation());
+        }
+    }
+
+    DelegateBase(DelegateBase&& other) noexcept:
+        allocator(std::move(other.allocator))
+    {
+    }
+
+    DelegateBase& operator=(const DelegateBase& other)
+    {
+        release();
+        if (other.allocator.has_allocation())
+        {
+            allocator.allocate(other.allocator.get_size());
+            other.get_delegate()->clone(allocator.get_allocation());
+        }
+        return *this;
+    }
+
+    DelegateBase& operator=(DelegateBase&& other) noexcept
+    {
+        release();
+        allocator = std::move(other.allocator);
+        return *this;
+    }
 
     /**
      * Returns the owner if exists
      */
-    [[nodiscard]] const void* get_owner() const;
+    [[nodiscard]] const void* get_owner() const
+    {
+        if (allocator.has_allocation())
+        {
+            return get_delegate()->get_owner();
+        }
+        return nullptr;
+    }
 
     /**
      * Returns the allocation size of the delegate
      */
-    [[nodiscard]] size_t get_size() const;
+    [[nodiscard]] size_t get_size() const
+    {
+        return allocator.get_size();
+    }
 
     /**
      * Clears the delegate if it's bound to the given object
      */
-    void clear_if_bound_to(void* object);
+    void clear_if_bound_to(void* object)
+    {
+        if (object && is_bound_to(object))
+        {
+            release();
+        }
+    }
 
     /**
      * Clears the cound delegate
      */
-    void clear();
+    void clear()
+    {
+        release();
+    }
 
     /**
      * Checks if the delegate is bound to a function
      */
-    [[nodiscard]] bool is_bound() const;
+    [[nodiscard]] bool is_bound() const
+    {
+        return allocator.has_allocation();
+    }
 
     /**
      * Checks if the delegate is bound to a given user object
      */
-    bool is_bound_to(const void* object) const;
+    bool is_bound_to(const void* object) const
+    {
+        if (object == nullptr || !allocator.has_allocation())
+            return false;
+        return get_delegate()->get_owner() == object;
+    }
 
 protected:
     /**
      * Releases the underlying allocation
      */
-    void release();
+    void release()
+    {
+        if (allocator.has_allocation())
+        {
+            get_delegate()->~DelegateCallbackBase();
+            allocator.release();
+        }
+    }
 
     /**
      * Gets the underlying delegate callback
      */
-    [[nodiscard]] DelegateCallbackBase* get_delegate() const;
+    [[nodiscard]] DelegateCallbackBase* get_delegate() const
+    {
+        return static_cast<DelegateCallbackBase*>(allocator.get_allocation());
+    }
 
     InlineAllocator<DELEGATE_INLINE_ALLOCATION_SIZE> allocator;
 };
+
 
 /**
  * A single cast delegate the can be bound to a single function or member function.
@@ -96,7 +165,7 @@ public:
 
     /* Delegate from instance and member function */
     template <typename T, typename... Payload>
-    [[nodiscard]] Delegate create_raw(T* object, NonConstMemberFunction<T, Payload> function, Payload&&... args)
+    [[nodiscard]] static Delegate create_raw(T* object, NonConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         Delegate delegate;
         delegate.template bind<RawDelegate<false, T, RetVal(Args...), Payload...>>(object, function, std::forward<Payload>(args)...);
@@ -104,7 +173,7 @@ public:
     }
 
     template <typename T, typename... Payload>
-    [[nodiscard]] Delegate create_raw(T* object, ConstMemberFunction<T, Payload> function, Payload&&... args)
+    [[nodiscard]] static Delegate create_raw(T* object, ConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         Delegate delegate;
         delegate.template bind<RawDelegate<true, T, RetVal(Args...), Payload...>>(object, function, std::forward<Payload>(args)...);
@@ -113,16 +182,20 @@ public:
 
     /* Delegate from static / global function, does not bind to an object */
     template <typename... Payload>
-    [[nodiscard]] Delegate create_static(RetVal (*function)(Args..., Payload...), Payload... args)
+    [[nodiscard]] static Delegate create_static(RetVal (*function)(Args..., Payload...), Payload... args)
     {
         Delegate delegate;
-        delegate.template bind<StaticDelegate<RetVal, Args...>>(function, std::forward<Payload>(args)...);
+        delegate.template bind<StaticDelegate<RetVal(Args...)>>(function, std::forward<Payload>(args)...);
         return delegate;
     }
 
     /* Delegate from a shared ptr */
     template <typename T, typename... Payload>
-    [[nodiscard]] Delegate create_shared_ptr(const std::shared_ptr<T>& object, NonConstMemberFunction<T, Payload> function, Payload&&... args)
+    [[nodiscard]] static Delegate create_shared_ptr(
+        const std::shared_ptr<T>& object,
+        NonConstMemberFunction<T, Payload...> function,
+        Payload&&... args
+    )
     {
         Delegate delegate;
         delegate.template bind<SharedPointerDelegate<false, T, RetVal(Args...), Payload...>>(object, function, std::forward<Payload>(args)...);
@@ -130,7 +203,7 @@ public:
     }
 
     template <typename T, typename... Payload>
-    [[nodiscard]] Delegate create_shared_ptr(const std::shared_ptr<T>& object, ConstMemberFunction<T, Payload> function, Payload&&... args)
+    [[nodiscard]] static Delegate create_shared_ptr(const std::shared_ptr<T>& object, ConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         Delegate delegate;
         delegate.template bind<SharedPointerDelegate<true, T, RetVal(Args...), Payload...>>(object, function, std::forward<Payload>(args)...);
@@ -139,26 +212,27 @@ public:
 
     /* Create a delegate from lambda */
     template <typename TLambda, typename... Payload>
-    [[nodiscard]] Delegate create_lambda(TLambda&& lambda, Payload... args)
+    [[nodiscard]] static Delegate create_lambda(TLambda&& lambda, Payload... args)
     {
         Delegate delegate;
         using LambdaType = std::decay_t<TLambda>;
         delegate.template bind<LambdaDelegate<LambdaType, RetVal(Args...), Payload...>>(
             std::forward<LambdaType>(lambda),
-            std::forward<Payload>(args)...);
+            std::forward<Payload>(args)...
+        );
         return delegate;
     }
 
     /* Binds to an instance and member function */
     template <typename T, typename... Payload>
-    void bind_raw(T* object, NonConstMemberFunction<T, Payload> function, Payload&&... args)
+    void bind_raw(T* object, NonConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         static_assert(!std::is_const_v<T>, "Cannot bind non const function to a const object");
         *this = create_raw(object, function, std::forward<Payload>(args)...);
     }
 
     template <typename T, typename... Payload>
-    void bind_raw(T* object, ConstMemberFunction<T, Payload> function, Payload&&... args)
+    void bind_raw(T* object, ConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         *this = create_raw(object, function, std::forward<Payload>(args)...);
     }
@@ -179,14 +253,14 @@ public:
 
     /* Binds from a shared ptr */
     template <typename T, typename... Payload>
-    void bind_shared_ptr(const std::shared_ptr<T>& object, NonConstMemberFunction<T, Payload> function, Payload&&... args)
+    void bind_shared_ptr(const std::shared_ptr<T>& object, NonConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         static_assert(!std::is_const_v<T>, "Cannot bind non const function to a const object");
         *this = create_shared_ptr(object, function, std::forward<Payload>(args)...);
     }
 
     template <typename T, typename... Payload>
-    void bind_shared_ptr(const std::shared_ptr<T>& object, ConstMemberFunction<T, Payload> function, Payload&&... args)
+    void bind_shared_ptr(const std::shared_ptr<T>& object, ConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         *this = create_shared_ptr(object, function, std::forward<Payload>(args)...);
     }
@@ -195,14 +269,14 @@ public:
     RetVal execute(Args... args) const
     {
         PORTAL_CORE_ASSERT(allocator.has_allocation(), "Delegate is not bound to a function");
-        return dynamic_cast<DelegateType*>(allocator.get_allocation())->execute(std::forward<Args>(args)...);
+        return static_cast<DelegateType*>(allocator.get_allocation())->execute(std::forward<Args>(args)...);
     }
 
     // TODO: change return value to optional?
     RetVal execute_if_bound(Args... args) const
     {
         if (is_bound())
-            return dynamic_cast<DelegateType*>(allocator.get_allocation())->execute(std::forward<Args>(args)...);
+            return static_cast<DelegateType*>(allocator.get_allocation())->execute(std::forward<Args>(args)...);
         return RetVal();
     }
 
@@ -243,12 +317,14 @@ private:
         }
 
         DelegateHandlerPair(const DelegateHandle& handle, const DelegateType& callback) :
-            handle(handle), callback(callback)
+            handle(handle),
+            callback(callback)
         {
         }
 
         DelegateHandlerPair(const DelegateHandle& handle, DelegateType&& callback) :
-            handle(handle), callback(std::move(callback))
+            handle(handle),
+            callback(std::move(callback))
         {
         }
     };
@@ -264,15 +340,17 @@ public:
     MulticastDelegate& operator=(const MulticastDelegate& other) = default;
 
     MulticastDelegate(MulticastDelegate&& other) noexcept :
-        delegates(std::move(other.delegates)),
-        locks(std::move(other.locks))
+        delegates(std::move(other.delegates))
     {
+        locks.store(other.locks.load());
+        other.locks.store(0);
     }
 
     MulticastDelegate& operator=(MulticastDelegate&& other) noexcept
     {
         delegates = std::move(other.delegates);
-        locks = std::move(other.locks);
+        locks.store(other.locks.load());
+        other.locks.store(0);
         return *this;
     }
 
@@ -330,13 +408,13 @@ public:
 
     /* Adds a member function */
     template <typename T, typename... Payload>
-    DelegateHandle add_raw(T* object, NonConstMemberFunction<T, Payload> function, Payload&&... args)
+    DelegateHandle add_raw(T* object, NonConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         return add(DelegateType::create_raw(object, function, std::forward<Payload>(args)...));
     }
 
     template <typename T, typename... Payload>
-    DelegateHandle add_raw(T* object, ConstMemberFunction<T, Payload> function, Payload&&... args)
+    DelegateHandle add_raw(T* object, ConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         return add(DelegateType::create_raw(object, function, std::forward<Payload>(args)...));
     }
@@ -357,13 +435,13 @@ public:
 
     /* Adds a shared ptr */
     template <typename T, typename... Payload>
-    DelegateHandle add_shared_ptr(const std::shared_ptr<T>& object, NonConstMemberFunction<T, Payload> function, Payload&&... args)
+    DelegateHandle add_shared_ptr(const std::shared_ptr<T>& object, NonConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         return add(DelegateType::create_shared_ptr(object, function, std::forward<Payload>(args)...));
     }
 
     template <typename T, typename... Payload>
-    DelegateHandle add_shared_ptr(const std::shared_ptr<T>& object, ConstMemberFunction<T, Payload> function, Payload&&... args)
+    DelegateHandle add_shared_ptr(const std::shared_ptr<T>& object, ConstMemberFunction<T, Payload...> function, Payload&&... args)
     {
         return add(DelegateType::create_shared_ptr(object, function, std::forward<Payload>(args)...));
     }
@@ -490,10 +568,10 @@ public:
     void broadcast(Args... args)
     {
         lock();
-        for (const auto& delegate_pair: delegates)
+        for (auto& delegate_pair : delegates)
         {
             if (delegate_pair.handle.is_valid())
-                delegate_pair.callback(args...);
+                delegate_pair.callback.execute(args...);
         }
         unlock();
     }
@@ -531,3 +609,6 @@ private:
     std::atomic<uint32_t> locks = 0;
 };
 } // portal
+
+#define DECLARE_DELEGATE(name, ...) using name = portal::Delegate<void, __VA_ARGS__>;
+#define DECLARE_DELEGATE_RET(name, ret, ...) using name = portal::Delegate<ret, __VA_ARGS__>;

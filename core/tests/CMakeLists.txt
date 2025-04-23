@@ -13,7 +13,7 @@ file(GLOB_RECURSE TEST_HEADERS "*.h")
 
 file(GLOB_RECURSE BENCHMARK_SOURCES "*benchmark.cpp")
 
-add_executable(portal-core-test ${TEST_SOURCES} ${TEST_HEADERS})
+add_executable(portal-core-test ${TEST_SOURCES} ${TEST_HEADERS} main.cpp)
 target_link_libraries(portal-core-test
         portal-core
         GTest::gtest

@@ -9,20 +9,21 @@ namespace portal
 
 namespace delegates
 {
-    template <bool IsConst, typename Object, typename RetVal, typename... Args>
-    struct MemberFunction;
+    template<bool IsConst, typename Object, typename RetVal, typename ...Args>
+     struct MemberFunction;
 
-    template <typename Object, typename RetVal, typename... Args>
+    template<typename Object, typename RetVal, typename ...Args>
     struct MemberFunction<true, Object, RetVal, Args...>
     {
         using Type = RetVal(Object::*)(Args...) const;
     };
 
-    template <typename Object, typename RetVal, typename... Args>
+    template<typename Object, typename RetVal, typename ...Args>
     struct MemberFunction<false, Object, RetVal, Args...>
     {
         using Type = RetVal(Object::*)(Args...);
     };
+
 }
 
 /**

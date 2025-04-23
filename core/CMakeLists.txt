@@ -27,13 +27,7 @@ option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-add_library(portal-core STATIC ${CORE_SOURCES}
-        portal/core/delegates/raw_delegate.h
-        portal/core/delegates/lambda_delegate.h
-        portal/core/delegates/shared_pointer_delegate.h
-        portal/core/delegates/inline_allocator.h
-        portal/core/delegates/delegate.cpp
-        tests/delegates_tests.cpp)
+add_library(portal-core STATIC ${CORE_SOURCES})
 add_library(portal::core ALIAS portal-core)
 
 target_sources(portal-core PUBLIC
