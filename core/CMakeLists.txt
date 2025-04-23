@@ -10,8 +10,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-file(GLOB CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
-file(GLOB CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
+file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
+file(GLOB_RECURSE CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
 
 file(GLOB_RECURSE WINDOWS_SOURCES CONFIGURE_DEPENDS "portal/platform/windows/*.cpp")
 file(GLOB_RECURSE WINDOWS_HEADER CONFIGURE_DEPENDS "portal/platform/windows/*.h")
@@ -22,12 +22,18 @@ file(GLOB_RECURSE MACOS_HEADER CONFIGURE_DEPENDS "portal/platform/macos/*.h")
 file(GLOB_RECURSE LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/linux/*.cpp")
 file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/linux/*.h")
 
-option(PORTAL_BUILD_TESTS "Whether or not to build the tests" OFF)
+option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-add_library(portal-core STATIC ${CORE_SOURCES})
+add_library(portal-core STATIC ${CORE_SOURCES}
+        portal/core/delegates/raw_delegate.h
+        portal/core/delegates/lambda_delegate.h
+        portal/core/delegates/shared_pointer_delegate.h
+        portal/core/delegates/inline_allocator.h
+        portal/core/delegates/delegate.cpp
+        tests/delegates_tests.cpp)
 add_library(portal::core ALIAS portal-core)
 
 target_sources(portal-core PUBLIC

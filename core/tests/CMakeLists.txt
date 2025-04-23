@@ -24,8 +24,8 @@ include(GoogleTest)
 gtest_discover_tests(portal-core-test)
 
 
-add_executable(portal-core-benchmark ${BENCHMARK_SOURCES})
-target_link_libraries(portal-core-benchmark
-        portal-core
-        benchmark::benchmark
-)
+#add_executable(portal-core-benchmark ${BENCHMARK_SOURCES})
+#target_link_libraries(portal-core-benchmark
+#        portal-core
+#        benchmark::benchmark
+#)
