@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.30)
-project(portal-application)
+
+file(READ "version" PROJECT_VERSION)
+string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
+project(portal-application VERSION ${PROJECT_VERSION})
+
+message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -51,9 +56,11 @@ install(EXPORT portal-application-targets
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/portal-application-config-version.cmake"
-        VERSION 1.0.0
+        VERSION ${PROJECT_VERSION}
         COMPATIBILITY SameMajorVersion
 )
+# To free it up for other add_subdirectories
+unset(PROJECT_VERSION)
 
 configure_package_config_file(
         "../cmake/portal-application-config.cmake.in"

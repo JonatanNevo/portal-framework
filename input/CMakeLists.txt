@@ -1,3 +1,15 @@
+cmake_minimum_required(VERSION 3.30)
+
+file(READ "version" PROJECT_VERSION)
+string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
+project(portal-input VERSION ${PROJECT_VERSION})
+
+message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 file(GLOB_RECURSE INPUT_SOURCES CONFIGURE_DEPENDS "portal/input/*.cpp")
 file(GLOB_RECURSE INPUT_HEADERS CONFIGURE_DEPENDS "portal/input/*.h")
 
@@ -45,9 +57,10 @@ install(EXPORT portal-input-targets
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/portal-input-config-version.cmake"
-        VERSION 1.0.0
+        VERSION ${PROJECT_VERSION}
         COMPATIBILITY SameMajorVersion
 )
+unset(PROJECT_VERSION)
 
 configure_package_config_file(
         "../cmake/portal-input-config.cmake.in"
