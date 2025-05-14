@@ -45,6 +45,12 @@ install(TARGETS portal-assets
         FILE_SET HEADERS DESTINATION include
 )
 
+if(MSVC)
+    target_compile_options(portal-assets PRIVATE /W4 /WX)
+else()
+    target_compile_options(portal-assets PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 # Generate and install the export targets
 install(EXPORT portal-assets-targets
         FILE portal-assets-targets.cmake

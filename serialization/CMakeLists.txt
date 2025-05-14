@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
 
-file(READ "version" PROJECT_VERSION)
+file(READ "version.txt" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
 project(portal-serialization VERSION ${PROJECT_VERSION})
 
@@ -10,12 +10,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+find_package(nlohmann_json CONFIG REQUIRED)
+
 file(GLOB_RECURSE SER_SOURCES CONFIGURE_DEPENDS "portal/serialization/*.cpp")
 file(GLOB_RECURSE SER_HEADERS CONFIGURE_DEPENDS "portal/serialization/*.h")
-file(GLOB_RECURSE SER_IMP_SOURCES CONFIGURE_DEPENDS "portal/serialization/impl/*.cpp")
-file(GLOB_RECURSE SER_IMP_HEADERS CONFIGURE_DEPENDS "portal/serialization/impl/*.h")
-
-find_package(nlohmann_json CONFIG REQUIRED)
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
@@ -38,6 +36,12 @@ target_link_libraries(portal-serialization
         portal::core
         nlohmann_json::nlohmann_json
 )
+
+if(MSVC)
+    target_compile_options(portal-serialization PRIVATE /W4 /WX)
+else()
+    target_compile_options(portal-serialization PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
 
 install(TARGETS portal-serialization
         EXPORT portal-serialization-targets

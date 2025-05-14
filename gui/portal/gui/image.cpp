@@ -59,29 +59,29 @@ namespace portal
 
     Image::Image(const std::string_view path) : file_path(path)
     {
-        int width, height, channels;
+        int im_width, im_height, channels;
         uint8_t* data = nullptr;
 
         if (stbi_is_hdr(file_path.c_str()))
         {
-            data = reinterpret_cast<uint8_t*>(stbi_loadf(file_path.c_str(), &width, &height, &channels, STBI_rgb_alpha));
+            data = reinterpret_cast<uint8_t*>(stbi_loadf(file_path.c_str(), &im_width, &im_height, &channels, STBI_rgb_alpha));
             format = ImageFormat::RGBA32F;
         }
         else
         {
-            data = stbi_load(file_path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+            data = stbi_load(file_path.c_str(), &im_width, &im_height, &channels, STBI_rgb_alpha);
             format = ImageFormat::RGBA;
         }
 
-        this->width = width;
-        this->height = height;
+        this->width = im_width;
+        this->height = im_height;
 
-        allocate_memory(width * height * utils::bytes_per_pixel(format));
+        allocate_memory(im_width * im_height * utils::bytes_per_pixel(format));
         set_data(data);
         stbi_image_free(data);
     }
 
-    Image::Image(const size_t width, const size_t height, const ImageFormat format, const void* data) : width(width), height(height), format(format)
+    Image::Image(const uint32_t width, const uint32_t height, const ImageFormat format, const void* data) : width(width), height(height), format(format)
     {
         allocate_memory(width * height * utils::bytes_per_pixel(format));
         if (data)
@@ -91,15 +91,15 @@ namespace portal
     Image::~Image() { release(); }
 
 
-    void Image::allocate_memory(size_t size)
+    void Image::allocate_memory(size_t /*size*/)
     {
         const vk::Device device = GUIApplication::get_device();
-        const vk::Format format = utils::format_to_vulkan_format(this->format);
+        const vk::Format vk_format = utils::format_to_vulkan_format(this->format);
 
         const vk::ImageCreateInfo image_create_info(
             {},
             vk::ImageType::e2D,
-            format,
+            vk_format,
             vk::Extent3D(width, height, 1),
             1,
             1,
@@ -114,7 +114,7 @@ namespace portal
         device.bindImageMemory(image, memory, 0);
 
         constexpr vk::ImageSubresourceRange subresource_range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-        const vk::ImageViewCreateInfo image_view_info({}, image, vk::ImageViewType::e2D, format, {}, subresource_range);
+        const vk::ImageViewCreateInfo image_view_info({}, image, vk::ImageViewType::e2D, vk_format, {}, subresource_range);
         image_view = device.createImageView(image_view_info);
 
         vk::SamplerCreateInfo sample_info(
@@ -126,7 +126,7 @@ namespace portal
             vk::SamplerAddressMode::eRepeat,
             vk::SamplerAddressMode::eRepeat,
             -1000.f,
-            1.f,
+            true,
             1000.f);
         sampler = device.createSampler(sample_info);
 
@@ -230,25 +230,25 @@ namespace portal
         GUIApplication::flush_command_buffer(command_buffer);
     }
 
-    void Image::resize(size_t width, size_t height)
+    void Image::resize(uint32_t new_width, uint32_t new_height)
     {
-        if (image && width == this->width && height == this->height)
+        if (image && new_width == this->width && new_height == this->height)
             return;
 
-        this->width = width;
-        this->height = height;
+        this->width = new_width;
+        this->height = new_height;
 
         release();
-        allocate_memory(width * height * utils::bytes_per_pixel(format));
+        allocate_memory(new_width * new_height * utils::bytes_per_pixel(format));
     }
 
 
-    void* Image::decode(const void* data, const size_t length, size_t& out_width, size_t& out_height)
+    void* Image::decode(const void* data, const size_t length, uint32_t& out_width, uint32_t& out_height)
     {
         int temp_width, temp_height, channels;
         uint8_t* temp_data = nullptr;
 
-        temp_data = stbi_load_from_memory(static_cast<const stbi_uc*>(data), length, &temp_width, &temp_height, &channels, STBI_rgb_alpha);
+        temp_data = stbi_load_from_memory(static_cast<const stbi_uc*>(data), static_cast<int>(length), &temp_width, &temp_height, &channels, STBI_rgb_alpha);
 
         out_width = temp_width;
         out_height = temp_height;

@@ -26,10 +26,10 @@ portal::Buffer FileAssetSource::load_asset()
 
 uint32_t FileAssetSource::get_id() const
 {
-    return std::hash<std::string>{}(path.string());
+    return static_cast<uint32_t>(std::hash<std::string>{}(path.string()));
 }
 
-NetworkAssetSource::NetworkAssetSource(std::string_view url)
+NetworkAssetSource::NetworkAssetSource(std::string_view)
 {
 }
 

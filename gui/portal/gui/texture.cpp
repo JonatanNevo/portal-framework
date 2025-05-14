@@ -20,9 +20,9 @@ Texture::Texture(const TextureSpecification spec):
     if (!g_default_image)
     {
         const auto image_data = portal::FileSystem::read_file_binary("resources/textures/missing_texture.png");
-        size_t width, height;
-        auto data = Image::decode(image_data.data, image_data.size, width, height);
-        g_default_image = std::make_shared<Image>(width, height, ImageFormat::RGBA, data);
+        uint32_t width, height;
+        auto default_data = Image::decode(image_data.data, image_data.size, width, height);
+        g_default_image = std::make_shared<Image>(width, height, ImageFormat::RGBA, default_data);
     }
 }
 
@@ -37,7 +37,7 @@ std::shared_ptr<Image>& Texture::get_image()
 
 void Texture::set_data(Buffer new_data)
 {
-    size_t width, height;
+    uint32_t width, height;
     data = new_data;
     void* decoded_data = portal::Image::decode(
         new_data.data,

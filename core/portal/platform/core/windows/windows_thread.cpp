@@ -14,15 +14,15 @@ namespace portal
 
 Thread::Thread(const std::string& name): name(name  ) {}
 
-void Thread::set_name(const std::string& name)
+void Thread::set_name(const std::string& in_name)
 {
     const HANDLE thread_handle = thread.native_handle();
-    const std::wstring w_name(name.begin(), name.end());
+    const std::wstring w_name(in_name.begin(), in_name.end());
 
     const auto result = SetThreadDescription(thread_handle, w_name.c_str());
     if (result == 0)
     {
-        LOG_CORE_WARN("Thread", "Failed to set thread name: {}", name);
+        LOG_CORE_WARN("Thread", "Failed to set thread name: {}", in_name);
     }
     // SetThreadAffinityMask(thread_handle, 8); // TODO: Do I want this?
 }

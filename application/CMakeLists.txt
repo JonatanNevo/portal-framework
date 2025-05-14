@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
 
-file(READ "version" PROJECT_VERSION)
+file(READ "version.txt" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
 project(portal-application VERSION ${PROJECT_VERSION})
 
@@ -36,6 +36,12 @@ target_link_libraries(portal-application
 )
 
 target_include_directories(portal-application PRIVATE ${Stb_INCLUDE_DIR})
+
+if(MSVC)
+    target_compile_options(portal-application PRIVATE /W4 /WX)
+else()
+    target_compile_options(portal-application PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
 
 install(TARGETS portal-application
         EXPORT portal-application-targets

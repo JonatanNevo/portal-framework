@@ -23,7 +23,7 @@ public:
         set_name(name);
     }
 
-    void set_name(const std::string& name);
+    void set_name(const std::string& in_name);
     void join();
 
     std::thread::id get_id() const;

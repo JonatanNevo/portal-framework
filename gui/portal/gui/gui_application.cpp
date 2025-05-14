@@ -17,6 +17,7 @@
 #include <stb_image.h>
 #include <vulkan/vulkan.hpp>
 
+#include "../../../input/portal/input/input.h"
 #include "portal/core/assert.h"
 #include "portal/core/log.h"
 
@@ -28,7 +29,7 @@ extern bool g_application_running;
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
-// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
+// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version.txt.txt.txt.txt.txt.txt of Visual Studio.
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
@@ -41,7 +42,7 @@ extern bool g_application_running;
 static vk::Instance g_instance = nullptr;
 static vk::PhysicalDevice g_physical_device = nullptr;
 static vk::Device g_device = nullptr;
-static uint32_t g_queue_family = -1;
+static uint32_t g_queue_family = std::numeric_limits<uint32_t>::max();
 static vk::Queue g_queue = nullptr;
 static vk::DebugReportCallbackEXT g_debug_report = nullptr;
 static vk::PipelineCache g_pipeline_cache = nullptr;
@@ -374,11 +375,11 @@ void GUIApplication::init()
 
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    window_handle = glfwCreateWindow(specs.width, specs.height, specs.name.c_str(), nullptr, nullptr);
+    window_handle = glfwCreateWindow(static_cast<int>(specs.width), static_cast<int>(specs.height), specs.name.c_str(), nullptr, nullptr);
 
     if (specs.center_window)
     {
-        glfwSetWindowPos(window_handle, monitorx + (mode->width - specs.width) / 2, monitory + (mode->height - specs.height) / 2);
+        glfwSetWindowPos(window_handle, monitorx + (mode->width - static_cast<int>(specs.width)) / 2, monitory + (mode->height - static_cast<int>(specs.height)) / 2);
         glfwSetWindowAttrib(window_handle, GLFW_RESIZABLE, specs.resizeable ? GLFW_TRUE : GLFW_FALSE);
     }
 
@@ -400,7 +401,7 @@ void GUIApplication::init()
         stbi_image_free(icon.pixels);
     }
 
-    glfwSetWindowUserPointer(window_handle, this);
+    // glfwSetWindowUserPointer(window_handle, this);
 
     uint32_t extension_count = 0;
     const char** extensions = glfwGetRequiredInstanceExtensions(&extension_count);

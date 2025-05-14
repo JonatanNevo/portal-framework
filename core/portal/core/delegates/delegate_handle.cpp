@@ -27,7 +27,7 @@ constexpr DelegateHandle::DelegateHandle() noexcept:
 {
 }
 
-DelegateHandle::DelegateHandle(bool generate_id) noexcept:
+DelegateHandle::DelegateHandle(bool) noexcept:
     id(get_next_id())
 {
 }

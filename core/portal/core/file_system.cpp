@@ -286,17 +286,17 @@ FileStatus FileSystem::try_open_file_and_wait(const std::filesystem::path& path,
 
 // TODO: Implement these
 
-std::filesystem::path FileSystem::open_file_dialog(const std::initializer_list<FileDialogFilterItem> in_filters)
+std::filesystem::path FileSystem::open_file_dialog(const std::initializer_list<FileDialogFilterItem>)
 {
     return {};
 }
 
-std::filesystem::path FileSystem::open_folder_dialog(const char* initial_folder)
+std::filesystem::path FileSystem::open_folder_dialog(const char*)
 {
     return {};
 }
 
-std::filesystem::path FileSystem::save_file_dialog(const std::initializer_list<FileDialogFilterItem> in_filters)
+std::filesystem::path FileSystem::save_file_dialog(const std::initializer_list<FileDialogFilterItem>)
 {
     return {};
 }

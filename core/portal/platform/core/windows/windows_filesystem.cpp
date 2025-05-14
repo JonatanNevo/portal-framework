@@ -107,10 +107,15 @@ bool FileSystem::set_environment_variable(const std::string& name, const std::st
 
 std::string FileSystem::get_environment_variable(const std::string& name)
 {
-    const char* value = std::getenv(name.c_str());
-    if (value)
-        return {value};
-    else
-        return {};
+    char* value = nullptr;
+    size_t len = 0;
+
+    if (_dupenv_s(&value, &len, name.c_str()) == 0 && value != nullptr)
+    {
+        std::string result(value);
+        free(value); // Free the allocated memory
+        return result;
+    }
+    return {};
 }
 }

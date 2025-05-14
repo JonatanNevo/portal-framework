@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
 
-file(READ "version" PROJECT_VERSION)
+file(READ "version.txt" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
 project(portal-gui VERSION ${PROJECT_VERSION})
 
@@ -25,12 +25,11 @@ option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #
 if (PORTAL_FIND_PACAKGE)
     find_package(portal-application CONFIG REQUIRED)
     find_package(portal-assets CONFIG REQUIRED)
+    find_package(portal-input CONFIG REQUIRED)
 endif ()
 unset(PORTAL_FIND_PACAKGE CACHE)
 
-add_library(portal-gui STATIC ${APP_SOURCES} ${GUI_SOURCES} ${GUI_UI_SOURCES}
-        portal/gui/texture.cpp
-        portal/gui/texture.h)
+add_library(portal-gui STATIC ${GUI_SOURCES} ${GUI_UI_SOURCES})
 
 target_sources(portal-gui PUBLIC
         FILE_SET HEADERS
@@ -55,10 +54,18 @@ target_link_libraries(portal-gui
         Vulkan::Vulkan
         portal::application
         portal::assets
+        portal::input
         glfw
 )
 
 target_include_directories(portal-gui PRIVATE ${Stb_INCLUDE_DIR})
+
+if(MSVC)
+    target_compile_options(portal-gui PRIVATE /W4 /WX)
+else()
+    target_compile_options(portal-gui PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
+
 
 install(TARGETS portal-gui
         EXPORT portal-gui-targets

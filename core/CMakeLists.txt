@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
 
-file(READ "version" PROJECT_VERSION)
+file(READ "version.txt" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
 project(portal-core VERSION ${PROJECT_VERSION})
 
@@ -13,14 +13,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
 file(GLOB_RECURSE CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
 
-file(GLOB_RECURSE WINDOWS_SOURCES CONFIGURE_DEPENDS "portal/platform/windows/*.cpp")
-file(GLOB_RECURSE WINDOWS_HEADER CONFIGURE_DEPENDS "portal/platform/windows/*.h")
+file(GLOB_RECURSE WINDOWS_SOURCES CONFIGURE_DEPENDS "portal/platform/core/windows/*.cpp")
+file(GLOB_RECURSE WINDOWS_HEADER CONFIGURE_DEPENDS "portal/platform/core/windows/*.h")
 
-file(GLOB_RECURSE MACOS_SOURCES CONFIGURE_DEPENDS "portal/platform/macos/*.cpp")
-file(GLOB_RECURSE MACOS_HEADER CONFIGURE_DEPENDS "portal/platform/macos/*.h")
+file(GLOB_RECURSE MACOS_SOURCES CONFIGURE_DEPENDS "portal/platform/core/macos/*.cpp")
+file(GLOB_RECURSE MACOS_HEADER CONFIGURE_DEPENDS "portal/platform/core/macos/*.h")
 
-file(GLOB_RECURSE LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/linux/*.cpp")
-file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/linux/*.h")
+file(GLOB_RECURSE LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/core/linux/*.cpp")
+file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/core/linux/*.h")
 
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 
@@ -53,6 +53,7 @@ if(WIN32)
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
             FILES ${WINDOWS_HEADER}
     )
+    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=windows)
 
 elseif (APPLE)
     set(PORTAL_PLATFORM_MACOS ON CACHE BOOL "MacOS platform" FORCE)
@@ -64,6 +65,7 @@ elseif (APPLE)
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
             FILES ${MACOS_HEADER}
     )
+    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=macos)
 
 elseif(UNIX)
     set(PORTAL_PLATFORM_LINUX ON CACHE BOOL "Linux platform" FORCE)
@@ -75,6 +77,7 @@ elseif(UNIX)
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
             FILES ${LINUX_HEADER}
     )
+    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=unix)
 
 else()
     message(FATAL_ERROR "Unsupported platform")
@@ -99,6 +102,7 @@ if(MSVC)
             "/Zc:__cplusplus"
             "$<$<CONFIG:Release>:/Zi>"
     )
+    target_compile_options(portal-core PRIVATE /W4 /WX)
 
     target_link_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:/DEBUG /OPT:REF /OPT:ICF>"
@@ -107,6 +111,8 @@ else()
     target_compile_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:-g>"
     )
+    target_compile_options(portal-core PRIVATE -Wall -Wextra -Wpedantic -Werror)
+
 endif()
 
 
