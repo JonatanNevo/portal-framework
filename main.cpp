@@ -83,25 +83,6 @@ portal::Application* portal::create_application(int argc, char** argv)
         .name = "Example App"
     };
 
-    portal::network::Connection connection;
-    connection.connect("google.com:1234");
-
-    std::vector<uint8_t> data(100);
-    Buffer buffer(data.data(), data.size());
-    BufferStreamWriter writer(buffer);
-    std::map<int, std::string> mapping = {
-        {1, "one"},
-        {2, "two"},
-        {3, "three"}
-    };
-    BinarySerializer serializer(writer);
-    serializer << mapping;
-
-    BufferStreamReader reader(buffer);
-    BinaryDeserializer deserializer(reader);
-    std::map<int, std::string> deserialized;
-    deserializer >> deserialized;
-
     auto* app = new GUIApplication(specs);
     std::shared_ptr<TestLayer> layer = std::make_shared<TestLayer>();
     app->push_layer(layer);

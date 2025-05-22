@@ -15,8 +15,12 @@ struct Buffer
 {
     void* data;
     size_t size;
+    bool allocated = false;
 
     Buffer():
+        data(nullptr), size(0) {}
+
+    Buffer(nullptr_t):
         data(nullptr), size(0) {}
 
     Buffer(void* data, const size_t size):
@@ -51,6 +55,7 @@ struct Buffer
 
         data = new uint8_t[new_size];
         this->size = new_size;
+        allocated = true;
     }
 
     void release()
@@ -69,20 +74,20 @@ struct Buffer
     template <typename T>
     T& read(const size_t offset = 0)
     {
-        PORTAL_CORE_ASSERT(offset >= size, "Buffer overflow");
+        PORTAL_CORE_ASSERT(offset <= size, "Buffer overflow");
         return *reinterpret_cast<T*>(static_cast<uint8_t*>(data) + offset);
     }
 
     template <typename T>
     const T& read(const size_t offset = 0) const
     {
-        PORTAL_CORE_ASSERT(offset >= size, "Buffer overflow");
+        PORTAL_CORE_ASSERT(offset <= size, "Buffer overflow");
         return *reinterpret_cast<T*>(static_cast<uint8_t*>(data) + offset);
     }
 
     [[nodiscard]] uint8_t* read_bytes(const size_t bytes_size, const size_t offset) const
     {
-        PORTAL_ASSERT(offset + bytes_size > size, "Buffer overflow");
+        PORTAL_CORE_ASSERT(offset + bytes_size <= size, "Buffer overflow");
         auto* buffer = new uint8_t[bytes_size];
         memcpy(buffer, static_cast<uint8_t*>(data) + offset, bytes_size);
         return buffer;

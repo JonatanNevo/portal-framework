@@ -2,6 +2,8 @@
 
 include(CMakeFindDependencyMacro)
 find_dependency(portal-application)
+find_dependency(portal-input)
+find_dependency(portal-assets)
 find_dependency(imgui)
 find_dependency(Vulkan)
 find_dependency(Stb)

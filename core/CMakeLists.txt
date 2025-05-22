@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.30)
 
-file(READ "version" PROJECT_VERSION)
+file(READ "version.txt" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
 project(portal-core VERSION ${PROJECT_VERSION})
 
@@ -12,6 +12,17 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
 file(GLOB_RECURSE CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
+
+file(GLOB_RECURSE WINDOWS_SOURCES CONFIGURE_DEPENDS "portal/platform/core/windows/*.cpp")
+file(GLOB_RECURSE WINDOWS_HEADER CONFIGURE_DEPENDS "portal/platform/core/windows/*.h")
+
+file(GLOB_RECURSE MACOS_SOURCES CONFIGURE_DEPENDS "portal/platform/core/macos/*.cpp")
+file(GLOB_RECURSE MACOS_HEADER CONFIGURE_DEPENDS "portal/platform/core/macos/*.h")
+
+file(GLOB_RECURSE LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/core/linux/*.cpp")
+file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/core/linux/*.h")
+
+option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
@@ -35,23 +46,48 @@ target_link_libraries(portal-core
 if(WIN32)
     set(PORTAL_PLATFORM_WINDOWS ON CACHE BOOL "Windows platform" FORCE)
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_WINDOWS)
+    target_sources(portal-core
+            PRIVATE ${WINDOWS_SOURCES}
+            PUBLIC
+            FILE_SET HEADERS
+            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+            FILES ${WINDOWS_HEADER}
+    )
+    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=windows)
+
 elseif (APPLE)
     set(PORTAL_PLATFORM_MACOS ON CACHE BOOL "MacOS platform" FORCE)
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_MACOS)
+    target_sources(portal-core
+            PRIVATE ${MACOS_SOURCES}
+            PUBLIC
+            FILE_SET HEADERS
+            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+            FILES ${MACOS_HEADER}
+    )
+    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=macos)
+
 elseif(UNIX)
     set(PORTAL_PLATFORM_LINUX ON CACHE BOOL "Linux platform" FORCE)
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_LINUX)
+    target_sources(portal-core
+            PRIVATE ${LINUX_SOURCES}
+            PUBLIC
+            FILE_SET HEADERS
+            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+            FILES ${LINUX_HEADER}
+    )
+    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=unix)
+
 else()
     message(FATAL_ERROR "Unsupported platform")
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_definitions(portal-core PUBLIC PORTAL_DEBUG)
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_definitions(portal-core PUBLIC PORTAL_RELEASE)
-else()
-    target_compile_definitions(portal-core PUBLIC PORTAL_DIST)
-endif()
+target_compile_definitions(portal-core PUBLIC
+        $<$<CONFIG:Debug>:PORTAL_DEBUG>
+        $<$<CONFIG:Release>:PORTAL_RELEASE>
+        $<$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:Release>>>:PORTAL_DIST>
+)
 
 target_compile_definitions(portal-core PUBLIC
         GLM_FORCE_SWIZZLE
@@ -62,8 +98,28 @@ target_compile_definitions(portal-core PUBLIC
 )
 
 if(MSVC)
-    target_compile_options(portal-core PUBLIC "/Zc:__cplusplus")
+    target_compile_options(portal-core PUBLIC
+            "/Zc:__cplusplus"
+            "$<$<CONFIG:Release>:/Zi>"
+    )
+    target_compile_options(portal-core PRIVATE /W4 /WX)
+
+    target_link_options(portal-core PUBLIC
+            "$<$<CONFIG:Release>:/DEBUG /OPT:REF /OPT:ICF>"
+    )
+else()
+    target_compile_options(portal-core PUBLIC
+            "$<$<CONFIG:Release>:-g>"
+    )
+    target_compile_options(portal-core PRIVATE -Wall -Wextra -Wpedantic -Werror)
+
 endif()
+
+
+if(PORTAL_BUILD_TESTS)
+    add_subdirectory(tests)
+endif ()
+unset(PORTAL_BUILD_TESTS CACHE)
 
 install(TARGETS portal-core
         EXPORT portal-core-targets

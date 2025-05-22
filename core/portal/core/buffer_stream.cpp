@@ -25,7 +25,7 @@ std::streamsize BufferStreamReader::xsgetn(char* s, std::streamsize n)
     {
         std::memcpy(s, static_cast<const char*>(buffer.data) + _position, to_read);
         _position += to_read;
-        gbump(to_read);
+        gbump(static_cast<int>(to_read));
     }
     return to_read;
 }
@@ -49,11 +49,11 @@ std::streampos BufferStreamReader::seekoff(const std::streamoff off, const seekd
         new_pos = buffer.size + off;
         break;
     default:
-        return std::streampos(-1);
+        return {-1};
     }
 
-    if (new_pos < 0 || new_pos > buffer.size)
-        return std::streampos(-1);
+    if (new_pos < 0 || new_pos > static_cast<std::streampos>(buffer.size))
+        return {-1};
 
     _position = new_pos;
     setg(static_cast<char*>(buffer.data),
@@ -71,7 +71,7 @@ BufferStreamWriter::BufferStreamWriter(Buffer& buffer): std::ostream(this), buff
         );
 }
 
-std::streambuf::int_type BufferStreamWriter::overflow(std::streambuf::int_type ch)
+std::streambuf::int_type BufferStreamWriter::overflow(std::streambuf::int_type)
 {
     return traits_type::eof();
 }
@@ -83,7 +83,7 @@ std::streamsize BufferStreamWriter::xsputn(const char* s, std::streamsize n)
 
     buffer.write(s, n, position);
     position += n;
-    pbump(n);
+    pbump(static_cast<int>(n));
     return n;
 }
 }

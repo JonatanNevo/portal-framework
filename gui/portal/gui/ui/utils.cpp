@@ -297,7 +297,7 @@ bool UpdateWindowManualResize(ImGuiWindow* window, ImVec2& new_size, ImVec2& new
     ImU32 resize_grip_col[4] = {};
     const int resize_grip_count =
         g.IO.ConfigWindowsResizeFromEdges ? 2 : 1; // Allow resize from lower-left if we have the mouse cursor feedback for it.
-    const float resize_grip_draw_size = IM_FLOOR(ImMax(g.FontSize * 1.10f, window->WindowRounding + 1.0f + g.FontSize * 0.2f));
+    // const float resize_grip_draw_size = IM_FLOOR(ImMax(g.FontSize * 1.10f, window->WindowRounding + 1.0f + g.FontSize * 0.2f));
     window->ResizeBorderHeld = (signed char)border_held;
 
     // const ImRect& visibility_rect;
@@ -614,7 +614,7 @@ void end_menubar()
     window->DC.MenuBarAppending = false;
 }
 
-bool button_centered(const char* label, const ImVec2& size)
+bool button_centered(const char* label, const ImVec2&)
 {
     ImGuiStyle& style = ImGui::GetStyle();
 
