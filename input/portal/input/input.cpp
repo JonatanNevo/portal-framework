@@ -214,15 +214,48 @@ void Input::process_inputs(const float delta_time)
 {
     static std::unordered_map<Key, KeyState*> keys_with_events;
     evaluate_key_states(delta_time, keys_with_events);
-
-    // Call input delegates based on events
-    for (const auto& key : keys_with_events | std::views::keys)
-    {
-        LOG_CORE_INFO_TAG("Input", "Key {} has events", key.get_name());
-    }
-
+    evaluate_input_delegates(delta_time, keys_with_events);
     finish_processing_inputs();
     keys_with_events.clear();
+}
+
+input::ActionBinding& Input::add_action_binding(input::ActionBinding in_bind)
+{
+    const auto& binding = action_bindings.emplace_back(std::make_shared<input::ActionBinding>(std::move(in_bind)));
+    binding->generate_new_handle();
+
+    if (binding->event == InputEvent::Pressed || binding->event == InputEvent::Released)
+    {
+        const auto paired_event = binding->event == InputEvent::Pressed ? InputEvent::Released : InputEvent::Pressed;
+        for (int32_t i = static_cast<int32_t>(action_bindings.size()) - 2; i >= 0; i--)
+        {
+            auto& action_binding = action_bindings[i];
+            if (action_binding->get_key() == binding->get_key())
+            {
+                // If we find a matching event that is already paired we know this is paired so mark it off and we're done
+                if (action_binding->is_paired())
+                {
+                    binding->paired = true;
+                    break;
+                }
+
+                // Otherwise if this is a pair to the new one mark them both as paired
+                // Don't break as there could be two bound paired events
+                if (action_binding->event == paired_event)
+                {
+                    action_binding->paired = true;
+                    binding->paired = true;
+                }
+            }
+        }
+    }
+
+    return *binding;
+}
+
+void Input::clear_action_binding()
+{
+    action_bindings.clear();
 }
 
 void Input::evaluate_key_states(const float delta_time, std::unordered_map<Key, KeyState*>& keys_with_events)
@@ -320,6 +353,38 @@ void Input::evaluate_key_states(const float delta_time, std::unordered_map<Key, 
         state.pair_sampled_axes = 0;
     }
     event_count = 0;
+}
+
+void Input::evaluate_input_delegates(float /*delta_time*/, std::unordered_map<Key, KeyState*>& keys_with_events)
+{
+    // TODO: Handle axis
+    static std::vector<std::shared_ptr<input::ActionBinding>> actions;
+
+    for (auto& [key, state] : keys_with_events)
+    {
+        // TODO: Use map instead
+        for (auto& action_bind: action_bindings)
+        {
+            if (action_bind->get_key() == key)
+            {
+                if (!state->event_counts[static_cast<uint8_t>(action_bind->event)].empty())
+                {
+                    actions.emplace_back(action_bind);
+                }
+            }
+        }
+
+        for (auto& action: actions)
+        {
+            if (action->delegate.is_bound())
+            {
+                // TODO: Cache all delegates and fire simultaneously
+                action->delegate.execute(key);
+            }
+        }
+    }
+
+    actions.clear();
 }
 
 void Input::finish_processing_inputs()

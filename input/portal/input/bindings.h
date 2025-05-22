@@ -7,6 +7,10 @@
 #include "portal/core/delegates/delegate.h"
 #include "portal/input/input_types.h"
 
+namespace portal {
+class Input;
+}
+
 namespace portal::input
 {
 
@@ -17,17 +21,17 @@ struct ActionBindingDelegate
     {
     };
 
-    ActionBindingDelegate(Delegate<void, void> d) :
-        delegate(std::make_shared<Delegate<void, void>>(std::move(d))), bound_delegate_type(BoundDelegate::Delegate)
+    explicit ActionBindingDelegate(Delegate<void> d) :
+        delegate(std::make_shared<Delegate<void>>(std::move(d))), bound_delegate_type(BoundDelegate::Delegate)
     {
     };
 
-    ActionBindingDelegate(Delegate<void, Key> d) :
+    explicit ActionBindingDelegate(Delegate<void, Key> d) :
         delegate_one_param(std::make_shared<Delegate<void, Key>>(std::move(d))), bound_delegate_type(BoundDelegate::DelegateWithKey)
     {
     };
 
-    bool is_bound() const
+    [[nodiscard]] bool is_bound() const
     {
         switch (bound_delegate_type)
         {
@@ -55,7 +59,7 @@ struct ActionBindingDelegate
         return false;
     }
 
-    const void* get_owner() const
+    [[nodiscard]] const void* get_owner() const
     {
         switch (bound_delegate_type)
         {
@@ -84,9 +88,43 @@ struct ActionBindingDelegate
         }
     }
 
+    template< class T >
+    void bind_delegate(T* object, typename Delegate<void>::NonConstMemberFunction<T> func)
+    {
+        unbind();
+        bound_delegate_type = BoundDelegate::Delegate;
+        delegate = std::make_shared<Delegate<void>>(Delegate<void>::create_raw(object, func));
+    }
+
+    template< class T >
+    void bind_delegate(T* object, typename Delegate<void, Key>::NonConstMemberFunction<T> func)
+    {
+        unbind();
+        bound_delegate_type = BoundDelegate::DelegateWithKey;
+        delegate_one_param = std::make_shared<Delegate<void, Key>>(Delegate<void, Key>::create_raw(object, func));
+    }
+
+    void unbind()
+    {
+        switch(bound_delegate_type)
+        {
+        case BoundDelegate::Delegate:
+            delegate->clear();
+            break;
+
+        case BoundDelegate::DelegateWithKey:
+            delegate_one_param->clear();
+            break;
+        default:
+            break;
+        }
+        bound_delegate_type = BoundDelegate::Unbound;
+    }
+
+
 private:
     /** Holds the delegate to call. */
-    std::shared_ptr<portal::Delegate<void, void>> delegate;
+    std::shared_ptr<portal::Delegate<void>> delegate;
     /** Holds the delegate that wants to know the key to call. */
     std::shared_ptr<portal::Delegate<void, Key>> delegate_one_param;
 
@@ -106,8 +144,28 @@ struct ActionBinding
     InputEvent event;
     ActionBindingDelegate delegate;
 
+    ActionBinding(): action_key(Keys::Invalid), event(InputEvent::Pressed), handle(-1), paired(false) {}
+    ActionBinding(Key key, InputEvent event): action_key(key), event(event), handle(-1), paired(false) {}
+
+    Key get_key() const { return action_key; }
+    int32_t get_handle() const { return handle; }
+    bool is_paired() const { return paired; }
+
+    bool operator==(const ActionBinding& rhs) const
+    {
+        return is_valid() && handle == rhs.handle;
+    }
+
+    // TODO: remove magic
+    bool is_valid() const { return handle != -1; }
+
+    void generate_new_handle();
+
 private:
     int32_t handle;
-    bool is_paired;
+    bool paired;
+
+    friend class portal::Input;
 };
+
 }

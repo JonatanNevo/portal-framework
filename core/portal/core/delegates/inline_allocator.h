@@ -94,16 +94,16 @@ public:
     /**
      * Allocates memory of a given size
      */
-    void* allocate(const size_t size)
+    void* allocate(const size_t alloc_size)
     {
-        if (this->size != size)
+        if (this->size != alloc_size)
         {
             release();
-            this->size = size;
+            this->size = alloc_size;
 
-            if (size > MaxStackSize)
+            if (alloc_size > MaxStackSize)
             {
-                ptr = internal::alloc(size);
+                ptr = internal::alloc(alloc_size);
                 return ptr;
             }
         }
