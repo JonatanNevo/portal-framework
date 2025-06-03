@@ -2,7 +2,7 @@
 // Created by thejo on 4/11/2025.
 //
 
-#include "texture.h"
+#include "portal/renderer/texture.h"
 
 #include <stb_image.h>
 
@@ -22,7 +22,7 @@ Texture::Texture(const TextureSpecification spec):
         const auto image_data = portal::FileSystem::read_file_binary("resources/textures/missing_texture.png");
         uint32_t width, height;
         auto default_data = Image::decode(image_data.data, image_data.size, width, height);
-        g_default_image = std::make_shared<Image>(width, height, ImageFormat::RGBA, default_data);
+        g_default_image = std::make_shared<Image>(nullptr, width, height, ImageFormat::RGBA, default_data);
     }
 }
 
@@ -50,6 +50,7 @@ void Texture::set_data(Buffer new_data)
     {
         // Create Vulkan image from decoded data
         image = std::make_shared<portal::Image>(
+            nullptr,
             width,
             height,
             portal::ImageFormat::RGBA,

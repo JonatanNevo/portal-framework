@@ -24,7 +24,7 @@ namespace portal
     class GUIApplication final : public Application
     {
     public:
-        GUIApplication(const ApplicationSpecs& specs = ApplicationSpecs());
+        GUIApplication(const ApplicationSettings& specs = ApplicationSettings());
         ~GUIApplication();
 
         static GUIApplication& get();
@@ -69,7 +69,7 @@ namespace portal
         void ui_draw_title_bar(float& out_height);
         void ui_draw_menu_bar();
     private:
-        ApplicationSpecs specs;
+        ApplicationSettings specs;
         GLFWwindow* window_handle = nullptr;
         bool running = false;
 

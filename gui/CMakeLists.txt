@@ -17,9 +17,7 @@ file(GLOB_RECURSE GUI_UI_HEADERS CONFIGURE_DEPENDS "portal/gui/ui/*.h")
 file(GLOB GUI_TEXTURES CONFIGURE_DEPENDS "resources/textures/*")
 
 find_package(imgui CONFIG REQUIRED)
-find_package(Vulkan REQUIRED)
 find_package(Stb REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if (PORTAL_FIND_PACAKGE)
@@ -51,11 +49,9 @@ add_library(portal::gui ALIAS portal-gui)
 target_link_libraries(portal-gui
         PUBLIC
         imgui::imgui
-        Vulkan::Vulkan
         portal::application
         portal::assets
         portal::input
-        glfw
 )
 
 target_include_directories(portal-gui PRIVATE ${Stb_INCLUDE_DIR})

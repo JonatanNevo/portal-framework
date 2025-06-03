@@ -6,19 +6,24 @@
 #include <string_view>
 #include <vulkan/vulkan.hpp>
 
-namespace portal {
+namespace portal
+{
 
-    enum class ImageFormat
-    {
-        None = 0,
-        RGBA,
-        RGBA32F
-    };
+class Renderer;
 
-class Image {
+enum class ImageFormat
+{
+    None = 0,
+    RGBA,
+    RGBA32F
+};
+
+class Image
+{
 public:
-    Image(std::string_view path);
-    Image(uint32_t width, uint32_t height, ImageFormat format, const void* data = nullptr);
+    // TODO: Split between memory allocator and container (image)
+    Image(Renderer* renderer, std::string_view path);
+    Image(Renderer* renderer, uint32_t width, uint32_t height, ImageFormat format, const void* data = nullptr);
     ~Image();
 
     void set_data(const void* data);
@@ -30,9 +35,11 @@ public:
     uint32_t get_height() const { return height; }
 
     static void* decode(const void* data, size_t length, uint32_t& out_width, uint32_t& out_height);
+
 private:
     void allocate_memory(size_t size);
     void release();
+
 private:
     uint32_t width = 0, height = 0;
 
@@ -50,7 +57,6 @@ private:
 
     vk::DescriptorSet descriptor_set;
     std::string file_path;
-
+    Renderer* renderer;
 };
-
 } // portal

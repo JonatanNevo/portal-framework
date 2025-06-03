@@ -8,7 +8,7 @@
 
 #include "asset.h"
 #include "asset_source.h"
-#include "../../../gui/portal/gui/texture.h"
+#include "../../../renderer/portal/renderer/texture.h"
 
 
 namespace portal

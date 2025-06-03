@@ -82,7 +82,7 @@ void Connection::send_string(const std::string& string, const bool reliable) { s
 void Connection::send_raw(const void* data, const size_t size, const bool reliable)
 {
     const auto flags = reliable ? k_nSteamNetworkingSend_Reliable : k_nSteamNetworkingSend_Unreliable;
-    const auto result = sockets->SendMessageToConnection(connection, data, size, flags, nullptr);
+    const auto result = sockets->SendMessageToConnection(connection, data, static_cast<uint32_t>(size), flags, nullptr);
     switch (result)
     {
     case k_EResultOK:
@@ -242,7 +242,7 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
     }
 }
 
-void Connection::on_connection_error(SteamNetConnectionInfo_t* info)
+void Connection::on_connection_error(SteamNetConnectionInfo_t*)
 {
     running = false;
     for (const auto& callback : on_disconnect_callbacks)

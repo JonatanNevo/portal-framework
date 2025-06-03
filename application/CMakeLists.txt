@@ -13,6 +13,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS "portal/application/*.cpp")
 file(GLOB_RECURSE APP_HEADERS CONFIGURE_DEPENDS "portal/application/*.h")
 
+find_package(Vulkan REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
     find_package(portal-core CONFIG REQUIRED)
@@ -33,9 +36,11 @@ add_library(portal::application ALIAS portal-application)
 target_link_libraries(portal-application
         PUBLIC
         portal::core
+        Vulkan::Vulkan
+        glfw
 )
 
-target_include_directories(portal-application PRIVATE ${Stb_INCLUDE_DIR})
+target_compile_definitions(portal-application PUBLIC GLFW_INCLUDE_NONE GLFW_INCLUDE_VULKAN)
 
 if(MSVC)
     target_compile_options(portal-application PRIVATE /W4 /WX)

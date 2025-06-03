@@ -5,19 +5,16 @@
 
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 
-#include <portal/gui/gui_application.h>
-#include <portal/application/entry_point.h>
-
-#include "portal/core/assert.h"
-#include "portal/core/buffer.h"
-#include "portal/core/buffer_stream.h"
+#include "portal/application/application.h"
 #include "portal/networking/connection.h"
+#include "portal/renderer/renderer.h"
+#include "portal/renderer/ui/ui_renderable.h"
 #include "portal/serialization/impl/binary_searilization.h"
+#include "portal/application/entry_point.h"
 
 
-class TestLayer : public portal::Layer
+class TestLayer : public portal::UIRenderable
 {
 public:
     virtual void on_ui_render() override
@@ -75,38 +72,17 @@ private:
     bool m_AboutModalOpen = false;
 };
 
-
 portal::Application* portal::create_application(int argc, char** argv)
 {
     Log::init();
-    ApplicationSpecs specs{
+    ApplicationSettings specs{
         .name = "Example App"
     };
-
-    auto* app = new GUIApplication(specs);
+    auto renderer = std::make_shared<portal::Renderer>();
+    auto* app = new Application(specs);
+    app->push_layer(renderer);
     std::shared_ptr<TestLayer> layer = std::make_shared<TestLayer>();
-    app->push_layer(layer);
-    app->set_menubar_callback(
-        [app, layer]()
-        {
-            if (ImGui::BeginMenu("File"))
-            {
-                if (ImGui::MenuItem("Exit"))
-                {
-                    app->close();
-                }
-                ImGui::EndMenu();
-            }
+    renderer->add_ui_renderable(layer);
 
-            if (ImGui::BeginMenu("Help"))
-            {
-                if (ImGui::MenuItem("About"))
-                {
-                    layer->ShowAboutModal();
-                }
-                ImGui::EndMenu();
-            }
-        }
-    );
     return app;
 }

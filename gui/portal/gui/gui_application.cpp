@@ -337,7 +337,7 @@ static void glfw_error_callback(int error, const char* description) { fprintf(st
 
 namespace portal
 {
-GUIApplication::GUIApplication(const ApplicationSpecs& specs) : specs(specs)
+GUIApplication::GUIApplication(const ApplicationSettings& specs) : specs(specs)
 {
     s_instance = this;
     init();

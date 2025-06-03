@@ -4,12 +4,12 @@
 
 #pragma once
 
-extern portal::Application* portal::create_application(int arc, char** argv);
-bool g_application_running = true;
+extern portal::Application* portal::create_application(int argc, char** argv);
+inline bool g_application_running = true;
 
 namespace portal
 {
-int main(int argc, char** argv)
+inline int main(int argc, char** argv)
 {
     while (g_application_running)
     {
