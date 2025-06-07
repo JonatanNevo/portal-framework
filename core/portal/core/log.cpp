@@ -1,5 +1,6 @@
 //
-// Created by Jonatan Nevo on 31/01/2025.
+// Copyright © 2025 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
 //
 
 #include "log.h"

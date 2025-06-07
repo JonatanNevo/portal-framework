@@ -1,5 +1,6 @@
 //
-// Created by Jonatan Nevo on 31/01/2025.
+// Copyright © 2025 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
 //
 
 #pragma once
@@ -37,7 +38,7 @@ inline void PORTAL_DEBUG_BREAK_HELPER()
 }
 #endif
 
-#ifdef PORTAL_DEBUG
+#ifndef PORTAL_DIST
 #define PORTAL_ENABLE_ASSERTS
 #endif
 

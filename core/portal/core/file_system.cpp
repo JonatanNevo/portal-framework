@@ -1,5 +1,6 @@
 //
-// Created by Jonatan Nevo on 03/03/2025.
+// Copyright © 2025 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
 //
 
 #include "file_system.h"
