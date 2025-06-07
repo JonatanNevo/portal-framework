@@ -93,12 +93,12 @@ std::vector<SteamNetworkingIPAddr> resolve_address(std::string_view address)
         auto& ip_address = result.emplace_back();
         if (has_port)
         {
-            const bool success = ip_address.ParseString(std::format("{}:{}", ip, port).c_str());
+            [[maybe_unused]] const bool success = ip_address.ParseString(std::format("{}:{}", ip, port).c_str());
             PORTAL_CORE_ASSERT(success, "Failed to parse IP address {}:{}", ip, port);
         }
         else
         {
-            const bool success = ip_address.ParseString(ip);
+            [[maybe_unused]] const bool success = ip_address.ParseString(ip);
             PORTAL_CORE_ASSERT(success, "Failed to parse IP address {}", ip);
         }
     }

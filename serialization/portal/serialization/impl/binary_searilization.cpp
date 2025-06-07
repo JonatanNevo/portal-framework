@@ -74,7 +74,7 @@ struct Header
         return header;
     }
 
-    static void validate_header(const Header& header)
+    static void validate_header([[maybe_unused]] const Header& header)
     {
         PORTAL_CORE_ASSERT(header.magic == MAGIC, "Invalid serialized buffer magic number");
         PORTAL_CORE_ASSERT(header.version == VERSION, "Invalid serialized buffer magic version");
