@@ -38,7 +38,7 @@ void Server::start()
 
     SteamNetworkingIPAddr local_address;
     local_address.Clear();
-    local_address.m_port = port;
+    local_address.m_port = static_cast<uint16_t>(port);
 
     SteamNetworkingConfigValue_t options[1];
     options[0].SetPtr(k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged, reinterpret_cast<void*>(Server::on_status_changed_callback));
@@ -197,7 +197,7 @@ void Server::send_string_to_all(const std::string& string, const HSteamNetConnec
 void Server::send_raw(HSteamNetConnection id, const void* data, const size_t size, const bool reliable) const
 {
     const auto flags = reliable ? k_nSteamNetworkingSend_Reliable : k_nSteamNetworkingSend_Unreliable;
-    const auto result = sockets->SendMessageToConnection(id, data, size, flags, nullptr);
+    const auto result = sockets->SendMessageToConnection(id, data, static_cast<uint32_t>(size), flags, nullptr);
     switch (result)
     {
     case k_EResultOK:
@@ -273,6 +273,6 @@ void Server::poll_incoming_messages()
 
 void Server::poll_connection_state_changes() const { sockets->RunCallbacks(); }
 void Server::set_client_nick(const HSteamNetConnection id, const char* nick) const { sockets->SetConnectionName(id, nick); }
-void Server::on_fatal_error(const std::string& message) {}
+void Server::on_fatal_error(const std::string& /*message*/) {}
 
 } // namespace portal::network

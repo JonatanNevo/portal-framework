@@ -7,8 +7,8 @@
 #include "portal/core/log.h"
 
 #include <format>
-#include <steam/steamnetworkingsockets.h>
 #include <steam/isteamnetworkingutils.h>
+#include <steam/steamnetworkingsockets.h>
 #ifndef STEAMNETWORKINGSOCKETS_OPENSOURCE
 #include <steam/steam_api.h>
 #endif
@@ -18,16 +18,11 @@
 
 namespace portal::network
 {
-Connection::Connection() :
-    manager(ConnectionManager::get_instance()), sockets(manager->get_sockets()) {}
+Connection::Connection() : manager(ConnectionManager::get_instance()), sockets(manager->get_sockets()) {}
 
-Connection::Connection(ConnectionManager* manager) :
-    manager(manager), sockets(manager->get_sockets()) {}
+Connection::Connection(ConnectionManager* manager) : manager(manager), sockets(manager->get_sockets()) {}
 
-Connection::~Connection()
-{
-    disconnect();
-}
+Connection::~Connection() { disconnect(); }
 
 void Connection::connect(const std::string& address)
 {
@@ -72,7 +67,6 @@ void Connection::disconnect()
     sockets->CloseConnection(connection, static_cast<int>(ConnectionEnd::AppConnectionClosed), "Connection closed", true);
     manager->remove_connection(connection);
     connection = k_HSteamNetConnection_Invalid;
-
 }
 
 void Connection::send_buffer(const Buffer buffer, const bool reliable) { send_raw(buffer.data, buffer.size, reliable); }
@@ -82,7 +76,7 @@ void Connection::send_string(const std::string& string, const bool reliable) { s
 void Connection::send_raw(const void* data, const size_t size, const bool reliable)
 {
     const auto flags = reliable ? k_nSteamNetworkingSend_Reliable : k_nSteamNetworkingSend_Unreliable;
-    const auto result = sockets->SendMessageToConnection(connection, data, size, flags, nullptr);
+    const auto result = sockets->SendMessageToConnection(connection, data, static_cast<uint32_t>(size), flags, nullptr);
     switch (result)
     {
     case k_EResultOK:
@@ -178,18 +172,10 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
         state = ConnectionState::ClosedByPeer;
         if (info->m_eOldState == k_ESteamNetworkingConnectionState_Connecting)
             LOG_CORE_ERROR_TAG(
-            "Networking",
-            "Connection {} - Failed to connect: {}",
-            info->m_info.m_szConnectionDescription,
-            info->m_info.m_szEndDebug
-            );
+                "Networking", "Connection {} - Failed to connect: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
         else
             LOG_CORE_ERROR_TAG(
-            "Networking",
-            "Connection {} - Disconnected from server: {}",
-            info->m_info.m_szConnectionDescription,
-            info->m_info.m_szEndDebug
-            );
+                "Networking", "Connection {} - Disconnected from server: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
         on_connection_error(&info->m_info);
         break;
 
@@ -197,18 +183,10 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
         state = ConnectionState::ProblemDetectedLocally;
         if (info->m_eOldState == k_ESteamNetworkingConnectionState_Connecting)
             LOG_CORE_ERROR_TAG(
-            "Networking",
-            "Connection {} - Failed to connect: {}",
-            info->m_info.m_szConnectionDescription,
-            info->m_info.m_szEndDebug
-            );
+                "Networking", "Connection {} - Failed to connect: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
         else
             LOG_CORE_ERROR_TAG(
-            "Networking",
-            "Connection {} - Problem detected locally: {}",
-            info->m_info.m_szConnectionDescription,
-            info->m_info.m_szEndDebug
-            );
+                "Networking", "Connection {} - Problem detected locally: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
         on_connection_error(&info->m_info);
         break;
 
@@ -233,16 +211,12 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
 
     default:
         LOG_CORE_TRACE_TAG(
-            "Networking",
-            "Connection {} - State changed to {}",
-            info->m_info.m_szConnectionDescription,
-            static_cast<int>(info->m_info.m_eState)
-            );
+            "Networking", "Connection {} - State changed to {}", info->m_info.m_szConnectionDescription, static_cast<int>(info->m_info.m_eState));
         break;
     }
 }
 
-void Connection::on_connection_error(SteamNetConnectionInfo_t* info)
+void Connection::on_connection_error(SteamNetConnectionInfo_t* /*info*/)
 {
     running = false;
     for (const auto& callback : on_disconnect_callbacks)
