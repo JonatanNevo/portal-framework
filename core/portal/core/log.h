@@ -7,7 +7,7 @@
 #include <map>
 #include <thread>
 
-#include <spdlog/fmt/ostr.h>
+#include <spdlog/mdc.h>
 #include <spdlog/spdlog.h>
 
 #include "custom_logger_formatters.h"
@@ -16,6 +16,51 @@
 
 namespace portal
 {
+class LogExtra
+{
+public:
+    template <typename... Args>
+    explicit LogExtra(Args&&... args)
+    {
+        static_assert(sizeof...(Args) % 2 == 0, "LogExtra requires an even number of arguments (key-value pairs)");
+        add_pairs(std::forward<Args>(args)...);
+    }
+
+    ~LogExtra();
+
+private:
+    // Helper to convert any value to string
+    template <typename T>
+    static std::string to_string_any(T&& value)
+    {
+        if constexpr (std::is_convertible_v<T, std::string>)
+            return std::string(std::forward<T>(value));
+        else if constexpr (std::is_convertible_v<T, const char*>)
+            return std::string(std::forward<T>(value));
+        else
+        {
+            std::ostringstream oss;
+            oss << value;
+            return oss.str();
+        }
+    }
+
+    // Recursive unpacking
+    template <typename K, typename V, typename... Rest>
+    void add_pairs(K&& key, V&& value, Rest&&... rest)
+    {
+        pairs.emplace_back(std::string(std::forward<K>(key)), to_string_any(std::forward<V>(value)));
+        spdlog::mdc::put(std::string(std::forward<K>(key)), to_string_any(std::forward<V>(value)));
+        if constexpr (sizeof...(Rest) > 0)
+            add_pairs(std::forward<Rest>(rest)...);
+    }
+
+private:
+    std::vector<std::pair<std::string, std::string>> pairs;
+
+};
+
+
 class Log
 {
 public:
@@ -54,6 +99,31 @@ public:
     static std::shared_ptr<spdlog::logger>& get_client_logger() { return client_logger; }
 
     static bool has_tag(const std::string& tag) { return enabled_tags.contains(tag); }
+
+    static void disable_tag(const std::string& tag)
+    {
+        if (enabled_tags.contains(tag))
+            enabled_tags[tag].enabled = false;
+        else
+            enabled_tags[tag] = {.enabled = false};
+    }
+
+    static void enable_tag(const std::string& tag)
+    {
+        if (enabled_tags.contains(tag))
+            enabled_tags[tag].enabled = true;
+        else
+            enabled_tags[tag] = {.enabled = true};
+    }
+
+    static void set_log_level(const std::string& tag, const LogLevel level)
+    {
+        if (enabled_tags.contains(tag))
+            enabled_tags[tag].level_filter = level;
+        else
+            enabled_tags[tag] = {.level_filter = level};
+    }
+
     static std::map<std::string, TagDetails>& get_enabled_tags() { return enabled_tags; }
 
     template <typename... Args>

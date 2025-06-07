@@ -9,6 +9,7 @@
 
 #include <filesystem>
 #include <map>
+#include <ranges>
 #include <utility>
 
 #define PORTAL_HAS_CONSOLE !PORTAL_DIST
@@ -28,11 +29,19 @@ namespace portal
 std::shared_ptr<spdlog::logger> Log::core_logger;
 std::shared_ptr<spdlog::logger> Log::client_logger;
 
+LogExtra::~LogExtra()
+{
+    for (const auto& key : pairs | std::views::keys)
+    {
+        spdlog::mdc::remove(key);
+    }
+}
+
 void Log::init()
 {
     main_thread_id = std::this_thread::get_id();
 
-    std::string log_directory = "logs";
+    const std::string log_directory = "logs";
     if (!std::filesystem::exists(log_directory))
         std::filesystem::create_directory(log_directory);
 

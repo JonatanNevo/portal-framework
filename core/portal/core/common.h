@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "reference.h"
 
 #include <functional>
 #include  <memory>

@@ -4,6 +4,8 @@
 
 #include "file_system.h"
 
+#include <fstream>
+
 #include "portal/core/assert.h"
 
 namespace portal
