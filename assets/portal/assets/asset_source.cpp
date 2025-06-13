@@ -17,10 +17,10 @@ portal::Buffer FileAssetSource::load_asset()
 {
     if (!std::filesystem::exists(path))
     {
-        LOG_CORE_WARN_TAG("Asset", "Attempting to load from invalid path: {}", path.string());
+        LOG_WARN_TAG("Asset", "Attempting to load from invalid path: {}", path.string());
         return nullptr;
     }
-    LOG_CORE_DEBUG_TAG("Asset", "Loading asset: {}", path.string());
+    LOG_DEBUG_TAG("Asset", "Loading asset: {}", path.string());
     return portal::FileSystem::read_file_binary(path);
 }
 

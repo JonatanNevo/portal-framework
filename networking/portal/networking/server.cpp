@@ -33,7 +33,7 @@ void Server::start()
 {
     if (running)
     {
-        LOG_CORE_WARN_TAG("Networking", "Server - {} is already running", port);
+        LOG_WARN_TAG("Networking", "Server - {} is already running", port);
         return;
     }
 
@@ -70,7 +70,7 @@ void Server::stop()
     if (polling_thread.joinable())
         polling_thread.join();
 
-    LOG_CORE_INFO_TAG("Networking", "Server {} - Closing connections", port);
+    LOG_INFO_TAG("Networking", "Server {} - Closing connections", port);
     for (const auto& id : connections | std::views::keys)
     {
         sockets->CloseConnection(id, static_cast<int>(ConnectionEnd::AppConnectionClosed), "Server closing", false);
@@ -89,7 +89,7 @@ void Server::thread_loop()
 {
     using namespace std::chrono_literals;
 
-    LOG_CORE_INFO_TAG("Networking", "Server {} - Starting to host", port);
+    LOG_INFO_TAG("Networking", "Server {} - Starting to host", port);
     while (running)
     {
         poll_incoming_messages();
@@ -100,7 +100,7 @@ void Server::thread_loop()
 void Server::on_status_changed_callback(SteamNetConnectionStatusChangedCallback_t* info)
 {
     const auto server = ConnectionManager::get_instance()->get_server(info->m_info.m_hListenSocket);
-    PORTAL_CORE_ASSERT(server != nullptr, "Server not found in manager");
+    PORTAL_ASSERT(server != nullptr, "Server not found in manager");
     if (server)
         server->on_status_changed(info);
 }
@@ -119,9 +119,9 @@ void Server::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
         {
             // Locate the client
             const auto& connection = connections.find(info->m_hConn);
-            PORTAL_CORE_ASSERT(connection != connections.end(), "Client not found in server");
+            PORTAL_ASSERT(connection != connections.end(), "Client not found in server");
 
-            LOG_CORE_INFO_TAG("Networking", "Server {} - Connection closed: {}", port, connection->second.connection_description);
+            LOG_INFO_TAG("Networking", "Server {} - Connection closed: {}", port, connection->second.connection_description);
 
             for (const auto& callback : on_connection_disconnect_callbacks)
                 callback(connection->second);
@@ -134,18 +134,18 @@ void Server::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
     case k_ESteamNetworkingConnectionState_Connecting:
     {
         // This must be a new connection
-        PORTAL_CORE_ASSERT(!connections.contains(info->m_hConn), "Client already exists in server");
+        PORTAL_ASSERT(!connections.contains(info->m_hConn), "Client already exists in server");
 
         if (sockets->AcceptConnection(info->m_hConn) != k_EResultOK)
         {
-            LOG_CORE_ERROR_TAG("Networking", "Server {} - Failed to accept connection: {}", port, info->m_info.m_szConnectionDescription);
+            LOG_ERROR_TAG("Networking", "Server {} - Failed to accept connection: {}", port, info->m_info.m_szConnectionDescription);
             sockets->CloseConnection(info->m_hConn, static_cast<int>(ConnectionEnd::AppExceptionGeneric), "Failed to accept connection", false);
             break;
         }
 
         if (!sockets->SetConnectionPollGroup(info->m_hConn, poll_group))
         {
-            LOG_CORE_ERROR_TAG(
+            LOG_ERROR_TAG(
                 "Networking",
                 "Server {} - Failed to set poll group for connection: {}",
                 port,
@@ -164,7 +164,7 @@ void Server::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
         };
         connections[info->m_hConn] = connection;
 
-        LOG_CORE_INFO_TAG("Networking", "Server {} - New connection: {}", port, connection.connection_description);
+        LOG_INFO_TAG("Networking", "Server {} - New connection: {}", port, connection.connection_description);
         for (const auto& callback : on_connection_connect_callbacks)
             callback(connection);
         break;
@@ -205,20 +205,20 @@ void Server::send_raw(HSteamNetConnection id, const void* data, const size_t siz
         // everything is ok
         break;
     case k_EResultInvalidParam:
-        LOG_CORE_ERROR_TAG("Networking", "Connection - {} Invalid connection, cannot send");
+        LOG_ERROR_TAG("Networking", "Connection - {} Invalid connection, cannot send");
         break;
     case k_EResultInvalidState:
-        LOG_CORE_ERROR_TAG("Networking", "Connection - {} Invalid state, cannot send", id);
+        LOG_ERROR_TAG("Networking", "Connection - {} Invalid state, cannot send", id);
         break;
     case k_EResultNoConnection:
-        LOG_CORE_ERROR_TAG("Networking", "Connection - {} is already invalid, cannot send", id);
+        LOG_ERROR_TAG("Networking", "Connection - {} is already invalid, cannot send", id);
         break;
     case k_EResultLimitExceeded:
-        LOG_CORE_ERROR_TAG("Networking", "Connection - {} Limit exceeded, cannot send", id);
+        LOG_ERROR_TAG("Networking", "Connection - {} Limit exceeded, cannot send", id);
         break;
 
     default:
-        LOG_CORE_WARN_TAG("Networking", "SendMessageToConnection should not return {}", static_cast<int>(result));
+        LOG_WARN_TAG("Networking", "SendMessageToConnection should not return {}", static_cast<int>(result));
         break;
     }
 }
@@ -247,7 +247,7 @@ void Server::poll_incoming_messages()
 
     if (message_count < 0)
     {
-        LOG_CORE_ERROR_TAG("Networking", "Server - {} Failed to receive message", port);
+        LOG_ERROR_TAG("Networking", "Server - {} Failed to receive message", port);
         running = false;
         return;
     }
@@ -255,7 +255,7 @@ void Server::poll_incoming_messages()
     const auto client = connections.find(incoming_message->m_conn);
     if (client == connections.end())
     {
-        LOG_CORE_ERROR_TAG("Networking", "Server - {} Client not found", port);
+        LOG_ERROR_TAG("Networking", "Server - {} Client not found", port);
         incoming_message->Release();
         return;
     }

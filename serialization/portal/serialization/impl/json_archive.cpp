@@ -47,7 +47,7 @@ void JsonArchiver::add_property(const std::string& name, const serialization::Pr
         case serialization::PropertyType::binary:
         case serialization::PropertyType::integer128:
         case serialization::PropertyType::invalid:
-            LOG_CORE_ERROR_TAG("Json Archiver", "Invalid property type for scalar in property {}", name);
+            LOG_ERROR_TAG("Json Archiver", "Invalid property type for scalar in property {}", name);
             break;
         }
         break;
@@ -106,7 +106,7 @@ void JsonArchiver::add_property(const std::string& name, const serialization::Pr
             break;
         case serialization::PropertyType::integer128:
         case serialization::PropertyType::invalid:
-            LOG_CORE_ERROR_TAG("Json Archiver", "Invalid property type for array in property {}", name);
+            LOG_ERROR_TAG("Json Archiver", "Invalid property type for array in property {}", name);
             break;
         }
         break;
@@ -122,16 +122,16 @@ void JsonArchiver::add_property(const std::string& name, const serialization::Pr
         break;
     }
     case serialization::PropertyContainerType::vec1:
-        LOG_CORE_ERROR_TAG("Json Archiver", "Cannot archive vec1 to json");
+        LOG_ERROR_TAG("Json Archiver", "Cannot archive vec1 to json");
         break;
     case serialization::PropertyContainerType::vec2:
-        LOG_CORE_ERROR_TAG("Json Archiver", "Cannot archive vec2 to json");
+        LOG_ERROR_TAG("Json Archiver", "Cannot archive vec2 to json");
         break;
     case serialization::PropertyContainerType::vec3:
-        LOG_CORE_ERROR_TAG("Json Archiver", "Cannot archive vec3 to json");
+        LOG_ERROR_TAG("Json Archiver", "Cannot archive vec3 to json");
         break;
     case serialization::PropertyContainerType::vec4:
-        LOG_CORE_ERROR_TAG("Json Archiver", "Cannot archive vec4 to json");
+        LOG_ERROR_TAG("Json Archiver", "Cannot archive vec4 to json");
         break;
     }
 }
@@ -148,7 +148,7 @@ bool JsonDearchiver::get_property(const std::string& name, serialization::Proper
 {
     if (!archive_object.contains(name))
     {
-        LOG_CORE_ERROR_TAG("Json Dearchiver", "Property {} not found in JSON", name);
+        LOG_ERROR_TAG("Json Dearchiver", "Property {} not found in JSON", name);
         return false;
     }
 
@@ -178,7 +178,7 @@ bool JsonDearchiver::get_property(const std::string& name, serialization::Proper
             property_size = sizeof(uint64_t);
             break;
         default:
-            LOG_CORE_ERROR_TAG("Json Dearchiver", "Type mismatch for property {}", name);
+            LOG_ERROR_TAG("Json Dearchiver", "Type mismatch for property {}", name);
             return false;
         }
     }
@@ -196,7 +196,7 @@ bool JsonDearchiver::get_property(const std::string& name, serialization::Proper
             property_size = sizeof(double);
             break;
         default:
-            LOG_CORE_ERROR_TAG("Json Dearchiver", "Type mismatch for property {}", name);
+            LOG_ERROR_TAG("Json Dearchiver", "Type mismatch for property {}", name);
             return false;
         }
     }
@@ -204,7 +204,7 @@ bool JsonDearchiver::get_property(const std::string& name, serialization::Proper
     {
         if (out.type != serialization::PropertyType::character)
         {
-            LOG_CORE_ERROR_TAG("Json Dearchiver", "Container type mismatch for string property {}", name);
+            LOG_ERROR_TAG("Json Dearchiver", "Container type mismatch for string property {}", name);
             return false;
         }
 
@@ -256,7 +256,7 @@ bool JsonDearchiver::get_property(const std::string& name, serialization::Proper
     }
     else
     {
-        LOG_CORE_ERROR_TAG("Json Dearchiver", "Unsupported JSON type for property {}", name);
+        LOG_ERROR_TAG("Json Dearchiver", "Unsupported JSON type for property {}", name);
         return false;
     }
 

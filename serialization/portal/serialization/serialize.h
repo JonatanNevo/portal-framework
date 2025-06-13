@@ -200,9 +200,9 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::scalar, "Property container type mismatch");
-        PORTAL_CORE_ASSERT(property.type == serialization::get_property_type<T>(), "Property type mismatch");
-        PORTAL_CORE_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
+        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::scalar, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialization::get_property_type<T>(), "Property type mismatch");
+        PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
         t = *static_cast<T*>(property.value.data);
     }
@@ -212,8 +212,8 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::array, "Property container type mismatch");
-        PORTAL_CORE_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::array, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
 
         auto array_length = property.elements_number;
         auto* data = static_cast<typename T::value_type*>(property.value.data);
@@ -225,7 +225,7 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_CORE_ASSERT(property.type == serialization::PropertyType::character, "Property type mismatch");
+        PORTAL_ASSERT(property.type == serialization::PropertyType::character, "Property type mismatch");
 
         size_t string_length;
         if (property.container_type == serialization::PropertyContainerType::null_term_string)
@@ -242,8 +242,8 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_CORE_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::vec1, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::vec1, "Property container type mismatch");
 
         t = T(*static_cast<typename T::value_type*>(property.value.data));
     }
@@ -253,8 +253,8 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_CORE_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::vec2, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::vec2, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1]);
@@ -265,8 +265,8 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_CORE_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::vec3, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::vec3, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1], data[2]);
@@ -277,8 +277,8 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_CORE_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_CORE_ASSERT(property.container_type == serialization::PropertyContainerType::vec4, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::vec4, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1], data[2], data[3]);
@@ -351,9 +351,9 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_CORE_ASSERT(property.type == serialization::PropertyType::character, "Property type mismatch");
+        PORTAL_ASSERT(property.type == serialization::PropertyType::character, "Property type mismatch");
 
-        PORTAL_CORE_ASSERT(property.elements_number == length, "Value size mismatch, expected: {} got {}", length, property.elements_number);
+        PORTAL_ASSERT(property.elements_number == length, "Value size mismatch, expected: {} got {}", length, property.elements_number);
         memcpy(t, property.value.data, (std::min)(length, property.elements_number));
     }
 

@@ -51,7 +51,7 @@ std::filesystem::path FileSystem::get_persistent_storage_path()
 
     PWSTR roaming_file_path;
     [[maybe_unused]] const HRESULT result = SHGetKnownFolderPath(FOLDERID_RoamingAppData, KF_FLAG_DEFAULT, nullptr, &roaming_file_path);
-    PORTAL_CORE_ASSERT(result == S_OK, "Failed to get Roaming App Data path");
+    PORTAL_ASSERT(result == S_OK, "Failed to get Roaming App Data path");
     s_persistent_storage_path = roaming_file_path;
     s_persistent_storage_path /= "portal"; // TODO: allow multiple folders
 

@@ -29,7 +29,7 @@ void Connection::connect(const std::string& address)
 {
     if (running)
     {
-        LOG_CORE_WARN_TAG("Networking", "Connection - {} is already running", connection);
+        LOG_WARN_TAG("Networking", "Connection - {} is already running", connection);
         return;
     }
 
@@ -84,20 +84,20 @@ void Connection::send_raw(const void* data, const size_t size, const bool reliab
         // everything is ok
         break;
     case k_EResultInvalidParam:
-        LOG_CORE_ERROR_TAG("Networking", "Connection - {} Invalid connection, cannot send");
+        LOG_ERROR_TAG("Networking", "Connection - {} Invalid connection, cannot send");
         break;
     case k_EResultInvalidState:
-        LOG_CORE_ERROR_TAG("Networking", "Connection - {} Invalid state, cannot send", connection);
+        LOG_ERROR_TAG("Networking", "Connection - {} Invalid state, cannot send", connection);
         break;
     case k_EResultNoConnection:
-        LOG_CORE_ERROR_TAG("Networking", "Connection - {} is already invalid, cannot send", connection);
+        LOG_ERROR_TAG("Networking", "Connection - {} is already invalid, cannot send", connection);
         break;
     case k_EResultLimitExceeded:
-        LOG_CORE_ERROR_TAG("Networking", "Connection - {} Limit exceeded, cannot send", connection);
+        LOG_ERROR_TAG("Networking", "Connection - {} Limit exceeded, cannot send", connection);
         break;
 
     default:
-        LOG_CORE_WARN_TAG("Networking", "SendMessageToConnection should not return {}", static_cast<int>(result));
+        LOG_WARN_TAG("Networking", "SendMessageToConnection should not return {}", static_cast<int>(result));
         break;
     }
 }
@@ -107,7 +107,7 @@ SteamNetConnectionInfo_t Connection::get_connection_info() const
     SteamNetConnectionInfo_t info{};
     if (sockets->GetConnectionInfo(connection, &info))
         return info;
-    LOG_CORE_ERROR_TAG("Networking", "Connection - {} Failed to get connection info", connection);
+    LOG_ERROR_TAG("Networking", "Connection - {} Failed to get connection info", connection);
     return info;
 }
 
@@ -134,7 +134,7 @@ void Connection::poll_incoming_messages()
 
     if (message_count < 0)
     {
-        LOG_CORE_ERROR_TAG("Networking", "Connection - {} Failed to receive message", connection);
+        LOG_ERROR_TAG("Networking", "Connection - {} Failed to receive message", connection);
         running = false;
     }
 
@@ -155,7 +155,7 @@ void Connection::on_status_changed_callback(SteamNetConnectionStatusChangedCallb
 {
     const auto manager = ConnectionManager::get_instance();
     const auto connection = manager->get_connection(info->m_hConn);
-    PORTAL_CORE_ASSERT(connection != nullptr, "Connection not found in manager");
+    PORTAL_ASSERT(connection != nullptr, "Connection not found in manager");
     if (connection)
         connection->on_status_changed(info);
 }
@@ -166,16 +166,16 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
     {
     case k_ESteamNetworkingConnectionState_None:
         // Clean up after connection destruction
-        LOG_CORE_DEBUG_TAG("Networking", "Connection {} - State changed to None", info->m_info.m_szConnectionDescription);
+        LOG_DEBUG_TAG("Networking", "Connection {} - State changed to None", info->m_info.m_szConnectionDescription);
         break;
 
     case k_ESteamNetworkingConnectionState_ClosedByPeer:
         state = ConnectionState::ClosedByPeer;
         if (info->m_eOldState == k_ESteamNetworkingConnectionState_Connecting)
-            LOG_CORE_ERROR_TAG(
+            LOG_ERROR_TAG(
                 "Networking", "Connection {} - Failed to connect: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
         else
-            LOG_CORE_ERROR_TAG(
+            LOG_ERROR_TAG(
                 "Networking", "Connection {} - Disconnected from server: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
         on_connection_error(&info->m_info);
         break;
@@ -183,35 +183,35 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
     case k_ESteamNetworkingConnectionState_ProblemDetectedLocally:
         state = ConnectionState::ProblemDetectedLocally;
         if (info->m_eOldState == k_ESteamNetworkingConnectionState_Connecting)
-            LOG_CORE_ERROR_TAG(
+            LOG_ERROR_TAG(
                 "Networking", "Connection {} - Failed to connect: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
         else
-            LOG_CORE_ERROR_TAG(
+            LOG_ERROR_TAG(
                 "Networking", "Connection {} - Problem detected locally: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
         on_connection_error(&info->m_info);
         break;
 
     case k_ESteamNetworkingConnectionState_Connecting:
-        LOG_CORE_DEBUG_TAG("Networking", "Connection {} - State changed to Connecting", info->m_info.m_szConnectionDescription);
+        LOG_DEBUG_TAG("Networking", "Connection {} - State changed to Connecting", info->m_info.m_szConnectionDescription);
         state = ConnectionState::Connecting;
         break;
 
     case k_ESteamNetworkingConnectionState_FindingRoute:
-        LOG_CORE_DEBUG_TAG("Networking", "Connection {} - State changed to FindingRoute", info->m_info.m_szConnectionDescription);
+        LOG_DEBUG_TAG("Networking", "Connection {} - State changed to FindingRoute", info->m_info.m_szConnectionDescription);
         state = ConnectionState::FindingRoute;
         break;
 
     case k_ESteamNetworkingConnectionState_Connected:
         char target_str[SteamNetworkingIdentity::k_cchMaxString];
         info->m_info.m_identityRemote.ToString(target_str, sizeof(target_str));
-        LOG_CORE_INFO_TAG("Networking", "Connection {} - Connected to {}", info->m_info.m_szConnectionDescription, target_str);
+        LOG_INFO_TAG("Networking", "Connection {} - Connected to {}", info->m_info.m_szConnectionDescription, target_str);
         state = ConnectionState::Connected;
         for (const auto& callback : on_connect_callbacks)
             callback();
         break;
 
     default:
-        LOG_CORE_TRACE_TAG(
+        LOG_TRACE_TAG(
             "Networking", "Connection {} - State changed to {}", info->m_info.m_szConnectionDescription, static_cast<int>(info->m_info.m_eState));
         break;
     }
@@ -231,7 +231,7 @@ void Connection::on_connection_error(SteamNetConnectionInfo_t* /*info*/)
 
 void Connection::on_fatal_error(const std::string& message)
 {
-    LOG_CORE_ERROR_TAG("Networking", "Fatal error - {}", message);
+    LOG_ERROR_TAG("Networking", "Fatal error - {}", message);
     running = false;
 }
 } // namespace portal::network
