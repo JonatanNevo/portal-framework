@@ -8,4 +8,4 @@ The core module, provides common functionalities for all other modules.
  - [Assertion](../core/portal/core/assert.h)
  - [Timer](../core/portal/core/timer.h)
  - [Non Owning Buffer](../core/portal/core/buffer.h)
- - [Random](../core/portal/core/random.h)
+ - [Random](../core/portal/core/random/random.h)
