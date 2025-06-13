@@ -9,7 +9,7 @@
 #include <ranges>
 
 #include "portal/core/log.h"
-#include "portal/core/random.h"
+#include "../../../core/portal/core/random/random.h"
 
 // TODO: decuple from GLFW
 

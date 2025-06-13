@@ -39,11 +39,23 @@ public:
      */
     void lock()
     {
-        // Spin until we can acquire the lock
-        while (!try_lock())
+        unsigned backoff = 1;
+
+        if (try_lock())
+            return;
+
+        // Exponential back-off strategy
+        while (true)
         {
-            // Reduce power consumption by yielding the thread
-            std::this_thread::yield();
+            for (unsigned i = 0; i < backoff; ++i)
+                std::this_thread::yield();
+
+            if (try_lock())
+                return;
+
+            // Increase back-off time (with a reasonable upper limit)
+            if (backoff < 1024)
+                backoff *= 2;
         }
     }
 

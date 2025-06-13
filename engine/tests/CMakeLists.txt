@@ -10,22 +10,22 @@ enable_testing()
 
 file(GLOB_RECURSE TEST_SOURCES "*tests.cpp")
 file(GLOB_RECURSE TEST_HEADERS "*.h")
-
 file(GLOB_RECURSE BENCHMARK_SOURCES "*benchmark.cpp")
 
-add_executable(portal-core-test ${TEST_SOURCES} ${TEST_HEADERS} main.cpp)
-target_link_libraries(portal-core-test
-        portal-core
+
+add_executable(portal-engine-test ${TEST_SOURCES} ${TEST_HEADERS} main.cpp)
+target_link_libraries(portal-engine-test
+        portal-engine
         GTest::gtest
         GTest::gmock
 )
 
 include(GoogleTest)
-gtest_discover_tests(portal-core-test)
+gtest_discover_tests(portal-engine-test)
 
 
-add_executable(portal-core-benchmark ${BENCHMARK_SOURCES})
-target_link_libraries(portal-core-benchmark
-        portal-core
+add_executable(portal-engine-benchmark ${BENCHMARK_SOURCES})
+target_link_libraries(portal-engine-benchmark
+        portal-engine
         benchmark::benchmark
 )
