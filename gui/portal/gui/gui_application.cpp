@@ -355,8 +355,10 @@ GUIApplication& GUIApplication::get() { return *s_instance; }
 
 void GUIApplication::init()
 {
-    // Intialize logging
+    // Initialize logging
     Log::init();
+
+    LOG_INFO("Starting application: {}", specs.name);
 
     // Setup GLFW window
     glfwSetErrorCallback(glfw_error_callback);
@@ -625,7 +627,6 @@ void GUIApplication::ui_draw_menu_bar()
 void GUIApplication::run()
 {
     running = true;
-
     ImGui_ImplVulkanH_Window* window = &g_main_window_data;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     ImGuiIO& io = ImGui::GetIO();

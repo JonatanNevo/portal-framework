@@ -13,6 +13,8 @@
 #include <ranges>
 #include <utility>
 
+#include "portal/core/common.h"
+
 #define PORTAL_HAS_CONSOLE !PORTAL_DIST
 
 
@@ -31,7 +33,7 @@ std::vector<spdlog::sink_ptr> default_sinks{};
 Log::Settings g_settings;
 
 // Format:  date [name] colored{[level]} message (file:line function #thread_id) extra
-constexpr auto default_pattern = "%H:%M:%S.%f [%n] %^[%l]%$ %v (%s:%# %! #%t) %&";
+constexpr auto default_pattern = "[%Y-%m-%d %H:%M:%S.%f] [%t] [%n] %^[%l]%$ [%s:%#] %v %&";
 
 void Log::init()
 {
@@ -47,7 +49,7 @@ void Log::init(const Settings& settings)
     if (!std::filesystem::exists(log_directory))
         std::filesystem::create_directory(log_directory);
 
-    std::vector<spdlog::sink_ptr> sinks = {
+    default_sinks = {
         std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/portal.log", true),
 #if PORTAL_HAS_CONSOLE
         std::make_shared<spdlog::sinks::stdout_color_sink_mt>()
@@ -129,7 +131,7 @@ void Log::enable_tag(const std::string& tag_name, const bool enable)
     }
 }
 
-__forceinline void Log::print_message_tag(
+PORTAL_FORCE_INLINE void Log::print_message_tag(
     const spdlog::source_loc& loc,
     LogLevel level,
     const std::string_view tag,
@@ -142,7 +144,7 @@ __forceinline void Log::print_message_tag(
     }
 }
 
-__forceinline void Log::print_message(
+PORTAL_FORCE_INLINE void Log::print_message(
     const std::shared_ptr<spdlog::logger>& logger,
     const spdlog::source_loc& loc,
     LogLevel level,
