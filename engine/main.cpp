@@ -3,31 +3,14 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
+#include "portal/core/log.h"
 #include "portal/engine/allocators/pool_allocator.h"
-
-struct A
-{
-    A()
-    {
-        std::printf("A constructed\n");
-    }
-    ~A()
-    {
-        std::printf("A destroyed\n");
-    }
-    uint64_t a;
-};
+#include "portal/engine/strings/md5_hash.h"
 
 int main()
 {
-    portal::PoolAllocator<A, 4> allocator;
-    auto* a = allocator.alloc();
-    auto* b = allocator.alloc();
-    auto* c = allocator.alloc();
-    auto* d = allocator.alloc();
+    portal::Log::init();
 
-    allocator.free(a);
-    allocator.free(b);
-    allocator.free(c);
-    allocator.free(d);
+    auto hash = portal::hash::md5("hello");
+    LOG_INFO("{:x}", hash);
 }

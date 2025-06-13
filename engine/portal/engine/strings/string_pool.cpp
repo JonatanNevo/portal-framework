@@ -18,7 +18,7 @@ StringId StringIdPool::store(const std::string_view string)
         return {hash, it->second};
 
     // Saves a copy of the string in memory
-    auto& [added_it, success] = entries.emplace(hash, std::string(string));
+    const auto& [added_it, success] = entries.emplace(hash, std::string(string));
 
     if (!success)
         throw std::runtime_error("Failed to store string in StringIdPool");
