@@ -10,6 +10,7 @@
 #include <cstdint>
 
 #include "portal/core/common.h"
+#include "portal/input/input_types.h"
 
 namespace portal::hash
 {
@@ -310,6 +311,25 @@ consteval md5_type md5(const char (&data)[n])
     return md5_step<0, 0>::do_step(md5_internal::make_buffer(data).data(), 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476);
 }
 
+namespace literals
+{
+    template <std::size_t N>
+    struct MD5String
+    {
+        md5_type hashed{};
+
+        consteval MD5String(const char(&str)[N])
+        {
+            hashed = md5<N>(str);
+        }
+    };
+
+    template<MD5String T>
+    consteval auto operator ""_md5()
+    {
+        return T.hashed;
+    }
+}
 
 }
 
