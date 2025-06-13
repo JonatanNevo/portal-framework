@@ -11,6 +11,10 @@ int main()
 {
     portal::Log::init();
 
+    using namespace portal::hash::literals;
+
     auto hash = portal::hash::md5("hello");
+    auto hash2 = "hello"_md5;
     LOG_INFO("{:x}", hash);
+    LOG_INFO("{:x}", hash2);
 }
