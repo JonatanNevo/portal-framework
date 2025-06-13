@@ -358,17 +358,17 @@ KeyDetails::KeyDetails(const Key& key, const uint32_t flags):
 
     if ((flags & KeyFlag::ButtonAxis) != 0)
     {
-        PORTAL_CORE_ASSERT((flags & (KeyFlag::Axis1D | KeyFlag::Axis2D)) == 0, "Key cannot be bound to multiple types of axis");
+        PORTAL_ASSERT((flags & (KeyFlag::Axis1D | KeyFlag::Axis2D)) == 0, "Key cannot be bound to multiple types of axis");
         axis_type = InputAxisType::Button;
     }
     else if ((flags & KeyFlag::Axis1D) != 0)
     {
-        PORTAL_CORE_ASSERT((flags & (KeyFlag::Axis2D | KeyFlag::ButtonAxis)) == 0, "Key cannot be bound to multiple types of axis");
+        PORTAL_ASSERT((flags & (KeyFlag::Axis2D | KeyFlag::ButtonAxis)) == 0, "Key cannot be bound to multiple types of axis");
         axis_type = InputAxisType::Axis1D;
     }
     else if ((flags & KeyFlag::Axis2D) != 0)
     {
-        PORTAL_CORE_ASSERT((flags & (KeyFlag::Axis1D | KeyFlag::ButtonAxis)) == 0, "Key cannot be bound to multiple types of axis");
+        PORTAL_ASSERT((flags & (KeyFlag::Axis1D | KeyFlag::ButtonAxis)) == 0, "Key cannot be bound to multiple types of axis");
         axis_type = InputAxisType::Axis2D;
     }
     else
@@ -673,7 +673,7 @@ void Keys::initialize()
 void Keys::add_key(const KeyDetails& key_details)
 {
     const Key& key = key_details.key;
-    PORTAL_CORE_ASSERT(!input_keys.contains(key), "Adding duplicate key");
+    PORTAL_ASSERT(!input_keys.contains(key), "Adding duplicate key");
     key.details = std::make_shared<KeyDetails>(key_details);
     input_keys[key] = key.details;
 }

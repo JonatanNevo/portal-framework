@@ -268,7 +268,7 @@ public:
     /* Executes the delegate */
     RetVal execute(Args... args) const
     {
-        PORTAL_CORE_ASSERT(allocator.has_allocation(), "Delegate is not bound to a function");
+        PORTAL_ASSERT(allocator.has_allocation(), "Delegate is not bound to a function");
         return static_cast<DelegateType*>(allocator.get_allocation())->execute(std::forward<Args>(args)...);
     }
 
@@ -589,7 +589,7 @@ private:
 
     void unlock()
     {
-        PORTAL_CORE_ASSERT(locks > 0, "Cannot unlock a delegate that is not locked");
+        PORTAL_ASSERT(locks > 0, "Cannot unlock a delegate that is not locked");
         --locks;
     }
 

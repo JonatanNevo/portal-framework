@@ -96,7 +96,7 @@ public:
         [[maybe_unused]] const size_t thread_id = hasher(std::this_thread::get_id());
         [[maybe_unused]] const size_t actual_value = locked_thread.load(std::memory_order_relaxed);
 
-        PORTAL_CORE_ASSERT(actual_value == thread_id, "Unlocking a reentrant spin lock that is not held by the current thread");
+        PORTAL_ASSERT(actual_value == thread_id, "Unlocking a reentrant spin lock that is not held by the current thread");
 
         --ref_count;
         if (ref_count == 0)

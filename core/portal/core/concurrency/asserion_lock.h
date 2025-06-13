@@ -23,14 +23,14 @@ public:
     void lock()
     {
         // Assert no one already has the lock
-        PORTAL_CORE_ASSERT(!locked, "Cannot lock an already locked AssertionLock");
+        PORTAL_ASSERT(!locked, "Cannot lock an already locked AssertionLock");
         locked = true;
     }
 
     void unlock()
     {
         // assert correct usage
-        PORTAL_CORE_ASSERT(locked, "Cannot unlock an already unlocked AssertionLock");
+        PORTAL_ASSERT(locked, "Cannot unlock an already unlocked AssertionLock");
         locked = false;
     }
 

@@ -113,7 +113,7 @@ public:
     ~ScopedTimer()
     {
         auto duration = timer.stop<T>();
-        LOG_CORE_INFO_TAG("Timer", "\"{}\" - {} s", name, duration);
+        LOG_INFO_TAG("Timer", "\"{}\" - {} s", name, duration);
     }
 
 private:

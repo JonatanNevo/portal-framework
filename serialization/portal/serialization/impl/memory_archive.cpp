@@ -10,12 +10,12 @@ namespace portal
 
 void MemoryArchive::archive()
 {
-    LOG_CORE_WARN_TAG("MemoryArchive", "There is no implementation for MemoryArchive::archive()");
+    LOG_WARN_TAG("MemoryArchive", "There is no implementation for MemoryArchive::archive()");
 }
 
 void MemoryArchive::dearchive()
 {
-    LOG_CORE_WARN_TAG("MemoryArchive", "There is no implementation for MemoryArchive::dearchive()");
+    LOG_WARN_TAG("MemoryArchive", "There is no implementation for MemoryArchive::dearchive()");
 }
 
 void MemoryArchive::add_property(const std::string& name, const serialization::Property& property)

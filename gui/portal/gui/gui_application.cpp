@@ -388,7 +388,7 @@ void GUIApplication::init()
 
     if (!glfwVulkanSupported())
     {
-        LOG_CORE_ERROR_TAG("App", "Vulkan not supported!");
+        LOG_ERROR_TAG("App", "Vulkan not supported!");
         return;
     }
 
@@ -782,7 +782,7 @@ void GUIApplication::set_menubar_callback(const std::function<void()>& callback)
 {
     if (!specs.use_dock_space)
     {
-        LOG_CORE_WARN_TAG(
+        LOG_WARN_TAG(
             "App", "Application::set_menubar_callback - ApplicationSpecification::use_dock_space is false so menubar will not be visible.");
     }
     menu_bar_callback = callback;

@@ -26,7 +26,7 @@ bool FileSystem::create_directory(const std::filesystem::path& path)
     std::error_code ec;
     std::filesystem::create_directory(path, ec);
     if (ec)
-        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to create directory: {}", path.string(), ec.message());
+        LOG_ERROR_TAG("Filesystem", "{}: Failed to create directory: {}", path.string(), ec.message());
     return !ec;
 }
 
@@ -57,7 +57,7 @@ bool FileSystem::remove(const std::filesystem::path& path)
         std::filesystem::remove(path, ec);
 
     if (ec)
-        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to remove file: {}", path.string(), ec.message());
+        LOG_ERROR_TAG("Filesystem", "{}: Failed to remove file: {}", path.string(), ec.message());
     return !ec;
 }
 
@@ -70,7 +70,7 @@ bool FileSystem::move(const std::filesystem::path& from, const std::filesystem::
     std::filesystem::rename(from, to, ec);
 
     if (ec)
-        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to move file: {}", from.string(), ec.message());
+        LOG_ERROR_TAG("Filesystem", "{}: Failed to move file: {}", from.string(), ec.message());
     return !ec;
 }
 
@@ -83,7 +83,7 @@ bool FileSystem::copy(const std::filesystem::path& from, const std::filesystem::
     std::filesystem::copy(from, to, ec);
 
     if (ec)
-        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to copy file: {}", from.string(), ec.message());
+        LOG_ERROR_TAG("Filesystem", "{}: Failed to copy file: {}", from.string(), ec.message());
     return !ec;
 }
 
@@ -105,7 +105,7 @@ FileStat FileSystem::stat_file(const std::filesystem::path& path)
     const auto fs_start = std::filesystem::status(path, ec);
     if (ec)
     {
-        LOG_CORE_TRACE_TAG("Filesystem", "{}: Failed to stat file: {}", path.string(), ec.message());
+        LOG_TRACE_TAG("Filesystem", "{}: Failed to stat file: {}", path.string(), ec.message());
         return FileStat(
             false,
             false,
@@ -116,7 +116,7 @@ FileStat FileSystem::stat_file(const std::filesystem::path& path)
     auto size = std::filesystem::file_size(path, ec);
     if (ec)
     {
-        LOG_CORE_WARN_TAG("Filesystem", "{}: Failed to get file size: {}", path.string(), ec.message());
+        LOG_WARN_TAG("Filesystem", "{}: Failed to get file size: {}", path.string(), ec.message());
         size = 0;
     }
 
@@ -192,7 +192,7 @@ bool FileSystem::write_file(const std::filesystem::path& path, const Buffer& buf
 
     if (!file.is_open())
     {
-        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to open file for writing", path.string());
+        LOG_ERROR_TAG("Filesystem", "{}: Failed to open file for writing", path.string());
         return false;
     }
 
@@ -219,14 +219,14 @@ Buffer FileSystem::read_chunk(const std::filesystem::path& path, size_t offset, 
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file.is_open())
     {
-        LOG_CORE_ERROR_TAG("Filesystem", "{}: Failed to open file for reading", path.string());
+        LOG_ERROR_TAG("Filesystem", "{}: Failed to open file for reading", path.string());
         return {};
     }
 
     auto size = stat_file(path).size;
     if (offset + count > size)
     {
-        LOG_CORE_WARN_TAG("Filesystem", "{}: Requested read chunk ({} + {}) is bigger than size: ({})", path.string(), offset, count, size);
+        LOG_WARN_TAG("Filesystem", "{}: Requested read chunk ({} + {}) is bigger than size: ({})", path.string(), offset, count, size);
         return {};
     }
 

@@ -43,11 +43,9 @@ inline void PORTAL_DEBUG_BREAK_HELPER()
 #endif
 
 #ifdef PORTAL_ENABLE_ASSERTS
-#define PORTAL_CORE_ASSERT_MESSAGE_INTERNAL(...)  ::portal::Log::print_assert_message(::portal::Log::LoggerType::Core,    (__FILE__), __LINE__, __FUNCTION__, __VA_ARGS__)
-#define PORTAL_ASSERT_MESSAGE_INTERNAL(...)       ::portal::Log::print_assert_message(::portal::Log::LoggerType::Client, (__FILE__), __LINE__, __FUNCTION__, __VA_ARGS__)
+#define PORTAL_ASSERT_MESSAGE_INTERNAL(...)  ::portal::Log::print_assert_message((__FILE__), __LINE__, __FUNCTION__, __VA_ARGS__)
 
-#define PORTAL_CORE_ASSERT(condition, ...) (void)((!!(condition)) || !PORTAL_CORE_ASSERT_MESSAGE_INTERNAL(__VA_ARGS__)  || (PORTAL_DEBUG_BREAK_HELPER(), 0))
-#define PORTAL_ASSERT(condition, ...)      (void)((!!(condition)) || !PORTAL_ASSERT_MESSAGE_INTERNAL(__VA_ARGS__)       || (PORTAL_DEBUG_BREAK_HELPER(), 0))
+#define PORTAL_ASSERT(condition, ...) (void)((!!(condition)) || !PORTAL_ASSERT_MESSAGE_INTERNAL(__VA_ARGS__)  || (PORTAL_DEBUG_BREAK_HELPER(), 0))
 #else
 #define PORTAL_CORE_ASSERT(condition, ...)
 #define PORTAL_ASSERT(condition, ...)

@@ -44,7 +44,7 @@ namespace utils
             return "Undefined";
         }
 
-        PORTAL_CORE_ASSERT(false, "Undefined Asset Type");
+        PORTAL_ASSERT(false, "Undefined Asset Type");
         return "Undefined";
     }
 }

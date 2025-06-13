@@ -30,7 +30,7 @@ public:
     constexpr InlineAllocator() noexcept :
         size(0)
     {
-        PORTAL_CORE_ASSERT(
+        PORTAL_ASSERT(
             MaxStackSize > sizeof(void*),
             "MaxStackSize is smaller or equal to the size of a pointer. This will make the use of an InlineAllocator pointless. Please increase the MaxStackSize."
             );

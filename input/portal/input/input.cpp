@@ -23,7 +23,7 @@ void key_callback(GLFWwindow* window, int key, int scan_code, int action, int /*
         params.key = InputKeyManager::get().get_key_from_codes(scan_code);
         if (!params.key.is_valid())
         {
-            LOG_CORE_ERROR_TAG("Input", "Key {} is not valid!", key);
+            LOG_ERROR_TAG("Input", "Key {} is not valid!", key);
             return;
         }
 
@@ -152,7 +152,7 @@ bool Input::input_key(const InputKeyParams& params)
             }
             else
             {
-                LOG_CORE_ERROR_TAG("Input", "Key {} has paired axis key {} but no valid paired axis!", params.key.get_name(), paired_key.get_name());
+                LOG_ERROR_TAG("Input", "Key {} has paired axis key {} but no valid paired axis!", params.key.get_name(), paired_key.get_name());
             }
 
             paired_state.sample_count_accumulator = std::max(paired_state.sample_count_accumulator, state.sample_count_accumulator);
