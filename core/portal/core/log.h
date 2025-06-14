@@ -213,15 +213,15 @@ private:
 #define LOG_FATAL(...) ::portal::Log::print_message_tag(SOURCE_LOC, ::portal::Log::LogLevel::Fatal, "default", __VA_ARGS__)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Logger logs                                                                                                      //
+// Logger logs (expects a logger named "logger" to be available in the context                                      //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define LOGGER_TRACE(tag, ...) ::portal::Log::print_message(SOURCE_LOC, ::portal::Log::LogLevel::Trace, __VA_ARGS__)
-#define LOGGER_DEBUG(tag, ...) ::portal::Log::print_message(SOURCE_LOC, ::portal::Log::LogLevel::Debug, __VA_ARGS__)
-#define LOGGER_INFO(tag, ...) ::portal::Log::print_message(SOURCE_LOC, ::portal::Log::LogLevel::Info, __VA_ARGS__)
-#define LOGGER_WARN(tag, ...) ::portal::Log::print_message(SOURCE_LOC, ::portal::Log::LogLevel::Warn, __VA_ARGS__)
-#define LOGGER_ERROR(tag, ...) ::portal::Log::print_message(SOURCE_LOC, ::portal::Log::LogLevel::Error, __VA_ARGS__)
-#define LOGGER_FATAL(tag, ...) ::portal::Log::print_message(SOURCE_LOC, ::portal::Log::LogLevel::Fatal, __VA_ARGS__)
+#define LOGGER_TRACE(...) ::portal::Log::print_message(logger, SOURCE_LOC, ::portal::Log::LogLevel::Trace, __VA_ARGS__)
+#define LOGGER_DEBUG(...) ::portal::Log::print_message(logger, SOURCE_LOC, ::portal::Log::LogLevel::Debug, __VA_ARGS__)
+#define LOGGER_INFO(...) ::portal::Log::print_message(logger, SOURCE_LOC, ::portal::Log::LogLevel::Info, __VA_ARGS__)
+#define LOGGER_WARN(...) ::portal::Log::print_message(logger, SOURCE_LOC, ::portal::Log::LogLevel::Warn, __VA_ARGS__)
+#define LOGGER_ERROR(...) ::portal::Log::print_message(logger, SOURCE_LOC, ::portal::Log::LogLevel::Error, __VA_ARGS__)
+#define LOGGER_FATAL(...) ::portal::Log::print_message(logger, SOURCE_LOC, ::portal::Log::LogLevel::Fatal, __VA_ARGS__)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
