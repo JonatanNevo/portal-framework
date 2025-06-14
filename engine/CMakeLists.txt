@@ -45,9 +45,9 @@ target_link_libraries(portal-engine
 )
 
 if(MSVC)
-    target_compile_options(portal-networking PRIVATE /W4 /WX)
+    target_compile_options(portal-engine PRIVATE /W4 /WX)
 else()
-    target_compile_options(portal-networking PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(portal-engine PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
 if(PORTAL_BUILD_TESTS)

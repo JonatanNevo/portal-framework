@@ -222,7 +222,7 @@ struct uint128_t
         // We go a step further and replace the last adjustment term with a
         // lookup table, which we encode as a binary literal.  This seems to
         // yield smaller code on x86 at least.
-        constexpr auto cst = ~uint64_t(0) / 5;
+        constexpr auto cst = ~static_cast<uint64_t>(0) / 5;
         uint128_t q = uint128_t{x.hi} * cst + uint128_t{x.hi / 5 + x.lo / 5};
         constexpr auto lookup = 0b111100000u;
         q += (lookup >> ((x.hi % 5) + (x.lo % 5))) & 1;
