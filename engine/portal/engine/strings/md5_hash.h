@@ -195,8 +195,8 @@ struct md5_step;
 
 consteval md5_type make_md5_result(const uint32_t a, const uint32_t b, const uint32_t c, const uint32_t d)
 {
-    const uint64_t lo = static_cast<uint64_t>(a) | (static_cast<uint64_t>(b) << 32);
-    const uint64_t hi = static_cast<uint64_t>(c) | (static_cast<uint64_t>(d) << 32);
+    const uint64_t lo = static_cast<uint64_t>(a) | static_cast<uint64_t>(b) << 32;
+    const uint64_t hi = static_cast<uint64_t>(c) | static_cast<uint64_t>(d) << 32;
     return {lo, hi};
 }
 
@@ -318,13 +318,13 @@ namespace literals
     {
         md5_type hashed{};
 
-        consteval MD5String(const char(&str)[N])
+        consteval MD5String(const char (&str)[N])
         {
             hashed = md5<N>(str);
         }
     };
 
-    template<MD5String T>
+    template <MD5String T>
     consteval auto operator ""_md5()
     {
         return T.hashed;

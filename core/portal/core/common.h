@@ -7,6 +7,10 @@
 
 
 #include <cstdint>
+#include <type_traits>
+#include <limits>
+#include <cassert>
+#include <bit>
 
 #define BIT(x) (1u << x)
 
@@ -38,7 +42,7 @@
 template <typename T>
 constexpr PORTAL_FORCE_INLINE bool add_overflow_impl(T a, T b, T* result)
 {
-    if constexpr (std::is_unsigned_v<T>)
+    if (std::is_unsigned_v<T>)
     {
         *result = a + b;
         return *result < a;
@@ -300,3 +304,15 @@ struct uint128_t
 #endif
 };
 }
+
+#if defined(PORTAL_COMPILER_CLANG) || defined(PORTAL_COMPILER_GCC)
+#else
+template <>
+struct std::hash<portal::uint128_t>
+{
+    constexpr size_t operator()(const portal::uint128_t& value) const noexcept
+    {
+        return value.lo ^ value.hi;
+    }
+};
+#endif
