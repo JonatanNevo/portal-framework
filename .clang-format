@@ -10,6 +10,7 @@ AlignTrailingComments: true
 AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: false
 BinPackParameters: false
+PackConstructorInitializers: NextLineOnly
 BraceWrapping: 
   AfterCaseLabel: true
   AfterClass: true
@@ -28,9 +29,9 @@ BraceWrapping:
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 BreakBeforeBraces: Custom
+BreakConstructorInitializers: AfterColon
 ColumnLimit: 150
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
-IncludeCategories: 
+IncludeCategories:
   - Regex: '^<.*'
     Priority: 1
   - Regex: '^".*'

@@ -183,16 +183,17 @@ std::filesystem::path FileSystem::get_unique_file_name(const std::filesystem::pa
 
 bool FileSystem::write_file(const std::filesystem::path& path, const Buffer& buffer)
 {
+    const auto abs_path = std::filesystem::absolute(path);
     // create directory if it doesn't exist
-    const auto parent = path.parent_path();
+    const auto parent = abs_path.parent_path();
     if (!std::filesystem::exists(parent))
         create_directory(parent);
 
-    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    std::ofstream file(abs_path, std::ios::binary | std::ios::trunc);
 
     if (!file.is_open())
     {
-        LOG_ERROR_TAG("Filesystem", "{}: Failed to open file for writing", path.string());
+        LOG_ERROR_TAG("Filesystem", "{}: Failed to open file for writing", abs_path.string());
         return false;
     }
 
