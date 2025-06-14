@@ -4,8 +4,9 @@
 //
 
 
+#include "portal/core/log.h"
 
 int main()
 {
-
+    portal::Log::init();
 }
