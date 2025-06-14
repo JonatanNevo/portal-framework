@@ -17,7 +17,7 @@ struct StringId
     uint128_t id;
     std::string_view string;
 
-    StringId(uint128_t id);
+    explicit StringId(uint128_t id);
     StringId(uint128_t id, std::string_view string);
     StringId(uint128_t id, const std::string& string);
 

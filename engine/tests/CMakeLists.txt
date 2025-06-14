@@ -13,7 +13,7 @@ file(GLOB_RECURSE TEST_HEADERS "*.h")
 file(GLOB_RECURSE BENCHMARK_SOURCES "*benchmark.cpp")
 
 
-add_executable(portal-engine-test ${TEST_SOURCES} ${TEST_HEADERS} main.cpp)
+add_executable(portal-engine-test ${TEST_SOURCES} ${TEST_HEADERS} test_main.cpp)
 target_link_libraries(portal-engine-test
         portal-engine
         GTest::gtest
@@ -24,7 +24,7 @@ include(GoogleTest)
 gtest_discover_tests(portal-engine-test)
 
 
-add_executable(portal-engine-benchmark ${BENCHMARK_SOURCES})
+add_executable(portal-engine-benchmark ${BENCHMARK_SOURCES} bench_main.cpp)
 target_link_libraries(portal-engine-benchmark
         portal-engine
         benchmark::benchmark
