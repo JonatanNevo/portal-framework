@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <fmt/format.h>
+
 #include "portal/core/common.h"
 
 #include "portal/engine/strings/md5_hash.h"
@@ -25,6 +27,30 @@ struct StringId
 };
 
 } // portal
+
+template<>
+struct std::hash<portal::StringId>
+{
+    std::size_t operator()(const portal::StringId& id) const noexcept
+    {
+        return std::hash<portal::uint128_t>()(id.id);
+    }
+};
+
+template <>
+struct fmt::formatter<portal::StringId>
+{
+    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+       return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const portal::StringId& id, FormatContext& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "id(\"{}\")", id.string);
+    }
+};
 
 #define STRING_ID(string) portal::StringId(portal::hash::md5(string), std::string_view(string))
 
