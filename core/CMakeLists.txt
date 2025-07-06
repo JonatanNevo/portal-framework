@@ -13,6 +13,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
 file(GLOB_RECURSE CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
 
+file(GLOB_RECURSE LLVM_SOURCES CONFIGURE_DEPENDS "llvm/Support.cpp")
+file(GLOB_RECURSE LLVM_HEADER CONFIGURE_DEPENDS "llvm/*.h" "llvm-c/*.h")
+
 file(GLOB_RECURSE WINDOWS_SOURCES CONFIGURE_DEPENDS "portal/platform/core/windows/*.cpp")
 file(GLOB_RECURSE WINDOWS_HEADER CONFIGURE_DEPENDS "portal/platform/core/windows/*.h")
 
@@ -27,13 +30,19 @@ option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 
-add_library(portal-core STATIC ${CORE_SOURCES})
+option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
+if(PORTAL_FIND_PACAKGE)
+    find_package(llvm-adt CONFIG REQUIRED)
+endif ()
+unset(PORTAL_FIND_PACAKGE CACHE)
+
+add_library(portal-core STATIC ${CORE_SOURCES} ${LLVM_SOURCES})
 add_library(portal::core ALIAS portal-core)
 
 target_sources(portal-core PUBLIC
         FILE_SET HEADERS
         BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES ${CORE_HEADER}
+        FILES ${CORE_HEADER} ${LLVM_HEADER}
 )
 
 set_target_properties(portal-core PROPERTIES EXPORT_NAME core)
@@ -41,6 +50,7 @@ target_link_libraries(portal-core
         PUBLIC
         spdlog::spdlog
         glm::glm
+        llvm::adt
 )
 
 if(WIN32)
@@ -95,6 +105,7 @@ target_compile_definitions(portal-core PUBLIC
         GLM_FORCE_CTOR_INIT
         GLM_ENABLE_EXPERIMENTAL
         GLM_FORCE_CXX20
+        SPDLOG_USE_STD_FORMAT
 )
 
 if(MSVC)
