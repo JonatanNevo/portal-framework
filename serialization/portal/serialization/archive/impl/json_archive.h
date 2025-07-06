@@ -5,7 +5,7 @@
 
 #pragma once
 #include <nlohmann/json.hpp>
-#include "portal/serialization/archive.h"
+#include "portal/serialization/archive/archive.h"
 
 namespace portal
 {
@@ -18,18 +18,18 @@ public:
 protected:
     std::ostream& output;
     nlohmann::json archive_object;
-    void add_property(const std::string& name, const serialization::Property& property) override;
+    void add_property(const std::string& name, const archiving::Property& property) override;
 };
 
 class JsonDearchiver : public Dearchiver
 {
 public:
     explicit JsonDearchiver(std::istream& input);
-    void dearchive() override;
+    void load() override;
 
 protected:
     std::istream& input;
     nlohmann::json archive_object;
-    bool get_property(const std::string& name, serialization::Property& out) override;
+    bool get_property(const std::string& name, archiving::Property& out) override;
 };
 } // portal

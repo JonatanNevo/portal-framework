@@ -10,6 +10,7 @@
 #include "portal/core/common.h"
 
 #include "portal/engine/strings/md5_hash.h"
+#include "portal/engine/strings/string_registry.h"
 
 namespace portal
 {
@@ -25,6 +26,8 @@ struct StringId
 
     bool operator==(const StringId&) const;
 };
+
+constexpr auto INVALID_STRING_ID = StringId{uint128_t{0}, INVALID_STRING_VIEW};
 
 } // portal
 

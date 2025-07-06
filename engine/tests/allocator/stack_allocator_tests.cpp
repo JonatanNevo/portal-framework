@@ -16,7 +16,7 @@ struct TestData
 class StackAllocatorTest : public ::testing::Test
 {
 protected:
-    portal::StackAllocator allocator{1024}; // 1KB stack
+    portal::SStackAllocator allocator{1024}; // 1KB stack
 };
 
 TEST_F(StackAllocatorTest, BasicAllocation)
@@ -67,7 +67,7 @@ TEST_F(StackAllocatorTest, MultipleAllocations)
 TEST_F(StackAllocatorTest, MarkerFunctionality)
 {
     auto* first = allocator.alloc<int>(1);
-    const portal::StackAllocator::marker marker = allocator.get_marker();
+    const portal::SStackAllocator::marker marker = allocator.get_marker();
 
     [[maybe_unused]] auto* second = allocator.alloc<int>(2);
     [[maybe_unused]] auto* third = allocator.alloc<int>(3);
@@ -139,7 +139,7 @@ TEST_F(DoubleBufferedAllocatorTest, SwapAndClear)
     allocator.swap_buffers();
     [[maybe_unused]] auto* second = allocator.alloc<int>(24);
 
-    portal::StackAllocator& current = allocator.get_current_allocator();
+    portal::SStackAllocator& current = allocator.get_current_allocator();
     const auto marker = current.get_marker();
     [[maybe_unused]] auto* third = allocator.alloc<int>(99);
     current.free_to_marker(marker);

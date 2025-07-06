@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "portal/engine/strings/string_id.h"
+#include "portal/engine/resources/resource.h"
 
 namespace portal::resources
 {

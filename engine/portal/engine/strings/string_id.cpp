@@ -14,7 +14,7 @@ namespace portal
 StringId::StringId(const uint128_t id): id(id)
 {
     string = StringRegistry::find(id);
-    if (string == INVALID_STRING_ID)
+    if (string == INVALID_STRING_VIEW)
     {
         LOG_ERROR_TAG("StringId", "StringId with id {} not found in registry", id);
     }

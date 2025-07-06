@@ -4,7 +4,7 @@
 //
 
 #pragma once
-#include "portal/serialization/serialize.h"
+#include "portal/serialization/serialize/serialize.h"
 
 namespace portal
 {

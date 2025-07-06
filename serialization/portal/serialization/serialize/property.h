@@ -37,7 +37,7 @@ enum class PropertyContainerType : uint8_t
     vec4                = 7
 };
 
-inline constexpr bool is_vector_type(const PropertyContainerType type)
+constexpr bool is_vector_type(const PropertyContainerType type)
 {
     return type == PropertyContainerType::vec1 || type == PropertyContainerType::vec2 ||
         type == PropertyContainerType::vec3 || type == PropertyContainerType::vec4;
@@ -86,8 +86,7 @@ consteval auto get_property_type()
 
 
 template <typename T>
-concept Vector =
-    requires(T t) { requires std::same_as<T, std::vector<typename T::value_type, typename T::allocator_type>>; };
+concept Vector = requires(T t) { requires std::same_as<T, std::vector<typename T::value_type, typename T::allocator_type>>; };
 
 template <typename T>
 concept String = requires(T t) {
