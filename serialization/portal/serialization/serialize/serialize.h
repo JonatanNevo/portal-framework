@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include <vector>
 #include "portal/core/log.h"
-#include "portal/serialization/property.h"
+#include "portal/serialization/serialize/property.h"
 
 namespace portal
 {
@@ -42,6 +41,19 @@ public:
         );
     }
 
+    template <typename T> requires std::is_same_v<T, uint128_t>
+    void add_value(const T& t)
+    {
+        add_property(
+            serialization::Property{
+                Buffer{const_cast<void*>(static_cast<const void*>(&t)), sizeof(T)},
+                serialization::PropertyType::integer128,
+                serialization::PropertyContainerType::scalar,
+                1
+            }
+        );
+    }
+
 
     template <serialization::Vector T> requires !Serializable<typename T::value_type>
     void add_value(const T& t)
@@ -59,10 +71,6 @@ public:
     template <serialization::String T>
     void add_value(const T& t)
     {
-        Buffer{
-            const_cast<void*>(static_cast<const void*>(t.data())),
-            (t.size() * sizeof(typename T::value_type)) + 1
-        };
         add_property(
             serialization::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), (t.size() * sizeof(typename T::value_type)) + 1},
@@ -202,6 +210,18 @@ public:
 
         PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::scalar, "Property container type mismatch");
         PORTAL_ASSERT(property.type == serialization::get_property_type<T>(), "Property type mismatch");
+        PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
+
+        t = *static_cast<T*>(property.value.data);
+    }
+
+    template <typename T> requires std::is_same_v<T, uint128_t>
+    void get_value(T& t)
+    {
+        const auto property = get_property();
+
+        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::scalar, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialization::PropertyType::integer128, "Property type mismatch");
         PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
         t = *static_cast<T*>(property.value.data);

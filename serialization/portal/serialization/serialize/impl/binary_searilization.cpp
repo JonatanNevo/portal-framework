@@ -9,7 +9,7 @@
 
 namespace portal
 {
-size_t get_size(const serialization::PropertyType type)
+constexpr size_t get_size(const serialization::PropertyType type)
 {
     switch (type)
     {
@@ -33,7 +33,7 @@ size_t get_size(const serialization::PropertyType type)
     return 0;
 }
 
-uint8_t element_number_size(const BinarySerializationParams& params)
+constexpr uint8_t element_number_size(const BinarySerializationParams& params)
 {
     if (params.large_element_size)
         return sizeof(size_t);

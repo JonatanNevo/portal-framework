@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "portal/core/buffer.h"
 #include "portal/core/common.h"
 #include "portal/engine/strings/string_id.h"
 
@@ -31,12 +32,20 @@ class Resource
 {
 public:
     const StringId id;
-    explicit Resource(const StringId& id) : id(id), state(ResourceState::Invalid) {}
-
+    explicit Resource(const StringId& id, const Buffer& data) : id(id), data(data), state(ResourceState::Invalid) {}
     virtual ~Resource() = default;
+
+    // Called after the data has been loaded
+    virtual void init() {};
+    // Called before the resource is destroyed
+    virtual void destroy() {};
 
     [[nodiscard]] bool is_valid() const { return state == ResourceState::Loaded; }
     [[nodiscard]] ResourceState get_state() const { return state; }
+
+protected:
+    // The raw resource data as loaded from the database.
+    Buffer data;
 
 private:
     friend class ResourceRegistry;

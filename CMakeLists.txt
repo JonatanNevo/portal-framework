@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
+
 project(portal_framework)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -15,6 +16,7 @@ add_subdirectory(gui)
 add_subdirectory(serialization)
 add_subdirectory(assets)
 add_subdirectory(engine)
+add_subdirectory(llvm-adt)
 
 add_executable(portal main.cpp)
 target_link_libraries(portal PUBLIC portal::networking portal::gui portal::serialization portal::assets)

@@ -10,13 +10,15 @@
 #include <vector>
 #include <array>
 
+#include "llvm/Support/MemAlloc.h"
+
 namespace portal
 {
 
 /**
  * A stack allocator that allows for allocations in a stack-like manner.
  */
-class StackAllocator
+class SStackAllocator
 {
 public:
     using marker = size_t;
@@ -24,14 +26,14 @@ public:
     /**
      * Constructs the stack allocator with default size
      */
-    StackAllocator();
+    SStackAllocator();
 
     /**
      * Constructs the stack allocator with the specified total size.
      *
      * @param total_size Total size of the stack allocator in bytes.
      */
-    explicit StackAllocator(size_t total_size);
+    explicit SStackAllocator(size_t total_size);
 
     /**
      * Allocates a given size from the top of the stack
@@ -221,7 +223,7 @@ public:
      * Gets the current stack allocator.
      * @return the current stack allocator
      */
-    [[nodiscard]] StackAllocator& get_current_allocator()
+    [[nodiscard]] SStackAllocator& get_current_allocator()
     {
         return allocators[stack_index];
     }
@@ -232,7 +234,7 @@ public:
      * @param index The index of the stack allocator to get. Must be in the range [0, N-1].
      * @return the stack allocator at the specified index
      */
-    [[nodiscard]] StackAllocator& get_allocator(size_t index)
+    [[nodiscard]] SStackAllocator& get_allocator(size_t index)
     {
         if (index >= N)
         {
@@ -243,7 +245,7 @@ public:
 
 private:
     size_t stack_index = 0;
-    std::array<StackAllocator, N> allocators;
+    std::array<SStackAllocator, N> allocators;
 };
 
 using DoubleBufferedAllocator = BufferedAllocator<2>;

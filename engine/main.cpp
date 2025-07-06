@@ -5,6 +5,7 @@
 
 
 #include "portal/core/log.h"
+#include "portal/engine/resources/database/resource_database.h"
 
 int main()
 {

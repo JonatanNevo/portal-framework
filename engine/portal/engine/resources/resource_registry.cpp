@@ -5,7 +5,7 @@
 
 #include "resource_registry.h"
 
-#include "portal/engine/resources/ResourceDatabase.h"
+#include "database/resource_database.h"
 #include "portal/engine/resources/resource.h"
 #include "portal/engine/resources/resource_source.h"
 
@@ -44,13 +44,13 @@ void ResourceRegistry::unload(StringId id)
     // TODO: add to clean queue if 0?
 }
 
-void ResourceRegistry::ResourceReference::increment_ref()
+void ResourceReference::increment_ref()
 {
     std::lock_guard guard(lock);
     ref_count++;
 }
 
-void ResourceRegistry::ResourceReference::decrement_ref()
+void ResourceReference::decrement_ref()
 {
     std::lock_guard guard(lock);
     ref_count--;

@@ -31,7 +31,7 @@ std::string_view StringRegistry::find(const uint128_t id)
     const auto it = entries.find(id);
     if (it != entries.end())
         return it->second;
-    return INVALID_STRING_ID;
+    return INVALID_STRING_VIEW;
 }
 
 } // portal
