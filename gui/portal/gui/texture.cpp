@@ -6,7 +6,7 @@
 
 #include <stb_image.h>
 
-#include "portal/core/file_system.h"
+#include "../../../core/portal/core/files/file_system.h"
 
 namespace portal
 {

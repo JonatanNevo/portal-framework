@@ -98,8 +98,7 @@ TEST(BufferStreamTests, ReaderZeroBytesTest) {
 
 TEST(BufferStreamTests, WriterTest)
 {
-    portal::Buffer buffer;
-    buffer.allocate(2);
+    portal::Buffer buffer = portal::Buffer::allocate(2);
 
     portal::BufferStreamWriter writer(buffer);
     EXPECT_EQ(writer.size(), 0);
@@ -115,14 +114,11 @@ TEST(BufferStreamTests, WriterTest)
     EXPECT_EQ(writer.size(), 2);
     EXPECT_EQ(buffer[1], 123);
     EXPECT_TRUE(writer.full());
-
-    buffer.release();
 }
 
 TEST(BufferStreamTests, WriteMultipleBytes)
 {
-    portal::Buffer buffer;
-    buffer.allocate(3);
+    portal::Buffer buffer = portal::Buffer::allocate(3);
 
     portal::BufferStreamWriter writer(buffer);
 
@@ -134,8 +130,6 @@ TEST(BufferStreamTests, WriteMultipleBytes)
     EXPECT_EQ(buffer[2], 30);
     EXPECT_EQ(writer.size(), 3);
     EXPECT_TRUE(writer.full());
-
-    buffer.release();
 }
 
 TEST(BufferStreamTests, WriteComplexType)
@@ -148,24 +142,20 @@ TEST(BufferStreamTests, WriteComplexType)
 
     const TestStruct data{42, 3.14f, 'X'};
 
-    portal::Buffer buffer;
-    buffer.allocate(sizeof(TestStruct));
+    portal::Buffer buffer = portal::Buffer::allocate(sizeof(TestStruct));
 
     portal::BufferStreamWriter writer(buffer);
     writer.write(reinterpret_cast<const char*>(&data), sizeof(TestStruct));
 
-    const TestStruct* result = buffer.as<TestStruct>();
+    const TestStruct* result = buffer.as<TestStruct*>();
     EXPECT_EQ(result->a, 42);
     EXPECT_FLOAT_EQ(result->b, 3.14f);
     EXPECT_EQ(result->c, 'X');
-
-    buffer.release();
 }
 
 TEST(BufferStreamTests, WriterFullCondition)
 {
-    portal::Buffer buffer;
-    buffer.allocate(2);
+    portal::Buffer buffer = portal::Buffer::allocate(2);
 
     portal::BufferStreamWriter writer(buffer);
 
@@ -179,8 +169,6 @@ TEST(BufferStreamTests, WriterFullCondition)
     EXPECT_EQ(writer.size(), 2);
     EXPECT_EQ(buffer[0], 10);
     EXPECT_EQ(buffer[1], 20);
-
-    buffer.release();
 }
 
 TEST(BufferStreamTests, EmptyBufferOperations)
@@ -200,21 +188,18 @@ TEST(BufferStreamTests, EmptyBufferOperations)
 
 TEST(BufferStreamTests, GetBufferFromWriter)
 {
-    portal::Buffer buffer;
-    buffer.allocate(10);
+    portal::Buffer buffer = portal::Buffer::allocate(10);
 
     portal::BufferStreamWriter writer(buffer);
     const std::vector<uint8_t> data{1, 2, 3, 4};
     writer.write(reinterpret_cast<const char*>(data.data()), data.size());
 
     const portal::Buffer result_buffer = writer.get_buffer();
-    EXPECT_EQ(result_buffer.get_size(), 4);
+    EXPECT_EQ(result_buffer.size, 4);
 
     for (size_t i = 0; i < data.size(); ++i) {
         EXPECT_EQ(result_buffer[i], data[i]);
     }
-
-    buffer.release();
 }
 
 TEST(BufferStreamTests, ReadBeyondEnd) {
@@ -251,8 +236,7 @@ TEST(BufferStreamTests, InvalidSeekOperations) {
 }
 
 TEST(BufferStreamTests, WriteAndReadIntegration) {
-    portal::Buffer buffer;
-    buffer.allocate(10);
+    portal::Buffer buffer = portal::Buffer::allocate(10);
 
     {
         portal::BufferStreamWriter writer(buffer);
@@ -262,14 +246,12 @@ TEST(BufferStreamTests, WriteAndReadIntegration) {
 
     {
         portal::BufferStreamReader reader(buffer);
-        std::vector<uint8_t> readData(4);
-        reader.read(reinterpret_cast<char*>(readData.data()), 4);
+        std::vector<uint8_t> read_data(4);
+        reader.read(reinterpret_cast<char*>(read_data.data()), 4);
 
-        EXPECT_EQ(readData[0], 10);
-        EXPECT_EQ(readData[1], 20);
-        EXPECT_EQ(readData[2], 30);
-        EXPECT_EQ(readData[3], 40);
+        EXPECT_EQ(read_data[0], 10);
+        EXPECT_EQ(read_data[1], 20);
+        EXPECT_EQ(read_data[2], 30);
+        EXPECT_EQ(read_data[3], 40);
     }
-
-    buffer.release();
 }

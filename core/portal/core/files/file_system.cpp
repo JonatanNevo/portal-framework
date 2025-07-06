@@ -24,9 +24,10 @@ void FileSystem::set_working_directory(const std::filesystem::path& path)
 bool FileSystem::create_directory(const std::filesystem::path& path)
 {
     std::error_code ec;
-    std::filesystem::create_directory(path, ec);
+    const auto abs_path = std::filesystem::absolute(path);
+    std::filesystem::create_directory(abs_path, ec);
     if (ec)
-        LOG_ERROR_TAG("Filesystem", "{}: Failed to create directory: {}", path.string(), ec.message());
+        LOG_ERROR_TAG("Filesystem", "{}: Failed to create directory: {}", abs_path.string(), ec.message());
     return !ec;
 }
 
@@ -215,26 +216,24 @@ bool FileSystem::write_file(const std::filesystem::path& path, const std::vector
 
 Buffer FileSystem::read_chunk(const std::filesystem::path& path, size_t offset, size_t count)
 {
-    Buffer buffer;
-
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file.is_open())
     {
         LOG_ERROR_TAG("Filesystem", "{}: Failed to open file for reading", path.string());
-        return {};
+        return std::move(Buffer{});
     }
 
     auto size = stat_file(path).size;
     if (offset + count > size)
     {
         LOG_WARN_TAG("Filesystem", "{}: Requested read chunk ({} + {}) is bigger than size: ({})", path.string(), offset, count, size);
-        return {};
+        return std::move(Buffer{});
     }
 
-    buffer.allocate(count);
+    Buffer buffer = Buffer::allocate(count);
     file.seekg(static_cast<std::streamsize>(offset), std::ios::beg);
-    file.read(static_cast<char*>(buffer.data), static_cast<std::streamsize>(count));
-    return buffer;
+    file.read(buffer.as<char*>(), static_cast<std::streamsize>(count));
+    return std::move(buffer);
 }
 
 Buffer FileSystem::read_file_binary(const std::filesystem::path& path)
@@ -247,7 +246,7 @@ Buffer FileSystem::read_file_binary(const std::filesystem::path& path)
 std::string FileSystem::read_file_string(const std::filesystem::path& path)
 {
     auto binary = read_file_binary(path);
-    return {static_cast<char*>(binary.data), binary.size};
+    return {binary.as<const char*>(), binary.size};
 }
 
 FileStatus FileSystem::try_open_file(const std::filesystem::path& path)
