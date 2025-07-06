@@ -11,10 +11,10 @@ BufferStreamReader::BufferStreamReader(const Buffer& buffer): std::istream(this)
 {
     if (buffer.data)
         setg(
-            static_cast<char*>(buffer.data),
-            static_cast<char*>(buffer.data),
-            static_cast<char*>(buffer.data) + buffer.size
-        );
+            buffer.as<char*>(),
+            buffer.as<char*>(),
+            buffer.as<char*>() + buffer.size
+            );
 }
 
 std::streamsize BufferStreamReader::xsgetn(char* s, std::streamsize n)
@@ -57,9 +57,11 @@ std::streampos BufferStreamReader::seekoff(const std::streamoff off, const seekd
         return {-1};
 
     _position = new_pos;
-    setg(static_cast<char*>(buffer.data),
-         static_cast<char*>(buffer.data) + _position,
-         static_cast<char*>(buffer.data) + buffer.size);
+    setg(
+        buffer.as<char*>(),
+        buffer.as<char*>() + _position,
+        buffer.as<char*>() + buffer.size
+        );
     return new_pos;
 }
 
@@ -67,9 +69,9 @@ BufferStreamWriter::BufferStreamWriter(Buffer& buffer): std::ostream(this), buff
 {
     if (buffer.data)
         setp(
-            static_cast<char*>(buffer.data),
-            static_cast<char*>(buffer.data) + buffer.size
-        );
+            buffer.as<char*>(),
+            buffer.as<char*>() + buffer.size
+            );
 }
 
 std::streambuf::int_type BufferStreamWriter::overflow(std::streambuf::int_type)
