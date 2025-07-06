@@ -346,7 +346,8 @@ TEST(BufferTests, OverlappingMemoryWrite)
         buffer[i] = i + 1;
     EXPECT_BUFFER(buffer, ElementsAre(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
 
-    buffer.write(buffer.data, 5, 2);
+    const portal::Buffer temp_buffer = portal::Buffer::copy(buffer.data, 5);
+    buffer.write(temp_buffer.data, 5, 2);
 
     EXPECT_BUFFER(buffer, ElementsAre(1, 2, 1, 2, 3, 4, 5, 8, 9, 10));
 }

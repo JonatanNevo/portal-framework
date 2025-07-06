@@ -10,6 +10,11 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
+option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
+option(PORTAL_PROFILE "Enable profiling with Tracy" ON)
+option(PORTAL_BUILD_DIST "Build the distribution package" OFF)
+
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
 file(GLOB_RECURSE CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
 
@@ -25,13 +30,11 @@ file(GLOB_RECURSE MACOS_HEADER CONFIGURE_DEPENDS "portal/platform/core/macos/*.h
 file(GLOB_RECURSE LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/core/linux/*.cpp")
 file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/core/linux/*.h")
 
-option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
-
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(Tracy CONFIG REQUIRED)
 
-option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
-if(PORTAL_FIND_PACAKGE)
+if (PORTAL_FIND_PACAKGE)
     find_package(llvm-adt CONFIG REQUIRED)
 endif ()
 unset(PORTAL_FIND_PACAKGE CACHE)
@@ -51,9 +54,10 @@ target_link_libraries(portal-core
         spdlog::spdlog
         glm::glm
         llvm::adt
+        Tracy::TracyClient
 )
 
-if(WIN32)
+if (WIN32)
     set(PORTAL_PLATFORM_WINDOWS ON CACHE BOOL "Windows platform" FORCE)
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_WINDOWS)
     target_sources(portal-core
@@ -77,7 +81,7 @@ elseif (APPLE)
     )
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=macos)
 
-elseif(UNIX)
+elseif (UNIX)
     set(PORTAL_PLATFORM_LINUX ON CACHE BOOL "Linux platform" FORCE)
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_LINUX)
     target_sources(portal-core
@@ -89,15 +93,18 @@ elseif(UNIX)
     )
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=unix)
 
-else()
+else ()
     message(FATAL_ERROR "Unsupported platform")
-endif()
+endif ()
 
-target_compile_definitions(portal-core PUBLIC
-        $<$<CONFIG:Debug>:PORTAL_DEBUG>
-        $<$<CONFIG:Release>:PORTAL_RELEASE>
-        $<$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:Release>>>:PORTAL_DIST>
-)
+if (NOT PORTAL_BUILD_DIST)
+    target_compile_definitions(portal-core PUBLIC
+            $<$<CONFIG:Debug>:PORTAL_DEBUG>
+            $<$<CONFIG:Release>:PORTAL_RELEASE>
+    )
+else ()
+    target_compile_definitions(portal-core PUBLIC PORTAL_DIST)
+endif ()
 
 target_compile_definitions(portal-core PUBLIC
         GLM_FORCE_SWIZZLE
@@ -108,7 +115,11 @@ target_compile_definitions(portal-core PUBLIC
         SPDLOG_USE_STD_FORMAT
 )
 
-if(MSVC)
+if (PORTAL_PROFILE AND NOT PORTAL_BUILD_DIST)
+    target_compile_definitions(portal-core PUBLIC PORTAL_PROFILE $<$<CONFIG:Release>:TRACY_ENABLE>)
+endif ()
+
+if (MSVC)
     target_compile_options(portal-core PUBLIC
             "/Zc:__cplusplus"
             "$<$<CONFIG:Release>:/Zi>"
@@ -118,16 +129,16 @@ if(MSVC)
     target_link_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:/DEBUG /OPT:REF /OPT:ICF>"
     )
-else()
+else ()
     target_compile_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:-g>"
     )
     target_compile_options(portal-core PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
-endif()
+endif ()
 
 
-if(PORTAL_BUILD_TESTS)
+if (PORTAL_BUILD_TESTS)
     add_subdirectory(tests)
 endif ()
 unset(PORTAL_BUILD_TESTS CACHE)
