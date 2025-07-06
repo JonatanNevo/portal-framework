@@ -6,7 +6,11 @@
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
+        "VCPKG_OVERLAY_PORTS": "${sourceDir}/overlay-ports",
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+      },
+      "environment": {
+        "VCPKG_MAX_CONCURRENCY": "24"
       }
     },
     {
