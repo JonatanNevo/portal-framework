@@ -1,5 +1,6 @@
 //
-// Created by thejo on 5/2/2025.
+// Copyright © 2025 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
 //
 
 #pragma once
