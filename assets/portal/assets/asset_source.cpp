@@ -1,5 +1,6 @@
 //
-// Created by thejo on 4/11/2025.
+// Copyright © 2025 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
 //
 
 #include "asset_source.h"
