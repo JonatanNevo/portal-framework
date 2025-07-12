@@ -78,6 +78,14 @@ struct Buffer
             release();
     }
 
+    template<typename T, typename... Args>
+    [[nodiscard]] PORTAL_FORCE_INLINE static Buffer create(Args&&... args)
+    {
+        Buffer buffer = allocate(sizeof(T));
+        new (buffer.data_ptr()) T(std::forward<Args>(args)...);
+        return std::move(buffer);
+    }
+
     [[nodiscard]] PORTAL_FORCE_INLINE static Buffer copy(const Buffer& other)
     {
         Buffer buffer = allocate(other.size);

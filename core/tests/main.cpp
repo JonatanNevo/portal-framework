@@ -1,5 +1,6 @@
 //
-// Created by thejo on 3/21/2025.
+// Copyright © 2025 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
 //
 
 #include <gmock/gmock.h>

@@ -121,7 +121,7 @@ TEST(BufferTests, Reallocation)
     for (int i = 0; i < 10; ++i)
         buffer.as<uint8_t*>()[i] = i + 1;
 
-    buffer = buffer.allocate(10);
+    buffer = portal::Buffer::allocate(10);
     EXPECT_EQ(buffer.size, 10);
     EXPECT_NE(buffer.data, nullptr);
     EXPECT_TRUE(buffer.is_allocated());
