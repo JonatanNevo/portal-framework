@@ -54,7 +54,7 @@ endif()
 configure_file("llvm/include/llvm/Config/llvm-config.h.cmake" "llvm/include/llvm/Config/llvm-config.h")
 
 file(GLOB_RECURSE LLVM_SOURCES CONFIGURE_DEPENDS "llvm/lib/*.cpp" "llvm/lib/*.c")
-file(GLOB_RECURSE LLVM_HEADER CONFIGURE_DEPENDS "llvm/include/*.h" "llvm/include/llvm/Config/llvm-config.h")
+file(GLOB_RECURSE LLVM_HEADER CONFIGURE_DEPENDS "llvm/include/*.h")
 
 add_library(llvm-adt STATIC ${LLVM_SOURCES})
 add_library(llvm::adt ALIAS llvm-adt)
@@ -65,9 +65,10 @@ target_sources(llvm-adt PUBLIC
         FILES ${LLVM_HEADER}
 )
 
-target_include_directories(llvm-adt PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR}/llvm/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/llvm/include
+target_include_directories(llvm-adt PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/llvm/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/llvm/include>
+        $<INSTALL_INTERFACE:include>
 )
 
 install(TARGETS llvm-adt

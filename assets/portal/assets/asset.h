@@ -16,7 +16,7 @@ class Asset
 public:
     virtual ~Asset()
     {
-        if (data && data.allocated)
+        if (data && data.is_allocated())
             data.release();
     }
 

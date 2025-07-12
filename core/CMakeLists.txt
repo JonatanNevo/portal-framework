@@ -34,11 +34,6 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(Tracy CONFIG REQUIRED)
 
-if (PORTAL_FIND_PACAKGE)
-    find_package(llvm-adt CONFIG REQUIRED)
-endif ()
-unset(PORTAL_FIND_PACAKGE CACHE)
-
 add_library(portal-core STATIC ${CORE_SOURCES} ${LLVM_SOURCES})
 add_library(portal::core ALIAS portal-core)
 
@@ -53,7 +48,6 @@ target_link_libraries(portal-core
         PUBLIC
         spdlog::spdlog
         glm::glm
-        llvm::adt
         Tracy::TracyClient
 )
 
