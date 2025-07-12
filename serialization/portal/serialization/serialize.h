@@ -6,7 +6,7 @@
 #pragma once
 
 #include "portal/core/log.h"
-#include "portal/serialization/serialize/property.h"
+#include "property.h"
 
 namespace portal
 {
@@ -32,10 +32,10 @@ public:
     void add_value(const T& t)
     {
         add_property(
-            serialization::Property{
+            serialize::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(&t)), sizeof(T)},
-                serialization::get_property_type<std::remove_const_t<T>>(),
-                serialization::PropertyContainerType::scalar,
+                serialize::get_property_type<std::remove_const_t<T>>(),
+                serialize::PropertyContainerType::scalar,
                 1
             }
         );
@@ -45,95 +45,95 @@ public:
     void add_value(const T& t)
     {
         add_property(
-            serialization::Property{
+            serialize::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(&t)), sizeof(T)},
-                serialization::PropertyType::integer128,
-                serialization::PropertyContainerType::scalar,
+                serialize::PropertyType::integer128,
+                serialize::PropertyContainerType::scalar,
                 1
             }
         );
     }
 
 
-    template <serialization::Vector T> requires !Serializable<typename T::value_type>
+    template <serialize::Vector T> requires !Serializable<typename T::value_type>
     void add_value(const T& t)
     {
         add_property(
-            serialization::Property{
+            serialize::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), t.size() * sizeof(typename T::value_type)},
-                serialization::get_property_type<typename T::value_type>(),
-                serialization::PropertyContainerType::array,
+                serialize::get_property_type<typename T::value_type>(),
+                serialize::PropertyContainerType::array,
                 t.size()
             }
         );
     }
 
-    template <serialization::String T>
+    template <serialize::String T>
     void add_value(const T& t)
     {
         add_property(
-            serialization::Property{
+            serialize::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), (t.size() * sizeof(typename T::value_type)) + 1},
-                serialization::PropertyType::character,
-                serialization::PropertyContainerType::null_term_string,
+                serialize::PropertyType::character,
+                serialize::PropertyContainerType::null_term_string,
                 t.size() + 1
             }
         );
     }
 
-    template <serialization::GlmVec1 T>
+    template <serialize::GlmVec1 T>
     void add_value(T& t)
     {
         add_property(
-            serialization::Property{
+            serialize::Property{
                 Buffer{&t.x, sizeof(typename T::value_type)},
-                serialization::get_property_type<typename T::value_type>(),
-                serialization::PropertyContainerType::vec1,
+                serialize::get_property_type<typename T::value_type>(),
+                serialize::PropertyContainerType::vec1,
                 1
             }
         );
     }
 
-    template <serialization::GlmVec2 T>
+    template <serialize::GlmVec2 T>
     void add_value(T& t)
     {
         add_property(
-            serialization::Property{
+            serialize::Property{
                 Buffer{&t.x, 2 * sizeof(typename T::value_type)},
-                serialization::get_property_type<typename T::value_type>(),
-                serialization::PropertyContainerType::vec2,
+                serialize::get_property_type<typename T::value_type>(),
+                serialize::PropertyContainerType::vec2,
                 2
             }
         );
     }
 
-    template <serialization::GlmVec3 T>
+    template <serialize::GlmVec3 T>
     void add_value(T& t)
     {
         add_property(
-            serialization::Property{
+            serialize::Property{
                 Buffer{&t.x, 3 * sizeof(typename T::value_type)},
-                serialization::get_property_type<typename T::value_type>(),
-                serialization::PropertyContainerType::vec3,
+                serialize::get_property_type<typename T::value_type>(),
+                serialize::PropertyContainerType::vec3,
                 3
             }
         );
     }
 
-    template <serialization::GlmVec4 T>
+    template <serialize::GlmVec4 T>
     void add_value(T& t)
     {
         add_property(
-            serialization::Property{
+            serialize::Property{
                 Buffer{&t.x, 4 * sizeof(typename T::value_type)},
-                serialization::get_property_type<typename T::value_type>(),
-                serialization::PropertyContainerType::vec4,
+                serialize::get_property_type<typename T::value_type>(),
+                serialize::PropertyContainerType::vec4,
                 4
             }
         );
     }
 
-    template <serialization::Map T>
+    template <serialize::Map T>
     void add_value(const T& t)
     {
         const size_t size = t.size();
@@ -149,7 +149,7 @@ public:
         }
     }
 
-    template <serialization::Vector T> requires Serializable<typename T::value_type>
+    template <serialize::Vector T> requires Serializable<typename T::value_type>
     void add_value(const T& t)
     {
         const size_t size = t.size();
@@ -178,10 +178,10 @@ public:
     {
         const size_t length = strlen(t);
         add_property(
-            serialization::Property{
+            serialize::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t)), (length * sizeof(char)) + 1},
-                serialization::PropertyType::character,
-                serialization::PropertyContainerType::null_term_string,
+                serialize::PropertyType::character,
+                serialize::PropertyContainerType::null_term_string,
                 length + 1
             }
         );
@@ -190,12 +190,12 @@ public:
     void add_value(void* t, const size_t length)
     {
         add_property(
-            serialization::Property{Buffer{t, length}, serialization::PropertyType::binary, serialization::PropertyContainerType::string, length}
+            serialize::Property{Buffer{t, length}, serialize::PropertyType::binary, serialize::PropertyContainerType::string, length}
         );
     }
 
 protected:
-    virtual void add_property(serialization::Property property) = 0;
+    virtual void add_property(serialize::Property property) = 0;
 };
 
 class Deserializer
@@ -208,8 +208,8 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::scalar, "Property container type mismatch");
-        PORTAL_ASSERT(property.type == serialization::get_property_type<T>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::scalar, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialize::get_property_type<T>(), "Property type mismatch");
         PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
         t = *static_cast<T*>(property.value.data);
@@ -220,91 +220,91 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::scalar, "Property container type mismatch");
-        PORTAL_ASSERT(property.type == serialization::PropertyType::integer128, "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::scalar, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialize::PropertyType::integer128, "Property type mismatch");
         PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
         t = *static_cast<T*>(property.value.data);
     }
 
-    template <serialization::Vector T> requires !Serializable<typename T::value_type>
+    template <serialize::Vector T> requires !Serializable<typename T::value_type>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::array, "Property container type mismatch");
-        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::array, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
 
         auto array_length = property.elements_number;
         auto* data = static_cast<typename T::value_type*>(property.value.data);
         t = T(data, data + array_length);
     }
 
-    template <serialization::String T>
+    template <serialize::String T>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialization::PropertyType::character, "Property type mismatch");
+        PORTAL_ASSERT(property.type == serialize::PropertyType::character, "Property type mismatch");
 
         size_t string_length;
-        if (property.container_type == serialization::PropertyContainerType::null_term_string)
+        if (property.container_type == serialize::PropertyContainerType::null_term_string)
             string_length = property.elements_number - 1;
-        else if (property.container_type == serialization::PropertyContainerType::string)
+        else if (property.container_type == serialize::PropertyContainerType::string)
             string_length = property.elements_number;
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data, string_length);
     }
 
-    template <serialization::GlmVec1 T>
+    template <serialize::GlmVec1 T>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::vec1, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec1, "Property container type mismatch");
 
         t = T(*static_cast<typename T::value_type*>(property.value.data));
     }
 
-    template <serialization::GlmVec2 T>
+    template <serialize::GlmVec2 T>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::vec2, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec2, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1]);
     }
 
-    template <serialization::GlmVec3 T>
+    template <serialize::GlmVec3 T>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::vec3, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec3, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1], data[2]);
     }
 
-    template <serialization::GlmVec4 T>
+    template <serialize::GlmVec4 T>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialization::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == serialization::PropertyContainerType::vec4, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec4, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1], data[2], data[3]);
     }
 
-    template <serialization::Map T>
+    template <serialize::Map T>
     void get_value(T& t)
     {
         size_t size;
@@ -326,7 +326,7 @@ public:
         }
     }
 
-    template <serialization::Vector T> requires Serializable<typename T::value_type>
+    template <serialize::Vector T> requires Serializable<typename T::value_type>
     void get_value(T& t)
     {
         size_t size;
@@ -371,14 +371,14 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialization::PropertyType::character, "Property type mismatch");
+        PORTAL_ASSERT(property.type == serialize::PropertyType::character, "Property type mismatch");
 
         PORTAL_ASSERT(property.elements_number == length, "Value size mismatch, expected: {} got {}", length, property.elements_number);
         memcpy(t, property.value.data, (std::min)(length, property.elements_number));
     }
 
 protected:
-    virtual serialization::Property get_property() = 0;
+    virtual serialize::Property get_property() = 0;
 };
 } // namespace portal
 
@@ -389,7 +389,7 @@ portal::Serializer& operator<<(portal::Serializer& s, const T& t)
     return s;
 }
 
-template <portal::serialization::PropertyConcept T>
+template <portal::serialize::PropertyConcept T>
 portal::Serializer& operator<<(portal::Serializer& s, const T& t)
 {
     T copy = t;
@@ -397,7 +397,7 @@ portal::Serializer& operator<<(portal::Serializer& s, const T& t)
     return s;
 }
 
-template <portal::serialization::PropertyConcept T>
+template <portal::serialize::PropertyConcept T>
 portal::Serializer& operator<<(portal::Serializer& s, T& t)
 {
     s.add_value<T>(t);
@@ -430,7 +430,7 @@ portal::Deserializer& operator>>(portal::Deserializer& d, T& t)
     return d;
 }
 
-template <portal::serialization::PropertyConcept T>
+template <portal::serialize::PropertyConcept T>
 portal::Deserializer& operator>>(portal::Deserializer& d, T& t)
 {
     d.get_value<T>(t);

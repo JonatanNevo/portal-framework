@@ -9,25 +9,25 @@
 
 namespace portal
 {
-constexpr size_t get_size(const serialization::PropertyType type)
+constexpr size_t get_size(const serialize::PropertyType type)
 {
     switch (type)
     {
-    case serialization::PropertyType::binary:
-    case serialization::PropertyType::character:
-    case serialization::PropertyType::integer8:
+    case serialize::PropertyType::binary:
+    case serialize::PropertyType::character:
+    case serialize::PropertyType::integer8:
         return 1;
-    case serialization::PropertyType::integer16:
+    case serialize::PropertyType::integer16:
         return 2;
-    case serialization::PropertyType::integer32:
-    case serialization::PropertyType::floating32:
+    case serialize::PropertyType::integer32:
+    case serialize::PropertyType::floating32:
         return 4;
-    case serialization::PropertyType::integer64:
-    case serialization::PropertyType::floating64:
+    case serialize::PropertyType::integer64:
+    case serialize::PropertyType::floating64:
         return 8;
-    case serialization::PropertyType::integer128:
+    case serialize::PropertyType::integer128:
         return 16;
-    case serialization::PropertyType::invalid:
+    case serialize::PropertyType::invalid:
         return 0;
     }
     return 0;
@@ -131,11 +131,11 @@ BinarySerializer::BinarySerializer(std::ostream& output, const BinarySerializati
     }
 }
 
-void BinarySerializer::add_property(const serialization::Property property)
+void BinarySerializer::add_property(const serialize::Property property)
 {
     output.write(reinterpret_cast<const char*>(&property.container_type), 1);
     output.write(reinterpret_cast<const char*>(&property.type), 1);
-    if (property.container_type != serialization::PropertyContainerType::scalar &&
+    if (property.container_type != serialize::PropertyContainerType::scalar &&
         !is_vector_type(property.container_type))
     {
         output.write(reinterpret_cast<const char*>(&property.elements_number), element_number_size(params));
@@ -172,20 +172,20 @@ BinaryDeserializer::BinaryDeserializer(std::istream& input, const BinarySerializ
     buffer.resize(size);
 }
 
-serialization::Property BinaryDeserializer::get_property()
+serialize::Property BinaryDeserializer::get_property()
 {
-    serialization::PropertyContainerType container_type;
-    serialization::PropertyType type;
+    serialize::PropertyContainerType container_type;
+    serialize::PropertyType type;
     input.read(reinterpret_cast<char*>(&container_type), 1);
     input.read(reinterpret_cast<char*>(&type), 1);
     const auto element_size = get_size(type);
 
     size_t elements_number = 1;
-    if (container_type != serialization::PropertyContainerType::scalar)
+    if (container_type != serialize::PropertyContainerType::scalar)
     {
         if (is_vector_type(container_type))
             elements_number = static_cast<uint8_t>(container_type) -
-                static_cast<uint8_t>(serialization::PropertyContainerType::__vector_type_start) + 1;
+                static_cast<uint8_t>(serialize::PropertyContainerType::__vector_type_start) + 1;
         else
             input.read(reinterpret_cast<char*>(&elements_number), element_number_size(params));
     }
