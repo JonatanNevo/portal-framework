@@ -10,12 +10,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
+option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
+
 find_package(nlohmann_json CONFIG REQUIRED)
 
 file(GLOB_RECURSE SER_SOURCES CONFIGURE_DEPENDS "portal/serialization/*.cpp")
 file(GLOB_RECURSE SER_HEADERS CONFIGURE_DEPENDS "portal/serialization/*.h")
 
-option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
     find_package(portal-core CONFIG REQUIRED)
 endif ()
@@ -42,6 +44,11 @@ if(MSVC)
 else()
     target_compile_options(portal-serialization PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
+
+if (PORTAL_BUILD_TESTS)
+    add_subdirectory(tests)
+endif ()
+unset(PORTAL_BUILD_TESTS CACHE)
 
 install(TARGETS portal-serialization
         EXPORT portal-serialization-targets

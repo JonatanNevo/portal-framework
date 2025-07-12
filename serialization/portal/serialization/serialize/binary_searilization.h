@@ -4,7 +4,7 @@
 //
 
 #pragma once
-#include "portal/serialization/serialize/serialize.h"
+#include "../serialize.h"
 
 namespace portal
 {
@@ -25,7 +25,7 @@ public:
     BinarySerializer(std::ostream& output, BinarySerializationParams params);
 
 protected:
-    void add_property(serialization::Property property) override;
+    void add_property(serialize::Property property) override;
 
 private:
     BinarySerializationParams params;
@@ -40,7 +40,7 @@ public:
 
 
 protected:
-    serialization::Property get_property() override;
+    serialize::Property get_property() override;
 
 private:
     std::istream& input;

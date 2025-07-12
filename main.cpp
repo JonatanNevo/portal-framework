@@ -6,16 +6,12 @@
 
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 
 #include <portal/gui/gui_application.h>
 #include <portal/application/entry_point.h>
 
 #include "portal/core/assert.h"
-#include "portal/core/buffer.h"
-#include "portal/core/buffer_stream.h"
 #include "portal/networking/connection.h"
-#include "portal/serialize/impl/binary_searilization.h"
 
 
 class TestLayer : public portal::Layer
