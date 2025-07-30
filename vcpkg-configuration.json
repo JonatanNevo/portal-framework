@@ -2,10 +2,17 @@
   "registries": [
     {
       "kind": "git",
-      "repository": "https://github.com/JonatanNevo/portal-vcpkg-registry",
+      "baseline": "73b6d1102a5557cef7b7b17923ba8fcbefa08ded",
       "reference": "main",
-      "baseline": "9f602618e0666db896756f8a309b4cca43391df1",
-      "packages": [ "portal-core", "portal-application", "portal-gui", "portal-input", "portal-networking", "portal-serialization" ]
+      "repository": "https://github.com/JonatanNevo/portal-vcpkg-registry",
+      "packages": [
+        "portal-core",
+        "portal-application",
+        "portal-gui",
+        "portal-input",
+        "portal-networking",
+        "portal-serialization"
+      ]
     }
   ]
 }

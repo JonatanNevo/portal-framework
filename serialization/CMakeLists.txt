@@ -6,7 +6,9 @@ project(portal-serialization VERSION ${PROJECT_VERSION})
 
 message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
-set(CMAKE_CXX_STANDARD 20)
+include(../cmake/development.cmake)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -42,7 +44,7 @@ target_link_libraries(portal-serialization
 if(MSVC)
     target_compile_options(portal-serialization PRIVATE /W4 /WX)
 else()
-    target_compile_options(portal-serialization PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(portal-serialization PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
 if (PORTAL_BUILD_TESTS)
