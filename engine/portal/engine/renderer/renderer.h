@@ -50,6 +50,8 @@ struct FrameData
     vulkan::DescriptorAllocator frame_descriptors;
 
     TracyVkCtx tracy_context = nullptr;
+
+    std::array<std::string, 3> debug_name_containers;
 };
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
