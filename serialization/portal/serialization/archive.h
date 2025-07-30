@@ -102,7 +102,7 @@ public:
         else
         {
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
-            for (int i = 0; i < t.size(); ++i)
+            for (size_t i = 0; i < t.size(); ++i)
             {
                 auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 object->add_property("v", t[i]);
@@ -204,7 +204,7 @@ public:
         }
     }
 
-    void add_binary_block(const PropertyName name, const std::vector<byte>& data)
+    void add_binary_block(const PropertyName name, const std::vector<std::byte>& data)
     {
         add_binary_block(name, {data.data(), data.size()});
     }
@@ -309,7 +309,7 @@ public:
         if constexpr (Archiveable<ValueType>)
         {
             auto* objects = value.as<ArchiveObject*>();
-            for (int i = 0; i < elements_number; ++i)
+            for (size_t i = 0; i < elements_number; ++i)
             {
                 out.push_back(ValueType::dearchive(objects[i]));
             }
@@ -317,7 +317,7 @@ public:
         else
         {
             auto* objects = value.as<ArchiveObject*>();
-            for (int i = 0; i < elements_number; ++i)
+            for (size_t i = 0; i < elements_number; ++i)
             {
                 ValueType v;
                 if (!objects[i].get_property("v", v))
@@ -454,7 +454,7 @@ public:
         return true;
     }
 
-    bool get_binary_block(const PropertyName name, std::vector<byte>& data)
+    bool get_binary_block(const PropertyName name, std::vector<std::byte>& data)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == serialize::PropertyType::invalid)
@@ -462,7 +462,7 @@ public:
         PORTAL_ASSERT(property.type == serialize::PropertyType::binary, "Property {} type mismatch", name);
         PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::array, "Property {} container type mismatch", name);
 
-        data.assign(property.value.as<const byte*>(), property.value.as<const byte*>() + property.value.size);
+        data.assign(property.value.as<const std::byte*>(), property.value.as<const std::byte*>() + property.value.size);
         return true;
     }
 

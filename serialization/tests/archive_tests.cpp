@@ -195,7 +195,7 @@ TEST_F(ArchiveObjectTest, AddAndGetMapProperty)
 // 3. Binary Data
 TEST_F(ArchiveObjectTest, AddAndGetBinaryBlockWithBuffer)
 {
-    const std::vector<byte> data = {0x01, 0x02, 0x03, 0x04, 0x05};
+    const std::vector<std::byte> data = {(std::byte)0x01, (std::byte)0x02, (std::byte)0x03, (std::byte)0x04, (std::byte)0x05};
     Buffer buffer = Buffer::allocate(data.size());
     buffer.write(data.data(), data.size());
 
@@ -209,22 +209,22 @@ TEST_F(ArchiveObjectTest, AddAndGetBinaryBlockWithBuffer)
 
 TEST_F(ArchiveObjectTest, AddAndGetBinaryBlockWithVector)
 {
-    std::vector<byte> data = {0xAA, 0xBB, 0xCC, 0xDD};
+    std::vector<std::byte> data = {(std::byte)0xAA, (std::byte)0xBB, (std::byte)0xCC, (std::byte)0xDD};
     archive.add_binary_block("binary_vector", data);
 
-    std::vector<byte> retrieved;
+    std::vector<std::byte> retrieved;
     ASSERT_TRUE(archive.get_binary_block("binary_vector", retrieved));
     EXPECT_EQ(retrieved, data);
 }
 
 TEST_F(ArchiveObjectTest, BinaryDataIntegrity)
 {
-    std::vector<byte> original_data(1024);
+    std::vector<std::byte> original_data(1024);
     std::iota(original_data.begin(), original_data.end(), 0);
 
     archive.add_binary_block("large_binary", original_data);
 
-    std::vector<byte> retrieved_data;
+    std::vector<std::byte> retrieved_data;
     ASSERT_TRUE(archive.get_binary_block("large_binary", retrieved_data));
     EXPECT_EQ(retrieved_data, original_data);
 }
