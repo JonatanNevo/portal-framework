@@ -17,10 +17,10 @@
 namespace portal::network
 {
 Server::Server(const int port) :
-    port(port), manager(ConnectionManager::get_instance()), sockets(manager->get_sockets()) {}
+    manager(ConnectionManager::get_instance()), sockets(manager->get_sockets()), port(port) {}
 
-Server::Server(ConnectionManager* manager, int port) :
-    port(port), manager(manager), sockets(manager->get_sockets()) {}
+Server::Server(ConnectionManager* manager, const int port) :
+    manager(manager), sockets(manager->get_sockets()), port(port) {}
 
 Server::~Server()
 {
