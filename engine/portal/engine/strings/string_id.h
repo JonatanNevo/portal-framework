@@ -5,11 +5,10 @@
 
 #pragma once
 
-#include <fmt/format.h>
-
+#include <spdlog/spdlog.h>
 #include "portal/core/common.h"
 
-#include "portal/engine/strings/md5_hash.h"
+#include "portal/engine/strings/hash.h"
 #include "portal/engine/strings/string_registry.h"
 
 namespace portal
@@ -17,17 +16,17 @@ namespace portal
 
 struct StringId
 {
-    uint128_t id;
+    uint64_t id;
     std::string_view string;
 
-    explicit StringId(uint128_t id);
-    StringId(uint128_t id, std::string_view string);
-    StringId(uint128_t id, const std::string& string);
+    explicit StringId(uint64_t id);
+    StringId(uint64_t id, std::string_view string);
+    StringId(uint64_t id, const std::string& string);
 
     bool operator==(const StringId&) const;
 };
 
-constexpr auto INVALID_STRING_ID = StringId{uint128_t{0}, INVALID_STRING_VIEW};
+const auto INVALID_STRING_ID = StringId{uint64_t{0}, INVALID_STRING_VIEW};
 
 } // portal
 
@@ -36,14 +35,14 @@ struct std::hash<portal::StringId>
 {
     std::size_t operator()(const portal::StringId& id) const noexcept
     {
-        return std::hash<portal::uint128_t>()(id.id);
+        return std::hash<uint64_t>()(id.id);
     }
 };
 
 template <>
 struct fmt::formatter<portal::StringId>
 {
-    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
+    static constexpr auto parse(const fmt::format_parse_context& ctx) -> decltype(ctx.begin())
     {
        return ctx.begin();
     }
@@ -55,5 +54,5 @@ struct fmt::formatter<portal::StringId>
     }
 };
 
-#define STRING_ID(string) portal::StringId(portal::hash::md5(string), std::string_view(string))
+#define STRING_ID(string) portal::StringId(portal::hash::hash(string), std::string_view(string))
 

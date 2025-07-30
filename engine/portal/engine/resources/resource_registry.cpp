@@ -6,85 +6,143 @@
 #include "resource_registry.h"
 
 #include "database/resource_database.h"
-#include "portal/engine/resources/resource.h"
-#include "portal/engine/resources/resource_source.h"
+#include "portal/core/debug/profile.h"
+#include "portal/engine/resources/loader/loader.h"
+#include "resources/resource.h"
+#include "source/resource_source.h"
+#include "portal/core/thread.h"
 
 namespace portal
 {
 
-auto logger = Log::get_logger("Resources");
+static auto logger = Log::get_logger("Resources");
 
-std::shared_ptr<Resource> ResourceRegistry::get(StringId id)
+Ref<Resource> ResourceRegistry::get(StringId id, ResourceType type)
 {
-    if (resources.contains(id))
-        return resources.at(id).resource;
+    PORTAL_PROF_ZONE;
+    if (resource_map.contains(id))
+        return resource_map.at(id);
 
-    auto& resource_ref = resources[id];
-    auto* default_resource = database->get_default_resource(id);
-    resource_ref.resource = std::shared_ptr<Resource>(default_resource);
+    auto& resource_ref = resource_map[id];
+    if (resource_ref == nullptr)
+    {
+        LOGGER_TRACE("Creating new {} for id: {}", type, id);
+        resource_ref = resources::utils::create_resource(id, type);
+    }
+    auto source = resource_database->get_source(id);
+    const auto meta = source->get_meta();
+    const auto& loader = loader_factory.get(meta);
+    loader->init(source);
+    loader->load_default(resource_ref);
 
     LOGGER_TRACE("Requesting load for resource: {}", id);
-    asset_load_queue.enqueue(id);
+    asset_load_queue.enqueue({id, loader});
 
-    resource_ref.increment_ref();
-    return resource_ref.resource;
+    return resource_ref;
+}
+
+Ref<Resource> ResourceRegistry::immediate_load(StringId id, ResourceType type)
+{
+    PORTAL_PROF_ZONE;
+    if (resource_map.contains(id))
+        return resource_map.at(id);
+
+    auto& resource_ref = resource_map[id];
+    if (resource_ref == nullptr)
+    {
+        LOGGER_TRACE("Creating new {} for id: {}", type, id);
+        resource_ref = resources::utils::create_resource(id, type);
+    }
+    const auto source = resource_database->get_source(id);
+    const auto meta = source->get_meta();
+    const auto& loader = loader_factory.get(meta);
+    loader->init(source);
+    load_resource(resource_ref, loader);
+    return resource_ref;
 }
 
 void ResourceRegistry::unload(StringId id)
 {
+    PORTAL_PROF_ZONE;
     LOGGER_TRACE("Unloading resource: {}", id);
-    const auto it = resources.find(id);
-    if (it == resources.end())
+    const auto it = resource_map.find(id);
+    if (it == resource_map.end())
     {
         LOGGER_WARN("Attempted to unload resource {} that is not loaded.", id);
         return;
     }
 
-    it->second.decrement_ref();
-    // TODO: add to clean queue if 0?
+    // There will always be one reference in the map, so a single reference means that the resource can be unloaded.
+    if (it->second->get_ref() > 1)
+    {
+        LOGGER_WARN("Resource {} has references, not unloading. Ref count: {}", id, it->second->get_ref());
+        return;
+    }
+
+    // TODO: add to clean queue if 0 instead?
+    resource_map.erase(it);
 }
 
-void ResourceReference::increment_ref()
+void ResourceRegistry::initialize(const std::shared_ptr<resources::GpuContext>& context, const std::shared_ptr<resources::ResourceDatabase>& database)
 {
-    std::lock_guard guard(lock);
-    ref_count++;
+    LOGGER_INFO("Resource registry initialization...");
+    gpu_context = context;
+    resource_database = database;
+    loader_factory.initialize(gpu_context);
+    asset_loader_thread = Thread(
+        "Asset Loader Thread",
+        [&](const std::stop_token& token)
+        {
+            resource_load_loop(token);
+        }
+        );
 }
 
-void ResourceReference::decrement_ref()
+void ResourceRegistry::shutdown()
 {
-    std::lock_guard guard(lock);
-    ref_count--;
+    LOGGER_INFO("Shutting down resource registry...");
+    asset_loader_thread.request_stop();
+    if (asset_loader_thread.joinable())
+    {
+        asset_loader_thread.join();
+    }
+
+    resource_map.clear();
 }
 
-void ResourceRegistry::load_assets(const std::stop_token& stoken)
+void ResourceRegistry::load_resource(Ref<Resource>& ref, const std::shared_ptr<resources::ResourceLoader>& loader)
 {
-    StringId resource_id = {0, ""sv};
+    PORTAL_PROF_ZONE;
+    LOGGER_TRACE("Loading resource: {}", ref->id);
+
+    if (ref->get_state() == ResourceState::Loaded)
+    {
+        LOGGER_WARN("Resource {} is already loaded, skipping load request.", ref->id);
+    }
+
+    const auto res = loader->load(ref);
+    if (res)
+    {
+        ref->set_state(ResourceState::Loaded);
+    }
+    else
+    {
+        LOGGER_ERROR("Resource {} could not be retrieved from the database, marking as missing.", ref->id);
+        ref->set_state(ResourceState::Missing);
+    }
+}
+
+void ResourceRegistry::resource_load_loop(const std::stop_token& stoken)
+{
+    PORTAL_PROF_ZONE;
+    std::pair<StringId, std::shared_ptr<resources::ResourceLoader>> resource_load_request = {INVALID_STRING_ID, nullptr};
     while (!stoken.stop_requested())
     {
-        if (asset_load_queue.try_dequeue(resource_id))
+        if (asset_load_queue.try_dequeue(resource_load_request))
         {
-            LOGGER_TRACE("Loading resource: {}", resource_id);
-            auto& resource_ref = resources[resource_id];
-            if (resource_ref.resource->state == ResourceState::Loaded)
-            {
-                LOGGER_WARN("Resource {} is already loaded, skipping load request.", resource_id);
-                continue;
-            }
-
-            auto source = database->get_source(resource_id);
-            if (const auto source_ptr = source.lock())
-            {
-                // TODO: Handle allocation
-                source_ptr->load({});
-                // TODO: Handle resource creation
-
-                resource_ref.resource->state = ResourceState::Loaded;
-            }
-            else
-            {
-                LOGGER_ERROR("Resource {} could not be retrieved from the database, marking as missing.", resource_id);
-                resource_ref.resource->state = ResourceState::Missing;
-            }
+            auto& [id, loader] = resource_load_request;
+            auto& resource_ref = resource_map[id];
+            load_resource(resource_ref, loader);
         }
         else
         {

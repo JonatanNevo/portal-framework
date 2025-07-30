@@ -8,7 +8,7 @@
 #include <memory>
 
 #include "portal/engine/strings/string_id.h"
-#include "portal/engine/resources/resource.h"
+#include "../resources/resource.h"
 
 namespace portal::resources
 {
@@ -21,7 +21,6 @@ class ResourceDatabase
 public:
     virtual ~ResourceDatabase() = default;
 
-    virtual Resource* get_default_resource(StringId id) const = 0;
-    virtual std::weak_ptr<ResourceSource> get_source(StringId id) const = 0;
+    [[nodiscard]] virtual std::shared_ptr<ResourceSource> get_source(StringId id) const = 0;
 };
 }

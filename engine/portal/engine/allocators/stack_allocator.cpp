@@ -12,13 +12,13 @@ namespace portal
 
 constexpr size_t DEFAULT_SIZE = 1024;
 
-SStackAllocator::SStackAllocator(): SStackAllocator(DEFAULT_SIZE)
+StackAllocator::StackAllocator(): StackAllocator(DEFAULT_SIZE)
 {}
 
-SStackAllocator::SStackAllocator(const size_t total_size) :
+StackAllocator::StackAllocator(const size_t total_size) :
     buffer(total_size), top(0) {}
 
-void* SStackAllocator::alloc(const size_t size)
+void* StackAllocator::alloc(const size_t size)
 {
     if (top + size > buffer.size()) {
         throw std::bad_alloc(); // Not enough space
@@ -31,7 +31,7 @@ void* SStackAllocator::alloc(const size_t size)
     return p;
 }
 
-void SStackAllocator::free(void* p)
+void StackAllocator::free(void* p)
 {
     if (!allocations.contains(p)) {
         throw std::invalid_argument("Pointer not allocated by this stack allocator");
@@ -42,28 +42,28 @@ void SStackAllocator::free(void* p)
     top -= size;
 }
 
-SStackAllocator::marker SStackAllocator::get_marker() const
+StackAllocator::marker StackAllocator::get_marker() const
 {
     return top;
 }
 
-size_t SStackAllocator::get_size() const {
+size_t StackAllocator::get_size() const {
     return buffer.size();
 }
 
-void SStackAllocator::free_to_marker(const marker m)
+void StackAllocator::free_to_marker(const marker m)
 {
     // Ignores the allocations map, worst case we will override it.
     top = m;
 }
 
-void SStackAllocator::clear()
+void StackAllocator::clear()
 {
     top = 0;
     allocations.clear();
 }
 
-void SStackAllocator::resize(const size_t new_size)
+void StackAllocator::resize(const size_t new_size)
 {
     clear();
     buffer.resize(new_size);
