@@ -186,7 +186,7 @@ void Renderer::cleanup()
 FrameData& Renderer::get_current_frame_data()
 {
     ZoneScoped;
-    return frame_data[frame_number % MAX_FRAMES_IN_FLIGHT];
+    return frame_data[frame_number % frames_in_flight];
 }
 
 void Renderer::update_scene([[maybe_unused]] float delta_time)
@@ -1127,7 +1127,7 @@ void Renderer::init_descriptors()
         {vk::DescriptorType::eStorageImage, 1}
     };
 
-    for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+    for (size_t i = 0; i < frames_in_flight; ++i)
     {
         std::vector<vulkan::DescriptorAllocator::PoolSizeRatio> frame_sizes = {
             {vk::DescriptorType::eStorageImage, 3},
@@ -1271,6 +1271,7 @@ void Renderer::create_swap_chain(const uint32_t width, const uint32_t height)
         const auto [format, colorSpace] = vulkan::choose_surface_format(surface_formats);
         swap_chain_extent = vulkan::choose_extent(width, height, surface_capabilities);
         const auto min_image_count = std::min(std::max(3u, surface_capabilities.minImageCount), surface_capabilities.maxImageCount);
+        LOGGER_TRACE("Creating swap-chain with {} images", min_image_count);
 
         const vk::SwapchainCreateInfoKHR swap_chain_create_info = {
             .flags = vk::SwapchainCreateFlagsKHR(),
@@ -1297,7 +1298,9 @@ void Renderer::create_swap_chain(const uint32_t width, const uint32_t height)
             }
             );
         swap_chain_images = swap_chain.getImages();
+        frames_in_flight = swap_chain_images.size();
         swap_chain_image_format = format;
+        frame_data = std::vector<FrameData>(frames_in_flight);
     }
 
     // Create Image Views
