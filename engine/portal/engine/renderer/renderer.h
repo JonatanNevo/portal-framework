@@ -54,8 +54,6 @@ struct FrameData
     std::array<std::string, 3> debug_name_containers;
 };
 
-constexpr int MAX_FRAMES_IN_FLIGHT = 2;
-
 struct RendererSettings
 {
     int width = -1;
@@ -129,12 +127,13 @@ private:
 
     std::vector<vk::Image> swap_chain_images;
     std::vector<vk::raii::ImageView> swap_chain_image_views;
+    size_t frames_in_flight = 0;
     vk::Extent2D swap_chain_extent = {};
     vulkan::AllocatedImage draw_image{};
     vulkan::AllocatedImage depth_image{};
     bool resize_requested = false;
 
-    std::vector<FrameData> frame_data{MAX_FRAMES_IN_FLIGHT};
+    std::vector<FrameData> frame_data;
     vk::raii::Queue graphics_queue = nullptr;
     uint32_t graphics_family_index = 0;
     vk::raii::Queue present_queue = nullptr;

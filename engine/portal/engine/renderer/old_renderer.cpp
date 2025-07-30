@@ -22,6 +22,8 @@ static auto logger = Log::get_logger("Renderer");
 constexpr uint32_t WIDTH = 800;
 constexpr uint32_t HEIGHT = 600;
 
+const auto MAX_FRAMES_IN_FLIGHT = 2;
+
 static std::string MODEL_PATH = "resources/viking_room.obj";
 static std::string TEXTURE_PATH = "resources/viking_room.png";
 
