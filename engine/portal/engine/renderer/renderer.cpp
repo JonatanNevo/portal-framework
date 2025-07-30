@@ -1082,12 +1082,18 @@ void Renderer::init_sync_structures()
     int i = 0;
     for (auto& data : frame_data)
     {
+        data.debug_name_containers = {
+            fmt::format("swap_chain_semaphore[{}]", i),
+            fmt::format("render_semaphore[{}]", i),
+            fmt::format("render_fence[{}]", i)
+        };
+
         data.swap_chain_semaphore = device.createSemaphore({});
         device.setDebugUtilsObjectNameEXT(
             vk::DebugUtilsObjectNameInfoEXT{
                 .objectType = vk::ObjectType::eSemaphore,
                 .objectHandle = VK_HANDLE_CAST(data.swap_chain_semaphore),
-                .pObjectName = fmt::format("swap_chain_semaphore[{}]", i)
+                .pObjectName = data.debug_name_containers[0].c_str()
             }
             );
         data.render_semaphore = device.createSemaphore({});
@@ -1095,7 +1101,7 @@ void Renderer::init_sync_structures()
             vk::DebugUtilsObjectNameInfoEXT{
                 .objectType = vk::ObjectType::eSemaphore,
                 .objectHandle = VK_HANDLE_CAST(data.render_semaphore),
-                .pObjectName = fmt::format("render_semaphore[{}]", i)
+                .pObjectName = data.debug_name_containers[1].c_str()
             }
             );
         data.render_fence = device.createFence({.flags = vk::FenceCreateFlagBits::eSignaled});
@@ -1103,7 +1109,7 @@ void Renderer::init_sync_structures()
             vk::DebugUtilsObjectNameInfoEXT{
                 .objectType = vk::ObjectType::eFence,
                 .objectHandle = VK_HANDLE_CAST(data.render_fence),
-                .pObjectName = fmt::format("render_fence[{}]", i)
+                .pObjectName = data.debug_name_containers[2].c_str()
             }
             );
         i++;
