@@ -10,7 +10,7 @@
 #include <portal/gui/gui_application.h>
 #include <portal/application/entry_point.h>
 
-#include "portal/core/assert.h"
+#include "portal/core/debug/assert.h"
 #include "portal/networking/connection.h"
 
 

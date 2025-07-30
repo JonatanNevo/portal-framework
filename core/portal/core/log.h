@@ -87,7 +87,7 @@ public:
     static void init(const Settings& settings);
     static void shutdown();
 
-    static std::shared_ptr<spdlog::logger>& get_logger(const std::string& tag_name);
+    static std::shared_ptr<spdlog::logger> get_logger(const std::string& tag_name);
 
     static void set_default_log_level(LogLevel level, bool apply_to_all = true);
 
@@ -107,7 +107,7 @@ public:
         spdlog::source_loc loc,
         LogLevel level,
         std::string_view tag,
-        std::format_string<Args...> format,
+        spdlog::format_string_t<Args...> format,
         Args&&... args
         );
 
@@ -123,7 +123,7 @@ public:
         const std::shared_ptr<spdlog::logger>& logger,
         const spdlog::source_loc& loc,
         LogLevel level,
-        std::format_string<Args...> format,
+        spdlog::format_string_t<Args...> format,
         Args&&... args
         );
 
@@ -139,7 +139,7 @@ public:
         std::string_view file,
         int line,
         std::string_view function,
-        std::format_string<Args...> format,
+        spdlog::format_string_t<Args...> format,
         Args&&... args
         );
 
@@ -184,7 +184,7 @@ public:
     }
 
 private:
-    static std::unordered_map<std::string, std::shared_ptr<spdlog::logger>>& loggers();
+    static std::unordered_map<std::string, std::shared_ptr<spdlog::logger>>& get_loggers();
 };
 } // namespace portal
 
@@ -232,14 +232,21 @@ void Log::print_message_tag(
     const spdlog::source_loc loc,
     const LogLevel level,
     const std::string_view tag,
-    std::format_string<Args...> format,
+    spdlog::format_string_t<Args...> format,
     Args&&... args
     )
 {
+#if defined(PORTAL_COMPILER_MSVC)
+#pragma warning(push)
+#pragma warning(disable : 4459)
+#endif
     if (const auto& logger = get_logger(tag.data()))
     {
         logger->log(loc, static_cast<spdlog::level::level_enum>(level), format, std::forward<Args>(args)...);
     }
+#if defined(PORTAL_COMPILER_MSVC)
+#pragma warning(pop)
+#endif
 }
 
 
@@ -248,7 +255,7 @@ void Log::print_message(
     const std::shared_ptr<spdlog::logger>& logger,
     const spdlog::source_loc& loc,
     LogLevel level,
-    std::format_string<Args...> format,
+    spdlog::format_string_t<Args...> format,
     Args&&... args
     )
 {
@@ -261,11 +268,11 @@ bool Log::print_assert_message(
     const std::string_view file,
     const int line,
     const std::string_view function,
-    std::format_string<Args...> format,
+    spdlog::format_string_t<Args...> format,
     Args&&... args
     )
 {
-    const std::string formatted = std::format(format, std::forward<Args>(args)...);
+    const std::string formatted = fmt::format(format, std::forward<Args>(args)...);
     return print_assert_message(file, line, function, formatted);
 }
 } // namespace portal

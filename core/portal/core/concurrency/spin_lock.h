@@ -64,7 +64,7 @@ public:
      *
      * The calling thread must have previously acquired the lock.
      */
-    void unlock()
+    void unlock() noexcept
     {
         // Use release semantics to ensure that all prior write have been fully commited before we unlock
         locked.clear(std::memory_order_release);

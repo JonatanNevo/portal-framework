@@ -155,7 +155,7 @@ protected:
 template <typename RetVal, typename... Args>
 class Delegate final : public DelegateBase
 {
-private:
+public:
     template <typename T, typename... Payload>
     using ConstMemberFunction = typename delegates::MemberFunction<true, T, RetVal, Args..., Payload...>::Type;
     template <typename T, typename... Payload>

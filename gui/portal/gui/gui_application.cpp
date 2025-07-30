@@ -18,8 +18,8 @@
 #include <stb_image.h>
 #include <vulkan/vulkan.hpp>
 
-#include "../../../input/portal/input/input.h"
-#include "portal/core/assert.h"
+#include "portal/input/input.h"
+#include "portal/core/debug/assert.h"
 #include "portal/core/log.h"
 
 #include "portal/gui/image.h"

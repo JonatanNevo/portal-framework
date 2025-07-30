@@ -7,7 +7,7 @@
 
 #include <ranges>
 
-#include "portal/core/assert.h"
+#include "portal/core/debug/assert.h"
 #include "portal/platform/input/hal/platform_input.h"
 
 namespace portal
@@ -725,8 +725,6 @@ void InputKeyManager::get_codes_from_key(const Key& key, uint32_t& key_code) con
         key_code = key_it->first;
     }
 }
-
-constexpr auto unknown_char_code = "UnknownCharCode_"sv;
 
 Key InputKeyManager::get_key_from_codes(const uint32_t key_code) const
 {

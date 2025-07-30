@@ -14,7 +14,7 @@
 #include <steam/steam_api.h>
 #endif
 
-#include "portal/core/assert.h"
+#include "portal/core/debug/assert.h"
 #include "portal/networking/utils.h"
 
 namespace portal::network
