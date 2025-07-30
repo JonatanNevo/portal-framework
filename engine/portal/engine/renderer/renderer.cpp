@@ -953,8 +953,22 @@ void Renderer::init_vulkan()
 
         graphics_queue = device.getQueue(graphics_queue_family_index, 0);
         graphics_family_index = graphics_queue_family_index;
+        device.setDebugUtilsObjectNameEXT(
+            vk::DebugUtilsObjectNameInfoEXT{
+                .objectType = vk::ObjectType::eQueue,
+                .objectHandle = VK_HANDLE_CAST(graphics_queue),
+                .pObjectName = "graphics queue"
+            }
+            );
         present_queue = device.getQueue(static_cast<uint32_t>(present_queue_family_index), 0);
         present_family_index = graphics_queue_family_index;
+        device.setDebugUtilsObjectNameEXT(
+            vk::DebugUtilsObjectNameInfoEXT{
+                .objectType = vk::ObjectType::eQueue,
+                .objectHandle = VK_HANDLE_CAST(present_queue),
+                .pObjectName = "present queue"
+            }
+            );
     }
 
     // Create allocator
@@ -1065,11 +1079,34 @@ void Renderer::init_sync_structures()
     // one fence to control when the gpu has finished rendering the frame,
     // and 2 semaphores to synchronize rendering with swap chain
     // we want the fence to start signalled so we can wait on it on the first frame
+    int i = 0;
     for (auto& data : frame_data)
     {
         data.swap_chain_semaphore = device.createSemaphore({});
+        device.setDebugUtilsObjectNameEXT(
+            vk::DebugUtilsObjectNameInfoEXT{
+                .objectType = vk::ObjectType::eSemaphore,
+                .objectHandle = VK_HANDLE_CAST(data.swap_chain_semaphore),
+                .pObjectName = fmt::format("swap_chain_semaphore[{}]", i)
+            }
+            );
         data.render_semaphore = device.createSemaphore({});
+        device.setDebugUtilsObjectNameEXT(
+            vk::DebugUtilsObjectNameInfoEXT{
+                .objectType = vk::ObjectType::eSemaphore,
+                .objectHandle = VK_HANDLE_CAST(data.render_semaphore),
+                .pObjectName = fmt::format("render_semaphore[{}]", i)
+            }
+            );
         data.render_fence = device.createFence({.flags = vk::FenceCreateFlagBits::eSignaled});
+        device.setDebugUtilsObjectNameEXT(
+            vk::DebugUtilsObjectNameInfoEXT{
+                .objectType = vk::ObjectType::eFence,
+                .objectHandle = VK_HANDLE_CAST(data.render_fence),
+                .pObjectName = fmt::format("render_fence[{}]", i)
+            }
+            );
+        i++;
     }
 
     immediate_fence = device.createFence({.flags = vk::FenceCreateFlagBits::eSignaled});
@@ -1246,6 +1283,13 @@ void Renderer::create_swap_chain(const uint32_t width, const uint32_t height)
             .oldSwapchain = nullptr
         };
         swap_chain = device.createSwapchainKHR(swap_chain_create_info);
+        device.setDebugUtilsObjectNameEXT(
+            vk::DebugUtilsObjectNameInfoEXT{
+                .objectType = vk::ObjectType::eSwapchainKHR,
+                .objectHandle = VK_HANDLE_CAST(swap_chain),
+                .pObjectName = "main swap-chain"
+            }
+            );
         swap_chain_images = swap_chain.getImages();
         swap_chain_image_format = format;
     }

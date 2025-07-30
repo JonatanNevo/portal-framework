@@ -29,7 +29,7 @@ private:
 class AllocatedBuffer final : public allocation::Allocated<vk::Buffer>
 {
 public:
-    static AllocatedBuffer create_staging_buffer(vk::raii::Device& device, vk::DeviceSize size, const void* data = nullptr);
+    static AllocatedBuffer create_staging_buffer(vk::raii::Device& device, vk::DeviceSize size, const void* data);
 
     template <typename T>
     static AllocatedBuffer create_staging_buffer(vk::raii::Device& device, const std::span<T>& data);
