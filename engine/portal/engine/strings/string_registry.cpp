@@ -9,10 +9,11 @@
 
 namespace portal
 {
-std::unordered_map<uint128_t, std::string> StringRegistry::entries;
+
 
 std::string_view StringRegistry::store(uint128_t id, const std::string_view string)
 {
+    auto& entries = get_entries();
     const auto it = entries.find(id);
     if (it != entries.end())
         return it->second;
@@ -28,10 +29,16 @@ std::string_view StringRegistry::store(uint128_t id, const std::string_view stri
 
 std::string_view StringRegistry::find(const uint128_t id)
 {
+    auto entries = get_entries();
     const auto it = entries.find(id);
     if (it != entries.end())
         return it->second;
     return INVALID_STRING_VIEW;
+}
+
+std::unordered_map<uint128_t, std::string>& StringRegistry::get_entries() {
+    static std::unordered_map<uint128_t, std::string> entries;
+    return entries;
 }
 
 } // portal

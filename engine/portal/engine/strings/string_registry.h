@@ -24,6 +24,6 @@ public:
     static std::string_view find(const uint128_t id);
 
 private:
-    static std::unordered_map<uint128_t, std::string> entries;
+    static std::unordered_map<uint128_t, std::string>& get_entries();
 };
 } // portal

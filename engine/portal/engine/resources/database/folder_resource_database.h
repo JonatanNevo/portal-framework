@@ -9,7 +9,7 @@
 
 #include "portal/engine/resources/database/resource_database.h"
 #include "portal/engine/strings/string_registry.h"
-#include "../../../../../serialization/portal/archive/archive.h"
+#include "portal/serialization/archive.h"
 
 namespace portal
 {
@@ -29,16 +29,18 @@ struct ResourceArchive
 {
     StringId id = STRING_ID("root");
     std::unordered_map<StringId, std::filesystem::path> resources{};
+
+    void archive(ArchiveObject& archive) const;
+    static ResourceArchive dearchive(ArchiveObject& archive);
 };
 
 
 class FolderResourceDatabase final : public resources::ResourceDatabase
 {
 public:
-    FolderResourceDatabase(const std::filesystem::path& path);
+    explicit FolderResourceDatabase(const std::filesystem::path& path);
 
-    Resource* get_default_resource(StringId id) const override;
-    std::weak_ptr<resources::ResourceSource> get_source(StringId id) const override;
+    [[nodiscard]] std::shared_ptr<resources::ResourceSource> get_source(StringId id) const override;
 
 private:
     std::filesystem::path root_path;

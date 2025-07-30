@@ -6,7 +6,9 @@ project(portal-engine VERSION ${PROJECT_VERSION})
 
 message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
-set(CMAKE_CXX_STANDARD 20)
+include(../cmake/development.cmake)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -14,6 +16,13 @@ file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS "portal/engine/*.cpp")
 file(GLOB_RECURSE ENGINE_HEADER CONFIGURE_DEPENDS "portal/engine/*.h")
 
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
+
+find_package(Vulkan REQUIRED)
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
+find_package(Ktx CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+find_package(fastgltf CONFIG REQUIRED)
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
@@ -38,22 +47,71 @@ add_library(portal::engine ALIAS portal-engine)
 
 target_link_libraries(portal-engine
         PUBLIC
+        portal::core
         portal::application
         portal::input
         portal::networking
         portal::serialization
+        Vulkan::Vulkan
+        GPUOpen::VulkanMemoryAllocator
+        tinyobjloader::tinyobjloader
+        KTX::ktx
+        imgui::imgui
+        fastgltf::fastgltf
 )
-
 if(MSVC)
     target_compile_options(portal-engine PRIVATE /W4 /WX)
 else()
-    target_compile_options(portal-engine PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(portal-engine PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
 if(PORTAL_BUILD_TESTS)
     add_subdirectory(tests)
 endif ()
 unset(PORTAL_BUILD_TESTS CACHE)
+
+target_compile_definitions(portal-engine PUBLIC
+        VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
+        VK_ENABLE_BETA_EXTENSIONS
+)
+
+find_program(SLANG_COMPILER "slangc" REQUIRED)
+
+file(GLOB_RECURSE SHADERS CONFIGURE_DEPENDS "shaders/*.shading.slang")
+file(GLOB_RECURSE COMPUTE_SHADERS CONFIGURE_DEPENDS "shaders/*.compute.slang")
+foreach (SHADER ${SHADERS})
+    get_filename_component(SHADER_NAME ${SHADER} NAME)
+    get_filename_component(SHADER_DIR ${SHADER} DIRECTORY)
+    add_custom_command(
+            OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}"
+            COMMAND ${SLANG_COMPILER} "${SHADER}" -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name -entry vert_main -entry frag_main -o "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}.spv"
+            DEPENDS "${SHADER}"
+            WORKING_DIRECTORY "${SHADER_DIR}"
+            COMMENT "Compiling shader: ${SHADER_NAME} to ${RESOURCES_OUTPUT_FOLDER}/${SHADER_NAME}.spv"
+    )
+    list(APPEND COMPILED_SHADERS "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}")
+endforeach ()
+foreach (SHADER ${COMPUTE_SHADERS})
+    get_filename_component(SHADER_NAME ${SHADER} NAME)
+    get_filename_component(SHADER_DIR ${SHADER} DIRECTORY)
+    add_custom_command(
+            OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}"
+            COMMAND ${SLANG_COMPILER} "${SHADER}" -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name -entry compute_main -o "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}.spv"
+            DEPENDS "${SHADER}"
+            WORKING_DIRECTORY "${SHADER_DIR}"
+            COMMENT "Compiling shader: ${SHADER_NAME} to ${RESOURCES_OUTPUT_FOLDER}/${SHADER_NAME}.spv"
+    )
+    list(APPEND COMPILED_SHADERS "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}")
+endforeach ()
+
+add_custom_target(compile-shaders ALL DEPENDS ${COMPILED_SHADERS})
+add_dependencies(portal-engine compile-shaders)
+
+foreach (BUILD_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS "resources/*")
+    file(COPY ${RESOURCES} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE}/resources")
+endforeach ()
+
 
 install(TARGETS portal-engine
         EXPORT portal-engine-targets

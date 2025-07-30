@@ -8,14 +8,32 @@
 #include <fstream>
 
 #include "portal/core/buffer_stream.h"
-#include "../../../../../core/portal/core/files/file_system.h"
-#include "../../../../../serialization/portal/archive/impl/json_archive.h"
+#include "portal/core/files/file_system.h"
+#include "portal/engine/resources/source/file_source.h"
+#include "portal/serialization/archive/json_archive.h"
 
 namespace portal
 {
 
-auto logger = Log::get_logger("ResourceDB");
+static auto logger = Log::get_logger("Resources");
 
+void ResourceArchive::archive(ArchiveObject& archive) const
+{
+    archive.add_property("id", id.id);
+    archive.add_property("name", id.string);
+    archive.add_property("resources", resources);
+}
+
+ResourceArchive ResourceArchive::dearchive(ArchiveObject& archive)
+{
+    uint64_t id = 0;
+    std::string name;
+    std::unordered_map<StringId, std::filesystem::path> resources;
+    archive.get_property<uint64_t>("id", id);
+    archive.get_property<std::string>("name", name);
+    archive.get_property<std::unordered_map<StringId, std::filesystem::path>>("resources", resources);
+    return {{id, name}, std::move(resources)};
+}
 
 FolderResourceDatabase::FolderResourceDatabase(const std::filesystem::path& path): root_path(path)
 {
@@ -27,35 +45,27 @@ FolderResourceDatabase::FolderResourceDatabase(const std::filesystem::path& path
 
     // searches for an archive file in the root path
     ResourceArchive resource_archive;
-    const auto archive_path = path / "root.par";
+    auto archive_path = path / "root.par";
     if (!FileSystem::exists(archive_path))
     {
-        LOGGER_INFO("No archive file found in resource database directory, initializing new archive: {}", archive_path.string());
-        std::ofstream archive_file(archive_path, std::ios::binary);
-        if (!archive_file.is_open())
-        {
-            LOGGER_ERROR("Failed to create archive file: {}", archive_path.string());
-            return;
-        }
-
-        JsonArchiver archiver(archive_file);
+        JsonArchive archiver;
         resource_archive.archive(archiver);
+        archiver.dump(path);
     }
     else
     {
-        auto data = FileSystem::read_file_binary(archive_path);
-        if (data.size == 0)
-        {
-            LOGGER_ERROR("Failed to read archive file: {}", archive_path.string());
-            return;
-        }
-        BufferStreamReader buffer_stream(data);
-        JsonDearchiver json_dearchiver{buffer_stream};
-        json_dearchiver.load();
+        JsonArchive json_dearchiver;
+        json_dearchiver.read(archive_path);
 
         resource_archive = ResourceArchive::dearchive(json_dearchiver);
     }
     LOGGER_DEBUG("Resource database loaded with {} resources", resource_archive.resources.size());
+}
+
+std::shared_ptr<resources::ResourceSource> FolderResourceDatabase::get_source(const StringId id) const
+{
+    // TODO: work with "imports" from the resource archive instead of walking on the path.
+    return std::make_shared<resources::FileSource>(root_path / id.string);
 }
 
 } // portal
