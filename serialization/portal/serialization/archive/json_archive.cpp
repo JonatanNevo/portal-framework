@@ -12,7 +12,7 @@
 namespace portal
 {
 
-void JsonArchive::archive(const std::filesystem::path& output_path)
+void JsonArchive::dump(const std::filesystem::path& output_path)
 {
     if (!FileSystem::exists(output_path.parent_path()))
     {
@@ -27,10 +27,10 @@ void JsonArchive::archive(const std::filesystem::path& output_path)
         return;
     }
 
-    archive(output);
+    dump(output);
 }
 
-void JsonArchive::archive(std::ostream& output)
+void JsonArchive::dump(std::ostream& output)
 {
     output << prepare_json();
 }
@@ -137,7 +137,7 @@ nlohmann::json JsonArchive::prepare_object(ArchiveObject* object)
                 extract_array_elements<char>(archive_object, prop, key);
                 break;
             case serialize::PropertyType::binary:
-                extract_array_elements<byte>(archive_object, prop, key);
+                extract_array_elements<std::byte>(archive_object, prop, key);
                 break;
             case serialize::PropertyType::boolean:
                 extract_array_elements<bool>(archive_object, prop, key);
@@ -153,7 +153,7 @@ nlohmann::json JsonArchive::prepare_object(ArchiveObject* object)
             case serialize::PropertyType::object:
             {
                 std::vector<nlohmann::json> array_elements;
-                for (int i = 0; i < prop.elements_number; i++)
+                for (size_t i = 0; i < prop.elements_number; i++)
                 {
                     array_elements.emplace_back(prepare_object(prop.value.as<ArchiveObject*>() + i));
                 }
@@ -183,6 +183,8 @@ nlohmann::json JsonArchive::prepare_object(ArchiveObject* object)
             break;
         case serialize::PropertyContainerType::vec4:
             LOG_ERROR_TAG("Json Archiver", "Cannot archive vec4 to json");
+            break;
+        case serialize::PropertyContainerType::invalid:
             break;
         }
     }
@@ -264,7 +266,7 @@ void JsonArchive::deserialize_array(ArchiveObject* root, const std::string& key,
         }
 
         const auto buffer = Buffer::allocate(objects.size() * sizeof(ArchiveObject));
-        for (int i = 0; i < objects.size(); ++i)
+        for (size_t i = 0; i < objects.size(); ++i)
         {
             new(buffer.as<ArchiveObject*>() + i) ArchiveObject(std::move(objects[i]));
         }

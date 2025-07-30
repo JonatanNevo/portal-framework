@@ -27,6 +27,14 @@ constexpr size_t get_size(const serialize::PropertyType type)
         return 8;
     case serialize::PropertyType::integer128:
         return 16;
+    case serialize::PropertyType::boolean:
+        return 1;
+    case serialize::PropertyType::object:
+        [[fallthrough]];
+    case serialize::PropertyType::null_term_string:
+        [[fallthrough]];
+    case serialize::PropertyType::string:
+        [[fallthrough]];
     case serialize::PropertyType::invalid:
         return 0;
     }
@@ -122,7 +130,7 @@ BinarySerializer::BinarySerializer(std::ostream& output) :
 }
 
 BinarySerializer::BinarySerializer(std::ostream& output, const BinarySerializationParams params) :
-    output(output), params(params)
+    params(params), output(output)
 {
     if (params.encode_header)
     {

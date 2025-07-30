@@ -55,7 +55,7 @@ public:
     }
 
 
-    template <serialize::Vector T> requires !Serializable<typename T::value_type>
+    template <serialize::Vector T> requires (!Serializable<typename T::value_type>)
     void add_value(const T& t)
     {
         add_property(
@@ -227,7 +227,7 @@ public:
         t = *static_cast<T*>(property.value.data);
     }
 
-    template <serialize::Vector T> requires !Serializable<typename T::value_type>
+    template <serialize::Vector T> requires (!Serializable<typename T::value_type>)
     void get_value(T& t)
     {
         const auto property = get_property();

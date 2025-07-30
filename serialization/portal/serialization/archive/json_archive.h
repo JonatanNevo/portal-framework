@@ -12,8 +12,8 @@ namespace portal
 class JsonArchive final : public ArchiveObject
 {
 public:
-    void archive(const std::filesystem::path& output_path);
-    void archive(std::ostream& output);
+    void dump(const std::filesystem::path& output_path);
+    void dump(std::ostream& output);
 
     void read(const std::filesystem::path& input_path);
     void read(std::istream& input);
@@ -33,7 +33,7 @@ private:
         std::vector<T> array_elements;
         array_elements.reserve(prop.elements_number);
 
-        for (int i = 0; i < prop.elements_number; i++)
+        for (size_t i = 0; i < prop.elements_number; i++)
         {
             auto& property_value = prop.value.as<ArchiveObject*>()[i].property_map["v"];
             if constexpr (serialize::String<T>)
