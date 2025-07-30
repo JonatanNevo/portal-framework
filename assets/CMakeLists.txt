@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.30)
 project(portal-assets)
 
-set(CMAKE_CXX_STANDARD 20)
+include(../cmake/development.cmake)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -48,7 +50,7 @@ install(TARGETS portal-assets
 if(MSVC)
     target_compile_options(portal-assets PRIVATE /W4 /WX)
 else()
-    target_compile_options(portal-assets PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(portal-assets PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
 # Generate and install the export targets

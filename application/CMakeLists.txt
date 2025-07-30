@@ -6,7 +6,9 @@ project(portal-application VERSION ${PROJECT_VERSION})
 
 message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
-set(CMAKE_CXX_STANDARD 20)
+include(../cmake/development.cmake)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -40,7 +42,7 @@ target_include_directories(portal-application PRIVATE ${Stb_INCLUDE_DIR})
 if(MSVC)
     target_compile_options(portal-application PRIVATE /W4 /WX)
 else()
-    target_compile_options(portal-application PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(portal-application PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
 install(TARGETS portal-application

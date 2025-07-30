@@ -6,20 +6,20 @@ project(portal-core VERSION ${PROJECT_VERSION})
 
 message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
-set(CMAKE_CXX_STANDARD 20)
+include(../cmake/development.cmake)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
-option(PORTAL_PROFILE "Enable profiling with Tracy" ON)
+option(PORTAL_DEBUG_ALLOCATIONS "Enable debug allocations (for debug only)" OFF)
+option(PORTAL_PROFILE "Enable profiling with Tracy" OFF)
 option(PORTAL_BUILD_DIST "Build the distribution package" OFF)
 
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
 file(GLOB_RECURSE CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
-
-file(GLOB_RECURSE LLVM_SOURCES CONFIGURE_DEPENDS "llvm/Support.cpp")
-file(GLOB_RECURSE LLVM_HEADER CONFIGURE_DEPENDS "llvm/*.h" "llvm-c/*.h")
 
 file(GLOB_RECURSE WINDOWS_SOURCES CONFIGURE_DEPENDS "portal/platform/core/windows/*.cpp")
 file(GLOB_RECURSE WINDOWS_HEADER CONFIGURE_DEPENDS "portal/platform/core/windows/*.h")
@@ -32,9 +32,14 @@ file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/core/linux/*.h
 
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+if (PORTAL_PROFILE)
+    option(TRACY_ENABLE "Enable Tracy profiling" ON)
+else ()
+    option(TRACY_ENABLE "Enable Tracy profiling" OFF)
+endif ()
 find_package(Tracy CONFIG REQUIRED)
 
-add_library(portal-core STATIC ${CORE_SOURCES} ${LLVM_SOURCES})
+add_library(portal-core STATIC ${CORE_SOURCES})
 add_library(portal::core ALIAS portal-core)
 
 target_sources(portal-core PUBLIC
@@ -48,7 +53,6 @@ target_link_libraries(portal-core
         PUBLIC
         spdlog::spdlog
         glm::glm
-        Tracy::TracyClient
 )
 
 if (WIN32)
@@ -74,6 +78,7 @@ elseif (APPLE)
             FILES ${MACOS_HEADER}
     )
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=macos)
+    target_compile_options(portal-core PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fexperimental-library>)
 
 elseif (UNIX)
     set(PORTAL_PLATFORM_LINUX ON CACHE BOOL "Linux platform" FORCE)
@@ -106,11 +111,15 @@ target_compile_definitions(portal-core PUBLIC
         GLM_FORCE_CTOR_INIT
         GLM_ENABLE_EXPERIMENTAL
         GLM_FORCE_CXX20
-        SPDLOG_USE_STD_FORMAT
+        GLM_FORCE_DEPTH_ZERO_TO_ONE
 )
 
 if (PORTAL_PROFILE AND NOT PORTAL_BUILD_DIST)
     target_compile_definitions(portal-core PUBLIC PORTAL_PROFILE $<$<CONFIG:Release>:TRACY_ENABLE>)
+    target_link_libraries(portal-core PUBLIC Tracy::TracyClient)
+endif ()
+if (PORTAL_DEBUG_ALLOCATIONS AND NOT PORTAL_BUILD_DIST)
+    target_compile_definitions(portal-core PUBLIC $<$<CONFIG:Debug>:PORTAL_DEBUG_ALLOCATIONS>)
 endif ()
 
 if (MSVC)
@@ -127,7 +136,7 @@ else ()
     target_compile_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:-g>"
     )
-    target_compile_options(portal-core PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(portal-core PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 
 endif ()
 

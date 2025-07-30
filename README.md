@@ -2,12 +2,26 @@
 
 A modular cross-platform framework for creating C++ applications, with focus on graphics (3D) application.
 
+## Supported Platforms
+- Windows
+  - Clang 19 (or clang-cl) or later [recommended]
+  - MSVC 19.44 or later
+- Linux
+- macOS
+
 # Installation
 TODO
 ## vcpkg (recommended)
 TODO
 ## Submodule
 TODO
+## xcode
+TODO
+```shell
+cmake --preset xcode
+```
+This will generate an Xcode project in the `build/xcode` directory. You can open the project in Xcode and build it from there.
+## vscode
 
 # Modules
  - [**Portal Core**](docs/core.md) - The core module, provides common functionalities and libraries 

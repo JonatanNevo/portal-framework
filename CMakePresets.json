@@ -1,41 +1,56 @@
 {
-  "version": 3,
+  "version": 6,
   "configurePresets": [
     {
       "name": "base",
-      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
+      "hidden": true,
       "cacheVariables": {
-        "VCPKG_OVERLAY_PORTS": "${sourceDir}/overlay-ports",
-        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake"
-      },
-      "environment": {
-        "VCPKG_MAX_CONCURRENCY": "24"
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_CONFIGURATION_TYPES": "Debug;Development;Release"
       }
     },
     {
-      "name": "debug",
+      "name": "ninja-multi",
       "inherits": "base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+      "generator": "Ninja Multi-Config"
+    },
+    {
+      "name": "xcode",
+      "inherits": "base",
+      "generator": "Xcode",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
       }
     },
     {
-      "name": "release",
+      "name": "vs2022",
       "inherits": "base",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
+      "generator": "Visual Studio 17 2022",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
       }
     }
   ],
   "buildPresets": [
     {
       "name": "debug",
-      "configurePreset": "debug"
+      "configurePreset": "ninja-multi",
+      "configuration": "Debug"
+    },
+    {
+      "name": "development",
+      "configurePreset": "ninja-multi",
+      "configuration": "Development"
     },
     {
       "name": "release",
-      "configurePreset": "release"
+      "configurePreset": "ninja-multi",
+      "configuration": "Release"
     }
   ]
 }

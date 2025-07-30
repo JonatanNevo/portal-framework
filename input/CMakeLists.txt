@@ -6,7 +6,9 @@ project(portal-input VERSION ${PROJECT_VERSION})
 
 message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
-set(CMAKE_CXX_STANDARD 20)
+include(../cmake/development.cmake)
+
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -16,7 +18,6 @@ file(GLOB_RECURSE INPUT_HEADERS CONFIGURE_DEPENDS "portal/input/*.h")
 file(GLOB_RECURSE GENERIC_SOURCES CONFIGURE_DEPENDS "portal/platform/input/generic/*.cpp")
 file(GLOB_RECURSE GENERIC_HEADERS CONFIGURE_DEPENDS "portal/platform/input/generic/*.h")
 file(GLOB_RECURSE HAL_INCLUDES CONFIGURE_DEPENDS "portal/platform/input/generic/hal/*.h")
-
 
 file(GLOB_RECURSE WINDOWS_SOURCES CONFIGURE_DEPENDS "portal/platform/input/windows/*.cpp")
 file(GLOB_RECURSE WINDOWS_HEADER CONFIGURE_DEPENDS "portal/platform/input/windows/*.h")
@@ -87,7 +88,7 @@ target_link_libraries(portal-input
 if(MSVC)
     target_compile_options(portal-input PRIVATE /W4 /WX)
 else()
-    target_compile_options(portal-input PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    target_compile_options(portal-input PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
 install(TARGETS portal-input
