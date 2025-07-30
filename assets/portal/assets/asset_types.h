@@ -6,7 +6,8 @@
 #pragma once
 
 #include <portal/core/common.h>
-#include <portal/core/assert.h>
+#include <portal/core/debug/assert.h>
+
 
 namespace portal
 {

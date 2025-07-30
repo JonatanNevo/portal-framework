@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "log.h"
+#include "portal/core/log.h"
 
 #ifdef PORTAL_PLATFORM_WINDOWS
 #define PORTAL_DEBUG_BREAK __debugbreak
@@ -34,7 +34,7 @@
 #else
 inline void PORTAL_DEBUG_BREAK_HELPER()
 {
-    PORTAL_DEBUG_BREAK();
+    PORTAL_DEBUG_BREAK;
 }
 #endif
 

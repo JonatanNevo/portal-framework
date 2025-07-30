@@ -12,7 +12,7 @@
 #include <cassert>
 #include <bit>
 
-#define BIT(x) (1u << x)
+#define BIT(x) (1u << (x))
 
 #if defined(__GNUC__)
 #if defined(__clang__)
@@ -83,8 +83,6 @@ constexpr PORTAL_FORCE_INLINE bool sub_overflow_impl(T a, T b, T* result)
 
 namespace portal
 {
-using byte = uint8_t;
-
 #if defined(PORTAL_COMPILER_CLANG) || defined(PORTAL_COMPILER_GCC)
 using uint128_t = __uint128_t;
 #else
@@ -301,8 +299,8 @@ struct uint128_t
     friend constexpr bool operator!=(const uint128_t x, const uint128_t y) { return !(x == y); }
     friend constexpr bool operator>(const uint128_t x, const uint128_t y) { return y < x; }
     friend constexpr bool operator>=(const uint128_t x, const uint128_t y) { return !(x < y); }
-#endif
 };
+#endif
 }
 
 #if defined(PORTAL_COMPILER_CLANG) || defined(PORTAL_COMPILER_GCC)

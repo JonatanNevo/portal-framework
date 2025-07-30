@@ -7,7 +7,7 @@
 
 #include <memory>
 
-#include "portal/core/assert.h"
+#include "debug/assert.h"
 
 namespace portal
 {
@@ -81,21 +81,21 @@ struct Buffer
     template<typename T, typename... Args>
     [[nodiscard]] PORTAL_FORCE_INLINE static Buffer create(Args&&... args)
     {
-        Buffer buffer = allocate(sizeof(T));
+        Buffer&& buffer = allocate(sizeof(T));
         new (buffer.data_ptr()) T(std::forward<Args>(args)...);
         return std::move(buffer);
     }
 
     [[nodiscard]] PORTAL_FORCE_INLINE static Buffer copy(const Buffer& other)
     {
-        Buffer buffer = allocate(other.size);
+        Buffer&& buffer = allocate(other.size);
         memcpy(const_cast<void*>(buffer.data), other.data, other.size);
         return std::move(buffer);
     }
 
     [[nodiscard]] PORTAL_FORCE_INLINE static Buffer copy(const void* data, const size_t size)
     {
-        Buffer buffer = allocate(size);
+        Buffer&& buffer = allocate(size);
         memcpy(const_cast<void*>(buffer.data), data, size);
         return std::move(buffer);
     }

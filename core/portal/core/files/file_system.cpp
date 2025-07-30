@@ -7,7 +7,7 @@
 
 #include <fstream>
 
-#include "portal/core/assert.h"
+#include "portal/core/debug/assert.h"
 
 namespace portal
 {
@@ -219,18 +219,18 @@ Buffer FileSystem::read_chunk(const std::filesystem::path& path, size_t offset, 
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file.is_open())
     {
-        LOG_ERROR_TAG("Filesystem", "{}: Failed to open file for reading", path.string());
-        return std::move(Buffer{});
+        LOG_ERROR_TAG("Filesystem", "{}: Failed to open file for reading", std::filesystem::absolute(path).string());
+        return Buffer{};
     }
 
     auto size = stat_file(path).size;
     if (offset + count > size)
     {
         LOG_WARN_TAG("Filesystem", "{}: Requested read chunk ({} + {}) is bigger than size: ({})", path.string(), offset, count, size);
-        return std::move(Buffer{});
+        return Buffer{};
     }
 
-    Buffer buffer = Buffer::allocate(count);
+    Buffer&& buffer = Buffer::allocate(count);
     file.seekg(static_cast<std::streamsize>(offset), std::ios::beg);
     file.read(buffer.as<char*>(), static_cast<std::streamsize>(count));
     return std::move(buffer);

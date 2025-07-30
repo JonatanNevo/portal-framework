@@ -9,6 +9,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <filesystem>
+#include <iostream>
 #include <map>
 #include <ranges>
 #include <utility>
@@ -32,7 +33,7 @@ std::vector<spdlog::sink_ptr> default_sinks{};
 Log::Settings g_settings;
 
 // Format:  date [name] colored{[level]} message (file:line function #thread_id) extra
-constexpr auto default_pattern = "[%Y-%m-%d %H:%M:%S.%f] [%t] [%n] %^[%l]%$ [%@] %v %&";
+constexpr auto default_pattern = "[%Y-%m-%d %H:%M:%S.%f] [%t] [%s:%#] [%n] %^[%l]%$ %v %&";
 
 void Log::init()
 {
@@ -60,32 +61,43 @@ void Log::init(const Settings& settings)
         sink->set_pattern(default_pattern);
     }
 
+    auto& loggers = get_loggers();
+    for (const auto& logger : loggers | std::views::values)
+    {
+        logger->sinks() = default_sinks;
+        logger->set_level(static_cast<spdlog::level::level_enum>(settings.default_log_level));
+    }
+
     const auto default_logger = std::make_shared<spdlog::logger>(settings.default_logger_name, begin(default_sinks), end(default_sinks));
     default_logger->set_level(static_cast<spdlog::level::level_enum>(settings.default_log_level));
 
     spdlog::set_default_logger(default_logger);
-    loggers()["default"] = default_logger;
+    loggers["default"] = default_logger;
+
+    LOG_INFO("Logger initialized");
 }
 
 void Log::shutdown()
 {
-    for (auto& logger : loggers() | std::views::values)
+    auto& loggers = get_loggers();
+    for (auto& logger : loggers | std::views::values)
     {
         logger.reset();
     }
     spdlog::drop_all();
 }
 
-std::shared_ptr<spdlog::logger>& Log::get_logger(const std::string& tag_name)
+std::shared_ptr<spdlog::logger> Log::get_logger(const std::string& tag_name)
 {
-    if (loggers().contains(tag_name))
-        return loggers()[tag_name];
+    auto& loggers = get_loggers();
+    if (loggers.contains(tag_name))
+        return loggers[tag_name];
 
     // Create a new logger if it doesn't exist
     const auto logger = std::make_shared<spdlog::logger>(tag_name, begin(default_sinks), end(default_sinks));
     logger->set_level(static_cast<spdlog::level::level_enum>(g_settings.default_log_level));
-    loggers()[tag_name] = logger;
-    return loggers()[tag_name];
+    loggers[tag_name] = logger;
+    return loggers[tag_name];
 }
 
 void Log::set_default_log_level(LogLevel level, const bool apply_to_all)
@@ -94,11 +106,11 @@ void Log::set_default_log_level(LogLevel level, const bool apply_to_all)
 
     // Set the default logger level
     spdlog::default_logger_raw()->set_level(static_cast<spdlog::level::level_enum>(level));
-
     // Apply to all existing loggers if requested
     if (apply_to_all)
     {
-        for (const auto& logger : loggers() | std::views::values)
+        auto& loggers = get_loggers();
+        for (const auto& logger : loggers | std::views::values)
         {
             logger->set_level(static_cast<spdlog::level::level_enum>(level));
         }
@@ -107,7 +119,8 @@ void Log::set_default_log_level(LogLevel level, const bool apply_to_all)
 
 bool Log::has_tag(const std::string& tag_name)
 {
-    return loggers().contains(tag_name);
+    auto& loggers = get_loggers();
+    return loggers.contains(tag_name);
 }
 
 void Log::set_tag_level(const std::string& tag_name, LogLevel level)
@@ -130,7 +143,7 @@ void Log::enable_tag(const std::string& tag_name, const bool enable)
     }
 }
 
-PORTAL_FORCE_INLINE void Log::print_message_tag(
+void Log::print_message_tag(
     const spdlog::source_loc& loc,
     LogLevel level,
     const std::string_view tag,
@@ -143,7 +156,7 @@ PORTAL_FORCE_INLINE void Log::print_message_tag(
     }
 }
 
-PORTAL_FORCE_INLINE void Log::print_message(
+void Log::print_message(
     const std::shared_ptr<spdlog::logger>& logger,
     const spdlog::source_loc& loc,
     LogLevel level,
@@ -160,7 +173,7 @@ bool Log::print_assert_message(
     const std::string_view message
     )
 {
-    volatile static bool do_assert = true;
+    [[maybe_unused]] volatile static bool do_assert = true;
     typedef std::pair<int, std::string> AssertLocation;
     static std::map<AssertLocation, bool> assertion_map;
 
@@ -216,7 +229,7 @@ bool Log::print_assert_message(
 #endif
 }
 
-std::unordered_map<std::string, std::shared_ptr<spdlog::logger>>& Log::loggers()
+std::unordered_map<std::string, std::shared_ptr<spdlog::logger>>& Log::get_loggers()
 {
     static std::unordered_map<std::string, std::shared_ptr<spdlog::logger>> logger_map;
     return logger_map;
