@@ -53,7 +53,7 @@ struct InputKeyParams
     };
 
     InputKeyParams(Key key, glm::vec3 delta, float delta_time, int32_t num_samples):
-        key(std::move(key)), delta(delta), num_samples(num_samples), delta_time(delta_time)
+        key(std::move(key)), num_samples(num_samples), delta_time(delta_time), delta(delta)
     {
     };
 
@@ -63,7 +63,8 @@ struct InputKeyParams
 class Input
 {
 public:
-    explicit Input(GLFWwindow* window);
+    void initialize(GLFWwindow* window_handle);
+
     bool input_key(const InputKeyParams& params);
 
     void process_inputs(const float delta_time);
@@ -139,7 +140,7 @@ private:
     uint32_t event_count;
 
     // Mouse smoothing sample data
-    float zero_time[2];         /** How long received mouse movement has been zero. */
+    //float zero_time[2];         /** How long received mouse movement has been zero. */
     float smoothed_mouse[2];    /** Current average mouse movement/sample */
     int32_t mouse_samples;      /** Number of mouse samples since mouse movement has been zero */
     float mouse_sampling_total; /** DirectInput's mouse sampling total time */

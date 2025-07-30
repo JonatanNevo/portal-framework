@@ -78,17 +78,16 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int /*mod
     }
 }
 
-Input::Input(GLFWwindow* window):
-    window(window)
-{
+void Input::initialize(GLFWwindow* window_handle) {
+    window = window_handle;
     // TODO: Create some "GLFW Application" or "GLFW Context" that will handle all glfw callbacks
-    glfwSetWindowUserPointer(window, this);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetCursorPosCallback(window, cursor_position_callback);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
+    glfwSetWindowUserPointer(window_handle, this);
+    glfwSetKeyCallback(window_handle, key_callback);
+    glfwSetCursorPosCallback(window_handle, cursor_position_callback);
+    glfwSetMouseButtonCallback(window_handle, mouse_button_callback);
 
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
-    glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
+    glfwSetInputMode(window_handle, GLFW_STICKY_KEYS, 1);
+    glfwSetInputMode(window_handle, GLFW_STICKY_MOUSE_BUTTONS, 1);
 }
 
 bool Input::input_key(const InputKeyParams& params)
