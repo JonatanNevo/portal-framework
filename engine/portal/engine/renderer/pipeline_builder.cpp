@@ -8,30 +8,30 @@
 namespace portal::vulkan
 {
 
-PipelineBuilder& PipelineBuilder::set_shaders(vk::raii::ShaderModule& vertex_shader, vk::raii::ShaderModule& fragment_shader)
+PipelineBuilder& PipelineBuilder::set_shaders(Ref<Shader> vertex_shader, Ref<Shader> fragment_shader)
 {
     shader_stages.clear();
+
     shader_stages.push_back(
         {
             .stage = vk::ShaderStageFlagBits::eVertex,
-            .module = vertex_shader,
-            .pName = "vert_main" // TODO: get from some abstract reflected shader class
+            .module = vertex_shader->get_shader_module(vk::ShaderStageFlagBits::eVertex),
+            .pName = vertex_shader->get_entry_point(vk::ShaderStageFlagBits::eVertex).c_str()
         }
         );
 
     shader_stages.push_back(
         {
             .stage = vk::ShaderStageFlagBits::eFragment,
-            .module = fragment_shader,
-            .pName = "frag_main" // TODO: get from some abstract reflected shader class
+            .module = fragment_shader->get_shader_module(vk::ShaderStageFlagBits::eFragment),
+            .pName = fragment_shader->get_entry_point(vk::ShaderStageFlagBits::eFragment).c_str()
         }
         );
-
 
     return *this;
 }
 
-PipelineBuilder& PipelineBuilder::add_shader(const vk::raii::ShaderModule& module, const vk::ShaderStageFlagBits stage, std::string_view entry_point)
+PipelineBuilder& PipelineBuilder::add_shader(const vk::ShaderModule& module, const vk::ShaderStageFlagBits stage, std::string_view entry_point)
 {
     shader_stages.push_back(
         {

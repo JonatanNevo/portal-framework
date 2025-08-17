@@ -8,19 +8,49 @@
 #include "portal/core/log.h"
 #include "portal/engine/renderer/allocated_buffer.h"
 #include "portal/engine/renderer/allocated_image.h"
+#include "portal/engine/renderer/descriptor_writer.h"
 #include "portal/engine/renderer/vulkan_utils.h"
 
 namespace portal::resources
 {
 static auto logger = Log::get_logger("Resources");
 
-GpuContext::GpuContext(vk::raii::Device& device, vk::raii::CommandBuffer& commandBuffer, vk::raii::Queue& submit_queue)
-    : device(device),
-      command_buffer(commandBuffer),
-      submit_queue(submit_queue)
+#define VK_HANDLE_CAST(raii_obj) reinterpret_cast<uint64_t>(static_cast<decltype(raii_obj)::CType>(*(raii_obj)))
+
+
+GpuContext::GpuContext(
+    vk::raii::Device& device,
+    vk::raii::CommandBuffer& commandBuffer,
+    vk::raii::Queue& submit_queue,
+    vulkan::AllocatedImage& draw_image,
+    vulkan::AllocatedImage& depth_image,
+    const std::vector<vk::DescriptorSetLayout>& global_descriptor_layouts
+    ) : global_descriptor_layouts(global_descriptor_layouts),
+        device(device),
+        command_buffer(commandBuffer),
+        submit_queue(submit_queue),
+        draw_image(draw_image),
+        depth_image(depth_image)
 {
     if (device != nullptr)
+    {
         fence = device.createFence(vk::FenceCreateInfo{});
+        device.setDebugUtilsObjectNameEXT(
+            {
+                .objectType = vk::ObjectType::eFence,
+                .objectHandle = VK_HANDLE_CAST(fence),
+                .pObjectName = "Immediate buffer fence"
+            }
+            );
+
+        // TODO: move somewhere
+        std::vector<vulkan::DescriptorAllocator::PoolSizeRatio> sizes = {
+            {vk::DescriptorType::eCombinedImageSampler, 3},
+            {vk::DescriptorType::eUniformBuffer, 3},
+            {vk::DescriptorType::eStorageBuffer, 1}
+        };
+        descriptor_allocator.init(&device, 16, sizes);
+    }
 }
 
 void GpuContext::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function) const
@@ -50,11 +80,84 @@ void GpuContext::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&
     }
 }
 
+
+vulkan::AllocatedBuffer GpuContext::create_buffer(vulkan::BufferBuilder builder) const
+{
+    return builder.build(device);
+}
+
+std::shared_ptr<vulkan::AllocatedBuffer> GpuContext::create_buffer_shared(vulkan::BufferBuilder builder) const
+{
+    return builder.build_shared(device);
+}
+
 vulkan::AllocatedImage GpuContext::create_image(void* data, vulkan::ImageBuilder image_builder) const
 {
     auto image = image_builder.build(device);
     populate_image(data, image);
     return image;
+}
+
+std::shared_ptr<vulkan::AllocatedImage> GpuContext::create_image_shared(void* data, vulkan::ImageBuilder image_builder) const
+{
+    auto image = image_builder.build_shared(device);
+    populate_image(data, *image);
+    return image;
+}
+
+vk::raii::Sampler GpuContext::create_sampler(const vk::SamplerCreateInfo create_info) const
+{
+    return device.createSampler(create_info);
+}
+
+vk::raii::DescriptorSetLayout GpuContext::create_descriptor_set_layout(vk::ShaderStageFlags stage_flags, vulkan::DescriptorLayoutBuilder builder)
+{
+    return builder.build(device, stage_flags);
+}
+
+vk::raii::DescriptorSet GpuContext::create_descriptor_set(const vk::DescriptorSetLayout& layout)
+{
+    return descriptor_allocator.allocate(layout);
+}
+
+vk::raii::PipelineLayout GpuContext::create_pipeline_layout(const vk::PipelineLayoutCreateInfo& pipeline_layout_info)
+{
+    return device.createPipelineLayout(pipeline_layout_info);
+}
+
+vk::raii::ShaderModule GpuContext::create_shader_module(Buffer code)
+{
+    const vk::ShaderModuleCreateInfo shader_module_create_info{
+        .codeSize = code.size * sizeof(char),
+        .pCode = code.as<uint32_t*>()
+    };
+
+    return device.createShaderModule(shader_module_create_info);
+}
+
+vk::raii::Pipeline GpuContext::create_pipeline(vulkan::PipelineBuilder builder)
+{
+    return builder.build(device);
+}
+
+std::vector<vk::DescriptorSetLayout>& GpuContext::get_global_descriptor_layouts()
+{
+    return global_descriptor_layouts;
+}
+
+void GpuContext::write_descriptor_set(vulkan::DescriptorWriter& writer, vk::raii::DescriptorSet& set)
+{
+    writer.update_set(device, set);
+}
+
+vk::Format GpuContext::get_draw_image_format()
+{
+    return draw_image.get_format();
+}
+
+vk::Format GpuContext::get_depth_format()
+{
+    return depth_image.get_format();
 }
 
 void GpuContext::populate_image(const void* data, vulkan::AllocatedImage& image) const

@@ -92,9 +92,9 @@ AllocatedImage ImageBuilder::build(vk::raii::Device& device) const
     return {device, *this};
 }
 
-std::unique_ptr<AllocatedImage> ImageBuilder::build_unique(vk::raii::Device& device) const
+std::shared_ptr<AllocatedImage> ImageBuilder::build_shared(vk::raii::Device& device) const
 {
-    return std::unique_ptr<AllocatedImage>(new AllocatedImage(device, *this));
+    return std::shared_ptr<AllocatedImage>(new AllocatedImage(device, *this));
 }
 
 AllocatedImage::AllocatedImage(): Allocated({}, nullptr, nullptr) {}

@@ -25,7 +25,7 @@ public:
     void destroy_pools();
     std::vector<vk::raii::DescriptorSet> handle_pool_resize(vk::raii::DescriptorPool& descriptor_pool, vk::DescriptorSetAllocateInfo& info);
 
-    vk::raii::DescriptorSet allocate(const vk::raii::DescriptorSetLayout& layout);
+    vk::raii::DescriptorSet allocate(const vk::DescriptorSetLayout& layout);
 
 private:
     vk::raii::DescriptorPool get_pool();

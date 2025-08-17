@@ -270,7 +270,7 @@ std::optional<std::shared_ptr<GLTFScene>> load_gltf(vk::raii::Device& device, st
     auto data = fastgltf::GltfDataBuffer::FromPath(path);
     if (!data)
     {
-        LOGGER_ERROR("Failed to load glTF meshes from: {}, error: {}",  std::filesystem::absolute(path).string(), fastgltf::to_underlying(data.error()));
+        LOGGER_ERROR("Failed to load glTF meshes from: {}, error: {}",  std::filesystem::absolute(path).string(), fastgltf::getErrorName(data.error()));
         return std::nullopt;
     }
 
@@ -294,7 +294,7 @@ std::optional<std::shared_ptr<GLTFScene>> load_gltf(vk::raii::Device& device, st
             gltf = std::move(load.get());
             break;
         }
-        LOGGER_ERROR("Failed to load glTF scene from: {}, error: {}",  std::filesystem::absolute(path).string(), fastgltf::to_underlying(load.error()));
+        LOGGER_ERROR("Failed to load glTF scene from: {}, error: {}",  std::filesystem::absolute(path).string(), fastgltf::getErrorName(load.error()));
         return std::nullopt;
     }
     case fastgltf::GltfType::GLB:
@@ -305,7 +305,7 @@ std::optional<std::shared_ptr<GLTFScene>> load_gltf(vk::raii::Device& device, st
             gltf = std::move(load.get());
             break;
         }
-        LOGGER_ERROR("Failed to load GLB scene from: {}, error: {}",  std::filesystem::absolute(path).string(), fastgltf::to_underlying(load.error()));
+        LOGGER_ERROR("Failed to load GLB scene from: {}, error: {}",  std::filesystem::absolute(path).string(), fastgltf::getErrorName(load.error()));
         return std::nullopt;
     }
     case fastgltf::GltfType::Invalid:
@@ -553,10 +553,12 @@ std::optional<std::shared_ptr<GLTFScene>> load_gltf(vk::raii::Device& device, st
             new_surface.bounds.extents = (max_pos - min_pos) / 2.f;
             new_surface.bounds.sphere_radius = glm::length(new_surface.bounds.extents);
 
-            new_mesh->surfaces.push_back(new_surface);
+            new_mesh->surfaces.push_back(new_surface);\
         }
 
         new_mesh->mesh_buffers = renderer->upload_mesh(indices, vertices);
+        new_mesh->vertices = vertices;
+        new_mesh->indices = indices;
     }
 
     // load all nodes and their meshes

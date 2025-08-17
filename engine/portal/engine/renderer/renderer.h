@@ -10,6 +10,7 @@
 #include <tracy/TracyVulkan.hpp>
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
+#include "portal/core/reference.h"
 
 #include "portal/core/timer.h"
 #include "portal/engine/renderer/allocated_image.h"
@@ -21,6 +22,10 @@
 #include "portal/engine/renderer/scene/draw_context.h"
 #include "portal/engine/renderer/scene/gltf_scene.h"
 #include "portal/engine/renderer/scene/materials/gltf_metallic_roughness.h"
+#include "portal/engine/resources/gpu_context.h"
+#include "portal/engine/resources/resource_types.h"
+#include "portal/engine/scene/draw_context.h"
+#include "portal/engine/scene/scene.h"
 
 namespace portal
 {
@@ -68,9 +73,14 @@ public:
     void run();
     void cleanup();
 
+    void set_scene(Ref<Scene> new_scene);
+    std::shared_ptr<resources::GpuContext> get_gpu_context();
+
     void populate_image(const void* data, vulkan::AllocatedImage& image);
     void generate_mipmaps(const vk::raii::CommandBuffer& command_buffer, const vulkan::AllocatedImage& image);
     vulkan::GPUMeshBuffers upload_mesh(std::span<uint32_t> indices, std::span<vulkan::Vertex> vertices);
+
+    void compare_to_old_scene();
 
 protected:
     void draw(float delta_time);
@@ -91,6 +101,7 @@ private:
     void init_sync_structures();
     void init_descriptors();
     void init_pipelines();
+    void create_gpu_context();
 
     void init_default_data();
 
@@ -99,6 +110,7 @@ private:
     void create_swap_chain(uint32_t width, uint32_t height);
 
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
+    bool compare_gpu_buffers(const vulkan::AllocatedBuffer& buffer1, const vulkan::AllocatedBuffer& buffer2);
 
 private:
     RendererSettings settings = {};
@@ -150,11 +162,13 @@ private:
     vulkan::GPUSceneData scene_data{};
     vk::raii::DescriptorSetLayout scene_descriptor_set_layout = nullptr;
 
-    DrawContext draw_context{};
+    std::shared_ptr<resources::GpuContext> gpu_context = nullptr;
+    scene::DrawContext draw_context{};
+    WeakRef<Scene> scene;
     // std::unordered_map<std::string, std::shared_ptr<SceneNode>> loaded_nodes;
     // std::vector<std::shared_ptr<vulkan::MeshAsset>> test_meshes;
 
-    std::unordered_map<std::string, std::shared_ptr<GLTFScene>> loaded_scenes;
+    // std::unordered_map<std::string, std::shared_ptr<GLTFScene>> loaded_scenes;
 
 public:
     // TODO: use input class... and resources....

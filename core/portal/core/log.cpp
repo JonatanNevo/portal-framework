@@ -7,6 +7,7 @@
 
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/pattern_formatter.h>
 
 #include <filesystem>
 #include <iostream>
@@ -14,26 +15,66 @@
 #include <ranges>
 #include <utility>
 
-#include "portal/core/common.h"
-
-#define PORTAL_HAS_CONSOLE !PORTAL_DIST
-
-
-#if defined(PORTAL_ASSERT_MESSAGE_BOX) && !defined(PORTAL_DIST)
-#ifdef PORTAL_PLATFORM_WINDOWS
-#include <windows.h>
-#endif
-#endif
-
+#include "portal/platform/core/hal/platform_logger.h"
 
 namespace portal
 {
 
-std::vector<spdlog::sink_ptr> default_sinks{};
 Log::Settings g_settings;
 
-// Format:  date [name] colored{[level]} message (file:line function #thread_id) extra
-constexpr auto default_pattern = "[%Y-%m-%d %H:%M:%S.%f] [%t] [%s:%#] [%n] %^[%l]%$ %v %&";
+// Format: [date] [#thread_id] [file:line function] [name] colored{[level] message} extra
+constexpr auto default_pattern = "[%Y-%m-%d %H:%M:%S.%f] [%t] [%*] [%-12n] %^[%=7l] %v%$ %&";
+
+class source_location_flag_formatter final : public spdlog::custom_flag_formatter
+{
+private:
+    size_t width_;
+
+public:
+    explicit source_location_flag_formatter(const size_t width = 30) : width_(width) {}
+
+    void format(const spdlog::details::log_msg& msg, const std::tm&, spdlog::memory_buf_t& dest) override
+    {
+        if (msg.source.filename && msg.source.line > 0)
+        {
+            // Extract filename from a full path manually
+            const std::string full_path = msg.source.filename;
+            std::string filename = full_path;
+
+            // Find last occurrence of path separator
+            const auto last_slash = full_path.find_last_of("/\\");
+            if (last_slash != std::string::npos)
+            {
+                filename = full_path.substr(last_slash + 1);
+            }
+
+            std::string location = fmt::format("{}:{}", filename, msg.source.line);
+
+            // Pad to specified width, left-aligned
+            if (location.length() < width_)
+            {
+                location += std::string(width_ - location.length(), ' ');
+            }
+            else if (location.length() > width_)
+            {
+                location = location.substr(0, width_);
+            }
+
+            dest.append(location.data(), location.data() + location.size());
+        }
+        else
+        {
+            // Fallback: pad with spaces
+            const std::string empty_location(width_, ' ');
+            dest.append(empty_location.data(), empty_location.data() + empty_location.size());
+        }
+    }
+
+    [[nodiscard]] std::unique_ptr<custom_flag_formatter> clone() const override
+    {
+        return spdlog::details::make_unique<source_location_flag_formatter>(width_);
+    }
+};
 
 void Log::init()
 {
@@ -49,26 +90,26 @@ void Log::init(const Settings& settings)
     if (!std::filesystem::exists(log_directory))
         std::filesystem::create_directory(log_directory);
 
-    default_sinks = {
-        std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/portal.log", true),
-#if PORTAL_HAS_CONSOLE
-        std::make_shared<spdlog::sinks::stdout_color_sink_mt>()
-#endif
-    };
+    // Create a custom formatter and register the custom flag
+    const auto formatter = std::make_unique<spdlog::pattern_formatter>();
+    formatter->add_flag<source_location_flag_formatter>('*', 30);
+    formatter->set_pattern(default_pattern);
 
-    for (const auto& sink : default_sinks)
+    auto& sinks = platform::get_platform_sinks();
+
+    for (const auto& sink : sinks)
     {
-        sink->set_pattern(default_pattern);
+        sink->set_formatter(std::unique_ptr(formatter->clone()));
     }
 
     auto& loggers = get_loggers();
     for (const auto& logger : loggers | std::views::values)
     {
-        logger->sinks() = default_sinks;
+        logger->sinks() = sinks;
         logger->set_level(static_cast<spdlog::level::level_enum>(settings.default_log_level));
     }
 
-    const auto default_logger = std::make_shared<spdlog::logger>(settings.default_logger_name, begin(default_sinks), end(default_sinks));
+    const auto default_logger = std::make_shared<spdlog::logger>(settings.default_logger_name, begin(sinks), end(sinks));
     default_logger->set_level(static_cast<spdlog::level::level_enum>(settings.default_log_level));
 
     spdlog::set_default_logger(default_logger);
@@ -93,8 +134,10 @@ std::shared_ptr<spdlog::logger> Log::get_logger(const std::string& tag_name)
     if (loggers.contains(tag_name))
         return loggers[tag_name];
 
+    auto& sinks = platform::get_platform_sinks();
+
     // Create a new logger if it doesn't exist
-    const auto logger = std::make_shared<spdlog::logger>(tag_name, begin(default_sinks), end(default_sinks));
+    const auto logger = std::make_shared<spdlog::logger>(tag_name, begin(sinks), end(sinks));
     logger->set_level(static_cast<spdlog::level::level_enum>(g_settings.default_log_level));
     loggers[tag_name] = logger;
     return loggers[tag_name];
@@ -167,16 +210,12 @@ void Log::print_message(
 }
 
 bool Log::print_assert_message(
-    std::string_view file,
-    int line,
-    std::string_view function,
+    const std::string_view file,
+    const int line,
+    const std::string_view function,
     const std::string_view message
     )
 {
-    [[maybe_unused]] volatile static bool do_assert = true;
-    typedef std::pair<int, std::string> AssertLocation;
-    static std::map<AssertLocation, bool> assertion_map;
-
     print_message_tag(
         spdlog::source_loc{file.data(), line, function.data()},
         LogLevel::Error,
@@ -184,49 +223,7 @@ bool Log::print_assert_message(
         std::format("assert ({}) failed", message)
         );
 
-    const AssertLocation assert_location = std::make_pair(line, std::string(file));
-    if (assertion_map[assert_location])
-        return false;
-
-#ifdef PORTAL_PLATFORM_WINDOWS
-    if (do_assert && IsDebuggerPresent())
-    {
-        int res = IDTRYAGAIN;
-        EndMenu();
-        {
-            std::thread assert_dialog(
-                [&]()
-                {
-                    res = MessageBoxA(
-                        nullptr,
-                        std::format(
-                            "Assert failed at:\n{}({})\n{}()\n{}\nTry again to debug, Cancel to ignore this assert in the future",
-                            file,
-                            line,
-                            function,
-                            message
-                            ).c_str(),
-                        "ASSERTION",
-                        MB_CANCELTRYCONTINUE | MB_ICONERROR | MB_TOPMOST
-                        );
-                }
-                );
-            assert_dialog.join();
-        }
-
-        if (res == IDCANCEL)
-            // ignore this assert in the future
-            assertion_map[assert_location] = true;
-        else if (res == IDTRYAGAIN)
-            return true; // break at outer context only if got option to select IDCANCEL
-    }
-
-    return false;
-
-#else
-    // TODO: use macos and linux windowing systems to display a message box
-    return true;
-#endif
+    return platform::print_assert_dialog(file, line, function, message);
 }
 
 std::unordered_map<std::string, std::shared_ptr<spdlog::logger>>& Log::get_loggers()

@@ -242,7 +242,7 @@ void Log::print_message_tag(
 #endif
     if (const auto& logger = get_logger(tag.data()))
     {
-        logger->log(loc, static_cast<spdlog::level::level_enum>(level), format, std::forward<Args>(args)...);
+        logger->log(loc, static_cast<spdlog::level::level_enum>(level), fmt::runtime(format), std::forward<Args>(args)...);
     }
 #if defined(PORTAL_COMPILER_MSVC)
 #pragma warning(pop)

@@ -5,50 +5,57 @@
 
 #include "loader_factory.h"
 
-#include "portal/engine/resources/loader/image_loader.h"
+#include <ranges>
+
+#include "portal/engine/resources/loader/texture_loader.h"
 #include "portal/engine/resources/utils.h"
+#include "portal/engine/resources/loader/gltf_loader.h"
+#include "portal/engine/resources/loader/shader_loader.h"
 
 namespace portal::resources
 {
 static auto logger = spdlog::get("Resources");
 
-void LoaderFactory::initialize(const std::shared_ptr<GpuContext>& context)
+std::unordered_map<StringId, std::shared_ptr<ResourceLoader>> loaders;
+
+void LoaderFactory::initialize(ResourceRegistry* registry, const std::shared_ptr<GpuContext>& context)
 {
     gpu_context = context;
-    stub_loader = std::make_shared<StubLoader>();
+    stub_loader = std::make_shared<StubLoader>(registry);
+
+    loaders[STRING_ID("Texture")] = std::make_shared<TextureLoader>(registry, gpu_context);
+    loaders[STRING_ID("Shader")] = std::make_shared<ShaderLoader>(registry, gpu_context);
+    loaders[STRING_ID("glFT")] = std::make_shared<GltfLoader>(registry, gpu_context);
+
+    for (const auto& loader : loaders | std::views::values)
+        loader->initialize();
 }
 
-std::shared_ptr<ResourceLoader> LoaderFactory::get(const SourceMetadata metadata)
+void LoaderFactory::shutdown()
 {
-    switch (metadata.resource_type)
+    gpu_context = nullptr;
+    loaders.clear();
+}
+
+std::shared_ptr<ResourceLoader> LoaderFactory::get(const ResourceType type)
+{
+    switch (type)
     {
     case ResourceType::Material:
         break;
     case ResourceType::Texture:
-        return get_texture_loader(metadata);
+        return loaders[STRING_ID("Texture")];
     case ResourceType::Shader:
-        break;
+        return loaders[STRING_ID("Shader")];
     case ResourceType::Mesh:
         break;
     case ResourceType::Composite:
+        return loaders[STRING_ID("glFT")];
+    case ResourceType::Pipeline:
         break;
+    case ResourceType::Scene:
+        return loaders[STRING_ID("glFT")];
     case ResourceType::Unknown:
-        break;
-    }
-    return stub_loader;
-}
-
-std::shared_ptr<ResourceLoader> LoaderFactory::get_texture_loader(const SourceMetadata metadata)
-{
-    switch (metadata.format)
-    {
-    case SourceFormat::Image:
-        return std::make_shared<ImageLoader>(gpu_context);
-    case SourceFormat::Texture:
-        break;
-    case SourceFormat::Preprocessed:
-        break;
-    default:
         break;
     }
     return stub_loader;

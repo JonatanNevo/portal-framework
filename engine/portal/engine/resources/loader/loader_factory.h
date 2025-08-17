@@ -8,22 +8,21 @@
 #include "loader.h"
 #include "portal/engine/resources/source/resource_source.h"
 
-namespace portal::resources
+namespace portal
 {
-    class GpuContext;
+    class ResourceRegistry;
 }
 
 namespace portal::resources
 {
+class GpuContext;
 
 class LoaderFactory
 {
 public:
-    void initialize(const std::shared_ptr<GpuContext>& context);
-    std::shared_ptr<ResourceLoader> get(SourceMetadata metadata);
-
-private:
-    std::shared_ptr<ResourceLoader> get_texture_loader(SourceMetadata metadata);
+    void initialize(ResourceRegistry* registry, const std::shared_ptr<GpuContext>& context);
+    void shutdown();
+    std::shared_ptr<ResourceLoader> get(ResourceType type);
 
 private:
     std::shared_ptr<GpuContext> gpu_context;

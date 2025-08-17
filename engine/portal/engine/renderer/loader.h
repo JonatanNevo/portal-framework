@@ -40,6 +40,9 @@ struct MeshAsset
 
     std::vector<GeoSurface> surfaces;
     GPUMeshBuffers mesh_buffers;
+
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
 };
 
 std::optional<std::shared_ptr<GLTFScene>> load_gltf(vk::raii::Device& device, std::filesystem::path path, Renderer* renderer);

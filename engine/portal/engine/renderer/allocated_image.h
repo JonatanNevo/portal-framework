@@ -34,7 +34,7 @@ public:
     ImageBuilder& with_flags(vk::ImageCreateFlags flags);
 
     AllocatedImage build(vk::raii::Device& device) const;
-    std::unique_ptr<AllocatedImage> build_unique(vk::raii::Device& device) const;
+    std::shared_ptr<AllocatedImage> build_shared(vk::raii::Device& device) const;
 };
 
 class AllocatedImage final : public allocation::Allocated<vk::Image>

@@ -32,12 +32,15 @@ struct Buffer
         size(size),
         allocated(false) {}
 
-    Buffer(const Buffer& other): Buffer(other, other.size) {}
+    Buffer(const Buffer& other): Buffer(other, 0, other.size) {}
 
-    Buffer(const Buffer& other, const size_t size):
-        data(other.data),
+    Buffer(const Buffer& other, const size_t size): Buffer(other, 0, size) {}
+
+    Buffer(const Buffer& other, const size_t offest, const size_t size):
+        data(static_cast<const uint8_t*>(other.data) + offest),
         size(size),
-        allocated(false) {}
+        allocated(false)
+    {}
 
     Buffer(Buffer&& other) noexcept:
         data(std::exchange(other.data, nullptr)),
@@ -79,21 +82,21 @@ struct Buffer
     }
 
     template<typename T, typename... Args>
-    [[nodiscard]] PORTAL_FORCE_INLINE static Buffer create(Args&&... args)
+    [[nodiscard]] static Buffer create(Args&&... args)
     {
         Buffer&& buffer = allocate(sizeof(T));
         new (buffer.data_ptr()) T(std::forward<Args>(args)...);
         return std::move(buffer);
     }
 
-    [[nodiscard]] PORTAL_FORCE_INLINE static Buffer copy(const Buffer& other)
+    [[nodiscard]] static Buffer copy(const Buffer& other)
     {
         Buffer&& buffer = allocate(other.size);
         memcpy(const_cast<void*>(buffer.data), other.data, other.size);
         return std::move(buffer);
     }
 
-    [[nodiscard]] PORTAL_FORCE_INLINE static Buffer copy(const void* data, const size_t size)
+    [[nodiscard]] static Buffer copy(const void* data, const size_t size)
     {
         Buffer&& buffer = allocate(size);
         memcpy(const_cast<void*>(buffer.data), data, size);
@@ -101,12 +104,12 @@ struct Buffer
     }
 
     template <typename T>
-    [[nodiscard]] PORTAL_FORCE_INLINE static Buffer copy(T& t)
+    [[nodiscard]] static Buffer copy_from(T& t)
     {
         return copy(&t, sizeof(T));
     }
 
-    [[nodiscard]] PORTAL_FORCE_INLINE static Buffer allocate(const size_t new_size)
+    [[nodiscard]] static Buffer allocate(const size_t new_size)
     {
         if (new_size == 0)
             return Buffer{};

@@ -28,7 +28,7 @@ void ref_utils::add_to_live(void* instance)
 void ref_utils::remove_from_live(void* instance)
 {
     PORTAL_ASSERT(instance, "Attempting to remove a null ptr.");
-    PORTAL_ASSERT(live_references.contains(instance), "Attempting to remove a reference that is not live.");
+    // PORTAL_ASSERT(live_references.contains(instance), "Attempting to remove a reference that is not live.");
 
     std::lock_guard guard(life_ref_lock);
     live_references.erase(instance);
@@ -37,6 +37,21 @@ void ref_utils::remove_from_live(void* instance)
 bool ref_utils::is_live(void* instance)
 {
     return live_references.contains(instance);
+}
+
+void ref_utils::clean_all_references()
+{
+    const auto lock_result = life_ref_lock.try_lock();
+    PORTAL_ASSERT(lock_result, "Attempting to clean references while another thread is using the ref counter.");
+    PORTAL_ASSERT(live_references.size() == 0, "Attempting to clean references while there are still live references.");
+
+    for (auto* ref : live_references)
+        delete ref;
+
+    live_references.clear();
+
+    if (lock_result)
+        life_ref_lock.unlock();
 }
 
 void RefCounted::inc_ref() const

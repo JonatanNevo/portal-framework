@@ -15,6 +15,7 @@ namespace ref_utils
     void add_to_live(void* instance);
     void remove_from_live(void* instance);
     bool is_live(void* instance);
+    void clean_all_references();
 }
 
 class RefCounted
@@ -35,11 +36,16 @@ private:
  * Calls the destructor for the underlying object only when the last Ref is destroyed.
  */
 //TODO: support custom allocators
-template <typename T> requires std::is_base_of_v<RefCounted, T>
+template <typename T>
 class Ref
 {
+
 public:
-    Ref(): instance(nullptr) {}
+    Ref(): instance(nullptr)
+    {
+        static_assert(std::is_base_of_v<RefCounted, T>, "T must inherit from RefCounted");
+    }
+
     Ref(nullptr_t) : instance(nullptr) {}
     Ref(T* instance): instance(instance)
     {
@@ -177,6 +183,7 @@ public:
     {
         return instance == other.instance;
     }
+
     bool operator!=(const Ref<T>& other) const
     {
         return !(*this == other);
@@ -215,22 +222,32 @@ private:
         }
     }
 
-    template <typename T2> requires std::is_base_of_v<RefCounted, T2>
+    template <typename T2>
     friend class Ref;
+    template <typename T2>
+    friend class WeakRef;
     mutable T* instance;
 };
 
-template<typename T> requires std::is_base_of_v<RefCounted, T>
+template <typename T>
 class WeakRef
 {
 public:
     WeakRef() = default;
+
     WeakRef(Ref<T> ref)
     {
+        static_assert(std::is_base_of_v<RefCounted, T>, "T must inherit from RefCounted");
         instance = ref.get();
     }
 
-    WeakRef(T* instance): instance(instance) {}
+    WeakRef(T* instance) : instance(instance) {}
+
+    WeakRef<T>& operator=(const Ref<T>& other)
+    {
+        instance = other.instance;
+        return *this;
+    }
 
     T* operator->() { return instance; }
     const T* operator->() const { return instance; }
@@ -241,7 +258,12 @@ public:
     bool is_valid() const { return instance ? ref_utils::is_live(instance) : false; }
     operator bool() const { return is_valid(); }
 
-    template<typename T2> requires std::is_base_of_v<RefCounted, T2>
+    Ref<T> lock() const
+    {
+        return is_valid() ? Ref<T>(instance) : nullptr;
+    }
+
+    template <typename T2> requires std::is_base_of_v<RefCounted, T2>
     WeakRef<T2> as() const
     {
         return WeakRef<T2>(dynamic_cast<T2*>(instance));

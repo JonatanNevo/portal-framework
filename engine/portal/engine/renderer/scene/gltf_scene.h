@@ -26,6 +26,7 @@ namespace vulkan {
 
 struct GLTFScene final : public Renderable
 {
+public:
     std::unordered_map<std::string, std::shared_ptr<vulkan::MeshAsset>> meshes;
     std::unordered_map<std::string, std::shared_ptr<SceneNode>> nodes;
     std::unordered_map<std::string, vulkan::AllocatedImage> images;

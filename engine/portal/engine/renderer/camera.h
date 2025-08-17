@@ -29,6 +29,9 @@ public:
     const glm::vec3& get_position() const;
     const glm::vec3& get_direction() const;
 
+    float get_speed() const;
+    void set_speed(float new_speed);
+
     float get_rotation_speed();
 
     void set_position(const glm::vec3& new_position);
@@ -52,5 +55,7 @@ private:
 
     glm::vec2 last_mouse_position{0.f, 0.f};
     uint32_t width = 1, height = 1;
+
+    float speed = 5.0f;
 };
 } // portal
