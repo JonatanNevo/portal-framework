@@ -8,7 +8,10 @@
 #include <unordered_set>
 #include <ranges>
 #include <vector>
+#include <fstream>
+#include <sstream>
 
+#include "portal/core/buffer_stream.h"
 #include "portal/core/files/file_system.h"
 
 namespace portal::resources
@@ -20,7 +23,7 @@ static std::vector<std::pair<std::unordered_set<std::string_view>, std::pair<Res
     {{".obj"}, {ResourceType::Mesh, SourceFormat::Obj}},
     {{".mtl"}, {ResourceType::Material, SourceFormat::Material}},
     {{".slang"}, {ResourceType::Shader, SourceFormat::Shader}},
-    {{".spv"}, {ResourceType::Shader, SourceFormat::Preprocessed}},
+    {{".spv"}, {ResourceType::Shader, SourceFormat::PrecompiledShader}},
     {{".glb", ".gltf"}, {ResourceType::Composite, SourceFormat::Glft}}
 };
 
@@ -34,7 +37,7 @@ SourceMetadata FileSource::get_meta() const
     if (!std::filesystem::exists(file_path))
     {
         LOGGER_ERROR("Path for resource does not exist: {}", file_path.string());
-        return {INVALID_STRING_ID, ResourceType::Unknown, SourceFormat::Unknown};
+        return {INVALID_STRING_ID, ResourceType::Unknown, SourceFormat::Unknown, 0, ""};
     }
 
     const auto file_extension = file_path.extension().string();
@@ -45,12 +48,14 @@ SourceMetadata FileSource::get_meta() const
             return {
                 STRING_ID(file_path.filename().string()),
                 resource_type.first,
-                resource_type.second
+                resource_type.second,
+                FileSystem::stat_file(file_path).size,
+                file_path
             };
         }
     }
 
-    return {INVALID_STRING_ID, ResourceType::Unknown, SourceFormat::Unknown};
+    return {INVALID_STRING_ID, ResourceType::Unknown, SourceFormat::Unknown, 0, ""};
 }
 
 Buffer FileSource::load()
@@ -62,5 +67,28 @@ Buffer FileSource::load()
     }
 
     return FileSystem::read_file_binary(file_path);
+}
+
+Buffer FileSource::load(const size_t offset, const size_t size)
+{
+    if (!std::filesystem::exists(file_path))
+    {
+        LOGGER_ERROR("Path for resource does not exist: {}", file_path.string());
+        return {};
+    }
+
+    return FileSystem::read_chunk(file_path, offset, size);
+}
+
+std::unique_ptr<std::istream> FileSource::stream()
+{
+    if (!std::filesystem::exists(file_path))
+    {
+        LOGGER_ERROR("Path for resource does not exist: {}", file_path.string());
+        return std::make_unique<std::ifstream>();
+    }
+
+    auto&& file = std::make_unique<std::ifstream>(file_path, std::ios::binary);
+    return file;
 }
 } // portal

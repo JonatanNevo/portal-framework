@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <filesystem>
+
 #include "portal/core/buffer.h"
 #include "portal/engine/resources/resource_types.h"
 #include "portal/engine/strings/string_id.h"
@@ -15,20 +17,23 @@ namespace portal::resources
 enum class SourceFormat: uint8_t
 {
     Unknown,
-    Preprocessed, // Preprocessed formats, no need to process before loading.
-    Image,        // Image formats, e.g. PNG, JPEG
-    Texture,      // Ktx or other texture formats
-    Material,     // Material files, e.g. MTL
-    Obj,          // Wavefront .obj files
-    Shader,       // Shader files, e.g. slang
-    Glft          // GLTF files
+    Memory,            // Source exists in memory
+    Image,             // Image formats, e.g. PNG, JPEG
+    Texture,           // Ktx or other texture formats
+    Material,          // Material files, e.g. MTL
+    Obj,               // Wavefront .obj files
+    Shader,            // Shader files, e.g. slang
+    PrecompiledShader, // Precompiled shader files, e.g. spv
+    Glft               // GLTF files
 };
 
 struct SourceMetadata
 {
     StringId source_id;
-    ResourceType resource_type;
-    SourceFormat format;
+    ResourceType resource_type = ResourceType::Unknown;
+    SourceFormat format = SourceFormat::Unknown;
+    size_t size;
+    std::filesystem::path source_path;
 };
 
 class ResourceSource
@@ -37,13 +42,15 @@ public:
     virtual ~ResourceSource() = default;
     [[nodiscard]] virtual SourceMetadata get_meta() const = 0;
     virtual Buffer load() = 0;
+    virtual Buffer load(size_t offset, size_t size) = 0;
+    virtual std::unique_ptr<std::istream> stream() = 0;
 };
 
 } // portal
 
 namespace fmt
 {
-template<>
+template <>
 struct formatter<portal::resources::SourceFormat>
 {
     static constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
@@ -54,8 +61,8 @@ struct formatter<portal::resources::SourceFormat>
         const char* name = "Unknown";
         switch (format)
         {
-        case portal::resources::SourceFormat::Preprocessed:
-            name = "Preprocessed";
+        case portal::resources::SourceFormat::PrecompiledShader:
+            name = "PrecompiledShader";
             break;
         case portal::resources::SourceFormat::Image:
             name = "Image";
@@ -75,10 +82,14 @@ struct formatter<portal::resources::SourceFormat>
         case portal::resources::SourceFormat::Glft:
             name = "Glft";
             break;
-        default:
+        case portal::resources::SourceFormat::Memory:
+            name = "Memory";
+            break;
+        case portal::resources::SourceFormat::Unknown:
+            name = "Unknown";
             break;
         }
-        return std::format_to(ctx.out(), "{}", name);
+        return fmt::format_to(ctx.out(), "{}", name);
     }
 };
 }

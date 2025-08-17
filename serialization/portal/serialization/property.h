@@ -93,8 +93,7 @@ template <typename T>
 concept String = requires(T t) {
     typename T::value_type;
     typename T::traits_type;
-    typename T::allocator_type;
-    requires std::same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>>;
+    requires (std::same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>> || std::same_as<T, std::basic_string_view<typename T::value_type, typename T::traits_type>>);
 };
 
 template <typename T>

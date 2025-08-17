@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <memory_resource>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -20,10 +21,11 @@ constexpr static auto INVALID_STRING_VIEW = std::string_view("Invalid");
 class StringRegistry
 {
 public:
-    static std::string_view store(uint128_t id, const std::string_view string);
-    static std::string_view find(const uint128_t id);
+    static std::string_view store(uint64_t id, std::string_view string);
+    static std::string_view find(uint64_t id);
 
 private:
-    static std::unordered_map<uint128_t, std::string>& get_entries();
+    static std::pmr::memory_resource* get_allocator();
+    static std::pmr::unordered_map<uint64_t, std::pmr::string>& get_entries();
 };
 } // portal

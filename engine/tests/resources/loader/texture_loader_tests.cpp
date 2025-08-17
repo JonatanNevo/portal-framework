@@ -8,7 +8,7 @@
 #include <array>
 #include <memory>
 
-#include "portal/engine/resources/loader/image_loader.h"
+#include "portal/engine/resources/loader/texture_loader.h"
 #include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/engine/strings/string_id.h"
@@ -83,12 +83,12 @@ protected:
 
 TEST_F(TextureLoaderTest, ConstructorInitializesCorrectly)
 {
-    EXPECT_NO_THROW(ImageLoader loader(mock_gpu_context));
+    EXPECT_NO_THROW(TextureLoader loader(mock_gpu_context));
 }
 
 TEST_F(TextureLoaderTest, InitializesWithSource)
 {
-    ImageLoader loader(mock_gpu_context);
+    TextureLoader loader(mock_gpu_context);
 
     EXPECT_CALL(*mock_source, get_meta())
         .WillOnce(testing::Return(SourceMetadata{
@@ -102,7 +102,7 @@ TEST_F(TextureLoaderTest, InitializesWithSource)
 
 TEST_F(TextureLoaderTest, LoadWithNonTextureResourceFails)
 {
-    ImageLoader loader(mock_gpu_context);
+    TextureLoader loader(mock_gpu_context);
 
     // Initialize with mock source
     EXPECT_CALL(*mock_source, get_meta())
@@ -123,7 +123,7 @@ TEST_F(TextureLoaderTest, LoadWithNonTextureResourceFails)
 
 TEST_F(TextureLoaderTest, LoadDefaultWithNonTextureResourceFails)
 {
-    ImageLoader loader(mock_gpu_context);
+    TextureLoader loader(mock_gpu_context);
 
     // Loading default for non-Texture resource should handle error gracefully
     EXPECT_NO_THROW(loader.load_default(regular_resource));
@@ -134,7 +134,7 @@ TEST_F(TextureLoaderTest, LoadDefaultWithNonTextureResourceFails)
 
 TEST_F(TextureLoaderTest, LoadDefaultWithTextureResource)
 {
-    ImageLoader loader(mock_gpu_context);
+    TextureLoader loader(mock_gpu_context);
 
     // Load default should work without initialization
     EXPECT_NO_THROW(loader.load_default(texture_resource));
@@ -145,7 +145,7 @@ TEST_F(TextureLoaderTest, LoadDefaultWithTextureResource)
 
 TEST_F(TextureLoaderTest, LoadWithValidTextureData)
 {
-    ImageLoader loader(mock_gpu_context);
+    TextureLoader loader(mock_gpu_context);
 
     // Set up mock source expectations
     EXPECT_CALL(*mock_source, get_meta())
@@ -170,7 +170,7 @@ TEST_F(TextureLoaderTest, LoadWithValidTextureData)
 
 TEST_F(TextureLoaderTest, GetSignatureReturnsEmptyVector)
 {
-    ImageLoader loader(mock_gpu_context);
+    TextureLoader loader(mock_gpu_context);
 
     auto signatures = loader.get_signature();
     EXPECT_TRUE(signatures.empty());
@@ -178,7 +178,7 @@ TEST_F(TextureLoaderTest, GetSignatureReturnsEmptyVector)
 
 TEST_F(TextureLoaderTest, LoadWithEmptyBuffer)
 {
-    ImageLoader loader(mock_gpu_context);
+    TextureLoader loader(mock_gpu_context);
 
     // Set up mock source to return empty buffer
     EXPECT_CALL(*mock_source, get_meta())
@@ -198,7 +198,7 @@ TEST_F(TextureLoaderTest, LoadWithEmptyBuffer)
 
 TEST_F(TextureLoaderTest, MultipleInitCallsWork)
 {
-    ImageLoader loader(mock_gpu_context);
+    TextureLoader loader(mock_gpu_context);
 
     auto second_source = std::make_shared<MockResourceSource>();
 
@@ -224,7 +224,7 @@ TEST_F(TextureLoaderTest, MultipleInitCallsWork)
 // Integration-style test
 TEST_F(TextureLoaderTest, CompleteLoadingWorkflow)
 {
-    ImageLoader loader(mock_gpu_context);
+    TextureLoader loader(mock_gpu_context);
 
     // 1. Initialize with source
     EXPECT_CALL(*mock_source, get_meta())

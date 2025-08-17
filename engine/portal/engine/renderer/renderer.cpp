@@ -28,11 +28,14 @@
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>
 #include <imgui_impl_glfw.h>
+#include <ranges>
 
 #include "portal/engine/renderer/descriptor_writer.h"
 #include "portal/engine/renderer/pipeline_builder.h"
 #include "portal/engine/renderer/base/allocated.h"
 #include "portal/engine/renderer/scene/gltf_scene.h"
+#include "portal/engine/renderer/scene/scene_node.h"
+#include "portal/engine/scene/nodes/mesh_node.h"
 
 namespace portal
 {
@@ -106,12 +109,13 @@ void Renderer::init(const RendererSettings& renderer_settings)
     init_pipelines();
 
     init_imgui();
+    create_gpu_context();
 
     init_default_data();
 
-    auto structure_file = vulkan::load_gltf(device, "resources/structure.glb", this);
-    assert(structure_file);
-    loaded_scenes["structure"] = structure_file.value();
+    // auto structure_file = vulkan::load_gltf(device, "resources/ABeautifulGame.gltf", this);
+    // assert(structure_file);
+    // loaded_scenes["structure"] = structure_file.value();
 
     is_initialized = true;
 }
@@ -142,6 +146,80 @@ void Renderer::run()
         ImGui::Text("draws %i", stats.drawcall_count);
         ImGui::End();
 
+        ImGui::Begin("Camera");
+        ImGui::Text("position %f %f %f", camera.get_position().x, camera.get_position().y, camera.get_position().z);
+        ImGui::Text("direction %f %f %f", camera.get_direction().x, camera.get_direction().y, camera.get_direction().z);
+
+        // Input to control camera speed
+        float camera_speed = camera.get_speed();
+        if (ImGui::SliderFloat("Camera Speed", &camera_speed, 0.1f, 10.0f))
+        {
+            camera.set_speed(camera_speed);
+        }
+        ImGui::End();
+
+        ImGui::Begin("Scene");
+        if (this->scene && this->scene->is_valid())
+        {
+            auto draw_node = [](auto& self, const Ref<scene::Node>& node, int& node_id) -> void
+            {
+                ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
+                if (node->children.empty())
+                {
+                    flags |= ImGuiTreeNodeFlags_Leaf;
+                }
+
+                ImGui::PushID(node_id++);
+
+                const bool is_mesh = dynamic_cast<const scene::MeshNode*>(node.get()) != nullptr;
+                if (is_mesh)
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
+                }
+
+                const bool open = ImGui::TreeNodeEx(node->id.string.data(), flags);
+
+                if (is_mesh)
+                {
+                    ImGui::PopStyleColor();
+                }
+
+                if (ImGui::IsItemHovered())
+                {
+                    ImGui::BeginTooltip();
+                    const auto& translate = glm::vec3(node->local_transform[3]);
+                    ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
+                    ImGui::EndTooltip();
+                }
+
+                if (open)
+                {
+                    for (const auto& child : node->children)
+                    {
+                        self(self, child, node_id);
+                    }
+                    ImGui::TreePop();
+                }
+
+                ImGui::PopID();
+            };
+
+            ImGui::Text("Scene Graph");
+            ImGui::Separator();
+            int node_id = 0;
+
+            for (auto scene_root : this->scene->get_root_nodes())
+            {
+                draw_node(draw_node, scene_root, node_id);
+            }
+        }
+        else
+        {
+            ImGui::Text("No scene loaded");
+        }
+        ImGui::End();
+
+
         ImGui::Render();
         draw(timer.tick<Timer::Seconds>());
 
@@ -162,7 +240,7 @@ void Renderer::cleanup()
     {
         device.waitIdle();
 
-        loaded_scenes.clear();
+        gpu_context.reset();
 
         for (auto& f : frame_data)
         {
@@ -183,6 +261,12 @@ void Renderer::cleanup()
     is_initialized = false;
 }
 
+void Renderer::set_scene(Ref<Scene> new_scene)
+{
+    // PORTAL_ASSERT(new_scene->is_valid(), "Scene is not loaded");
+    scene = new_scene;
+}
+
 FrameData& Renderer::get_current_frame_data()
 {
     ZoneScoped;
@@ -193,8 +277,7 @@ void Renderer::update_scene([[maybe_unused]] float delta_time)
 {
     ZoneScoped;
     auto start = std::chrono::system_clock::now();
-    draw_context.opaque_surfaces.clear();
-    draw_context.transparent_surfaces.clear();
+    draw_context.render_objects.clear();
     camera.update(delta_time, window);
 
     const glm::mat4 view = camera.get_view();
@@ -206,7 +289,7 @@ void Renderer::update_scene([[maybe_unused]] float delta_time)
     scene_data.proj = projection;
     scene_data.view_proj = projection * view;
 
-    loaded_scenes["structure"]->draw(glm::mat4{1.f}, draw_context);
+    scene->draw(glm::mat4{1.f}, draw_context);
 
 
     //some default lighting parameters
@@ -230,14 +313,14 @@ vulkan::GPUMeshBuffers Renderer::upload_mesh(std::span<uint32_t> indices, std::s
     vulkan::BufferBuilder vertex_builder{vertex_buffer_size};
     vertex_builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
                   .with_usage(
-                      vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eShaderDeviceAddress
+                      vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eTransferSrc
                       )
                   .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
 
     vulkan::BufferBuilder index_builder{index_buffer_size};
     index_builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
                  .with_usage(
-                     vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst
+                     vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc
                      )
                  .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
 
@@ -280,6 +363,136 @@ vulkan::GPUMeshBuffers Renderer::upload_mesh(std::span<uint32_t> indices, std::s
         );
 
     return buffers;
+}
+
+bool Renderer::compare_gpu_buffers(const vulkan::AllocatedBuffer& buffer1, const vulkan::AllocatedBuffer& buffer2)
+{
+    if (buffer1.get_size() != buffer2.get_size())
+    {
+        return false;
+    }
+
+    const vk::DeviceSize buffer_size = buffer1.get_size();
+
+    vulkan::BufferBuilder builder{buffer_size};
+    builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
+       .with_usage(vk::BufferUsageFlagBits::eTransferDst)
+       .with_vma_usage(VMA_MEMORY_USAGE_GPU_TO_CPU)
+       .with_debug_name("staging");
+
+    auto staging_buffer1 = builder.build(device);
+    auto staging_buffer2 = builder.build(device);
+
+    // Copy GPU buffers to staging buffers
+    immediate_submit([&](vk::raii::CommandBuffer& cmd) {
+        vk::BufferCopy copy_region{};
+        copy_region.size = buffer_size;
+        copy_region.srcOffset = 0;
+        copy_region.dstOffset = 0;
+
+        // Copy first buffer
+        cmd.copyBuffer(buffer1.get_handle(), staging_buffer1.get_handle(), copy_region);
+
+        // Copy second buffer
+        cmd.copyBuffer(buffer1.get_handle(), staging_buffer2.get_handle(), copy_region);
+    });
+
+    // Map and compare the staging buffers
+    void* data1 = staging_buffer1.get_data();
+    void* data2 = staging_buffer2.get_data();
+
+
+    if (!data1 || !data2)
+    {
+        LOGGER_ERROR("Failed to map staging buffers for comparison");
+        return false;
+    }
+
+    // Compare byte by byte
+    bool buffers_match = memcmp(data1, data2, buffer_size) == 0;
+
+    return buffers_match;
+
+}
+
+void Renderer::compare_to_old_scene()
+{
+    LOGGER_WARN("Comparing to old scene");
+    auto structure_file = vulkan::load_gltf(device, "resources/ABeautifulGame.gltf", this);
+    assert(structure_file);
+    auto old_scene = structure_file.value();
+
+    auto old_scene_nodes = old_scene->top_nodes;
+    auto new_scene_nodes = scene->get_root_nodes();
+    PORTAL_ASSERT(old_scene_nodes.size() == new_scene_nodes.size(), "Scene structure has changed");
+
+    for (size_t i = 0; i < old_scene_nodes.size(); i++)
+    {
+        auto& old_node = old_scene_nodes[i];
+        auto& new_node = new_scene_nodes[i];
+
+        auto old_mesh_node = std::dynamic_pointer_cast<MeshNode>(old_node);
+        auto new_mesh_node = new_node.as<scene::MeshNode>();
+        PORTAL_ASSERT(old_mesh_node && new_mesh_node, "Node is not a mesh");
+
+        auto old_mesh = old_mesh_node->mesh;
+        auto new_mesh = new_mesh_node->mesh;
+        PORTAL_ASSERT(old_mesh->surfaces.size() == new_mesh->surfaces.size(), "Mesh has changed");
+
+        for (size_t j = 0; j < old_mesh->surfaces.size(); j++)
+        {
+            auto& old_surface = old_mesh->surfaces[j];
+            auto& new_surface = new_mesh->surfaces[j];
+            PORTAL_ASSERT(old_surface.count == new_surface.count, "Surface not the same");
+            PORTAL_ASSERT(old_surface.start_index == new_surface.start_index, "Surface not the same");
+            PORTAL_ASSERT(old_surface.bounds.origin == new_surface.bounds.origin, "Surface not the same");
+            PORTAL_ASSERT(old_surface.bounds.extents == new_surface.bounds.extents, "Surface not the same");
+            PORTAL_ASSERT(old_surface.bounds.sphere_radius == new_surface.bounds.sphere_radius, "Surface not the same");
+
+            auto old_material = old_surface.material;
+            auto new_material = new_surface.material;
+            PORTAL_ASSERT(static_cast<uint8_t>(old_material->data.pass_type) == static_cast<uint8_t>(new_material->pass_type), "Material not the same");
+
+            auto& old_mesh_data = old_mesh->mesh_buffers;
+            auto& new_mesh_data = new_mesh->mesh_data;
+            PORTAL_ASSERT(old_mesh_data.index_buffer.get_size() == new_mesh_data.index_buffer->get_size(), "Index buffer invalid");
+            PORTAL_ASSERT(old_mesh_data.vertex_buffer.get_size() == new_mesh_data.vertex_buffer->get_size(), "Vertex buffer invalid");
+        }
+
+        auto& old_mesh_vertices = old_mesh->vertices;
+        auto& new_mesh_vertices = new_mesh->mesh_data.vertices;
+        PORTAL_ASSERT(old_mesh_vertices.size() == new_mesh_vertices.size(), "Vertex count invalid");
+        for (size_t k = 0; k < old_mesh_vertices.size(); k++)
+        {
+            auto& old_vertex = old_mesh_vertices[k];
+            auto& new_vertex = new_mesh_vertices[k];
+            PORTAL_ASSERT(old_vertex.position == new_vertex.position, "Vertex position invalid");
+            PORTAL_ASSERT(old_vertex.normal == new_vertex.normal, "Vertex normal invalid");
+            PORTAL_ASSERT(old_vertex.uv_x == new_vertex.uv_x, "Vertex tex coord invalid");
+            PORTAL_ASSERT(old_vertex.uv_y == new_vertex.uv_y, "Vertex tangent invalid");
+            PORTAL_ASSERT(old_vertex.color == new_vertex.color, "Vertex color invalid");
+        }
+
+        auto& old_mesh_data = old_mesh->mesh_buffers;
+        auto& new_mesh_data = new_mesh->mesh_data;
+        PORTAL_ASSERT(old_mesh_data.index_buffer.get_size() == new_mesh_data.index_buffer->get_size(), "Index buffer invalid");
+        PORTAL_ASSERT(old_mesh_data.vertex_buffer.get_size() == new_mesh_data.vertex_buffer->get_size(), "Vertex buffer invalid");
+
+        // Compare actual GPU buffer contents
+        PORTAL_ASSERT(compare_gpu_buffers(old_mesh_data.vertex_buffer, *new_mesh_data.vertex_buffer), "Vertex buffer GPU data mismatch");
+        PORTAL_ASSERT(compare_gpu_buffers(old_mesh_data.index_buffer, *new_mesh_data.index_buffer), "Index buffer GPU data mismatch");
+
+
+        auto& old_mesh_indices = old_mesh->indices;
+        auto& new_mesh_indices = new_mesh->mesh_data.indices;
+        PORTAL_ASSERT(old_mesh_indices.size() == new_mesh_indices.size(), "Index count invalid");
+        for (size_t k = 0; k < old_mesh_indices.size(); k++)
+        {
+            auto& old_index = old_mesh_indices[k];
+            auto& new_index = new_mesh_indices[k];
+            PORTAL_ASSERT(old_index == new_index, "Index invalid");
+        }
+    }
 }
 
 void Renderer::draw([[maybe_unused]] float delta_time)
@@ -490,36 +703,21 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
     auto start = std::chrono::system_clock::now();
     auto& current_frame = get_current_frame_data();
 
-    std::vector<uint32_t> opaque_draws;
-    opaque_draws.reserve(draw_context.opaque_surfaces.size());
+    std::unordered_map<StringId, std::vector<uint32_t>> render_by_material;
+    render_by_material.reserve(draw_context.render_objects.size());
 
-    for (uint32_t i = 0; i < draw_context.opaque_surfaces.size(); i++)
+    for (uint32_t i = 0; i < draw_context.render_objects.size(); i++)
     {
-        const auto& object = draw_context.opaque_surfaces[i];
+        const auto& object = draw_context.render_objects[i];
         if (object.is_visible(scene_data.view_proj))
-            opaque_draws.push_back(i);
+            render_by_material[object.material->id].push_back(i);
     }
-
-    // sort the opaque surfaces by material and mesh
-    std::ranges::sort(
-        opaque_draws,
-        [&](const auto& iA, const auto& iB)
-        {
-            const RenderObject& A = draw_context.opaque_surfaces[iA];
-            const RenderObject& B = draw_context.opaque_surfaces[iB];
-            if (A.material == B.material)
-            {
-                return A.index_buffer < B.index_buffer;
-            }
-            return A.material < B.material;
-        }
-        );
 
 
     vk::RenderingAttachmentInfo color_attachment{
         .imageView = draw_image.get_view(),
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-        .loadOp = vk::AttachmentLoadOp::eLoad,
+        .loadOp = vk::AttachmentLoadOp::eClear,
         .storeOp = vk::AttachmentStoreOp::eStore,
         .clearValue = vk::ClearColorValue(0.0f, 0.0f, 0.0f, 1.0f)
     };
@@ -557,23 +755,37 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
         writer.write_buffer(0, current_frame.scene_data_buffer, sizeof(vulkan::GPUSceneData), 0, vk::DescriptorType::eUniformBuffer);
         writer.update_set(device, current_frame.global_descriptor_set);
 
-        MaterialPipeline* last_pipeline = nullptr;
-        MaterialInstance* last_material = nullptr;
-        vulkan::AllocatedBuffer* last_index_buffer = nullptr;
+        Ref<Pipeline> last_pipeline = nullptr;
+        Ref<Material> last_material = nullptr;
+        // MaterialPipeline* real_p = nullptr;
+        std::shared_ptr<vulkan::AllocatedBuffer> last_index_buffer = nullptr;
 
-        auto draw_object = [&](const RenderObject& object)
+        auto draw_object = [&](const scene::RenderObject& object)
         {
             TracyVkZone(tracy_context, *current_frame.command_buffer, "Draw object");
-            auto& [pipeline, layout] = *object.material->pipeline;
-            if (object.material != last_material)
+            auto material = object.material.lock();
+            auto pipeline = material->get_pipeline();
+            if (material != last_material)
             {
-                last_material = object.material;
+                last_material = material;
                 //rebind pipeline and descriptors if the material changed
-                if (object.material->pipeline != last_pipeline)
+                if (pipeline != last_pipeline)
                 {
-                    last_pipeline = object.material->pipeline;
-                    command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
-                    command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 0, {current_frame.global_descriptor_set}, {});
+                    last_pipeline = pipeline;
+
+                    // if (pipeline->id == STRING_ID("color_pipeline"))
+                    //     real_p = &metal_rough_material.opaque_pipeline;
+                    // else if (pipeline->id == STRING_ID("transparent_pipeline"))
+                    //     real_p = &metal_rough_material.transparent_pipeline;
+
+                    command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->get());
+                    command_buffer.bindDescriptorSets(
+                        vk::PipelineBindPoint::eGraphics,
+                        pipeline->get_layout(),
+                        0,
+                        {current_frame.global_descriptor_set},
+                        {}
+                        );
 
                     command_buffer.setViewport(
                         0,
@@ -588,7 +800,7 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
                         );
                     command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), window_extent));
                 }
-                command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, layout, 1, {object.material->material_set}, {});
+                command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->get_layout(), 1, {material->get_descriptor_set()}, {});
             }
 
             //rebind index buffer if needed
@@ -602,23 +814,21 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
                 object.transform,
                 object.vertex_buffer_address,
             };
-            command_buffer.pushConstants<vulkan::GPUDrawPushConstants>(layout, vk::ShaderStageFlagBits::eVertex, 0, {push_constants});
+            command_buffer.pushConstants<vulkan::GPUDrawPushConstants>(pipeline->get_layout(), vk::ShaderStageFlagBits::eVertex, 0, {push_constants});
 
             command_buffer.drawIndexed(object.index_count, 1, object.first_index, 0, 0);
 
             //add counters for triangles and draws
             stats.drawcall_count++;
-            stats.triangle_count += object.index_count / 3;
+            stats.triangle_count += static_cast<uint32_t>(object.index_count / 3);
         };
 
-        for (const auto& index : opaque_draws)
+        for (const auto& indexes : render_by_material | std::views::values)
         {
-            draw_object(draw_context.opaque_surfaces[index]);
-        }
-
-        for (const auto& obj : draw_context.transparent_surfaces)
-        {
-            draw_object(obj);
+            for (const auto& index : indexes)
+            {
+                draw_object(draw_context.render_objects[index]);
+            }
         }
 
         command_buffer.endRendering();
@@ -697,6 +907,11 @@ void Renderer::resize_swap_chain()
 
     camera.on_resize(width, height);
     resize_requested = false;
+}
+
+std::shared_ptr<resources::GpuContext> Renderer::get_gpu_context()
+{
+    return gpu_context;
 }
 
 void Renderer::init_window()
@@ -933,10 +1148,12 @@ void Renderer::init_vulkan()
         };
 
 
-        vk::StructureChain<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan12Features, vk::PhysicalDeviceVulkan13Features,
+        vk::StructureChain<vk::PhysicalDeviceFeatures2, vk::PhysicalDeviceVulkan11Features, vk::PhysicalDeviceVulkan12Features,
+                           vk::PhysicalDeviceVulkan13Features,
                            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
             feature_chain = {
                 {.features = {.sampleRateShading = true, .samplerAnisotropy = true}},
+                {.shaderDrawParameters = true},
                 {.bufferDeviceAddress = true},
                 {.synchronization2 = true, .dynamicRendering = true},
                 {.extendedDynamicState = true}
@@ -979,6 +1196,7 @@ void Renderer::init_swap_chain()
 {
     ZoneScoped;
     create_swap_chain(window_extent.width, window_extent.height);
+    frame_data = std::vector<FrameData>(frames_in_flight);
 
     const vk::Extent2D draw_image_extent{
         .width = window_extent.width,
@@ -1029,6 +1247,7 @@ void Renderer::init_commands()
     {
         data.command_pool = vulkan::create_command_pool(device, graphics_family_index, vk::CommandPoolCreateFlagBits::eResetCommandBuffer);
         data.command_buffer = vulkan::allocate_command_buffer(device, data.command_pool, vk::CommandBufferLevel::ePrimary);
+
         data.tracy_context = TracyVkContext(*physical_device, *device, *graphics_queue, *data.command_buffer);
         device.setDebugUtilsObjectNameEXT(
             {
@@ -1160,6 +1379,18 @@ void Renderer::init_pipelines()
     metal_rough_material.build_pipelines(device, scene_descriptor_set_layout, draw_image.get_format(), depth_image.get_format());
 }
 
+void Renderer::create_gpu_context()
+{
+    gpu_context = std::make_shared<resources::GpuContext>(
+        device,
+        immediate_command_buffer,
+        graphics_queue,
+        draw_image,
+        depth_image,
+        std::vector{*scene_descriptor_set_layout}
+        );
+}
+
 void Renderer::init_default_data()
 {
     ZoneScoped;
@@ -1235,7 +1466,7 @@ void Renderer::init_default_data()
         default_sampler_linear = device.createSampler(sampler_info);
     }
 
-    camera.set_position(glm::vec3(30.f, -00.f, -085.f));
+    camera.set_position(glm::vec3(0.f, -0.f, -0.f));
 
     deletion_queue.push_deleter(
         [this]
@@ -1300,7 +1531,6 @@ void Renderer::create_swap_chain(const uint32_t width, const uint32_t height)
         swap_chain_images = swap_chain.getImages();
         frames_in_flight = swap_chain_images.size();
         swap_chain_image_format = format;
-        frame_data = std::vector<FrameData>(frames_in_flight);
     }
 
     // Create Image Views

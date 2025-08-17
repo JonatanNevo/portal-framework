@@ -5,13 +5,14 @@
 
 #include "string_registry.h"
 
+#include <memory_resource>
 #include <stdexcept>
 
 namespace portal
 {
 
 
-std::string_view StringRegistry::store(uint128_t id, const std::string_view string)
+std::string_view StringRegistry::store(uint64_t id, const std::string_view string)
 {
     auto& entries = get_entries();
     const auto it = entries.find(id);
@@ -19,7 +20,7 @@ std::string_view StringRegistry::store(uint128_t id, const std::string_view stri
         return it->second;
 
     // Saves a copy of the string in memory
-    const auto& [added_it, success] = entries.emplace(id, std::string(string));
+    const auto& [added_it, success] = entries.emplace(id, std::pmr::string(string, get_allocator()));
 
     if (!success)
         throw std::runtime_error("Failed to store string in StringIdPool");
@@ -27,7 +28,7 @@ std::string_view StringRegistry::store(uint128_t id, const std::string_view stri
     return std::string_view(added_it->second);
 }
 
-std::string_view StringRegistry::find(const uint128_t id)
+std::string_view StringRegistry::find(const uint64_t id)
 {
     auto entries = get_entries();
     const auto it = entries.find(id);
@@ -36,8 +37,16 @@ std::string_view StringRegistry::find(const uint128_t id)
     return INVALID_STRING_VIEW;
 }
 
-std::unordered_map<uint128_t, std::string>& StringRegistry::get_entries() {
-    static std::unordered_map<uint128_t, std::string> entries;
+std::pmr::memory_resource* StringRegistry::get_allocator()
+{
+    // Initial size of 64k bytes
+    static auto buffer_resource = std::pmr::monotonic_buffer_resource{64 * 1024, std::pmr::new_delete_resource()};
+    static auto pool_resource = std::pmr::unsynchronized_pool_resource{&buffer_resource};
+    return &pool_resource;
+}
+
+std::pmr::unordered_map<uint64_t, std::pmr::string>& StringRegistry::get_entries() {
+    static std::pmr::unordered_map<uint64_t, std::pmr::string> entries {get_allocator()};
     return entries;
 }
 

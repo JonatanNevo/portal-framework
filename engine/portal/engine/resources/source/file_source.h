@@ -16,8 +16,10 @@ class FileSource final : public ResourceSource
 {
 public:
     explicit FileSource(const std::filesystem::path& path);
-    SourceMetadata get_meta() const override;
+    [[nodiscard]] SourceMetadata get_meta() const override;
     Buffer load() override;
+    Buffer load(size_t offset, size_t size) override;
+    std::unique_ptr<std::istream> stream() override;
 
 protected:
     std::filesystem::path file_path;

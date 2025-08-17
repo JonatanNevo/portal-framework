@@ -19,7 +19,7 @@ void DescriptorLayoutBuilder::clear() {
     layout_bindings.clear();
 }
 
-vk::raii::DescriptorSetLayout DescriptorLayoutBuilder::build(vk::raii::Device& device, vk::ShaderStageFlags shader_stages) {
+vk::raii::DescriptorSetLayout DescriptorLayoutBuilder::build(const vk::raii::Device& device, const vk::ShaderStageFlags shader_stages) {
     for (auto& binding: layout_bindings) {
         binding.stageFlags |= shader_stages;
     }
@@ -30,6 +30,8 @@ vk::raii::DescriptorSetLayout DescriptorLayoutBuilder::build(vk::raii::Device& d
         .pBindings = layout_bindings.data(),
     };
 
-    return device.createDescriptorSetLayout(info);
+    auto&& set = device.createDescriptorSetLayout(info);
+    clear();
+    return set;
 }
 } // portal

@@ -66,8 +66,6 @@ void Camera::update(const float delta_time, GLFWwindow* window)
     constexpr glm::vec3 up_direction(0.0f, 1.0f, 0.0f);
     glm::vec3 right_direction = glm::cross(forward_direction, up_direction);
 
-    float speed = 5.0f;
-
     // Movement
     if (is_key_down(GLFW_KEY_W, window))
     {
@@ -162,6 +160,16 @@ const glm::vec3& Camera::get_position() const
 const glm::vec3& Camera::get_direction() const
 {
     return forward_direction;
+}
+
+float Camera::get_speed() const
+{
+    return speed;
+}
+
+void Camera::set_speed(float new_speed)
+{
+    speed = new_speed;
 }
 
 float Camera::get_rotation_speed()

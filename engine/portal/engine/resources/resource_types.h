@@ -31,6 +31,8 @@ enum class ResourceType: uint16_t
     Texture = 2,
     Shader = 3,
     Mesh = 4,
+    Pipeline = 5,
+    Scene = 6,
     Composite = std::numeric_limits<uint16_t>::max(),
 };
 
@@ -46,8 +48,12 @@ namespace utils
             return ResourceType::Shader;
         if (resource_type == "Mesh")
             return ResourceType::Mesh;
+        if (resource_type == "Pipeline")
+            return ResourceType::Pipeline;
         if (resource_type == "Composite")
             return ResourceType::Composite;
+        if (resource_type == "Scene")
+            return ResourceType::Scene;
         return ResourceType::Unknown;
     }
 
@@ -67,6 +73,10 @@ namespace utils
             return "Mesh";
         case ResourceType::Composite:
             return "Composite";
+        case ResourceType::Pipeline:
+            return "Pipeline";
+        case ResourceType::Scene:
+            return "Scene";
         }
         PORTAL_ASSERT(false, "Unknown resource Type");
         return "Unknown";

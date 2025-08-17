@@ -32,23 +32,6 @@ public:
     using PropertyName = std::string_view;
     virtual ~ArchiveObject() = default;
 
-    template <typename T>
-    void add_property(const PropertyName name, const T& t);
-
-    template<>
-    void add_property<bool>(const PropertyName name, const bool& b)
-    {
-        add_property_to_map(
-            name,
-            {
-                Buffer::create<bool>(b),
-                serialize::PropertyType::boolean,
-                serialize::PropertyContainerType::scalar,
-                1
-            }
-            );
-    }
-
     template <typename T> requires (std::integral<T> || std::floating_point<T>) && (!std::is_same_v<T, bool>)
     void add_property(const PropertyName name, const T& t)
     {
@@ -57,20 +40,6 @@ public:
             {
                 Buffer::create<T>(t),
                 serialize::get_property_type<T>(),
-                serialize::PropertyContainerType::scalar,
-                1
-            }
-            );
-    }
-
-    template<>
-    void add_property<uint128_t>(const PropertyName name, const uint128_t& t)
-    {
-        add_property_to_map(
-            name,
-            {
-                Buffer::create<uint128_t>(t),
-                serialize::PropertyType::integer128,
                 serialize::PropertyContainerType::scalar,
                 1
             }
@@ -204,6 +173,41 @@ public:
         }
     }
 
+    template <typename T>
+    void add_property(const PropertyName, const T&)
+    {
+        static_assert(false, "Not implemented");
+    }
+
+    template <>
+    void add_property<bool>(const PropertyName name, const bool& b)
+    {
+        add_property_to_map(
+            name,
+            {
+                Buffer::create<bool>(b),
+                serialize::PropertyType::boolean,
+                serialize::PropertyContainerType::scalar,
+                1
+            }
+            );
+    }
+
+
+    template <>
+    void add_property<uint128_t>(const PropertyName name, const uint128_t& t)
+    {
+        add_property_to_map(
+            name,
+            {
+                Buffer::create<uint128_t>(t),
+                serialize::PropertyType::integer128,
+                serialize::PropertyContainerType::scalar,
+                1
+            }
+            );
+    }
+
     void add_binary_block(const PropertyName name, const std::vector<std::byte>& data)
     {
         add_binary_block(name, {data.data(), data.size()});
@@ -229,10 +233,10 @@ public:
         t.archive(*child);
     }
 
-    template<typename T>
+    template <typename T>
     bool get_property(const PropertyName name, T& t);
 
-    template<>
+    template <>
     bool get_property<bool>(const PropertyName name, bool& out)
     {
         const auto& property = property_map[std::string(name)];
@@ -284,7 +288,7 @@ public:
         return true;
     }
 
-    template<>
+    template <>
     bool get_property<uint128_t>(const PropertyName name, uint128_t& out)
     {
         const auto& property = property_map[std::string(name)];
@@ -468,6 +472,7 @@ public:
 
     virtual ArchiveObject* create_child(PropertyName name);
     virtual ArchiveObject* get_object(PropertyName name);
+
 protected:
     virtual serialize::Property& add_property_to_map(PropertyName name, serialize::Property&& property);
     std::unordered_map<std::string, serialize::Property> property_map;

@@ -21,7 +21,7 @@ void ResourceArchive::archive(ArchiveObject& archive) const
 {
     archive.add_property("id", id.id);
     archive.add_property("name", id.string);
-    archive.add_property("resources", resources);
+    // archive.add_property("resources", resources);
 }
 
 ResourceArchive ResourceArchive::dearchive(ArchiveObject& archive)
@@ -31,26 +31,27 @@ ResourceArchive ResourceArchive::dearchive(ArchiveObject& archive)
     std::unordered_map<StringId, std::filesystem::path> resources;
     archive.get_property<uint64_t>("id", id);
     archive.get_property<std::string>("name", name);
-    archive.get_property<std::unordered_map<StringId, std::filesystem::path>>("resources", resources);
+    // archive.get_property<std::unordered_map<StringId, std::filesystem::path>>("resources", resources);
     return {{id, name}, std::move(resources)};
 }
 
 FolderResourceDatabase::FolderResourceDatabase(const std::filesystem::path& path): root_path(path)
 {
-    if (!FileSystem::is_directory(path) && !FileSystem::create_directory(path))
+    auto abs_path = std::filesystem::absolute(path);
+    if (!FileSystem::is_directory(abs_path) && !FileSystem::create_directory(abs_path))
     {
-        LOGGER_ERROR("Failed to initialize resource database directory: {}", path.string());
+        LOGGER_ERROR("Failed to initialize resource database directory: {}", abs_path.string());
         return;
     }
 
     // searches for an archive file in the root path
     ResourceArchive resource_archive;
-    auto archive_path = path / "root.par";
+    auto archive_path = abs_path / "root.par";
     if (!FileSystem::exists(archive_path))
     {
         JsonArchive archiver;
         resource_archive.archive(archiver);
-        archiver.dump(path);
+        archiver.dump(archive_path);
     }
     else
     {

@@ -53,13 +53,13 @@ std::vector<vk::raii::DescriptorSet> DescriptorAllocator::handle_pool_resize(
     return device->allocateDescriptorSets(info);
 }
 
-vk::raii::DescriptorSet DescriptorAllocator::allocate(const vk::raii::DescriptorSetLayout& layout)
+vk::raii::DescriptorSet DescriptorAllocator::allocate(const vk::DescriptorSetLayout& layout)
 {
     vk::raii::DescriptorPool descriptor_pool = get_pool();
     vk::DescriptorSetAllocateInfo info{
         .descriptorPool = descriptor_pool,
         .descriptorSetCount = 1,
-        .pSetLayouts = &*layout
+        .pSetLayouts = &layout
     };
 
     std::vector<vk::raii::DescriptorSet> sets;

@@ -17,7 +17,7 @@ public:
 
     DescriptorLayoutBuilder& add_binding(uint32_t binding, vk::DescriptorType type);
     void clear();
-    vk::raii::DescriptorSetLayout build(vk::raii::Device& device, vk::ShaderStageFlags shader_stages);
+    vk::raii::DescriptorSetLayout build(const vk::raii::Device& device, vk::ShaderStageFlags shader_stages);
 };
 
 } // portal

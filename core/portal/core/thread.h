@@ -7,6 +7,8 @@
 #include <functional>
 #include <type_traits>
 
+#include "portal/core/debug/profile.h"
+
 namespace portal
 {
 

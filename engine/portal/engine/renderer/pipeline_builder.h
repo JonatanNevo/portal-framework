@@ -6,14 +6,16 @@
 #pragma once
 #include <vulkan/vulkan_raii.hpp>
 
+#include "portal/engine/resources/resources/shader.h"
+
 namespace portal::vulkan
 {
 
 class PipelineBuilder
 {
 public:
-    PipelineBuilder& set_shaders(vk::raii::ShaderModule& vertex_shader, vk::raii::ShaderModule& fragment_shader);
-    PipelineBuilder& add_shader(const vk::raii::ShaderModule& module, vk::ShaderStageFlagBits stage, std::string_view entry_point);
+    PipelineBuilder& set_shaders(Ref<Shader> vertex_shader, Ref<Shader> fragment_shader);
+    PipelineBuilder& add_shader(const vk::ShaderModule& module, vk::ShaderStageFlagBits stage, std::string_view entry_point);
 
     PipelineBuilder& set_vertex_bindings(const std::vector<vk::VertexInputBindingDescription>& descriptions);
     PipelineBuilder& set_vertex_attributes(const std::vector<vk::VertexInputAttributeDescription>& attribute_descriptions);

@@ -8,7 +8,7 @@
 #include <atomic>
 #include <thread>
 
-#include "portal/core/assert.h"
+#include "portal/core/debug/assert.h"
 
 namespace portal
 {

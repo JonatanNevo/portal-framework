@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="Black">
+    <option name="sdkName" value="Python 3.12" />
+  </component>
   <component name="CMakePythonSetting">
     <option name="pythonIntegrationState" value="YES" />
   </component>
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
+    <libraryRoots>
+      <file path="$PROJECT_DIR$/vcpkg/buildtrees" />
+    </libraryRoots>
     <excludeRoots>
-      <file path="$PROJECT_DIR$/vcpkg" />
+      <file path="$PROJECT_DIR$/vcpkg/.github" />
+      <file path="$PROJECT_DIR$/vcpkg/docs" />
+      <file path="$PROJECT_DIR$/vcpkg/downloads" />
+      <file path="$PROJECT_DIR$/vcpkg/packages" />
+      <file path="$PROJECT_DIR$/vcpkg/ports" />
+      <file path="$PROJECT_DIR$/vcpkg/scripts" />
+      <file path="$PROJECT_DIR$/vcpkg/toolsrc" />
+      <file path="$PROJECT_DIR$/vcpkg/triplets" />
+      <file path="$PROJECT_DIR$/vcpkg/versions" />
     </excludeRoots>
   </component>
-  <component name="WestSettings"><![CDATA[{}]]></component>
+  <component name="WestSettings">{}</component>
 </project>
