@@ -29,24 +29,16 @@ enum class PropertyType : uint8_t
 
 enum class PropertyContainerType : uint8_t
 {
-    invalid             = 0,
-    scalar              = 1,
-    array               = 2,
-    string              = 3,
-    null_term_string    = 4,
-    vec1                = 5,
-    __vector_type_start = vec1,
-    vec2                = 6,
-    vec3                = 7,
-    vec4                = 8,
-    object              = 9
-};
+    invalid          = 0,
+    scalar           = 1,
+    array            = 2,
+    string           = 3,
+    null_term_string = 4,
+    vector           = 5,
+    matrix           = 6,
+    object           = 7,
 
-constexpr bool is_vector_type(const PropertyContainerType type)
-{
-    return type == PropertyContainerType::vec1 || type == PropertyContainerType::vec2 ||
-        type == PropertyContainerType::vec3 || type == PropertyContainerType::vec4;
-}
+};
 
 struct Property
 {
@@ -79,4 +71,183 @@ constexpr PropertyType get_float_type(const size_t size)
         return PropertyType::floating64;
     return PropertyType::invalid;
 }
+
+constexpr size_t get_property_size(const Property& prop)
+{
+    size_t base_size = 0;
+    switch (prop.type)
+    {
+    case PropertyType::binary:
+        base_size = sizeof(std::byte);
+        break;
+    case PropertyType::integer8:
+        base_size = sizeof(std::uint8_t);
+        break;
+    case PropertyType::integer16:
+        base_size = sizeof(std::uint16_t);
+        break;
+    case PropertyType::integer32:
+        base_size = sizeof(std::uint32_t);
+        break;
+    case PropertyType::integer64:
+        base_size = sizeof(std::uint64_t);
+        break;
+    case PropertyType::integer128:
+        base_size = sizeof(portal::uint128_t);
+        break;
+    case PropertyType::floating32:
+        base_size = sizeof(float);
+        break;
+    case PropertyType::floating64:
+        base_size = sizeof(double);
+        break;
+    case PropertyType::character:
+        base_size = sizeof(char);
+        break;
+    case PropertyType::boolean:
+        base_size = sizeof(bool);
+        break;
+    case PropertyType::object:
+        LOG_WARN_TAG("Reflection", "Attempting to fetch size of object property");
+        base_size = 0;
+        break;
+    case PropertyType::null_term_string:
+    case PropertyType::string:
+        base_size = sizeof(char);
+        break;
+    case PropertyType::invalid:
+        LOG_WARN_TAG("Reflection", "Attempting to fetch size of an invalid property");
+        base_size = 0;
+        break;
+    }
+
+    return base_size * prop.elements_number;
+}
 } // namespace portal::serialization
+
+namespace portal::utils
+{
+inline std::string to_string(const portal::reflection::PropertyType& type)
+{
+    switch (type)
+    {
+    case reflection::PropertyType::binary:
+        return "binary";
+    case reflection::PropertyType::integer8:
+        return "integer8";
+    case reflection::PropertyType::integer16:
+        return "integer16";
+    case reflection::PropertyType::integer32:
+        return "integer32";
+    case reflection::PropertyType::integer64:
+        return "integer64";
+    case reflection::PropertyType::integer128:
+        return "integer128";
+    case reflection::PropertyType::floating32:
+        return "floating32";
+    case reflection::PropertyType::floating64:
+        return "floating64";
+    case reflection::PropertyType::character:
+        return "character";
+    case reflection::PropertyType::boolean:
+        return "boolean";
+    case reflection::PropertyType::object:
+        return "object";
+    case reflection::PropertyType::null_term_string:
+        return "null_term_string";
+    case reflection::PropertyType::string:
+        return "string";
+    case reflection::PropertyType::invalid:
+        return "invalid";
+    }
+    return "invalid";
+}
+
+inline std::string to_string(const portal::reflection::PropertyContainerType& type)
+{
+    switch (type)
+    {
+    case reflection::PropertyContainerType::invalid:
+        return "invalid";
+    case reflection::PropertyContainerType::scalar:
+        return "scalar";
+    case reflection::PropertyContainerType::array:
+        return "array";
+    case reflection::PropertyContainerType::string:
+        return "string";
+    case reflection::PropertyContainerType::null_term_string:
+        return "null_term_string";
+    case reflection::PropertyContainerType::vector:
+        return "vector";
+    case reflection::PropertyContainerType::matrix:
+        return "matrix";
+    case reflection::PropertyContainerType::object:
+        return "object";
+    }
+    return "invalid";
+}
+}
+
+namespace fmt
+{
+template <>
+struct formatter<portal::reflection::PropertyType>
+{
+    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const portal::reflection::PropertyType& type, FormatContext& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(type));
+    }
+};
+
+template <>
+struct formatter<portal::reflection::PropertyContainerType>
+{
+    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const portal::reflection::PropertyContainerType& type, FormatContext& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(type));
+    }
+};
+
+template <>
+struct formatter<portal::reflection::Property>
+{
+    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const portal::reflection::Property& prop, FormatContext& ctx) const
+    {
+        if (prop.value.data == nullptr)
+            return fmt::format_to(
+                ctx.out(),
+                "Property(.type={}, .container_type={}, .elements_number={})",
+                prop.type,
+                prop.container_type,
+                prop.elements_number
+                );
+
+        return fmt::format_to(
+            ctx.out(),
+            "Property(.value=Buffer(.size={}), .type={}, .container_type={}, .elements_number={})",
+            prop.value.size,
+            prop.type,
+            prop.container_type,
+            prop.elements_number
+            );
+    }
+};
+}

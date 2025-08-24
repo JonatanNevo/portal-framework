@@ -172,17 +172,8 @@ nlohmann::json JsonArchive::prepare_object(ArchiveObject* object)
         case reflection::PropertyContainerType::null_term_string:
             archive_object[key] = std::string(prop.value.as<const char*>());
             break;
-        case reflection::PropertyContainerType::vec1:
-            LOG_ERROR_TAG("Json Archiver", "Cannot archive vec1 to json");
-            break;
-        case reflection::PropertyContainerType::vec2:
-            LOG_ERROR_TAG("Json Archiver", "Cannot archive vec2 to json");
-            break;
-        case reflection::PropertyContainerType::vec3:
-            LOG_ERROR_TAG("Json Archiver", "Cannot archive vec3 to json");
-            break;
-        case reflection::PropertyContainerType::vec4:
-            LOG_ERROR_TAG("Json Archiver", "Cannot archive vec4 to json");
+        case reflection::PropertyContainerType::vector:
+            LOG_ERROR_TAG("Json Archiver", "Cannot archive vector to json");
             break;
         case reflection::PropertyContainerType::invalid:
             break;

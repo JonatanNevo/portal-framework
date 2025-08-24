@@ -90,7 +90,7 @@ public:
             reflection::Property{
                 Buffer{&t.x, sizeof(typename T::value_type)},
                 serialize::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vec1,
+                reflection::PropertyContainerType::vector,
                 1
             }
         );
@@ -103,7 +103,7 @@ public:
             reflection::Property{
                 Buffer{&t.x, 2 * sizeof(typename T::value_type)},
                 serialize::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vec2,
+                reflection::PropertyContainerType::vector,
                 2
             }
         );
@@ -116,7 +116,7 @@ public:
             reflection::Property{
                 Buffer{&t.x, 3 * sizeof(typename T::value_type)},
                 serialize::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vec3,
+                reflection::PropertyContainerType::vector,
                 3
             }
         );
@@ -129,7 +129,7 @@ public:
             reflection::Property{
                 Buffer{&t.x, 4 * sizeof(typename T::value_type)},
                 serialize::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vec4,
+                reflection::PropertyContainerType::vector,
                 4
             }
         );
@@ -265,7 +265,8 @@ public:
         const auto property = get_property();
 
         PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec1, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
+        PORTAL_ASSERT(property.elements_number == 1, "Property elements number mismatch");
 
         t = T(*static_cast<typename T::value_type*>(property.value.data));
     }
@@ -276,7 +277,8 @@ public:
         const auto property = get_property();
 
         PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec2, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
+        PORTAL_ASSERT(property.elements_number == 2, "Property elements number mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1]);
@@ -288,7 +290,8 @@ public:
         const auto property = get_property();
 
         PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec3, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
+        PORTAL_ASSERT(property.elements_number == 3, "Property elements number mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1], data[2]);
@@ -300,7 +303,8 @@ public:
         const auto property = get_property();
 
         PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec4, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
+        PORTAL_ASSERT(property.elements_number == 4, "Property elements number mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1], data[2], data[3]);
