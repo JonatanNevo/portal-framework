@@ -28,7 +28,7 @@ protected:
 
 private:
     template<typename T>
-    static void extract_array_elements(nlohmann::json& archive, const serialize::Property& prop, const std::string& key, int element_number_skew = 1)
+    static void extract_array_elements(nlohmann::json& archive, const reflection::Property& prop, const std::string& key, int element_number_skew = 1)
     {
         std::vector<T> array_elements;
         array_elements.reserve(prop.elements_number);

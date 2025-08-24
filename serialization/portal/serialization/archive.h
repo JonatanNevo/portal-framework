@@ -8,9 +8,11 @@
 #include <string>
 #include <variant>
 
-#include "portal/core/buffer.h"
+#include <portal/core/buffer.h>
+#include <portal/core/reflection/property.h>
+
 #include "portal/serialization/archive.h"
-#include "portal/serialization/property.h"
+#include "portal/serialization/concepts.h"
 
 namespace portal
 {
@@ -40,7 +42,7 @@ public:
             {
                 Buffer::create<T>(t),
                 serialize::get_property_type<T>(),
-                serialize::PropertyContainerType::scalar,
+                reflection::PropertyContainerType::scalar,
                 1
             }
             );
@@ -62,8 +64,8 @@ public:
                 name,
                 {
                     std::move(buffer),
-                    serialize::PropertyType::object,
-                    serialize::PropertyContainerType::array,
+                    reflection::PropertyType::object,
+                    reflection::PropertyContainerType::array,
                     t.size()
                 }
                 );
@@ -78,7 +80,7 @@ public:
             }
 
             constexpr auto property_type = (serialize::String<typename T::value_type>)
-                ? serialize::PropertyType::null_term_string
+                ? reflection::PropertyType::null_term_string
                 : serialize::get_property_type<typename T::value_type>();
 
             add_property_to_map(
@@ -86,7 +88,7 @@ public:
                 {
                     std::move(buffer),
                     property_type,
-                    serialize::PropertyContainerType::array,
+                    reflection::PropertyContainerType::array,
                     t.size()
                 }
                 );
@@ -100,8 +102,8 @@ public:
             name,
             {
                 Buffer::copy(t.data(), t.size() + 1),
-                serialize::PropertyType::character,
-                serialize::PropertyContainerType::null_term_string,
+                reflection::PropertyType::character,
+                reflection::PropertyContainerType::null_term_string,
                 t.size() + 1
             }
             );
@@ -115,7 +117,7 @@ public:
             {
                 Buffer::create<T>(t),
                 serialize::get_property_type<typename T::value_type>(),
-                serialize::PropertyContainerType::vec1,
+                reflection::PropertyContainerType::vec1,
                 1
             }
             );
@@ -129,7 +131,7 @@ public:
             {
                 Buffer::create<T>(t),
                 serialize::get_property_type<typename T::value_type>(),
-                serialize::PropertyContainerType::vec2,
+                reflection::PropertyContainerType::vec2,
                 2
             }
             );
@@ -143,7 +145,7 @@ public:
             {
                 Buffer::create<T>(t),
                 serialize::get_property_type<typename T::value_type>(),
-                serialize::PropertyContainerType::vec3,
+                reflection::PropertyContainerType::vec3,
                 3
             }
             );
@@ -157,7 +159,7 @@ public:
             {
                 Buffer::create<T>(t),
                 serialize::get_property_type<typename T::value_type>(),
-                serialize::PropertyContainerType::vec4,
+                reflection::PropertyContainerType::vec4,
                 4
             }
             );
@@ -186,8 +188,8 @@ public:
             name,
             {
                 Buffer::create<bool>(b),
-                serialize::PropertyType::boolean,
-                serialize::PropertyContainerType::scalar,
+                reflection::PropertyType::boolean,
+                reflection::PropertyContainerType::scalar,
                 1
             }
             );
@@ -201,8 +203,8 @@ public:
             name,
             {
                 Buffer::create<uint128_t>(t),
-                serialize::PropertyType::integer128,
-                serialize::PropertyContainerType::scalar,
+                reflection::PropertyType::integer128,
+                reflection::PropertyContainerType::scalar,
                 1
             }
             );
@@ -219,8 +221,8 @@ public:
             name,
             {
                 Buffer::copy(buffer),
-                serialize::PropertyType::binary,
-                serialize::PropertyContainerType::array,
+                reflection::PropertyType::binary,
+                reflection::PropertyContainerType::array,
                 buffer.size
             }
             );
@@ -240,7 +242,7 @@ public:
     bool get_property<bool>(const PropertyName name, bool& out)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
 
         out = *property.value.as<bool*>();
@@ -251,7 +253,7 @@ public:
     bool get_property(const PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
 
         out = *property.value.as<T*>();
@@ -262,7 +264,7 @@ public:
     bool get_property(const PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
 
         if (property.type != serialize::get_property_type<T>())
@@ -292,7 +294,7 @@ public:
     bool get_property<uint128_t>(const PropertyName name, uint128_t& out)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
 
         out = *property.value.as<uint128_t*>();
@@ -305,10 +307,10 @@ public:
         using ValueType = typename T::value_type;
         out.clear();
         const auto& [value, type, container_type, elements_number] = property_map[std::string(name)];
-        if (container_type == serialize::PropertyContainerType::invalid)
+        if (container_type == reflection::PropertyContainerType::invalid)
             return false;
 
-        PORTAL_ASSERT(container_type == serialize::PropertyContainerType::array, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(container_type == reflection::PropertyContainerType::array, "Property {} container type mismatch", name);
 
         if constexpr (Archiveable<ValueType>)
         {
@@ -339,13 +341,13 @@ public:
     bool get_property(PropertyName name, T& out)
     {
         const auto& [value, type, container_type, elements_number] = property_map[std::string(name)];
-        if (type == serialize::PropertyType::invalid)
+        if (type == reflection::PropertyType::invalid)
             return false;
 
         size_t string_length;
-        if (container_type == serialize::PropertyContainerType::null_term_string)
+        if (container_type == reflection::PropertyContainerType::null_term_string)
             string_length = elements_number - 1;
-        else if (container_type == serialize::PropertyContainerType::string)
+        else if (container_type == reflection::PropertyContainerType::string)
             string_length = elements_number;
         else
         {
@@ -363,10 +365,10 @@ public:
     bool get_property(PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
 
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec1, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec1, "Property {} container type mismatch", name);
 
         out = T(*property.value.as<T*>());
         return true;
@@ -376,9 +378,9 @@ public:
     bool get_property(PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec2, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec2, "Property {} container type mismatch", name);
 
         out = T(*property.value.as<T*>());
         return true;
@@ -388,9 +390,9 @@ public:
     bool get_property(PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec3, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec3, "Property {} container type mismatch", name);
 
         out = T(*property.value.as<T*>());
         return true;
@@ -400,9 +402,9 @@ public:
     bool get_property(PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec4, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec4, "Property {} container type mismatch", name);
 
         out = T(*property.value.as<T*>());
         return true;
@@ -449,10 +451,10 @@ public:
     bool get_binary_block(const PropertyName name, Buffer& buffer)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
-        PORTAL_ASSERT(property.type == serialize::PropertyType::binary, "Property {} type mismatch", name);
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::array, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.type == reflection::PropertyType::binary, "Property {} type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::array, "Property {} container type mismatch", name);
 
         buffer = Buffer::copy(property.value);
         return true;
@@ -461,10 +463,10 @@ public:
     bool get_binary_block(const PropertyName name, std::vector<std::byte>& data)
     {
         const auto& property = property_map[std::string(name)];
-        if (property.type == serialize::PropertyType::invalid)
+        if (property.type == reflection::PropertyType::invalid)
             return false;
-        PORTAL_ASSERT(property.type == serialize::PropertyType::binary, "Property {} type mismatch", name);
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::array, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.type == reflection::PropertyType::binary, "Property {} type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::array, "Property {} container type mismatch", name);
 
         data.assign(property.value.as<const std::byte*>(), property.value.as<const std::byte*>() + property.value.size);
         return true;
@@ -474,8 +476,8 @@ public:
     virtual ArchiveObject* get_object(PropertyName name);
 
 protected:
-    virtual serialize::Property& add_property_to_map(PropertyName name, serialize::Property&& property);
-    std::unordered_map<std::string, serialize::Property> property_map;
+    virtual reflection::Property& add_property_to_map(PropertyName name, reflection::Property&& property);
+    std::unordered_map<std::string, reflection::Property> property_map;
 
     friend class JsonArchive;
 };

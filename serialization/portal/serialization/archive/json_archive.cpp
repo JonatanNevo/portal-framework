@@ -69,88 +69,88 @@ nlohmann::json JsonArchive::prepare_object(ArchiveObject* object)
     {
         switch (prop.container_type)
         {
-        case serialize::PropertyContainerType::object:
-            PORTAL_ASSERT(prop.type == serialize::PropertyType::object, "Object property type must be object");
+        case reflection::PropertyContainerType::object:
+            PORTAL_ASSERT(prop.type == reflection::PropertyType::object, "Object property type must be object");
             archive_object[key] = prepare_object(prop.value.as<ArchiveObject*>());
             break;
-        case serialize::PropertyContainerType::scalar:
+        case reflection::PropertyContainerType::scalar:
             switch (prop.type)
             {
-            case serialize::PropertyType::integer8:
+            case reflection::PropertyType::integer8:
                 archive_object[key] = *prop.value.as<uint8_t*>();
                 break;
-            case serialize::PropertyType::integer16:
+            case reflection::PropertyType::integer16:
                 archive_object[key] = *prop.value.as<uint16_t*>();
                 break;
-            case serialize::PropertyType::integer32:
+            case reflection::PropertyType::integer32:
                 archive_object[key] = *prop.value.as<uint32_t*>();
                 break;
-            case serialize::PropertyType::integer64:
+            case reflection::PropertyType::integer64:
                 archive_object[key] = *prop.value.as<uint64_t*>();
                 break;
-            case serialize::PropertyType::integer128:
+            case reflection::PropertyType::integer128:
                 LOG_ERROR_TAG("Json Archiver", "Cannot archive integer128 to json");
                 break;
-            case serialize::PropertyType::floating32:
+            case reflection::PropertyType::floating32:
                 archive_object[key] = *prop.value.as<float*>();
                 break;
-            case serialize::PropertyType::floating64:
+            case reflection::PropertyType::floating64:
                 archive_object[key] = *prop.value.as<double*>();
                 break;
-            case serialize::PropertyType::character:
+            case reflection::PropertyType::character:
                 archive_object[key] = *prop.value.as<char*>();
                 break;
-            case serialize::PropertyType::boolean:
+            case reflection::PropertyType::boolean:
                 archive_object[key] = *prop.value.as<bool*>();
                 break;
-            case serialize::PropertyType::binary:
-            case serialize::PropertyType::invalid:
-            case serialize::PropertyType::object:
-            case serialize::PropertyType::null_term_string:
-            case serialize::PropertyType::string:
+            case reflection::PropertyType::binary:
+            case reflection::PropertyType::invalid:
+            case reflection::PropertyType::object:
+            case reflection::PropertyType::null_term_string:
+            case reflection::PropertyType::string:
                 LOG_ERROR_TAG("Json Archiver", "Invalid property type for scalar in property {}", std::string_view(key));
                 break;
             }
             break;
-        case serialize::PropertyContainerType::array:
+        case reflection::PropertyContainerType::array:
             switch (prop.type)
             {
-            case serialize::PropertyType::integer8:
+            case reflection::PropertyType::integer8:
                 extract_array_elements<uint8_t>(archive_object, prop, key);
                 break;
-            case serialize::PropertyType::integer16:
+            case reflection::PropertyType::integer16:
                 extract_array_elements<uint16_t>(archive_object, prop, key);
                 break;
-            case serialize::PropertyType::integer32:
+            case reflection::PropertyType::integer32:
                 extract_array_elements<uint32_t>(archive_object, prop, key);
                 break;
-            case serialize::PropertyType::integer64:
+            case reflection::PropertyType::integer64:
                 extract_array_elements<uint64_t>(archive_object, prop, key);
                 break;
-            case serialize::PropertyType::floating32:
+            case reflection::PropertyType::floating32:
                 extract_array_elements<float>(archive_object, prop, key);
                 break;
-            case serialize::PropertyType::floating64:
+            case reflection::PropertyType::floating64:
                 extract_array_elements<double>(archive_object, prop, key);
                 break;
-            case serialize::PropertyType::character:
+            case reflection::PropertyType::character:
                 extract_array_elements<char>(archive_object, prop, key);
                 break;
-            case serialize::PropertyType::binary:
+            case reflection::PropertyType::binary:
                 extract_array_elements<std::byte>(archive_object, prop, key);
                 break;
-            case serialize::PropertyType::boolean:
+            case reflection::PropertyType::boolean:
                 extract_array_elements<bool>(archive_object, prop, key);
                 break;
-            case serialize::PropertyType::null_term_string:
+            case reflection::PropertyType::null_term_string:
                 extract_array_elements<std::string>(archive_object, prop, key, 1);
                 break;
-            case serialize::PropertyType::string:
+            case reflection::PropertyType::string:
             {
                 extract_array_elements<std::string>(archive_object, prop, key, 0);
                 break;
             }
-            case serialize::PropertyType::object:
+            case reflection::PropertyType::object:
             {
                 std::vector<nlohmann::json> array_elements;
                 for (size_t i = 0; i < prop.elements_number; i++)
@@ -160,31 +160,31 @@ nlohmann::json JsonArchive::prepare_object(ArchiveObject* object)
                 archive_object[key] = array_elements;
                 break;
             }
-            case serialize::PropertyType::integer128:
-            case serialize::PropertyType::invalid:
+            case reflection::PropertyType::integer128:
+            case reflection::PropertyType::invalid:
                 LOG_ERROR_TAG("Json Archiver", "Invalid property type for array in property {}", std::string_view(key));
                 break;
             }
             break;
-        case serialize::PropertyContainerType::string:
+        case reflection::PropertyContainerType::string:
             archive_object[key] = std::string(prop.value.as<const char*>(), prop.elements_number);
             break;
-        case serialize::PropertyContainerType::null_term_string:
+        case reflection::PropertyContainerType::null_term_string:
             archive_object[key] = std::string(prop.value.as<const char*>());
             break;
-        case serialize::PropertyContainerType::vec1:
+        case reflection::PropertyContainerType::vec1:
             LOG_ERROR_TAG("Json Archiver", "Cannot archive vec1 to json");
             break;
-        case serialize::PropertyContainerType::vec2:
+        case reflection::PropertyContainerType::vec2:
             LOG_ERROR_TAG("Json Archiver", "Cannot archive vec2 to json");
             break;
-        case serialize::PropertyContainerType::vec3:
+        case reflection::PropertyContainerType::vec3:
             LOG_ERROR_TAG("Json Archiver", "Cannot archive vec3 to json");
             break;
-        case serialize::PropertyContainerType::vec4:
+        case reflection::PropertyContainerType::vec4:
             LOG_ERROR_TAG("Json Archiver", "Cannot archive vec4 to json");
             break;
-        case serialize::PropertyContainerType::invalid:
+        case reflection::PropertyContainerType::invalid:
             break;
         }
     }
@@ -245,8 +245,8 @@ void JsonArchive::deserialize_array(ArchiveObject* root, const std::string& key,
             key,
             {
                 {},
-                serialize::PropertyType::invalid,
-                serialize::PropertyContainerType::array,
+                reflection::PropertyType::invalid,
+                reflection::PropertyContainerType::array,
                 0
             }
             );
@@ -268,15 +268,15 @@ void JsonArchive::deserialize_array(ArchiveObject* root, const std::string& key,
         const auto buffer = Buffer::allocate(objects.size() * sizeof(ArchiveObject));
         for (size_t i = 0; i < objects.size(); ++i)
         {
-            new(buffer.as<ArchiveObject*>() + i) ArchiveObject(std::move(objects[i]));
+            new(buffer.as<ArchiveObject*>() + i) ArchiveObject(objects[i]);
         }
 
         root->add_property_to_map(
             key,
             {
-                std::move(buffer),
-                serialize::PropertyType::object,
-                serialize::PropertyContainerType::array,
+                buffer,
+                reflection::PropertyType::object,
+                reflection::PropertyContainerType::array,
                 objects.size()
             }
             );

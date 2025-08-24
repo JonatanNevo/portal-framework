@@ -5,8 +5,10 @@
 
 #pragma once
 
-#include "portal/core/log.h"
-#include "property.h"
+#include <portal/core/log.h>
+#include <portal/core/reflection/property.h>
+
+#include "portal/serialization/concepts.h"
 
 namespace portal
 {
@@ -32,10 +34,10 @@ public:
     void add_value(const T& t)
     {
         add_property(
-            serialize::Property{
+            reflection::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(&t)), sizeof(T)},
                 serialize::get_property_type<std::remove_const_t<T>>(),
-                serialize::PropertyContainerType::scalar,
+                reflection::PropertyContainerType::scalar,
                 1
             }
         );
@@ -45,10 +47,10 @@ public:
     void add_value(const T& t)
     {
         add_property(
-            serialize::Property{
+            reflection::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(&t)), sizeof(T)},
-                serialize::PropertyType::integer128,
-                serialize::PropertyContainerType::scalar,
+                reflection::PropertyType::integer128,
+                reflection::PropertyContainerType::scalar,
                 1
             }
         );
@@ -59,10 +61,10 @@ public:
     void add_value(const T& t)
     {
         add_property(
-            serialize::Property{
+            reflection::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), t.size() * sizeof(typename T::value_type)},
                 serialize::get_property_type<typename T::value_type>(),
-                serialize::PropertyContainerType::array,
+                reflection::PropertyContainerType::array,
                 t.size()
             }
         );
@@ -72,10 +74,10 @@ public:
     void add_value(const T& t)
     {
         add_property(
-            serialize::Property{
+            reflection::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), (t.size() * sizeof(typename T::value_type)) + 1},
-                serialize::PropertyType::character,
-                serialize::PropertyContainerType::null_term_string,
+                reflection::PropertyType::character,
+                reflection::PropertyContainerType::null_term_string,
                 t.size() + 1
             }
         );
@@ -85,10 +87,10 @@ public:
     void add_value(T& t)
     {
         add_property(
-            serialize::Property{
+            reflection::Property{
                 Buffer{&t.x, sizeof(typename T::value_type)},
                 serialize::get_property_type<typename T::value_type>(),
-                serialize::PropertyContainerType::vec1,
+                reflection::PropertyContainerType::vec1,
                 1
             }
         );
@@ -98,10 +100,10 @@ public:
     void add_value(T& t)
     {
         add_property(
-            serialize::Property{
+            reflection::Property{
                 Buffer{&t.x, 2 * sizeof(typename T::value_type)},
                 serialize::get_property_type<typename T::value_type>(),
-                serialize::PropertyContainerType::vec2,
+                reflection::PropertyContainerType::vec2,
                 2
             }
         );
@@ -111,10 +113,10 @@ public:
     void add_value(T& t)
     {
         add_property(
-            serialize::Property{
+            reflection::Property{
                 Buffer{&t.x, 3 * sizeof(typename T::value_type)},
                 serialize::get_property_type<typename T::value_type>(),
-                serialize::PropertyContainerType::vec3,
+                reflection::PropertyContainerType::vec3,
                 3
             }
         );
@@ -124,10 +126,10 @@ public:
     void add_value(T& t)
     {
         add_property(
-            serialize::Property{
+            reflection::Property{
                 Buffer{&t.x, 4 * sizeof(typename T::value_type)},
                 serialize::get_property_type<typename T::value_type>(),
-                serialize::PropertyContainerType::vec4,
+                reflection::PropertyContainerType::vec4,
                 4
             }
         );
@@ -178,10 +180,10 @@ public:
     {
         const size_t length = strlen(t);
         add_property(
-            serialize::Property{
+            reflection::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t)), (length * sizeof(char)) + 1},
-                serialize::PropertyType::character,
-                serialize::PropertyContainerType::null_term_string,
+                reflection::PropertyType::character,
+                reflection::PropertyContainerType::null_term_string,
                 length + 1
             }
         );
@@ -190,12 +192,12 @@ public:
     void add_value(void* t, const size_t length)
     {
         add_property(
-            serialize::Property{Buffer{t, length}, serialize::PropertyType::binary, serialize::PropertyContainerType::string, length}
+            reflection::Property{Buffer{t, length}, reflection::PropertyType::binary, reflection::PropertyContainerType::string, length}
         );
     }
 
 protected:
-    virtual void add_property(serialize::Property property) = 0;
+    virtual void add_property(reflection::Property property) = 0;
 };
 
 class Deserializer
@@ -208,7 +210,7 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::scalar, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::scalar, "Property container type mismatch");
         PORTAL_ASSERT(property.type == serialize::get_property_type<T>(), "Property type mismatch");
         PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
@@ -220,8 +222,8 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::scalar, "Property container type mismatch");
-        PORTAL_ASSERT(property.type == serialize::PropertyType::integer128, "Property type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::scalar, "Property container type mismatch");
+        PORTAL_ASSERT(property.type == reflection::PropertyType::integer128, "Property type mismatch");
         PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
         t = *static_cast<T*>(property.value.data);
@@ -232,7 +234,7 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::array, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::array, "Property container type mismatch");
         PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
 
         auto array_length = property.elements_number;
@@ -245,12 +247,12 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialize::PropertyType::character, "Property type mismatch");
+        PORTAL_ASSERT(property.type == reflection::PropertyType::character, "Property type mismatch");
 
         size_t string_length;
-        if (property.container_type == serialize::PropertyContainerType::null_term_string)
+        if (property.container_type == reflection::PropertyContainerType::null_term_string)
             string_length = property.elements_number - 1;
-        else if (property.container_type == serialize::PropertyContainerType::string)
+        else if (property.container_type == reflection::PropertyContainerType::string)
             string_length = property.elements_number;
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
@@ -263,7 +265,7 @@ public:
         const auto property = get_property();
 
         PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec1, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec1, "Property container type mismatch");
 
         t = T(*static_cast<typename T::value_type*>(property.value.data));
     }
@@ -274,7 +276,7 @@ public:
         const auto property = get_property();
 
         PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec2, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec2, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1]);
@@ -286,7 +288,7 @@ public:
         const auto property = get_property();
 
         PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec3, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec3, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1], data[2]);
@@ -298,7 +300,7 @@ public:
         const auto property = get_property();
 
         PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == serialize::PropertyContainerType::vec4, "Property container type mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec4, "Property container type mismatch");
 
         const auto* data = static_cast<const typename T::value_type*>(property.value.data);
         t = T(data[0], data[1], data[2], data[3]);
@@ -371,14 +373,14 @@ public:
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialize::PropertyType::character, "Property type mismatch");
+        PORTAL_ASSERT(property.type == reflection::PropertyType::character, "Property type mismatch");
 
         PORTAL_ASSERT(property.elements_number == length, "Value size mismatch, expected: {} got {}", length, property.elements_number);
         memcpy(t, property.value.data, (std::min)(length, property.elements_number));
     }
 
 protected:
-    virtual serialize::Property get_property() = 0;
+    virtual reflection::Property get_property() = 0;
 };
 } // namespace portal
 

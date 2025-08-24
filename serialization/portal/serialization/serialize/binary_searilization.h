@@ -25,7 +25,7 @@ public:
     BinarySerializer(std::ostream& output, BinarySerializationParams params);
 
 protected:
-    void add_property(serialize::Property property) override;
+    void add_property(reflection::Property property) override;
 
 private:
     BinarySerializationParams params;
@@ -40,7 +40,7 @@ public:
 
 
 protected:
-    serialize::Property get_property() override;
+    reflection::Property get_property() override;
 
 private:
     std::istream& input;
