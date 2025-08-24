@@ -368,7 +368,8 @@ public:
         if (property.type == reflection::PropertyType::invalid)
             return false;
 
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec1, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.elements_number == 1, "Property {} elements number mismatch", name);
 
         out = T(*property.value.as<T*>());
         return true;
@@ -380,7 +381,8 @@ public:
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
             return false;
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec2, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.elements_number == 2, "Property {} elements number mismatch", name);
 
         out = T(*property.value.as<T*>());
         return true;
@@ -392,7 +394,8 @@ public:
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
             return false;
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec3, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.elements_number == 3, "Property {} elements number mismatch", name);
 
         out = T(*property.value.as<T*>());
         return true;
@@ -404,7 +407,8 @@ public:
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
             return false;
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vec4, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(property.elements_number == 4, "Property {} elements number mismatch", name);
 
         out = T(*property.value.as<T*>());
         return true;

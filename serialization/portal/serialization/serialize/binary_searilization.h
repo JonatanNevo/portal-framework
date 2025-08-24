@@ -16,6 +16,8 @@ struct BinarySerializationParams
 {
     bool encode_header = true;
     bool large_element_size = false;
+    // Will not write the sizes of vectors into memory, will not allow deserializing automatically
+    bool pack_elements = false;
 };
 
 class BinarySerializer final : public Serializer

@@ -143,8 +143,7 @@ void BinarySerializer::add_property(const reflection::Property property)
 {
     output.write(reinterpret_cast<const char*>(&property.container_type), 1);
     output.write(reinterpret_cast<const char*>(&property.type), 1);
-    if (property.container_type != reflection::PropertyContainerType::scalar &&
-        !is_vector_type(property.container_type))
+    if (property.container_type != reflection::PropertyContainerType::scalar && !(property.container_type == reflection::PropertyContainerType::vector && params.pack_elements))
     {
         output.write(reinterpret_cast<const char*>(&property.elements_number), element_number_size(params));
     }
@@ -191,9 +190,8 @@ reflection::Property BinaryDeserializer::get_property()
     size_t elements_number = 1;
     if (container_type != reflection::PropertyContainerType::scalar)
     {
-        if (is_vector_type(container_type))
-            elements_number = static_cast<uint8_t>(container_type) -
-                static_cast<uint8_t>(reflection::PropertyContainerType::__vector_type_start) + 1;
+        if (container_type == reflection::PropertyContainerType::vector && params.pack_elements)
+            elements_number = 0; // Ignoring element number in packed elements
         else
             input.read(reinterpret_cast<char*>(&elements_number), element_number_size(params));
     }
