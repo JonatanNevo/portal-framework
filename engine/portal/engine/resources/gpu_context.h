@@ -45,7 +45,7 @@ public:
     virtual vulkan::AllocatedImage create_image(void* data, vulkan::ImageBuilder image_builder) const;
     virtual std::shared_ptr<vulkan::AllocatedImage> create_image_shared(void* data, vulkan::ImageBuilder image_builder) const;
     [[nodiscard]] virtual vk::raii::Sampler create_sampler(vk::SamplerCreateInfo create_info) const;
-    virtual vk::raii::DescriptorSetLayout create_descriptor_set_layout(vk::ShaderStageFlags stage_flags, vulkan::DescriptorLayoutBuilder builder);
+    virtual vk::raii::DescriptorSetLayout create_descriptor_set_layout(vulkan::DescriptorLayoutBuilder builder);
     virtual vk::raii::DescriptorSet create_descriptor_set(const vk::DescriptorSetLayout& layout);
     virtual vk::raii::PipelineLayout create_pipeline_layout(const vk::PipelineLayoutCreateInfo& pipeline_layout_info);
     virtual vk::raii::ShaderModule create_shader_module(Buffer code);

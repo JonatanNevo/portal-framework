@@ -15,9 +15,9 @@ class DescriptorLayoutBuilder
 public:
     std::vector<vk::DescriptorSetLayoutBinding> layout_bindings;
 
-    DescriptorLayoutBuilder& add_binding(uint32_t binding, vk::DescriptorType type);
+    DescriptorLayoutBuilder& add_binding(size_t binding, vk::DescriptorType type, vk::ShaderStageFlags shader_stages, size_t count = 1);
     void clear();
-    vk::raii::DescriptorSetLayout build(const vk::raii::Device& device, vk::ShaderStageFlags shader_stages);
+    vk::raii::DescriptorSetLayout build(const vk::raii::Device& device);
 };
 
 } // portal

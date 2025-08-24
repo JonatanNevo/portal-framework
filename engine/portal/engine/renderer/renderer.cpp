@@ -800,7 +800,11 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
                         );
                     command_buffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), window_extent));
                 }
-                command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->get_layout(), 1, {material->get_descriptor_set()}, {});
+                auto& descriptor_sets = material->get_descriptor_sets();
+                std::vector<vk::DescriptorSet> descriptor_set_array;
+                std::ranges::transform(descriptor_sets, std::back_inserter(descriptor_set_array), [](const auto& set) { return *set; });
+
+                command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline->get_layout(), 1, descriptor_set_array, {});
             }
 
             //rebind index buffer if needed
@@ -1368,8 +1372,8 @@ void Renderer::init_descriptors()
 
     {
         vulkan::DescriptorLayoutBuilder builder;
-        builder.add_binding(0, vk::DescriptorType::eUniformBuffer);
-        scene_descriptor_set_layout = builder.build(device, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
+        builder.add_binding(0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
+        scene_descriptor_set_layout = builder.build(device);
     }
 }
 

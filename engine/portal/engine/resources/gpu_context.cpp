@@ -110,9 +110,9 @@ vk::raii::Sampler GpuContext::create_sampler(const vk::SamplerCreateInfo create_
     return device.createSampler(create_info);
 }
 
-vk::raii::DescriptorSetLayout GpuContext::create_descriptor_set_layout(vk::ShaderStageFlags stage_flags, vulkan::DescriptorLayoutBuilder builder)
+vk::raii::DescriptorSetLayout GpuContext::create_descriptor_set_layout(vulkan::DescriptorLayoutBuilder builder)
 {
-    return builder.build(device, stage_flags);
+    return builder.build(device);
 }
 
 vk::raii::DescriptorSet GpuContext::create_descriptor_set(const vk::DescriptorSetLayout& layout)

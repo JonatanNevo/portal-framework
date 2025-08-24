@@ -6,7 +6,7 @@
 #pragma once
 #include "portal/engine/renderer/pipeline_builder.h"
 #include "portal/engine/resources/resources/resource.h"
-#include "portal/engine/resources/resources/shader.h"
+#include "../../shaders/shader.h"
 
 namespace portal
 {
