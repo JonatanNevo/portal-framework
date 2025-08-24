@@ -29,10 +29,10 @@ void GLTFMetallicRoughness::build_pipelines(
     };
 
     material_layout = vulkan::DescriptorLayoutBuilder{}
-                      .add_binding(0, vk::DescriptorType::eUniformBuffer)
-                      .add_binding(1, vk::DescriptorType::eCombinedImageSampler)
-                      .add_binding(2, vk::DescriptorType::eCombinedImageSampler)
-                      .build(device, vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eVertex);
+                      .add_binding(0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eVertex)
+                      .add_binding(1, vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eVertex)
+                      .add_binding(2, vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment | vk::ShaderStageFlagBits::eVertex)
+                      .build(device);
 
     vk::DescriptorSetLayout layouts[] = {
         global_layout,

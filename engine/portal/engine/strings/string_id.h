@@ -16,9 +16,10 @@ namespace portal
 
 struct StringId
 {
-    uint64_t id;
-    std::string_view string;
+    uint64_t id = 0;
+    std::string_view string = INVALID_STRING_VIEW;
 
+    StringId() = default;
     explicit StringId(uint64_t id);
     StringId(uint64_t id, std::string_view string);
     StringId(uint64_t id, const std::string& string);

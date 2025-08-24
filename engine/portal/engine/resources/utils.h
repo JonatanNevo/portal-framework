@@ -12,7 +12,7 @@
 #include "portal/engine/resources/resources/material.h"
 #include "portal/engine/resources/resources/mesh.h"
 #include "portal/engine/resources/resources/pipeline.h"
-#include "portal/engine/resources/resources/shader.h"
+#include "../shaders/shader.h"
 #include "portal/engine/scene/scene.h"
 
 namespace portal::resources::utils

@@ -66,7 +66,7 @@ FolderResourceDatabase::FolderResourceDatabase(const std::filesystem::path& path
 std::shared_ptr<resources::ResourceSource> FolderResourceDatabase::get_source(const StringId id) const
 {
     // TODO: work with "imports" from the resource archive instead of walking on the path.
-    return std::make_shared<resources::FileSource>(root_path / id.string);
+    return std::make_shared<resources::FileSource>(absolute(root_path) / id.string);
 }
 
 } // portal

@@ -23,8 +23,8 @@ find_package(tinyobjloader CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
-find_package(slang CONFIG REQUIRED)
 find_package(SPIRV-Tools CONFIG REQUIRED)
+find_package(slang CONFIG REQUIRED)
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
@@ -115,46 +115,46 @@ foreach (BUILD_TYPE ${CMAKE_CONFIGURATION_TYPES})
     file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS "resources/*")
     file(COPY ${RESOURCES} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE}/resources")
 endforeach ()
-
-
-install(TARGETS portal-engine
-        EXPORT portal-engine-targets
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        FILE_SET HEADERS DESTINATION include
-)
-
-# Generate and install the export targets
-install(EXPORT portal-engine-targets
-        FILE portal-engine-targets.cmake
-        NAMESPACE portal::
-        DESTINATION share/portal-engine
-)
-
-# Create and install the config file
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-config-version.cmake"
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY SameMajorVersion
-)
-# To free it up for other add_subdirectories
-unset(PROJECT_VERSION)
-
-configure_package_config_file(
-        "../cmake/portal-engine-config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-config.cmake"
-        INSTALL_DESTINATION share/portal-engine
-)
-
-# Install the config files
-install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-config-version.cmake"
-        DESTINATION share/portal-engine
-)
-
+#
+#
+#install(TARGETS portal-engine
+#        EXPORT portal-engine-targets
+#        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+#        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+#        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+#        FILE_SET HEADERS DESTINATION include
+#)
+#
+## Generate and install the export targets
+#install(EXPORT portal-engine-targets
+#        FILE portal-engine-targets.cmake
+#        NAMESPACE portal::
+#        DESTINATION share/portal-engine
+#)
+#
+## Create and install the config file
+#include(CMakePackageConfigHelpers)
+#write_basic_package_version_file(
+#        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-config-version.cmake"
+#        VERSION ${PROJECT_VERSION}
+#        COMPATIBILITY SameMajorVersion
+#)
+## To free it up for other add_subdirectories
+#unset(PROJECT_VERSION)
+#
+#configure_package_config_file(
+#        "../cmake/portal-engine-config.cmake.in"
+#        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-config.cmake"
+#        INSTALL_DESTINATION share/portal-engine
+#)
+#
+## Install the config files
+#install(FILES
+#        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-config.cmake"
+#        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-config-version.cmake"
+#        DESTINATION share/portal-engine
+#)
+#
 add_executable(engine-test main.cpp)
 target_link_libraries(engine-test
         PUBLIC

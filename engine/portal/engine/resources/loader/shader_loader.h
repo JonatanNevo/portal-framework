@@ -9,7 +9,7 @@
 
 #include "portal/engine/resources/gpu_context.h"
 #include "portal/engine/resources/loader/loader.h"
-#include "portal/engine/resources/resources/shader.h"
+#include "../../shaders/shader.h"
 
 namespace portal::resources
 {
@@ -26,14 +26,10 @@ protected:
     bool load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const;
     bool load_shader(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const;
 
-    struct CompiledShader
-    {
-        Slang::ComPtr<slang::IBlob> data;
-        slang::ProgramLayout* layout;
-    };
+    static void compile_shaders(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader);
+    // void reflect_shader(slang::ProgramLayout* layout, Ref<Shader>& shader) const;
 
-    void compile_shaders(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const;
-    void reflect_shader(slang::ProgramLayout* layout, Ref<Shader>& shader) const;
+    // void describe_parameter_block(Shader::Layout& shader_layout, slang::TypeLayoutReflection* parameter_block) const;
 
 private:
     Slang::ComPtr<slang::IGlobalSession> slang_session;

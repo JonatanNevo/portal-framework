@@ -12,9 +12,9 @@ Ref<Pipeline> Material::get_pipeline() const
     return pipeline.lock();
 }
 
-vk::raii::DescriptorSet& Material::get_descriptor_set() const
+const std::vector<vk::raii::DescriptorSet>& Material::get_descriptor_sets() const
 {
-    return *descriptor_set;
+    return descriptor_sets;
 }
 
 void Material::copy_from(const Ref<Resource> other)
@@ -24,7 +24,8 @@ void Material::copy_from(const Ref<Resource> other)
     pass_type = other_material->pass_type;
     consts = other_material->consts;
     material_data = other_material->material_data;
-    descriptor_set = other_material->descriptor_set;
+    std::swap(descriptor_sets, other_material->descriptor_sets);
+    std::swap(descriptor_set_layouts, other_material->descriptor_set_layouts);
 
     pipeline = other_material->pipeline;
     color_texture = other_material->color_texture;

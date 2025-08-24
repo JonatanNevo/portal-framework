@@ -8,7 +8,7 @@
 #include "portal/engine/renderer/allocated_buffer.h"
 #include "portal/engine/resources/resources/pipeline.h"
 #include "portal/engine/resources/resources/resource.h"
-#include "portal/engine/resources/resources/shader.h"
+#include "../../shaders/shader.h"
 #include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/resources/resources/texture.h"
 
@@ -41,7 +41,7 @@ class Material final : public Resource
 public:
     explicit Material(const StringId& id): Resource(id) {}
     Ref<Pipeline> get_pipeline() const;
-    vk::raii::DescriptorSet& get_descriptor_set() const;
+    const std::vector<vk::raii::DescriptorSet>& get_descriptor_sets() const;
 
     void copy_from(Ref<Resource> other) override;
 
@@ -52,7 +52,9 @@ public:
 
     resources::MaterialConsts consts;
     std::shared_ptr<vulkan::AllocatedBuffer> material_data;
-    std::shared_ptr<vk::raii::DescriptorSet> descriptor_set = nullptr;
+
+    std::vector<vk::raii::DescriptorSetLayout> descriptor_set_layouts;
+    std::vector<vk::raii::DescriptorSet> descriptor_sets;
 
     WeakRef<Pipeline> pipeline;
     WeakRef<Texture> color_texture;

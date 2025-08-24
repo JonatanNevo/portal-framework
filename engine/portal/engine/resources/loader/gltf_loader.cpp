@@ -13,6 +13,7 @@
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/descriptor_writer.h"
 #include "portal/engine/renderer/pipeline_builder.h"
+#include "portal/engine/renderer/vulkan_shader.h"
 #include "portal/engine/resources/gpu_context.h"
 #include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/resources/loader/loader_factory.h"
@@ -336,7 +337,7 @@ void GltfLoader::load_material(
     }
     else
     {
-        resource->color_texture = registry->get<Texture>(Texture::MISSING_TEXTURE_ID);
+        resource->color_texture = registry->get<Texture>(Texture::BLACK_TEXTURE_ID);
     }
 
     PORTAL_ASSERT(resource->color_texture->is_valid(), "Material references invalid image: {} ", resource->color_texture->id);
@@ -365,9 +366,13 @@ void GltfLoader::load_material(
 
     PORTAL_ASSERT(resource->shader->is_valid(), "Material references invalid shader: pbr.slang");
 
-    resource->descriptor_set = std::make_shared<vk::raii::DescriptorSet>(
-        gpu_context->create_descriptor_set(resource->shader->get_descriptor_layout())
-        );
+    vulkan::VulkanShader shader(resource->shader.lock());
+    resource->descriptor_set_layouts = shader.create_descriptor_layouts();
+
+    for (const auto& layout : resource->descriptor_set_layouts)
+    {
+        resource->descriptor_sets.push_back(gpu_context->create_descriptor_set(layout));
+    }
 
     if (resource->pass_type == MaterialPass::Transparent)
         resource->pipeline = registry->get<Pipeline>(STRING_ID("transparent_pipeline"));
@@ -376,24 +381,24 @@ void GltfLoader::load_material(
 
     PORTAL_ASSERT(resource->pipeline->is_valid(), "Material references invalid pipeline: transparent_pipeline");
 
-    vulkan::DescriptorWriter writer;
-    writer.write_buffer(0, *resource->material_data, sizeof(MaterialConsts), 0, vk::DescriptorType::eUniformBuffer);
-    writer.write_image(
-        1,
-        resource->color_texture.lock()->get().get_view(),
-        resource->color_texture.lock()->get_sampler(),
-        vk::ImageLayout::eShaderReadOnlyOptimal,
-        vk::DescriptorType::eCombinedImageSampler
-        );
-    writer.write_image(
-        2,
-        resource->metallic_roughness_texture.lock()->get().get_view(),
-        resource->metallic_roughness_texture.lock()->get_sampler(),
-        vk::ImageLayout::eShaderReadOnlyOptimal,
-        vk::DescriptorType::eCombinedImageSampler
-        );
-
-    gpu_context->write_descriptor_set(writer, *resource->descriptor_set);
+    // vulkan::DescriptorWriter writer;
+    // writer.write_buffer(0, *resource->material_data, sizeof(MaterialConsts), 0, vk::DescriptorType::eUniformBuffer);
+    // writer.write_image(
+    //     1,
+    //     resource->color_texture.lock()->get().get_view(),
+    //     resource->color_texture.lock()->get_sampler(),
+    //     vk::ImageLayout::eShaderReadOnlyOptimal,
+    //     vk::DescriptorType::eCombinedImageSampler
+    //     );
+    // writer.write_image(
+    //     2,
+    //     resource->metallic_roughness_texture.lock()->get().get_view(),
+    //     resource->metallic_roughness_texture.lock()->get_sampler(),
+    //     vk::ImageLayout::eShaderReadOnlyOptimal,
+    //     vk::DescriptorType::eCombinedImageSampler
+    //     );
+    //
+    // gpu_context->write_descriptor_set(writer, *resource->descriptor_set);
     resource->set_state(ResourceState::Loaded);
 
     if (!set_default)
@@ -692,17 +697,17 @@ void GltfLoader::load_pipelines() const
 
     std::vector<vk::DescriptorSetLayout> layouts;
     layouts.insert_range(layouts.begin(), gpu_context->get_global_descriptor_layouts());
-    layouts.push_back(color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex)->get_descriptor_layout());
+    // layouts.push_back(color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex)->get_descriptor_layout());
     //        // color_pipeline->fragment_shader->get_descriptor_layout()
 
     std::vector<vk::PushConstantRange> ranges;
-    const auto vertex_constants = color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex)->get_push_constant_range(vk::ShaderStageFlagBits::eVertex);
-    if (vertex_constants.has_value())
-        ranges.push_back(vertex_constants.value());
+    // const auto vertex_constants = color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex)->get_push_constant_range(vk::ShaderStageFlagBits::eVertex);
+    // if (vertex_constants.has_value())
+        // ranges.push_back(vertex_constants.value());
 
-    const auto fragment_constants = color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex)->get_push_constant_range(vk::ShaderStageFlagBits::eFragment);
-    if (fragment_constants.has_value())
-        ranges.push_back(fragment_constants.value());
+    // const auto fragment_constants = color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex)->get_push_constant_range(vk::ShaderStageFlagBits::eFragment);
+    // if (fragment_constants.has_value())
+        // ranges.push_back(fragment_constants.value());
 
     const vk::PipelineLayoutCreateInfo pipeline_layout_info{
         .setLayoutCount = static_cast<uint32_t>(layouts.size()),
@@ -714,30 +719,30 @@ void GltfLoader::load_pipelines() const
     color_pipeline->set_layout(std::make_shared<vk::raii::PipelineLayout>(gpu_context->create_pipeline_layout(pipeline_layout_info)));
     transparent_pipeline->set_layout(std::make_shared<vk::raii::PipelineLayout>(gpu_context->create_pipeline_layout(pipeline_layout_info)));
 
-    vulkan::PipelineBuilder builder;
-    builder.set_shaders(
-               color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex),
-               color_pipeline->get_shader(vk::ShaderStageFlagBits::eFragment)
-               )
-           .set_input_topology(vk::PrimitiveTopology::eTriangleList)
-           .set_polygon_mode(vk::PolygonMode::eFill)
-           .set_cull_mode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise)
-           .disable_multisampling()
-           .disable_color_blending()
-           .enable_depth_stencil(true, vk::CompareOp::eGreaterOrEqual)
-           .set_color_attachment_format(gpu_context->get_draw_image_format())
-           .set_depth_format(gpu_context->get_depth_format());
-
-    builder.set_layout(color_pipeline->get_layout());
-    color_pipeline->set_pipeline(std::make_shared<vk::raii::Pipeline>(gpu_context->create_pipeline(builder)));
-
-    builder.set_layout(transparent_pipeline->get_layout())
-           .enable_blending_additive()
-           .enable_depth_stencil(false, vk::CompareOp::eGreaterOrEqual);
-    transparent_pipeline->set_pipeline(std::make_shared<vk::raii::Pipeline>(gpu_context->create_pipeline(builder)));
-
-    color_pipeline->set_state(ResourceState::Loaded);
-    transparent_pipeline->set_state(ResourceState::Loaded);
+    // vulkan::PipelineBuilder builder;
+    // builder.set_shaders(
+    //            color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex),
+    //            color_pipeline->get_shader(vk::ShaderStageFlagBits::eFragment)
+    //            )
+    //        .set_input_topology(vk::PrimitiveTopology::eTriangleList)
+    //        .set_polygon_mode(vk::PolygonMode::eFill)
+    //        .set_cull_mode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise)
+    //        .disable_multisampling()
+    //        .disable_color_blending()
+    //        .enable_depth_stencil(true, vk::CompareOp::eGreaterOrEqual)
+    //        .set_color_attachment_format(gpu_context->get_draw_image_format())
+    //        .set_depth_format(gpu_context->get_depth_format());
+    //
+    // builder.set_layout(color_pipeline->get_layout());
+    // color_pipeline->set_pipeline(std::make_shared<vk::raii::Pipeline>(gpu_context->create_pipeline(builder)));
+    //
+    // builder.set_layout(transparent_pipeline->get_layout())
+    //        .enable_blending_additive()
+    //        .enable_depth_stencil(false, vk::CompareOp::eGreaterOrEqual);
+    // transparent_pipeline->set_pipeline(std::make_shared<vk::raii::Pipeline>(gpu_context->create_pipeline(builder)));
+    //
+    // color_pipeline->set_state(ResourceState::Loaded);
+    // transparent_pipeline->set_state(ResourceState::Loaded);
 }
 
 } // portal
