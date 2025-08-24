@@ -188,6 +188,11 @@ struct Buffer
         return allocated;
     }
 
+    std::string as_string() const
+    {
+        return std::string(as<const char*>(), size);
+    }
+
 private:
     Buffer(const void* data, const size_t size, const bool allocated):
         data(data),
