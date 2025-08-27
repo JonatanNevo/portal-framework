@@ -36,7 +36,7 @@ private:
         for (size_t i = 0; i < prop.elements_number; i++)
         {
             auto& property_value = prop.value.as<ArchiveObject*>()[i].property_map["v"];
-            if constexpr (serialize::String<T>)
+            if constexpr (reflection::String<T>)
             {
                 array_elements.emplace_back(property_value.value.as<const char*>(), property_value.elements_number - element_number_skew);
             }

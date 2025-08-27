@@ -12,7 +12,7 @@
 #include <portal/core/reflection/property.h>
 
 #include "portal/serialization/archive.h"
-#include "portal/serialization/concepts.h"
+#include "../../../core/portal/core/reflection/concepts.h"
 
 namespace portal
 {
@@ -41,14 +41,14 @@ public:
             name,
             {
                 Buffer::create<T>(t),
-                serialize::get_property_type<T>(),
+                reflection::get_property_type<T>(),
                 reflection::PropertyContainerType::scalar,
                 1
             }
             );
     }
 
-    template <serialize::Vector T>
+    template <reflection::Vector T>
     void add_property(const PropertyName name, const T& t)
     {
         if constexpr (Archiveable<typename T::value_type>)
@@ -79,9 +79,9 @@ public:
                 object->add_property("v", t[i]);
             }
 
-            constexpr auto property_type = (serialize::String<typename T::value_type>)
+            constexpr auto property_type = (reflection::String<typename T::value_type>)
                 ? reflection::PropertyType::null_term_string
-                : serialize::get_property_type<typename T::value_type>();
+                : reflection::get_property_type<typename T::value_type>();
 
             add_property_to_map(
                 name,
@@ -95,7 +95,7 @@ public:
         }
     }
 
-    template <serialize::String T>
+    template <reflection::String T>
     void add_property(const PropertyName name, const T& t)
     {
         add_property_to_map(
@@ -109,63 +109,63 @@ public:
             );
     }
 
-    template <serialize::GlmVec1 T>
+    template <reflection::GlmVec1 T>
     void add_property(const PropertyName name, const T& t)
     {
         add_property_to_map(
             name,
             {
                 Buffer::create<T>(t),
-                serialize::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vec1,
+                reflection::get_property_type<typename T::value_type>(),
+                reflection::PropertyContainerType::vector,
                 1
             }
             );
     }
 
-    template <serialize::GlmVec2 T>
+    template <reflection::GlmVec2 T>
     void add_property(const PropertyName name, const T& t)
     {
         add_property_to_map(
             name,
             {
                 Buffer::create<T>(t),
-                serialize::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vec2,
+                reflection::get_property_type<typename T::value_type>(),
+                reflection::PropertyContainerType::vector,
                 2
             }
             );
     }
 
-    template <serialize::GlmVec3 T>
+    template <reflection::GlmVec3 T>
     void add_property(const PropertyName name, const T& t)
     {
         add_property_to_map(
             name,
             {
                 Buffer::create<T>(t),
-                serialize::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vec3,
+                reflection::get_property_type<typename T::value_type>(),
+                reflection::PropertyContainerType::vector,
                 3
             }
             );
     }
 
-    template <serialize::GlmVec4 T>
+    template <reflection::GlmVec4 T>
     void add_property(const PropertyName name, const T& t)
     {
         add_property_to_map(
             name,
             {
                 Buffer::create<T>(t),
-                serialize::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vec4,
+                reflection::get_property_type<typename T::value_type>(),
+                reflection::PropertyContainerType::vector,
                 4
             }
             );
     }
 
-    template <serialize::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
+    template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
     void add_property(const PropertyName name, const T& t)
     {
         auto* child = create_child(name);
@@ -267,7 +267,7 @@ public:
         if (property.type == reflection::PropertyType::invalid)
             return false;
 
-        if (property.type != serialize::get_property_type<T>())
+        if (property.type != reflection::get_property_type<T>())
         {
             if constexpr (std::is_same_v<T, float>)
             {
@@ -301,7 +301,7 @@ public:
         return true;
     }
 
-    template <serialize::Vector T>
+    template <reflection::Vector T>
     bool get_property(PropertyName name, T& out)
     {
         using ValueType = typename T::value_type;
@@ -337,7 +337,7 @@ public:
         return true;
     }
 
-    template <serialize::String T>
+    template <reflection::String T>
     bool get_property(PropertyName name, T& out)
     {
         const auto& [value, type, container_type, elements_number] = property_map[std::string(name)];
@@ -361,7 +361,7 @@ public:
         return true;
     }
 
-    template <serialize::GlmVec1 T>
+    template <reflection::GlmVec1 T>
     bool get_property(PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
@@ -375,7 +375,7 @@ public:
         return true;
     }
 
-    template <serialize::GlmVec2 T>
+    template <reflection::GlmVec2 T>
     bool get_property(PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
@@ -388,7 +388,7 @@ public:
         return true;
     }
 
-    template <serialize::GlmVec3 T>
+    template <reflection::GlmVec3 T>
     bool get_property(PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
@@ -401,7 +401,7 @@ public:
         return true;
     }
 
-    template <serialize::GlmVec4 T>
+    template <reflection::GlmVec4 T>
     bool get_property(PropertyName name, T& out)
     {
         const auto& property = property_map[std::string(name)];
@@ -414,7 +414,7 @@ public:
         return true;
     }
 
-    template <serialize::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
+    template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
     bool get_property(const PropertyName name, T& out)
     {
         using ValueType = typename T::mapped_type;

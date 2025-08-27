@@ -10,33 +10,27 @@ namespace portal::vulkan
 
 vk::ShaderStageFlagBits to_shader_stage(const ShaderStage stage)
 {
+#define CASE(FROM, TO)             \
+case portal::ShaderStage::FROM:    \
+return vk::ShaderStageFlagBits::TO
+
     switch (stage)
     {
-    case ShaderStage::All:
-        return vk::ShaderStageFlagBits::eAll;
-    case ShaderStage::Vertex:
-        return vk::ShaderStageFlagBits::eVertex;
-    case ShaderStage::Fragment:
-        return vk::ShaderStageFlagBits::eFragment;
-    case ShaderStage::Geometry:
-        return vk::ShaderStageFlagBits::eGeometry;
-    case ShaderStage::Compute:
-        return vk::ShaderStageFlagBits::eCompute;
-    case ShaderStage::RayGeneration:
-        return vk::ShaderStageFlagBits::eRaygenKHR;
-    case ShaderStage::Intersection:
-        return vk::ShaderStageFlagBits::eIntersectionKHR;
-    case ShaderStage::AnyHit:
-        return vk::ShaderStageFlagBits::eAnyHitKHR;
-    case ShaderStage::ClosestHit:
-        return vk::ShaderStageFlagBits::eClosestHitKHR;
-    case ShaderStage::Miss:
-        return vk::ShaderStageFlagBits::eMissKHR;
-    case ShaderStage::Callable:
-        return vk::ShaderStageFlagBits::eCallableKHR;
-    case ShaderStage::Mesh:
-        return vk::ShaderStageFlagBits::eMeshEXT;
+    CASE(All, eAll);
+    CASE(Vertex, eVertex);
+    CASE(Fragment, eFragment);
+    CASE(Geometry, eGeometry);
+    CASE(Compute, eCompute);
+    CASE(RayGeneration, eRaygenKHR);
+    CASE(Intersection, eIntersectionKHR);
+    CASE(AnyHit, eAnyHitKHR);
+    CASE(ClosestHit, eClosestHitKHR);
+    CASE(Miss, eMissKHR);
+    CASE(Callable, eCallableKHR);
+    CASE(Mesh, eMeshEXT);
     }
+
+#undef CASE
     return vk::ShaderStageFlagBits::eAll;
 }
 
@@ -76,43 +70,45 @@ vk::DescriptorType to_descriptor_type(const DescriptorType type)
     return vk::DescriptorType::eUniformBuffer;
 }
 
-VulkanShader::VulkanShader(const Ref<Shader>& shader) : shader(shader)
+VulkanShader::VulkanShader(const Ref<Shader>& shader, const std::shared_ptr<resources::GpuContext>& context) : context(context), shader(shader)
 {}
 
 std::vector<vk::raii::DescriptorSetLayout> VulkanShader::create_descriptor_layouts() const
 {
-    DescriptorLayoutBuilder builder;
     std::vector<vk::raii::DescriptorSetLayout> output;
     output.reserve(shader->reflection.layouts.size());
 
-    for (const auto& [_, bindings] : shader->reflection.layouts)
+    for (const auto& [name, bindings] : shader->reflection.layouts)
     {
+        DescriptorLayoutBuilder builder;
         for (auto& binding : bindings)
         {
             builder.add_binding(binding.binding_index, to_descriptor_type(binding.type), to_shader_stage(binding.stage), binding.descriptor_count);
-            output.push_back(context->create_descriptor_set_layout(builder));
-
-            builder.clear();
         }
+        builder.set_name(name);
+        output.push_back(context->create_descriptor_set_layout(builder));
     }
 
-    return output;
+    return std::move(output);
 }
 
-std::vector<vk::PushConstantRange> VulkanShader::get_push_constant_range() const
+std::vector<vk::PushConstantRange> VulkanShader::get_push_constant_range(ShaderStage stage) const
 {
     std::vector<vk::PushConstantRange> output;
     output.reserve(shader->reflection.push_constants.size());
 
     for (auto& push_constant : shader->reflection.push_constants)
     {
-        output.push_back(
-            vk::PushConstantRange{
-                .stageFlags = to_shader_stage(push_constant.stage),
-                .offset = static_cast<uint32_t>(push_constant.offset),
-                .size = static_cast<uint32_t>(push_constant.size)
-            }
-            );
+        if (stage == push_constant.stage)
+        {
+            output.push_back(
+                vk::PushConstantRange{
+                    .stageFlags = to_shader_stage(push_constant.stage),
+                    .offset = static_cast<uint32_t>(push_constant.offset),
+                    .size = static_cast<uint32_t>(push_constant.size)
+                }
+                );
+        }
     }
     return output;
 }

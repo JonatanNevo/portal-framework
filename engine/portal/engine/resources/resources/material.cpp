@@ -23,14 +23,10 @@ void Material::copy_from(const Ref<Resource> other)
 
     pass_type = other_material->pass_type;
     consts = other_material->consts;
-    material_data = other_material->material_data;
-    std::swap(descriptor_sets, other_material->descriptor_sets);
-    std::swap(descriptor_set_layouts, other_material->descriptor_set_layouts);
 
     pipeline = other_material->pipeline;
     color_texture = other_material->color_texture;
 
     metallic_roughness_texture = other_material->metallic_roughness_texture;
-    shader = other_material->shader;
 }
 } // portal

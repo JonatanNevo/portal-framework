@@ -93,7 +93,7 @@ void diagnose_if_needed(const Slang::ComPtr<slang::IBlob>& diagnostics_blob)
     }
 }
 
-void ShaderLoader::compile_shaders(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader)
+void ShaderLoader::compile_shaders(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const
 {
     const auto meta = source->get_meta();
     const auto data = source->load();
@@ -103,7 +103,7 @@ void ShaderLoader::compile_shaders(const std::shared_ptr<ResourceSource>& source
 
     auto& [code, reflection] = compiled_shader;
     shader->code = Buffer::copy(code);
-    shader->reflection = reflection;
+    shader->set_shader_reflection(reflection, context.get());
 }
 
 // vk::DescriptorType to_descriptor_type(slang::TypeLayoutReflection* layout)

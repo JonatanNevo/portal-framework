@@ -18,17 +18,17 @@ int main()
         portal::Renderer renderer;
         renderer.init();
 
-        auto resource_database = std::make_shared<portal::FolderResourceDatabase>("C:/Code/portal-framework/engine/shaders");
+        auto resource_database = std::make_shared<portal::FolderResourceDatabase>("C:/Code/portal-framework/engine/resources");
         auto registry = portal::ResourceRegistry();
         registry.initialize(renderer.get_gpu_context(), resource_database);
 
-        auto shader = registry.immediate_load<portal::Shader>(STRING_ID("PBR/pbr.slang"));;
-        // {
-        //     registry.immediate_load<portal::Scene>(STRING_ID("ABeautifulGame.gltf"));
-        //     auto scene = registry.get<portal::Scene>(STRING_ID("Scene0-Scene"));
-        //     renderer.set_scene(scene);
-        //     renderer.run();
-        // }
+        // auto shader = registry.immediate_load<portal::Shader>(STRING_ID("PBR/pbr.slang"));;
+        {
+            registry.immediate_load<portal::Scene>(STRING_ID("game/ABeautifulGame.gltf"));
+            auto scene = registry.get<portal::Scene>(STRING_ID("Scene0-Scene"));
+            renderer.set_scene(scene);
+            renderer.run();
+        }
 
         registry.shutdown();
         renderer.cleanup();

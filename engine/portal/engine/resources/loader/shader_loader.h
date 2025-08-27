@@ -26,7 +26,7 @@ protected:
     bool load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const;
     bool load_shader(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const;
 
-    static void compile_shaders(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader);
+    void compile_shaders(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const;
     // void reflect_shader(slang::ProgramLayout* layout, Ref<Shader>& shader) const;
 
     // void describe_parameter_block(Shader::Layout& shader_layout, slang::TypeLayoutReflection* parameter_block) const;

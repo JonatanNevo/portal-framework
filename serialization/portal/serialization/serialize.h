@@ -8,7 +8,7 @@
 #include <portal/core/log.h>
 #include <portal/core/reflection/property.h>
 
-#include "portal/serialization/concepts.h"
+#include "../../../core/portal/core/reflection/concepts.h"
 
 namespace portal
 {
@@ -36,7 +36,7 @@ public:
         add_property(
             reflection::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(&t)), sizeof(T)},
-                serialize::get_property_type<std::remove_const_t<T>>(),
+                reflection::get_property_type<std::remove_const_t<T>>(),
                 reflection::PropertyContainerType::scalar,
                 1
             }
@@ -57,20 +57,20 @@ public:
     }
 
 
-    template <serialize::Vector T> requires (!Serializable<typename T::value_type>)
+    template <reflection::Vector T> requires (!Serializable<typename T::value_type>)
     void add_value(const T& t)
     {
         add_property(
             reflection::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), t.size() * sizeof(typename T::value_type)},
-                serialize::get_property_type<typename T::value_type>(),
+                reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::array,
                 t.size()
             }
         );
     }
 
-    template <serialize::String T>
+    template <reflection::String T>
     void add_value(const T& t)
     {
         add_property(
@@ -83,59 +83,59 @@ public:
         );
     }
 
-    template <serialize::GlmVec1 T>
+    template <reflection::GlmVec1 T>
     void add_value(T& t)
     {
         add_property(
             reflection::Property{
                 Buffer{&t.x, sizeof(typename T::value_type)},
-                serialize::get_property_type<typename T::value_type>(),
+                reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::vector,
                 1
             }
         );
     }
 
-    template <serialize::GlmVec2 T>
+    template <reflection::GlmVec2 T>
     void add_value(T& t)
     {
         add_property(
             reflection::Property{
                 Buffer{&t.x, 2 * sizeof(typename T::value_type)},
-                serialize::get_property_type<typename T::value_type>(),
+                reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::vector,
                 2
             }
         );
     }
 
-    template <serialize::GlmVec3 T>
+    template <reflection::GlmVec3 T>
     void add_value(T& t)
     {
         add_property(
             reflection::Property{
                 Buffer{&t.x, 3 * sizeof(typename T::value_type)},
-                serialize::get_property_type<typename T::value_type>(),
+                reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::vector,
                 3
             }
         );
     }
 
-    template <serialize::GlmVec4 T>
+    template <reflection::GlmVec4 T>
     void add_value(T& t)
     {
         add_property(
             reflection::Property{
                 Buffer{&t.x, 4 * sizeof(typename T::value_type)},
-                serialize::get_property_type<typename T::value_type>(),
+                reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::vector,
                 4
             }
         );
     }
 
-    template <serialize::Map T>
+    template <reflection::Map T>
     void add_value(const T& t)
     {
         const size_t size = t.size();
@@ -151,7 +151,7 @@ public:
         }
     }
 
-    template <serialize::Vector T> requires Serializable<typename T::value_type>
+    template <reflection::Vector T> requires Serializable<typename T::value_type>
     void add_value(const T& t)
     {
         const size_t size = t.size();
@@ -211,7 +211,7 @@ public:
         const auto property = get_property();
 
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::scalar, "Property container type mismatch");
-        PORTAL_ASSERT(property.type == serialize::get_property_type<T>(), "Property type mismatch");
+        PORTAL_ASSERT(property.type == reflection::get_property_type<T>(), "Property type mismatch");
         PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
         t = *static_cast<T*>(property.value.data);
@@ -229,20 +229,20 @@ public:
         t = *static_cast<T*>(property.value.data);
     }
 
-    template <serialize::Vector T> requires (!Serializable<typename T::value_type>)
+    template <reflection::Vector T> requires (!Serializable<typename T::value_type>)
     void get_value(T& t)
     {
         const auto property = get_property();
 
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::array, "Property container type mismatch");
-        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
 
         auto array_length = property.elements_number;
         auto* data = static_cast<typename T::value_type*>(property.value.data);
         t = T(data, data + array_length);
     }
 
-    template <serialize::String T>
+    template <reflection::String T>
     void get_value(T& t)
     {
         const auto property = get_property();
@@ -259,24 +259,24 @@ public:
         t = T(data, string_length);
     }
 
-    template <serialize::GlmVec1 T>
+    template <reflection::GlmVec1 T>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
         PORTAL_ASSERT(property.elements_number == 1, "Property elements number mismatch");
 
         t = T(*static_cast<typename T::value_type*>(property.value.data));
     }
 
-    template <serialize::GlmVec2 T>
+    template <reflection::GlmVec2 T>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
         PORTAL_ASSERT(property.elements_number == 2, "Property elements number mismatch");
 
@@ -284,12 +284,12 @@ public:
         t = T(data[0], data[1]);
     }
 
-    template <serialize::GlmVec3 T>
+    template <reflection::GlmVec3 T>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
         PORTAL_ASSERT(property.elements_number == 3, "Property elements number mismatch");
 
@@ -297,12 +297,12 @@ public:
         t = T(data[0], data[1], data[2]);
     }
 
-    template <serialize::GlmVec4 T>
+    template <reflection::GlmVec4 T>
     void get_value(T& t)
     {
         const auto property = get_property();
 
-        PORTAL_ASSERT(property.type == serialize::get_property_type<typename T::value_type>(), "Property type mismatch");
+        PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
         PORTAL_ASSERT(property.elements_number == 4, "Property elements number mismatch");
 
@@ -310,7 +310,7 @@ public:
         t = T(data[0], data[1], data[2], data[3]);
     }
 
-    template <serialize::Map T>
+    template <reflection::Map T>
     void get_value(T& t)
     {
         size_t size;
@@ -332,7 +332,7 @@ public:
         }
     }
 
-    template <serialize::Vector T> requires Serializable<typename T::value_type>
+    template <reflection::Vector T> requires Serializable<typename T::value_type>
     void get_value(T& t)
     {
         size_t size;
@@ -395,7 +395,7 @@ portal::Serializer& operator<<(portal::Serializer& s, const T& t)
     return s;
 }
 
-template <portal::serialize::PropertyConcept T>
+template <portal::reflection::PropertyConcept T>
 portal::Serializer& operator<<(portal::Serializer& s, const T& t)
 {
     T copy = t;
@@ -403,7 +403,7 @@ portal::Serializer& operator<<(portal::Serializer& s, const T& t)
     return s;
 }
 
-template <portal::serialize::PropertyConcept T>
+template <portal::reflection::PropertyConcept T>
 portal::Serializer& operator<<(portal::Serializer& s, T& t)
 {
     s.add_value<T>(t);
@@ -436,7 +436,7 @@ portal::Deserializer& operator>>(portal::Deserializer& d, T& t)
     return d;
 }
 
-template <portal::serialize::PropertyConcept T>
+template <portal::reflection::PropertyConcept T>
 portal::Deserializer& operator>>(portal::Deserializer& d, T& t)
 {
     d.get_value<T>(t);

@@ -34,6 +34,11 @@ void Pipeline::set_pipeline(const std::shared_ptr<vk::raii::Pipeline>& new_pipel
     pipeline = new_pipeline;
 }
 
+void Pipeline::set_descriptor_set_layouts(std::vector<vk::raii::DescriptorSetLayout>&& new_layouts)
+{
+    descriptor_set_layouts = std::move(new_layouts);
+}
+
 Ref<Shader> Pipeline::get_shader(vk::ShaderStageFlagBits stage) const
 {
     if (stage == vk::ShaderStageFlagBits::eVertex)
@@ -41,6 +46,10 @@ Ref<Shader> Pipeline::get_shader(vk::ShaderStageFlagBits stage) const
     if (stage == vk::ShaderStageFlagBits::eFragment)
         return fragment_shader.lock();
     return nullptr;
+}
+
+std::pair<Ref<Shader>, Ref<Shader>> Pipeline::get_shaders() const {
+    return std::make_pair(vertex_shader.lock(), fragment_shader.lock());
 }
 
 

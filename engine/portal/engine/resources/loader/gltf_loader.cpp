@@ -11,7 +11,6 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "portal/core/debug/profile.h"
-#include "portal/engine/renderer/descriptor_writer.h"
 #include "portal/engine/renderer/pipeline_builder.h"
 #include "portal/engine/renderer/vulkan_shader.h"
 #include "portal/engine/resources/gpu_context.h"
@@ -162,7 +161,7 @@ void GltfLoader::load_texture(
     const size_t index = texture.imageIndex.value();
     auto texture_name = texture.name.empty() ? image.name : texture.name;
 
-    auto texture_resource = registry->get<Texture>(create_name(ResourceType::Texture, index,texture_name.c_str()));
+    auto texture_resource = registry->get<Texture>(create_name(ResourceType::Texture, index, texture_name.c_str()));
     if (texture_resource->is_valid())
         return;
 
@@ -192,7 +191,7 @@ void GltfLoader::load_texture(
             image_source = std::make_shared<MemorySource>(
                 Buffer(array_source.bytes.data(), array_source.bytes.size()),
                 SourceMetadata{
-                    .source_id = create_name(ResourceType::Texture, index,texture_name.c_str()),
+                    .source_id = create_name(ResourceType::Texture, index, texture_name.c_str()),
                     .resource_type = ResourceType::Texture,
                     .format = SourceFormat::Memory,
                     .size = array_source.bytes.size(),
@@ -205,7 +204,7 @@ void GltfLoader::load_texture(
             image_source = std::make_shared<MemorySource>(
                 Buffer(vector_source.bytes.data(), vector_source.bytes.size()),
                 SourceMetadata{
-                    .source_id = create_name(ResourceType::Texture, index,texture_name.c_str()),
+                    .source_id = create_name(ResourceType::Texture, index, texture_name.c_str()),
                     .resource_type = ResourceType::Texture,
                     .format = SourceFormat::Memory,
                     .size = vector_source.bytes.size(),
@@ -227,7 +226,7 @@ void GltfLoader::load_texture(
                         image_source = std::make_shared<MemorySource>(
                             Buffer(data_ptr, data_size),
                             SourceMetadata{
-                                .source_id = create_name(ResourceType::Texture, index,texture_name.c_str()),
+                                .source_id = create_name(ResourceType::Texture, index, texture_name.c_str()),
                                 .resource_type = ResourceType::Texture,
                                 .format = SourceFormat::Memory,
                                 .size = data_size,
@@ -243,7 +242,7 @@ void GltfLoader::load_texture(
                         image_source = std::make_shared<MemorySource>(
                             Buffer(data_ptr, data_size),
                             SourceMetadata{
-                                .source_id = create_name(ResourceType::Texture, index,texture_name.c_str()),
+                                .source_id = create_name(ResourceType::Texture, index, texture_name.c_str()),
                                 .resource_type = ResourceType::Texture,
                                 .format = SourceFormat::Memory,
                                 .size = data_size,
@@ -293,15 +292,11 @@ void GltfLoader::load_material(
 {
     static bool set_default = false;
     // TODO: move to material loader
-    auto resource = registry->get<Material>(create_name(ResourceType::Material, index,material.name.c_str()));
+    auto material_name = create_name(ResourceType::Material, index, material.name.c_str());
+    auto resource = registry->get<Material>(material_name);
 
-    auto builder = vulkan::BufferBuilder(sizeof(MaterialConsts))
-                   .with_usage(vk::BufferUsageFlagBits::eUniformBuffer)
-                   .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
-                   .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
-                   .with_debug_name(fmt::format("gltf_material_data_{}", material.name));
-
-    resource->material_data = gpu_context->create_buffer_shared(builder);
+    if (resource->is_valid())
+        return;
 
     const MaterialConsts consts{
         .color_factors = {
@@ -318,7 +313,6 @@ void GltfLoader::load_material(
         }
     };
     resource->consts = consts;
-    resource->material_data->convert_and_update(consts);
 
     if (material.alphaMode == fastgltf::AlphaMode::Blend)
         resource->pass_type = MaterialPass::Transparent;
@@ -357,48 +351,42 @@ void GltfLoader::load_material(
         resource->metallic_roughness_texture = registry->get<Texture>(Texture::WHITE_TEXTURE_ID);
     }
 
-    PORTAL_ASSERT(
-        resource->metallic_roughness_texture->is_valid(),
-        "Material references invalid image: {} ",
-        resource->metallic_roughness_texture->id
-        );
-    resource->shader = registry->get<Shader>(STRING_ID(SHADER));
-
-    PORTAL_ASSERT(resource->shader->is_valid(), "Material references invalid shader: pbr.slang");
-
-    vulkan::VulkanShader shader(resource->shader.lock());
-    resource->descriptor_set_layouts = shader.create_descriptor_layouts();
-
-    for (const auto& layout : resource->descriptor_set_layouts)
-    {
-        resource->descriptor_sets.push_back(gpu_context->create_descriptor_set(layout));
-    }
-
     if (resource->pass_type == MaterialPass::Transparent)
         resource->pipeline = registry->get<Pipeline>(STRING_ID("transparent_pipeline"));
     else
         resource->pipeline = registry->get<Pipeline>(STRING_ID("color_pipeline"));
 
+    auto& pipeline = resource->pipeline;
+
+    auto global_descriptor_sets = gpu_context->get_global_descriptor_layouts();
+
+    size_t skipped = 0;
+    resource->descriptor_sets.clear();
+    for (const auto& layout : pipeline->get_descriptor_set_layouts())
+    {
+        if (skipped < global_descriptor_sets.size())
+        {
+            skipped++;
+            continue;
+        }
+
+        resource->descriptor_sets.push_back(gpu_context->create_descriptor_set(layout));
+    }
+
     PORTAL_ASSERT(resource->pipeline->is_valid(), "Material references invalid pipeline: transparent_pipeline");
 
-    // vulkan::DescriptorWriter writer;
-    // writer.write_buffer(0, *resource->material_data, sizeof(MaterialConsts), 0, vk::DescriptorType::eUniformBuffer);
-    // writer.write_image(
-    //     1,
-    //     resource->color_texture.lock()->get().get_view(),
-    //     resource->color_texture.lock()->get_sampler(),
-    //     vk::ImageLayout::eShaderReadOnlyOptimal,
-    //     vk::DescriptorType::eCombinedImageSampler
-    //     );
-    // writer.write_image(
-    //     2,
-    //     resource->metallic_roughness_texture.lock()->get().get_view(),
-    //     resource->metallic_roughness_texture.lock()->get_sampler(),
-    //     vk::ImageLayout::eShaderReadOnlyOptimal,
-    //     vk::DescriptorType::eCombinedImageSampler
-    //     );
-    //
-    // gpu_context->write_descriptor_set(writer, *resource->descriptor_set);
+    auto vertex_shader = pipeline->get_shader(vk::ShaderStageFlagBits::eVertex);
+    [[maybe_unused]] auto fragment_shader = pipeline->get_shader(vk::ShaderStageFlagBits::eFragment);
+    PORTAL_ASSERT(vertex_shader == fragment_shader, "currently vertex and fragment are the same shader");
+
+    vertex_shader->bind(STRING_ID("material_data.color_factors"), consts.color_factors);
+    vertex_shader->bind(STRING_ID("material_data.metal_rough_factors"), consts.metal_rough_factors);
+    vertex_shader->bind_texture(STRING_ID("material_data.color_texture"), resource->color_texture.lock());
+    vertex_shader->bind_texture(STRING_ID("material_data.metal_rough_texture"), resource->metallic_roughness_texture.lock());
+
+    // PORTAL_ASSERT(vertex_shader->check_all_bind_points_occupied(), "Some unbound shader data!");
+
+    gpu_context->write_descriptor_sets(vertex_shader, resource->descriptor_sets, global_descriptor_sets.size());
     resource->set_state(ResourceState::Loaded);
 
     if (!set_default)
@@ -542,7 +530,8 @@ void GltfLoader::load_mesh(
     vulkan::BufferBuilder vertex_builder{vertex_buffer_size};
     vertex_builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
                   .with_usage(
-                      vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eShaderDeviceAddress | vk::BufferUsageFlagBits::eTransferSrc
+                      vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eShaderDeviceAddress
+                      | vk::BufferUsageFlagBits::eTransferSrc
                       )
                   .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
 
@@ -606,7 +595,9 @@ std::vector<Ref<Scene>> GltfLoader::load_scenes(const fastgltf::Asset& asset) co
         if (node.meshIndex.has_value())
         {
             new_node = Ref<scene::MeshNode>::create(node_name);
-            new_node.as<scene::MeshNode>()->mesh = registry->get<Mesh>(create_name(ResourceType::Mesh, node.meshIndex.value(), asset.meshes[node.meshIndex.value()].name.c_str()));
+            new_node.as<scene::MeshNode>()->mesh = registry->get<Mesh>(
+                create_name(ResourceType::Mesh, node.meshIndex.value(), asset.meshes[node.meshIndex.value()].name.c_str())
+                );
         }
         else
         {
@@ -614,33 +605,33 @@ std::vector<Ref<Scene>> GltfLoader::load_scenes(const fastgltf::Asset& asset) co
         }
 
         std::visit(
-           fastgltf::visitor{[&](fastgltf::math::fmat4x4 matrix)
-                             {
-                                 std::memcpy(&new_node->local_transform, matrix.data(), sizeof(matrix));
-                             },
-                             [&](fastgltf::TRS transform)
-                             {
-                                 glm::vec3 tl(
-                                     transform.translation[0],
-                                     transform.translation[1],
-                                     transform.translation[2]
-                                     );
-                                 glm::quat rot(
-                                     transform.rotation[3],
-                                     transform.rotation[0],
-                                     transform.rotation[1],
-                                     transform.rotation[2]
-                                     );
-                                 glm::vec3 sc(transform.scale[0], transform.scale[1], transform.scale[2]);
+            fastgltf::visitor{[&](fastgltf::math::fmat4x4 matrix)
+                              {
+                                  std::memcpy(&new_node->local_transform, matrix.data(), sizeof(matrix));
+                              },
+                              [&](fastgltf::TRS transform)
+                              {
+                                  glm::vec3 tl(
+                                      transform.translation[0],
+                                      transform.translation[1],
+                                      transform.translation[2]
+                                      );
+                                  glm::quat rot(
+                                      transform.rotation[3],
+                                      transform.rotation[0],
+                                      transform.rotation[1],
+                                      transform.rotation[2]
+                                      );
+                                  glm::vec3 sc(transform.scale[0], transform.scale[1], transform.scale[2]);
 
-                                 glm::mat4 tm = glm::translate(glm::mat4(1.f), tl);
-                                 glm::mat4 rm = glm::toMat4(rot);
-                                 glm::mat4 sm = glm::scale(glm::mat4(1.f), sc);
+                                  glm::mat4 tm = glm::translate(glm::mat4(1.f), tl);
+                                  glm::mat4 rm = glm::toMat4(rot);
+                                  glm::mat4 sm = glm::scale(glm::mat4(1.f), sc);
 
-                                 new_node->local_transform = tm * rm * sm;
-                             }},
-           node.transform
-           );
+                                  new_node->local_transform = tm * rm * sm;
+                              }},
+            node.transform
+            );
 
         nodes.push_back(new_node);
         node_index++;
@@ -660,7 +651,7 @@ std::vector<Ref<Scene>> GltfLoader::load_scenes(const fastgltf::Asset& asset) co
 
     std::vector<Ref<Scene>> scenes;
     size_t index = 0;
-    for (const auto& [nodeIndices, name]: asset.scenes)
+    for (const auto& [nodeIndices, name] : asset.scenes)
     {
         auto scene_resource = registry->get<Scene>(create_name(ResourceType::Scene, index, name.c_str()));
 
@@ -691,23 +682,23 @@ void GltfLoader::load_pipelines() const
         return;
 
     const auto shader = registry->immediate_load<Shader>(STRING_ID(SHADER));
-
     color_pipeline->set_shaders(shader, shader);
     transparent_pipeline->set_shaders(shader, shader);
 
+    const auto vertex_shader = vulkan::VulkanShader(color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex), gpu_context);
+    const auto fragment_shader = vulkan::VulkanShader(color_pipeline->get_shader(vk::ShaderStageFlagBits::eFragment), gpu_context);
+
+    color_pipeline->set_descriptor_set_layouts(vertex_shader.create_descriptor_layouts());
+    transparent_pipeline->set_descriptor_set_layouts(vertex_shader.create_descriptor_layouts());
+
     std::vector<vk::DescriptorSetLayout> layouts;
-    layouts.insert_range(layouts.begin(), gpu_context->get_global_descriptor_layouts());
-    // layouts.push_back(color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex)->get_descriptor_layout());
-    //        // color_pipeline->fragment_shader->get_descriptor_layout()
+    // layouts.insert_range(layouts.begin(), gpu_context->get_global_descriptor_layouts());
+    layouts.append_range(color_pipeline->get_descriptor_set_layouts());
+    // color_pipeline->fragment_shader->get_descriptor_layout()
 
     std::vector<vk::PushConstantRange> ranges;
-    // const auto vertex_constants = color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex)->get_push_constant_range(vk::ShaderStageFlagBits::eVertex);
-    // if (vertex_constants.has_value())
-        // ranges.push_back(vertex_constants.value());
-
-    // const auto fragment_constants = color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex)->get_push_constant_range(vk::ShaderStageFlagBits::eFragment);
-    // if (fragment_constants.has_value())
-        // ranges.push_back(fragment_constants.value());
+    ranges.append_range(vertex_shader.get_push_constant_range(ShaderStage::Vertex));
+    ranges.append_range(fragment_shader.get_push_constant_range(ShaderStage::Fragment));
 
     const vk::PipelineLayoutCreateInfo pipeline_layout_info{
         .setLayoutCount = static_cast<uint32_t>(layouts.size()),
@@ -719,30 +710,31 @@ void GltfLoader::load_pipelines() const
     color_pipeline->set_layout(std::make_shared<vk::raii::PipelineLayout>(gpu_context->create_pipeline_layout(pipeline_layout_info)));
     transparent_pipeline->set_layout(std::make_shared<vk::raii::PipelineLayout>(gpu_context->create_pipeline_layout(pipeline_layout_info)));
 
-    // vulkan::PipelineBuilder builder;
-    // builder.set_shaders(
-    //            color_pipeline->get_shader(vk::ShaderStageFlagBits::eVertex),
-    //            color_pipeline->get_shader(vk::ShaderStageFlagBits::eFragment)
-    //            )
-    //        .set_input_topology(vk::PrimitiveTopology::eTriangleList)
-    //        .set_polygon_mode(vk::PolygonMode::eFill)
-    //        .set_cull_mode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise)
-    //        .disable_multisampling()
-    //        .disable_color_blending()
-    //        .enable_depth_stencil(true, vk::CompareOp::eGreaterOrEqual)
-    //        .set_color_attachment_format(gpu_context->get_draw_image_format())
-    //        .set_depth_format(gpu_context->get_depth_format());
-    //
-    // builder.set_layout(color_pipeline->get_layout());
-    // color_pipeline->set_pipeline(std::make_shared<vk::raii::Pipeline>(gpu_context->create_pipeline(builder)));
-    //
-    // builder.set_layout(transparent_pipeline->get_layout())
-    //        .enable_blending_additive()
-    //        .enable_depth_stencil(false, vk::CompareOp::eGreaterOrEqual);
-    // transparent_pipeline->set_pipeline(std::make_shared<vk::raii::Pipeline>(gpu_context->create_pipeline(builder)));
-    //
-    // color_pipeline->set_state(ResourceState::Loaded);
-    // transparent_pipeline->set_state(ResourceState::Loaded);
+    vulkan::PipelineBuilder builder;
+
+    auto shader_module = vertex_shader.create_shader_module();
+
+    builder.add_shader(shader_module, ShaderStage::Vertex, vertex_shader.get_shader()->get_entry_point(ShaderStage::Vertex))
+           .add_shader(shader_module, ShaderStage::Fragment, vertex_shader.get_shader()->get_entry_point(ShaderStage::Fragment))
+           .set_input_topology(vk::PrimitiveTopology::eTriangleList)
+           .set_polygon_mode(vk::PolygonMode::eFill)
+           .set_cull_mode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise)
+           .disable_multisampling()
+           .disable_color_blending()
+           .enable_depth_stencil(true, vk::CompareOp::eGreaterOrEqual)
+           .set_color_attachment_format(gpu_context->get_draw_image_format())
+           .set_depth_format(gpu_context->get_depth_format());
+
+    builder.set_layout(color_pipeline->get_layout());
+    color_pipeline->set_pipeline(std::make_shared<vk::raii::Pipeline>(gpu_context->create_pipeline(builder)));
+
+    builder.set_layout(transparent_pipeline->get_layout())
+           .enable_blending_additive()
+           .enable_depth_stencil(false, vk::CompareOp::eGreaterOrEqual);
+    transparent_pipeline->set_pipeline(std::make_shared<vk::raii::Pipeline>(gpu_context->create_pipeline(builder)));
+
+    color_pipeline->set_state(ResourceState::Loaded);
+    transparent_pipeline->set_state(ResourceState::Loaded);
 }
 
 } // portal

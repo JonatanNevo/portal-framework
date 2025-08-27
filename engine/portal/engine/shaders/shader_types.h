@@ -46,13 +46,13 @@ enum class DescriptorType : uint8_t
     InlineUniformBlock,
 };
 
-struct DescriptorLayout
+struct FieldLayout
 {
     StringId name;
     // Value is ignored, only looking at the reflection
     reflection::Property property;
-    size_t offset;
-    size_t size;
+    size_t offset{};
+    size_t size{};
 };
 
 struct ShaderDescriptorBinding
@@ -64,7 +64,7 @@ struct ShaderDescriptorBinding
     StringId name = INVALID_STRING_ID;
 
     // Only relevant in buffer types
-    std::unordered_map<StringId, DescriptorLayout> layout;
+    std::unordered_map<StringId, FieldLayout> fields;
 };
 
 struct DescriptorBindingPointer
@@ -72,7 +72,7 @@ struct DescriptorBindingPointer
     StringId name{};
     size_t layout_index = std::numeric_limits<size_t>::max();
     size_t binding_index = std::numeric_limits<size_t>::max();
-    std::optional<StringId> layout_name = std::nullopt;
+    std::optional<StringId> field_name = std::nullopt;
 };
 
 struct ShaderDescriptorLayout
@@ -84,7 +84,7 @@ struct ShaderDescriptorLayout
 struct ShaderPushConstant
 {
     StringId name;
-    ShaderStage stage;
+    ShaderStage stage = ShaderStage::All;
     size_t size{};
     size_t offset{};
 };
