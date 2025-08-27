@@ -7,6 +7,185 @@
 
 #include "portal/engine/shaders/shader_types.h"
 
+/**
+ ● 🎯 Complete DEFINES with Possible Values
+
+  🔧 Core Configuration
+
+  DEBUG - Debug visualization mode
+  - DEBUG_NONE (100) - No debug visualization (production)
+  - DEBUG_NORMAL_SHADING (0) - Show shading normals
+  - DEBUG_NORMAL_TEXTURE (1) - Show normal map
+  - DEBUG_NORMAL_GEOMETRY (2) - Show geometry normals
+  - DEBUG_TANGENT (3) - Show tangent vectors
+  - DEBUG_BITANGENT (4) - Show bitangent vectors
+  - DEBUG_ALPHA (5) - Show alpha channel
+  - DEBUG_UV_0 (6) - Show primary UV coordinates
+  - DEBUG_UV_1 (7) - Show secondary UV coordinates
+  - DEBUG_OCCLUSION (8) - Show ambient occlusion
+  - DEBUG_EMISSIVE (9) - Show emissive color
+  - DEBUG_BASE_COLOR (10) - Show base color
+  - DEBUG_ROUGHNESS (11) - Show roughness values
+  - DEBUG_METALLIC (12) - Show metallic values
+  - DEBUG_CLEARCOAT_FACTOR (13) - Show clearcoat factor
+  - DEBUG_CLEARCOAT_ROUGHNESS (14) - Show clearcoat roughness
+  - DEBUG_CLEARCOAT_NORMAL (15) - Show clearcoat normals
+  - DEBUG_SHEEN_COLOR (16) - Show sheen color
+  - DEBUG_SHEEN_ROUGHNESS (17) - Show sheen roughness
+  - DEBUG_SPECULAR_FACTOR (18) - Show specular factor
+  - DEBUG_SPECULAR_COLOR (19) - Show specular color
+  - DEBUG_TRANSMISSION_FACTOR (20) - Show transmission factor
+  - DEBUG_VOLUME_THICKNESS (21) - Show volume thickness
+  - DEBUG_DIFFUSE_TRANSMISSION_FACTOR (22) - Show diffuse transmission factor
+  - DEBUG_DIFFUSE_TRANSMISSION_COLOR_FACTOR (23) - Show diffuse transmission color
+  - DEBUG_IRIDESCENCE_FACTOR (24) - Show iridescence factor
+  - DEBUG_IRIDESCENCE_THICKNESS (25) - Show iridescence thickness
+  - DEBUG_ANISOTROPIC_STRENGTH (26) - Show anisotropy strength
+  - DEBUG_ANISOTROPIC_DIRECTION (27) - Show anisotropy direction
+
+  ALPHAMODE - Alpha blending mode
+  - ALPHAMODE_OPAQUE (0) - Fully opaque rendering
+  - ALPHAMODE_MASK (1) - Alpha testing with cutoff
+  - ALPHAMODE_BLEND (2) - Alpha blending
+
+  LINEAR_OUTPUT - Output format
+  - Defined - Output linear HDR color
+  - Undefined - Apply tone mapping to sRGB
+
+  USE_IBL - Image-Based Lighting
+  - Defined - Enable IBL calculations
+  - Undefined - No IBL (punctual lights only)
+
+  USE_PUNCTUAL - Punctual lights
+  - Defined - Enable directional/point/spot lights
+  - Undefined - No punctual lights
+
+  LIGHT_COUNT - Number of punctual lights
+  - Integer value (e.g., 4, 8, 16) - Maximum lights to process
+
+  🎨 Material Features (Boolean - Defined/Undefined)
+
+  MATERIAL_METALLICROUGHNESS - Standard PBR workflow
+  MATERIAL_SPECULARGLOSSINESS - Legacy workflow
+  MATERIAL_CLEARCOAT - Clear coat layer
+  MATERIAL_SHEEN - Fabric sheen
+  MATERIAL_SPECULAR - Specular control
+  MATERIAL_TRANSMISSION - Glass transmission
+  MATERIAL_VOLUME - Volumetric effects
+  MATERIAL_IRIDESCENCE - Thin-film interference
+  MATERIAL_DIFFUSE_TRANSMISSION - Diffuse transmission
+  MATERIAL_ANISOTROPY - Anisotropic reflections
+  MATERIAL_DISPERSION - Chromatic dispersion
+  MATERIAL_IOR - Custom index of refraction
+  MATERIAL_EMISSIVE_STRENGTH - HDR emissive
+  MATERIAL_UNLIT - Unlit shading
+
+  📋 Vertex Attributes (Boolean - Defined/Undefined)
+
+  HAS_NORMAL_VEC3 - Vertex normals available
+  HAS_TANGENT_VEC4 - Vertex tangents available
+  HAS_TEXCOORD_0_VEC2 - Primary UV coordinates
+  HAS_TEXCOORD_1_VEC2 - Secondary UV coordinates
+  HAS_COLOR_0_VEC3 - Vertex colors RGB
+  HAS_COLOR_0_VEC4 - Vertex colors RGBA
+
+  🗺️ Texture Maps (Boolean - Defined/Undefined)
+
+  Base Material:
+  - HAS_BASE_COLOR_MAP
+  - HAS_NORMAL_MAP
+  - HAS_METALLIC_ROUGHNESS_MAP
+  - HAS_EMISSIVE_MAP
+  - HAS_OCCLUSION_MAP
+
+  Clearcoat:
+  - HAS_CLEARCOAT_MAP
+  - HAS_CLEARCOAT_ROUGHNESS_MAP
+  - HAS_CLEARCOAT_NORMAL_MAP
+
+  Sheen:
+  - HAS_SHEEN_COLOR_MAP
+  - HAS_SHEEN_ROUGHNESS_MAP
+
+  Specular:
+  - HAS_SPECULAR_MAP
+  - HAS_SPECULAR_COLOR_MAP
+
+  Transmission:
+  - HAS_TRANSMISSION_MAP
+  - HAS_THICKNESS_MAP
+
+  Iridescence:
+  - HAS_IRIDESCENCE_MAP
+  - HAS_IRIDESCENCE_THICKNESS_MAP
+
+  Diffuse Transmission:
+  - HAS_DIFFUSE_TRANSMISSION_MAP
+  - HAS_DIFFUSE_TRANSMISSION_COLOR_MAP
+
+  Anisotropy:
+  - HAS_ANISOTROPY_MAP
+
+  🔄 UV Transforms (Boolean - Defined/Undefined)
+
+  Base:
+  - HAS_NORMAL_UV_TRANSFORM
+  - HAS_EMISSIVE_UV_TRANSFORM
+  - HAS_OCCLUSION_UV_TRANSFORM
+  - HAS_BASECOLOR_UV_TRANSFORM
+  - HAS_METALLICROUGHNESS_UV_TRANSFORM
+
+  Extensions:
+  - HAS_CLEARCOAT_UV_TRANSFORM
+  - HAS_CLEARCOATROUGHNESS_UV_TRANSFORM
+  - HAS_CLEARCOATNORMAL_UV_TRANSFORM
+  - HAS_SHEENCOLOR_UV_TRANSFORM
+  - HAS_SHEENROUGHNESS_UV_TRANSFORM
+  - HAS_SPECULAR_UV_TRANSFORM
+  - HAS_SPECULARCOLOR_UV_TRANSFORM
+  - HAS_TRANSMISSION_UV_TRANSFORM
+  - HAS_THICKNESS_UV_TRANSFORM
+  - HAS_IRIDESCENCE_UV_TRANSFORM
+  - HAS_IRIDESCENCETHICKNESS_UV_TRANSFORM
+  - HAS_DIFFUSETRANSMISSION_UV_TRANSFORM
+  - HAS_DIFFUSETRANSMISSIONCOLOR_UV_TRANSFORM
+  - HAS_ANISOTROPY_UV_TRANSFORM
+
+  🎮 Animation (Boolean/Integer)
+
+  Skinning:
+  - USE_SKINNING - Enable GPU skinning
+  - HAS_JOINTS_0_VEC4 - First 4 bone indices
+  - HAS_JOINTS_1_VEC4 - Additional 4 bone indices
+  - HAS_WEIGHTS_0_VEC4 - First 4 bone weights
+  - HAS_WEIGHTS_1_VEC4 - Additional 4 bone weights
+
+  Morphing:
+  - USE_MORPHING - Enable morph targets
+  - HAS_MORPH_TARGETS - Morph targets available
+  - WEIGHT_COUNT - Integer (e.g., 4, 8) - Number of morph weights
+  - HAS_MORPH_TARGET_POSITION - Position deltas
+  - HAS_MORPH_TARGET_NORMAL - Normal deltas
+  - HAS_MORPH_TARGET_TANGENT - Tangent deltas
+  - HAS_MORPH_TARGET_TEXCOORD0 - UV0 deltas
+  - HAS_MORPH_TARGET_TEXCOORD1 - UV1 deltas
+  - HAS_MORPH_TARGET_COLOR - Color deltas
+
+  Instancing:
+  - USE_INSTANCING - GPU instancing enabled
+
+  🎨 Tone Mapping (Mutually Exclusive)
+
+  Choose ONE:
+  - TONEMAP_ACES_NARKOWICZ - Fast ACES approximation
+  - TONEMAP_ACES_HILL - Full ACES filmic
+  - TONEMAP_ACES_HILL_EXPOSURE_BOOST - ACES with 1.67x exposure boost
+  - TONEMAP_KHR_PBR_NEUTRAL - Khronos neutral tone mapping
+
+  🔧 Vertex Processing (Boolean)
+
+  - HAS_VERT_NORMAL_UV_TRANSFORM - Vertex-level normal UV transform
+ */
 namespace portal
 {
 
@@ -208,7 +387,10 @@ CompiledShader ShaderCompiler::compile(const CompileRequest& request)
     }};
 
     std::vector<slang::PreprocessorMacroDesc> macros = {
-        {"MATERIAL_METALLICROUGHNESS", "1"}
+        {"MATERIAL_METALLICROUGHNESS", "1"},
+        {"HAS_NORMAL_VEC3", "1"},
+        {"HAS_COLOR_0_VEC4", "1"},
+        {"HAS_TEXCOORD_0_VEC2", "1"}
     };
 
     auto parent_path = request.shader_path.parent_path().string();

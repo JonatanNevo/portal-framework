@@ -21,7 +21,7 @@ public struct MaterialInputs
 
     float transmission_factor;
 
-    float thichness_factor;
+    float thickness_factor;
     float3 attenuation_color;
     float attenuation_distance;
 
@@ -37,7 +37,7 @@ public struct MaterialInputs
 
     float ior;
 
-    float3 anistropy;
+    float3 anisotropy;
 
     float dispersion;
 
@@ -47,11 +47,17 @@ public struct MaterialInputs
 public struct SceneData
 {
     public float3 camera;
-    public float4x4 model_matrix;
     public float4x4 view_matrix;
     public float4x4 projection_matrix;
+    public float4x4 view_proj;
     public int2 screen_size;
     public float exposure; // TODO: have it in some camera struct?
+}
+
+public struct ModelInfo
+{
+    public float4x4 model_matrix;
+    public float4x4 normal_matrix;
 }
 
 public struct Material
@@ -101,7 +107,7 @@ public struct Material
     public float dispersion;
 }
 
-public NormalInfo get_normal_info(Vertex vert, ScaledTexture normal_texture, float3 v, float2 v_texcoord_0, float2 v_texcoord_1)
+public NormalInfo get_normal_info(Vertex vert, ScaledTexture normal_texture, float normal_scale, float3 v, float2 v_texcoord_0, float2 v_texcoord_1)
 {
     float2 uv = get_normal_uv(normal_texture, v_texcoord_0, v_texcoord_1);
     float2 uv_dx = ddx(uv);
@@ -164,10 +170,10 @@ public float3 get_clearcoat_normal(NormalInfo normal_info)
 #ifdef HAS_CLEARCOAT_NORMAL_MAP
     float3 n = clearcoat_normal_texture.Sample(get_clearcoat_normal_uv()).rgb * 2.0 - float3(1.0);
     n *= float3(clearcoat_normal_scale, u_ClearcoatNormalScale, 1.0);
-    n = float3x3(normal_info.t, normal_info.b, normal_info.ng) * normalize(n);
+    n = mul(float3x3(normal_info.tangent, normal_info.bitangent, normal_info.geometry_normal), normalize(n));
     return n;
 #else
-    return normal_info.ng;
+    return normal_info.geometry_normal;
 #endif
 }
 #endif
@@ -177,7 +183,7 @@ public float4 get_base_color(MaterialInputs input, float2 v_texcoord_0, float2 v
     float4 base_color = input.base_color_factor;
 
 #ifdef HAS_BASE_COLOR_MAP
-    base_color *= color_texture.Sample(get_base_color_uv(v_texcoord_0, v_texcoord_1))
+    base_color *= color_texture.Sample(get_base_color_uv(v_texcoord_0, v_texcoord_1));
 #endif
 
     return base_color;
@@ -355,13 +361,13 @@ public Material get_anisotropy_info(MaterialInputs input, Material info, NormalI
     direction = anisotropy_sample.xy * 2.0 - float2(1.0);
     strength_factor = anisotropy_sample.z;
 #endif
-    float2 direction_rotation = input.anistropy.xy; // cos(theta), sin(theta)
+    float2 direction_rotation = input.anisotropy.xy; // cos(theta), sin(theta)
     float2x2 rotation_matrix = float2x2(direction_rotation.x, direction_rotation.y, -direction_rotation.y, direction_rotation.x);
     direction = mul(rotation_matrix, direction.xy);
 
     info.anisotropic_t = mul(float3x3(normal_info.tangent, normal_info.bitangent, normal_info.normal), normalize(float3(direction, 0.0)));
     info.anisotropic_b = cross(normal_info.geometry_normal, info.anisotropic_t);
-    info.anisotropy_strength = clamp(input.anistropy.z * strength_factor, 0.0, 1.0);
+    info.anisotropy_strength = clamp(input.anisotropy.z * strength_factor, 0.0, 1.0);
     return info;
 }
 #endif

@@ -95,7 +95,7 @@ public float3 tonemap_khronos_pbr_neutral(float3 color )
     color *= newPeak / peak;
 
     float g = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
-    return mix(color, newPeak * vec3(1, 1, 1), g);
+    return lerp(color, newPeak * float3(1, 1, 1), g);
 }
 #endif
 

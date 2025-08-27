@@ -9,6 +9,7 @@ public struct Vertex
     #ifdef HAS_NORMAL_VEC3
     #ifdef HAS_TANGENT_VEC4
     public float3x3 tbn;
+    public float4 tangent;
     #else
     public float3 normal;
     #endif
@@ -19,6 +20,14 @@ public struct Vertex
     #endif
     #ifdef HAS_COLOR_0_VEC4
     public float4 color;
+    #endif
+
+    #ifdef HAS_TEXCOORD_0_VEC2
+    public float2 uv0;
+    #endif
+
+    #ifdef HAS_TEXCOORD_1_VEC2
+    public float2 uv1;
     #endif
 }
 
