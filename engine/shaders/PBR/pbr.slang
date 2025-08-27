@@ -41,12 +41,13 @@ import brdf;
 import lights;
 import ibl;
 import material_info;
+import animation;
 
 #ifdef MATERIAL_IRIDESCENCE
 import iridescence;
 #endif
 
-ConstantBuffer<SceneData> scene_data;
+ParameterBlock<SceneData> scene_data;
 
 #ifdef USE_PUNCTUAL
 ParameterBlock<Light> lights[LIGHT_COUNT + 1];
@@ -108,17 +109,157 @@ ParameterBlock<MaterialTexture> diffuse_transmission_color_texture;
 ParameterBlock<MaterialTexture> anisotropy_texture;
 #endif
 
-ParameterBlock<Vertex> vertex_input;
+#ifdef USE_INSTANCING
+ParameterBlock<float4x4> instance_model_matrix;
+#endif
 
-struct VertexIn
+#ifdef HAS_VERT_NORMAL_UV_TRANSFORM
+ParameterBlock<float3x3> normal_uv_transform;
+#endif
+
+ParameterBlock<AnimationData> animation_data;
+
+struct VertexOutput
 {
-    float3 position;
+    float4 position: SV_Position;
+    Vertex vertex;
     float2 uv0;
     float2 uv1;
 };
 
+float4 get_position(uint vertex_id, Vertex v)
+{
+    float4 pos = float4(v.position, 1);
+
+#ifdef USE_MORPHING
+    pos += get_target_position(animation_data, vertex_id);
+#endif
+
+#ifdef USE_SKINNING
+    pos = mul(get_skinning_matrix(animation_data), pos);
+#endif
+
+    return pos;
+}
+
+#ifdef HAS_NORMAL_VEC3
+float3 get_normal(uint vertex_id, Vertex v)
+{
+    float3 normal = v.normal;
+
+#ifdef USE_MORPHING
+    normal += get_target_normal(animation_data, vertex_id);
+#endif
+
+#ifdef USE_SKINNING
+    normal = mul(float3x3(get_skinning_matrix(animation_data)), normal);
+#endif
+
+    return normalize(normal);
+}
+#endif
+
+#ifdef HAS_NORMAL_VEC3
+#ifdef HAS_TANGENT_VEC4
+float3 get_tangent(uint vertex_id, Vertex v)
+{
+    float3 tangent = v.tangent.xyz;
+
+#ifdef USE_MORPHING
+    tangent += get_target_tangent(animation_data, vertex_id);
+#endif
+
+#ifdef USE_SKINNING
+    tangent = mul(float3x3(get_skinning_matrix(animation_data)), tangent);
+#endif
+
+    return normalize(tangent);
+}
+#endif
+#endif
+
+
+[shader("vertex")]
+VertexOutput vert_main(uint vertex_id : SV_VertexID, [[push_constant]] uniform Vertex* vertex_buffer, [[push_constant]] uniform ModelInfo model_info)
+{
+    Vertex v = vertex_buffer[vertex_id];
+
+#ifdef USE_INSTANCING
+    float4x4 model_matrix = instance_model_matrix;
+    float4x4 normal_matrix = transpose(inverse(model_matrix));
+#else
+    float4x4 model_matrix = model_info.model_matrix;
+    float4x4 normal_matrix = model_info.normal_matrix;
+#endif
+
+#ifdef USE_SKINNING
+    float4 pos = get_position(vertex_id, v);
+#else
+    float4 pos = mul(model_matrix, get_position(vertex_id, v));
+#endif
+
+    Vertex out_vertex;
+    VertexOutput out;
+    out.vertex = out_vertex;
+    out.vertex.position = pos.xyz / pos.w;
+
+#ifdef HAS_NORMAL_VEC3
+#ifdef HAS_TANGENT_VEC4
+    float3 tangent = get_tangent(vertex_id, v);
+    float3 normal_w = normalize(float3(mul(normal_matrix, float4(get_normal(vertex_id, v), 0.0))));
+    float3 tangent_w = float3(mul(model_matrix, float4(tangent, 0)));
+    float3 bitangent_w = cross(normal_w, tangent_w) * v.tangent.w;
+
+#ifdef HAS_VERT_NORMAL_UV_TRANSFORM
+    tangent_w = mul(normal_uv_transform, tangent_w);
+    bitangent_w = mul(normal_uv_transform, bitangent_w);
+#endif
+
+    bitangent_w = normalize(bitangent_w);
+    tangent_w = normalize(tangent_w);
+    out.vertex.tbn = float3x3(tangent_w, bitangent_w, normal_w);
+#else
+    out.vertex.normal = normalize(float3(mul(normal_matrix, float4(get_normal(vertex_id, v), 0.0))));
+#endif
+#endif
+
+    out.uv0 = float2(0.0, 0.0);
+    out.uv1 = float2(0.0, 0.0);
+
+#ifdef HAS_TEXCOORD_0_VEC2
+    out.uv0 = v.uv0;
+#endif
+
+#ifdef HAS_TEXCOORD_1_VEC2
+    out.uv1 = v.uv1;
+#endif
+
+#ifdef USE_MORPHING
+    out.uv0 += get_target_tex_coord0(animation_data, vertex_id);
+    out.uv1 += get_target_tex_coord1(animation_data, vertex_id);
+#endif
+
+#ifdef HAS_COLOR_0_VEC3
+    out.color = v.color;
+#ifdef USE_MORPHING
+    out.color = clamp(out.color + get_target_color0(animation_data, vertex_id).xyz, 0, 1.f);
+#endif
+#endif
+
+#ifdef HAS_COLOR_0_VEC4
+    out.color = v.color;
+#ifdef USE_MORPHING
+    out.color = clamp(out.color + get_target_color0(animation_data, vertex_id).xyz, 0, 1.f);
+#endif
+#endif
+
+    out.position = mul(model_info.model_matrix, pos);
+
+    return out;
+}
+
 [shader("fragment")]
-float4 frag_main(VertexIn in) : SV_Target
+float4 frag_main(VertexOutput in, [[push_constant]] uniform ModelInfo model_info) : SV_Target
 {
     float4 base_color = get_base_color(material_inputs, in.uv0, in.uv1);
 
@@ -128,8 +269,8 @@ float4 frag_main(VertexIn in) : SV_Target
 
     float3 color = float3(0);
 
-    float3 v = normalize(scene_data.camera - in.position);
-    NormalInfo normal_info = get_normal_info(vertex_input, normal_texture, v, in.uv0, in.uv1);
+    float3 v = normalize(scene_data.camera - in.position.xyz);
+    NormalInfo normal_info = get_normal_info(in.vertex, normal_texture, normal_texture.scale, v, in.uv0, in.uv1);
     float3 n = normal_info.normal;
     float3 t = normal_info.tangent;
     float3 b = normal_info.bitangent;
@@ -151,43 +292,43 @@ float4 frag_main(VertexIn in) : SV_Target
     material.f90_dielectric = material.f90;
 
 #ifdef MATERIAL_IOR
-    material = get_ior_info(material)
+    material = get_ior_info(material_inputs, material);
 #endif
 
 #ifdef MATERIAL_METALLICROUGHNESS
-    material = get_metallic_roughness_info(material)
+    material = get_metallic_roughness_info(material_inputs, material, in.uv0, in.uv1);
 #endif
 
 #ifdef MATERIAL_SHEEN
-    material = get_sheen_info(material)
+    material = get_sheen_info(material_inputs, material, in.uv0, in.uv1);
 #endif
 
 #ifdef MATERIAL_CLEARCOAT
-    material = get_clearcoat_info(material, normalInfo);
+    material = get_clearcoat_info(material_inputs, material, normal_info, in.uv0, in.uv1);
 #endif
 
 #ifdef MATERIAL_SPECULAR
-    material = get_specular_info(material);
+    material = get_specular_info(material_inputs, material, in.uv0, in.uv1);
 #endif
 
 #ifdef MATERIAL_TRANSMISSION
-    material = get_transmission_info(material);
+    material = get_transmission_info(material_inputs, material, in.uv0, in.uv1);
 #endif
 
 #ifdef MATERIAL_VOLUME
-    material = get_volume_info(material);
+    material = get_volume_info(material_inputs, material, in.uv0, in.uv1);
 #endif
 
 #ifdef MATERIAL_IRIDESCENCE
-    material = get_iridescence_info(material);
+    material = get_iridescence_info(material_inputs, material, in.uv0, in.uv1);
 #endif
 
 #ifdef MATERIAL_DIFFUSE_TRANSMISSION
-    material = get_diffuse_transmission_info(material);
+    material = get_diffuse_transmission_info(material_inputs, material, in.uv0, in.uv1);
 #endif
 
 #ifdef MATERIAL_ANISOTROPY
-    material = get_anisotropy_info(material, normalInfo);
+    material = get_anisotropy_info(material_inputs, material, normal_info, in.uv0, in.uv1);
 #endif
 
     material.perceptual_roughness = clamp(material.perceptual_roughness, 0.0, 1.0);
@@ -210,7 +351,7 @@ float4 frag_main(VertexIn in) : SV_Target
     float3 f_diffuse_transmission = float3(0.0);
 
     float clearcoat_factor = 0;
-    float3 clearcoat_fresnetl = float3(0.0);
+    float3 clearcoat_fresnel = float3(0.0);
 
     float albedo_sheen_scaling = 1.f;
     float diffuse_transmission_thickness = 1.0;
@@ -227,7 +368,7 @@ float4 frag_main(VertexIn in) : SV_Target
 #ifdef MATERIAL_DIFFUSE_TRANSMISSION
 #ifdef MATERIAL_VOLUME
     diffuse_transmission_thickness = material.thickness *
-        (length(float3(scene_data.model_matrix[0].xyz)) + length(float3(scene_data.model_matrix[1].xyz)) + length(float3(scene_data.model_matrix[2].xyz))) / 3.0;
+        (length(float3(model_info.model_matrix[0].xyz)) + length(float3(model_info.model_matrix[1].xyz)) + length(float3(model_info.model_matrix[2].xyz))) / 3.0;
 #endif
 #endif
 
@@ -238,42 +379,42 @@ float4 frag_main(VertexIn in) : SV_Target
 
     // Calculate lighting contribution from image based lighting source (IBL)
 #if defined(USE_IBL) || defined(MATERIAL_TRANSMISSION)
-    f_diffuse = get_diffuse_light(n) * base_color.rgb ;
+    f_diffuse = get_diffuse_light(ibl_data, n) * base_color.rgb ;
 
 #ifdef MATERIAL_DIFFUSE_TRANSMISSION
-    float3 diffuseTransmissionIBL = get_diffuse_light(-n) * material.diffuse_transmission_color_factor;
+    float3 diffuseTransmissionIBL = get_diffuse_light(ibl_data, -n) * material.diffuse_transmission_color_factor;
 #ifdef MATERIAL_VOLUME
         diffuseTransmissionIBL = apply_volume_attenuation(diffuseTransmissionIBL, diffuse_transmission_thickness, material.attenuation_color, material.attenuation_distance);
 #endif
-    f_diffuse = mix(f_diffuse, diffuseTransmissionIBL, material.diffuse_transmission_factor);
+    f_diffuse = lerp(f_diffuse, diffuseTransmissionIBL, material.diffuse_transmission_factor);
 #endif
 
 
 #if defined(MATERIAL_TRANSMISSION)
     f_specular_transmission = get_ibl_volume_refraction(
-        n, v,
+        transmission_texture, n, v,
         material.perceptual_roughness,
-        base_color.rgb, in.position, scene_data.model_matrix, scene_data.view_matrix, scene_data.projection_matrix,
+        base_color.rgb, in.position, model_info.model_matrix, scene_data.view_matrix, scene_data.projection_matrix,
         material.ior, material.thickness, material.attenuation_color, material.attenuation_distance, material.dispersion);
     f_diffuse = lerp(f_diffuse, f_specular_transmission, material.transmission_factor);
 #endif
 
 #ifdef MATERIAL_ANISOTROPY
-    f_specular_metal = get_ibl_radiance_anisotropy(n, v, material.perceptual_roughness, material.anisotropy_strength, material.anisotropic_b);
+    f_specular_metal = get_ibl_radiance_anisotropy(ibl_data, n, v, material.perceptual_roughness, material.anisotropy_strength, material.anisotropic_b);
     f_specular_dielectric = f_specular_metal;
 #else
-    f_specular_metal = get_ibl_radiance_ggx(n, v, material.perceptual_roughness);
+    f_specular_metal = get_ibl_radiance_ggx(ibl_data, n, v, material.perceptual_roughness);
     f_specular_dielectric = f_specular_metal;
 #endif
 
 
     // Calculate fresnel mix for IBL  
 
-    float3 f_metal_fresnel_ibl = get_ibl_ggx_fresnel(n, v, material.perceptual_roughness, base_color.rgb, 1.0);
+    float3 f_metal_fresnel_ibl = get_ibl_ggx_fresnel(ibl_data, n, v, material.perceptual_roughness, base_color.rgb, 1.0);
     f_metal_brdf_ibl = f_metal_fresnel_ibl * f_specular_metal;
 
-    float3 f_dielectric_fresnel_ibl = get_ibl_ggx_fresnel(n, v, material.perceptual_roughness, material.f0_dielectric, material.specular_weight);
-    f_dielectric_brdf_ibl = mix(f_diffuse, f_specular_dielectric,  f_dielectric_fresnel_ibl);
+    float3 f_dielectric_fresnel_ibl = get_ibl_ggx_fresnel(ibl_data, n, v, material.perceptual_roughness, material.f0_dielectric, material.specular_weight);
+    f_dielectric_brdf_ibl = lerp(f_diffuse, f_specular_dielectric,  f_dielectric_fresnel_ibl);
 
 #ifdef MATERIAL_IRIDESCENCE
     f_metal_brdf_ibl = lerp(f_metal_brdf_ibl, f_specular_metal * iridescenceFresnel_metallic, material.iridescence_factor);
@@ -282,22 +423,22 @@ float4 frag_main(VertexIn in) : SV_Target
 
 
 #ifdef MATERIAL_CLEARCOAT
-    clearcoat_brdf = get_ibl_radiance_ggx(material.clearcoat_normal, v, material.clearcoat_roughness);
+    clearcoat_brdf = get_ibl_radiance_ggx(ibl_data, material.clearcoat_normal, v, material.clearcoat_roughness);
 #endif
 
 #ifdef MATERIAL_SHEEN
-    f_sheen = get_ibl_radiance_charlie(n, v, material.sheen_roughness, material.sheen_color);
-    albedo_sheen_scaling = 1.0 - lerp(material.sheen_color, albedo_sheen_scaling(n_dot_v, material.sheen_roughness));
+    f_sheen = get_ibl_radiance_charlie(ibl_data, n, v, material.sheen_roughness, material.sheen_color);
+    albedo_sheen_scaling = 1.0 - lerp(material.sheen_color, albedo_sheen_scaling_lut(ibl_data, n_dot_v, material.sheen_roughness));
 #endif
 
-    color = lerp(f_dielectric_brdf_ibl, f_metal_brdf_ibl, materialInfo.metallic);
+    color = lerp(f_dielectric_brdf_ibl, f_metal_brdf_ibl, material.metallic);
     color = f_sheen + color * albedo_sheen_scaling;
     color = lerp(color, clearcoat_brdf, clearcoat_factor * clearcoat_fresnel);
 
 #ifdef HAS_OCCLUSION_MAP
     float ao = 1.0;
     ao = occlusion_texture.Sample(get_occlusion_uv(in.uv0, in.uv1)).r;
-    color = color * (1.0 + occlusion_strength * (ao - 1.0)); 
+    color = color * (1.0 + occlusion_texture.scale * (ao - 1.0)); 
 #endif
 
 #endif //end USE_IBL
@@ -368,7 +509,7 @@ float4 frag_main(VertexIn in) : SV_Target
 #ifdef MATERIAL_TRANSMISSION
         // If the light ray travels through the geometry, use the point it exits the geometry again.
         // That will change the angle to the light source, if the material refracts the light ray.
-        float3 transmissionRay = get_volume_transmission_ray(n, v, material.thickness, material.ior, scene_data.model_matrix);
+        float3 transmissionRay = get_volume_transmission_ray(n, v, material.thickness, material.ior, model_info.model_matrix);
         point_to_light -= transmissionRay;
         l = normalize(point_to_light);
 
@@ -415,7 +556,7 @@ float4 frag_main(VertexIn in) : SV_Target
         
         float3 l_color = lerp(l_dielectric_brdf, l_metal_brdf, material.metallic);
         l_color = l_sheen + l_color * l_albedoSheenScaling;
-        l_color = lerp(l_color, l_clearcoat_brdf, clearcoat_factor * clearcoat_fresnetl);
+        l_color = lerp(l_color, l_clearcoat_brdf, clearcoat_factor * clearcoat_fresnel);
         color += l_color;
     }
 #endif
@@ -556,7 +697,7 @@ float3 specular_texture_sample = float3(1.0);
 #endif
 #ifdef MATERIAL_VOLUME
 #if DEBUG == DEBUG_VOLUME_THICKNESS
-    output_color.rgb = float3(material.thickness / material_inputs.thichness_factor);
+    output_color.rgb = float3(material.thickness / material_inputs.thickness_factor);
 #endif
 #endif
 
@@ -581,7 +722,7 @@ float3 specular_texture_sample = float3(1.0);
     direction = anisotropy_texture.Sample(get_anisotropy_uv(in.uv0, in.uv1)).xy;
     direction = direction * 2.0 - float2(1.0); // [0, 1] -> [-1, 1]
 #endif
-    float2 direction_rotation = material_inputs.anistropy.xy; // cos(theta), sin(theta)
+    float2 direction_rotation = material_inputs.anisotropy.xy; // cos(theta), sin(theta)
     float2x2 rotation_matrix = float2x2(direction_rotation.x, direction_rotation.y, -direction_rotation.y, direction_rotation.x);
     direction = mul(rotation_matrix, direction);
     direction = (direction + float2(1.0)) * 0.5; // [-1, 1] -> [0, 1]

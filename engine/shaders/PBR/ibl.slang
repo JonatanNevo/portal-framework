@@ -58,7 +58,7 @@ float3 get_ibl_ggx_fresnel(ImageBasedLightingData ibl, float3 n, float3 v, float
     return FssEss + FmsEms;
 }
 
-float3 get_ibl_readiance_ggx(ImageBasedLightingData ibl, float3 n, float3 v, float roughness)
+float3 get_ibl_radiance_ggx(ImageBasedLightingData ibl, float3 n, float3 v, float roughness)
 {
     float NdotV = clamped_dot(n, v);
     float lod = roughness * float(ibl.mip_count - 1);
@@ -70,18 +70,32 @@ float3 get_ibl_readiance_ggx(ImageBasedLightingData ibl, float3 n, float3 v, flo
     return specularLight; 
 }
 
-#ifdef MATERIAL_TRANSMISSION
-float3 get_transmission_sample(float2 frag_coords, float roughness, float ior)
+public float3 get_ibl_radiance_charlie(ImageBasedLightingData ibl, float3 n, float3 v, float sheen_roughness, float3 sheen_color)
 {
-    float framebufferLod = log2(float(u_TransmissionFramebufferSize.x)) * apply_ior_to_roughness(roughness, ior);
-    float3 transmittedLight = textureLod(u_TransmissionFramebufferSampler, frag_coords.xy, framebufferLod).rgb;
+    float NdotV = clamped_dot(n, v);
+    float lod = sheen_roughness * float(ibl.mip_count - 1);
+    float3 reflection = normalize(reflect(-v, n));
+    
+    float2 brdfSamplePoint = clamp(float2(NdotV, sheen_roughness), float2(0.0, 0.0), float2(1.0, 1.0));
+    float brdf = ibl.charlie_lookup_table.Sample(brdfSamplePoint).b;
+    
+    float4 sheenSample = get_sheen_sample(ibl, reflection, lod);
+    
+    return sheenSample.rgb * sheen_color * brdf;
+}
+
+#ifdef MATERIAL_TRANSMISSION
+float3 get_transmission_sample(TransmissionTexture transmission_tex, float2 frag_coords, float roughness, float ior)
+{
+    float framebufferLod = log2(float(transmission_tex.framebuffer_size.x)) * apply_ior_to_roughness(roughness, ior);
+    float3 transmittedLight = transmission_tex.framebuffer_sampler.SampleLevel(frag_coords.xy, framebufferLod).rgb;
 
     return transmittedLight;
 }
 #endif
 
 #ifdef MATERIAL_TRANSMISSION
-float3 get_ibl_volume_refraction(float3 n, float3 v, float perceptualRoughness, float3 baseColor, float3 position, float4x4 modelMatrix, float4x4 viewMatrix, float4x4 projMatrix, float ior, float thickness, float3 attenuationColor, float attenuationDistance, float dispersion)
+float3 get_ibl_volume_refraction(TransmissionTexture transmission_tex, float3 n, float3 v, float perceptualRoughness, float3 baseColor, float3 position, float4x4 modelMatrix, float4x4 viewMatrix, float4x4 projMatrix, float ior, float thickness, float3 attenuationColor, float attenuationDistance, float dispersion)
 {
 #ifdef MATERIAL_DISPERSION
     // Dispersion will spread out the ior values for each r,g,b channel
@@ -98,13 +112,13 @@ float3 get_ibl_volume_refraction(float3 n, float3 v, float perceptualRoughness, 
         float3 refractedRayExit = position + transmissionRay;
 
         // Project refracted vector on the framebuffer, while mapping to normalized device coordinates.
-        float4 ndcPos = projMatrix * viewMatrix * float4(refractedRayExit, 1.0);
+        float4 ndcPos = mul(mul(projMatrix, viewMatrix), float4(refractedRayExit, 1.0));
         float2 refractionCoords = ndcPos.xy / ndcPos.w;
         refractionCoords += 1.0;
         refractionCoords /= 2.0;
 
         // Sample framebuffer to get pixel the refracted ray hits for this color channel.
-        transmittedLight[i] = get_transmission_sample(refractionCoords, perceptualRoughness, iors[i])[i];
+        transmittedLight[i] = get_transmission_sample(transmission_tex, refractionCoords, perceptualRoughness, iors[i])[i];
     }
 #else
     float3 transmissionRay = get_volume_transmission_ray(n, v, thickness, ior, modelMatrix);
@@ -112,37 +126,37 @@ float3 get_ibl_volume_refraction(float3 n, float3 v, float perceptualRoughness, 
     float3 refractedRayExit = position + transmissionRay;
 
     // Project refracted vector on the framebuffer, while mapping to normalized device coordinates.
-    float4 ndcPos = projMatrix * viewMatrix * float4(refractedRayExit, 1.0);
+    float4 ndcPos = mul(mul(projMatrix, viewMatrix), float4(refractedRayExit, 1.0));
     float2 refractionCoords = ndcPos.xy / ndcPos.w;
     refractionCoords += 1.0;
     refractionCoords /= 2.0;
 
     // Sample framebuffer to get pixel the refracted ray hits.
-    float3 transmittedLight = get_transmission_sample(refractionCoords, perceptualRoughness, ior);
+    float3 transmittedLight = get_transmission_sample(transmission_tex, refractionCoords, perceptualRoughness, ior);
 
 #endif // MATERIAL_DISPERSION
-    float3 attenuatedColor = apply_to_volume_attenuation(transmittedLight, transmissionRayLength, attenuationColor, attenuationDistance);
+    float3 attenuatedColor = apply_volume_attenuation(transmittedLight, transmissionRayLength, attenuationColor, attenuationDistance);
 
     return attenuatedColor * baseColor;
 }
 #endif
 
 #ifdef MATERIAL_ANISOTROPY
-float3 get_ibl_radiance_anisotropy(float3 n, float3 v, float roughness, float anisotropy, float3 anisotropyDirection)
+float3 get_ibl_radiance_anisotropy(ImageBasedLightingData ibl, float3 n, float3 v, float roughness, float anisotropy, float3 anisotropyDirection)
 {
-    float NdotV = clampedDot(n, v);
+    float NdotV = clamped_dot(n, v);
 
-    float tangentRoughness = mix(roughness, 1.0, anisotropy * anisotropy);
+    float tangentRoughness = lerp(roughness, 1.0, anisotropy * anisotropy);
     float3  anisotropicTangent  = cross(anisotropyDirection, v);
     float3  anisotropicNormal   = cross(anisotropicTangent, anisotropyDirection);
     float bendFactor          = 1.0 - anisotropy * (1.0 - roughness);
     float bendFactorPow4      = bendFactor * bendFactor * bendFactor * bendFactor;
-    float3  bentNormal          = normalize(mix(anisotropicNormal, n, bendFactorPow4));
+    float3  bentNormal          = normalize(lerp(anisotropicNormal, n, bendFactorPow4));
 
-    float lod = roughness * float(u_MipCount - 1);
+    float lod = roughness * float(ibl.mip_count - 1);
     float3 reflection = normalize(reflect(-v, bentNormal));
 
-    float4 specularSample = getSpecularSample(reflection, lod);
+    float4 specularSample = get_specular_sample(ibl, reflection, lod);
 
     float3 specularLight = specularSample.rgb;
 

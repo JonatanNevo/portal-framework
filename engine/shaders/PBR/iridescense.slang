@@ -3,29 +3,29 @@ module iridescence;
 import functions;
 import brdf;
 
-// XYZ to sRGB color space
+// XYZ to sRGB color space (transposed for column-major)
 static const float3x3 XYZ_TO_REC709 = {
-     3.2404542, -0.9692660,  0.0556434,
-    -1.5371385,  1.8760108, -0.2040259,
-    -0.4985314,  0.0415560,  1.0572252
+     3.2404542, -1.5371385, -0.4985314,
+    -0.9692660,  1.8760108,  0.0415560,
+     0.0556434, -0.2040259,  1.0572252
 };
 
 // Assume air interface for top
 // Note: We don't handle the case fresnel0 == 1
-float3 fresnel0_to_ior(float3 fresnel0)
+public float3 fresnel0_to_ior(float3 fresnel0)
 {
     float3 sqrtF0 = sqrt(fresnel0);
     return (float3(1.0) + sqrtF0) / (float3(1.0) - sqrtF0);
 }
 
 // Conversion FO/IOR
-float3 ior_to_fresnel0(float3 transmitted_ior, float incident_ior)
+public float3 ior_to_fresnel0(float3 transmitted_ior, float incident_ior)
 {
     return sq((transmitted_ior - float3(incident_ior)) / (transmitted_ior + float3(incident_ior)));
 }
 
 // ior is a value between 1.0 and 3.0. 1.0 is air interface
-float ior_to_fresnel0(float transmitted_ior, float incident_ior)
+public float ior_to_fresnel0(float transmitted_ior, float incident_ior)
 {
     return sq((transmitted_ior - incident_ior) / (transmitted_ior + incident_ior));
 }
@@ -33,7 +33,7 @@ float ior_to_fresnel0(float transmitted_ior, float incident_ior)
 // Fresnel equations for dielectric/dielectric interfaces.
 // Ref: https://belcour.github.io/blog/research/2017/05/01/brdf-thin-film.html
 // Evaluation XYZ sensitivity curves in Fourier space
-float3 eval_sensitivity(float opd, float3 shift)
+public float3 eval_sensitivity(float opd, float3 shift)
 {
     float phase = 2.0 * M_PI * opd * 1.0e-9;
     float3 val = float3(5.4856e-13, 4.4201e-13, 5.2481e-13);
@@ -48,7 +48,7 @@ float3 eval_sensitivity(float opd, float3 shift)
     return srgb;
 }
 
-public float3 eval_iridescene(float outside_ior, float eta2, float cos_theta1, float thin_film_thickness, float3 basef0)
+public float3 eval_iridescence(float outside_ior, float eta2, float cos_theta1, float thin_film_thickness, float3 base_f0)
 {
     float3 I;
 
@@ -75,7 +75,7 @@ public float3 eval_iridescene(float outside_ior, float eta2, float cos_theta1, f
     float phi21 = M_PI - phi12;
 
     // Second interface
-    float3 baseIOR = fresnel0_to_ior(clamp(basef0, 0.0, 0.9999)); // guard against 1.0
+    float3 baseIOR = fresnel0_to_ior(clamp(base_f0, 0.0, 0.9999)); // guard against 1.0
     float3 R1 = ior_to_fresnel0(baseIOR, iridescenceIor);
     float3 R23 = f_schlick(R1, cosTheta2);
     float3 phi23 = float3(0.0);

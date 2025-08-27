@@ -29,7 +29,7 @@ public struct Light
 }
 
 // https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_lights_punctual/README.md#range-property
-float get_range_attenuation(float range, float distance)
+public float get_range_attenuation(float range, float distance)
 {
     if (range <= 0.0)
     {
@@ -41,7 +41,7 @@ float get_range_attenuation(float range, float distance)
 }
 
 // https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_lights_punctual/README.md#inner-and-outer-cone-angles
-float get_spot_attenuation(float3 point_to_light, float3 spot_direction, float outer_cone_cos, float inner_cone_cos)
+public float get_spot_attenuation(float3 point_to_light, float3 spot_direction, float outer_cone_cos, float inner_cone_cos)
 {
     float actualCos = dot(normalize(spot_direction), normalize(-point_to_light));
     if (actualCos > outer_cone_cos)
@@ -128,9 +128,9 @@ public float3 get_volume_transmission_ray(float3 n, float3 v, float thickness, f
 
     // Compute rotation-independant scaling of the model matrix.
     float3 model_scale;
-    model_scale.x = length(float3(model_matrix[0].xyz));
-    model_scale.y = length(float3(model_matrix[1].xyz));
-    model_scale.z = length(float3(model_matrix[2].xyz));
+    model_scale.x = length(model_matrix[0].xyz);
+    model_scale.y = length(model_matrix[1].xyz);
+    model_scale.z = length(model_matrix[2].xyz);
 
     // The thickness is specified in local space.
     return normalize(refraction_vector) * thickness * model_scale;
