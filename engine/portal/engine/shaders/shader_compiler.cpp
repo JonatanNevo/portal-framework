@@ -154,6 +154,7 @@ reflection::PropertyType to_property_type(slang::TypeLayoutReflection* type_layo
     case slang::TypeReflection::UInt64:
         return reflection::PropertyType::integer64;
     case slang::TypeReflection::Float32:
+        return reflection::PropertyType::floating32;
     case slang::TypeReflection::Float64:
         return reflection::PropertyType::floating64;
     case slang::TypeReflection::Int8:
@@ -206,6 +207,10 @@ CompiledShader ShaderCompiler::compile(const CompileRequest& request)
         }
     }};
 
+    std::vector<slang::PreprocessorMacroDesc> macros = {
+        {"MATERIAL_METALLICROUGHNESS", "1"}
+    };
+
     auto parent_path = request.shader_path.parent_path().string();
 
     const char* search_paths[] = {
@@ -217,6 +222,8 @@ CompiledShader ShaderCompiler::compile(const CompileRequest& request)
         .targetCount = 1,
         .searchPaths = search_paths,
         .searchPathCount = std::size(search_paths),
+        .preprocessorMacros = macros.data(),
+        .preprocessorMacroCount = static_cast<uint32_t>(macros.size()),
         .compilerOptionEntries = options.data(),
         .compilerOptionEntryCount = static_cast<uint32_t>(options.size())
     };
@@ -378,16 +385,16 @@ void ShaderCompiler::populate_binding_points(ShaderReflection& reflection)
         {
             auto& binding = layout.bindings[binding_index];
 
-            if (!binding.layout.empty())
+            if (!binding.fields.empty())
             {
-                for (auto& [layout_name, field_layout] : binding.layout)
+                for (auto& [layout_name, field_layout] : binding.fields)
                 {
                     auto name = STRING_ID(fmt::format("{}.{}", binding.name.string, layout_name.string));
                     reflection.bind_points[name] = {
                         .name = field_layout.name,
                         .layout_index = layout_index,
                         .binding_index = binding_index,
-                        .layout_name = layout_name
+                        .field_name = layout_name
                     };
                 }
             }
@@ -602,7 +609,7 @@ void ShaderCompiler::populate_binding_with_field_type(slang::TypeLayoutReflectio
         auto* field = var_type->getFieldByIndex(i);
         const auto field_layout = field->getTypeLayout();
 
-        DescriptorLayout layout{
+        FieldLayout layout{
             .name = STRING_ID(field->getName() == nullptr ? "" : field->getName()),
             .offset = field->getOffset(),
             .size = field_layout->getSize()
@@ -623,7 +630,7 @@ void ShaderCompiler::populate_binding_with_field_type(slang::TypeLayoutReflectio
                 layout.size,
                 layout.offset
                 );
-            binding.layout[layout.name] = layout;
+            binding.fields[layout.name] = layout;
         }
     }
 }

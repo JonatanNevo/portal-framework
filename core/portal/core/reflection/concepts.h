@@ -12,7 +12,7 @@
 
 #include "portal/core/reflection/property.h"
 
-namespace portal::serialize
+namespace portal::reflection
 {
 template <typename T>
 concept Vector = requires(T t) {
@@ -25,7 +25,8 @@ template <typename T>
 concept String = requires(T t) {
     typename T::value_type;
     typename T::traits_type;
-    requires (std::same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>> || std::same_as<T, std::basic_string_view<typename T::value_type, typename T::traits_type>>);
+    requires (std::same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>> || std::same_as<
+        T, std::basic_string_view<typename T::value_type, typename T::traits_type>>);
 };
 
 template <typename T>
@@ -47,6 +48,27 @@ template <typename T>
 concept GlmVec4 = requires(T t) {
     requires std::same_as<T, glm::vec4> || std::same_as<T, glm::dvec4> || std::same_as<T, glm::ivec4>;
 };
+
+template<typename T>
+concept IsVec = GlmVec1<T> || GlmVec2<T> || GlmVec3<T> || GlmVec4<T>;
+
+template <typename T>
+concept GlmMat2 = requires(T t) {
+    requires std::same_as<T, glm::mat2x2> || std::same_as<T, glm::dmat2x2> || std::same_as<T, glm::imat2x2>;
+};
+
+template <typename T>
+concept GlmMat3 = requires(T t) {
+    requires std::same_as<T, glm::mat3x3> || std::same_as<T, glm::dmat3x3> || std::same_as<T, glm::imat3x3>;
+};
+
+template <typename T>
+concept GlmMat4 = requires(T t) {
+    requires std::same_as<T, glm::mat4x4> || std::same_as<T, glm::dmat4x4> || std::same_as<T, glm::imat4x4>;
+};
+
+template <typename T>
+concept IsMatrix = GlmMat2<T> || GlmMat3<T> || GlmMat4<T>;
 
 template <typename T>
 concept Map = requires(T t) {

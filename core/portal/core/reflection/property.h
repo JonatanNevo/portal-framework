@@ -46,6 +46,11 @@ struct Property
     PropertyType type = PropertyType::invalid;
     PropertyContainerType container_type = PropertyContainerType::invalid;
     size_t elements_number = 0;
+
+    bool operator==(const Property& other) const
+    {
+        return other.type == type && other.container_type == container_type && other.elements_number == elements_number;
+    }
 };
 
 constexpr PropertyType get_integer_type(const size_t size)
@@ -123,7 +128,7 @@ constexpr size_t get_property_size(const Property& prop)
 
     return base_size * prop.elements_number;
 }
-} // namespace portal::serialization
+}
 
 namespace portal::utils
 {

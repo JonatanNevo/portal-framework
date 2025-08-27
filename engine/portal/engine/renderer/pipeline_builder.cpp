@@ -5,14 +5,17 @@
 
 #include "pipeline_builder.h"
 
+#include "portal/engine/renderer/vulkan_shader.h"
+#include "portal/engine/resources/gpu_context.h"
+
 namespace portal::vulkan
 {
 
-PipelineBuilder& PipelineBuilder::add_shader(const vk::ShaderModule& module, const vk::ShaderStageFlagBits stage, std::string_view entry_point)
+PipelineBuilder& PipelineBuilder::add_shader(const vk::ShaderModule& module, ShaderStage stage, std::string_view entry_point)
 {
     shader_stages.push_back(
         {
-            .stage = stage,
+            .stage = resources::to_vk_shader_stage(stage),
             .module = module,
             .pName = entry_point.data()
         }

@@ -7,6 +7,8 @@
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
 
+#include "portal/engine/shaders/shader_types.h"
+
 namespace portal::vulkan
 {
 
@@ -14,8 +16,11 @@ class DescriptorLayoutBuilder
 {
 public:
     std::vector<vk::DescriptorSetLayoutBinding> layout_bindings;
+    StringId name  = INVALID_STRING_ID;
 
     DescriptorLayoutBuilder& add_binding(size_t binding, vk::DescriptorType type, vk::ShaderStageFlags shader_stages, size_t count = 1);
+    DescriptorLayoutBuilder& set_name(const StringId& layout_name);
+
     void clear();
     vk::raii::DescriptorSetLayout build(const vk::raii::Device& device);
 };

@@ -50,17 +50,12 @@ public:
 
     resources::MaterialPass pass_type = resources::MaterialPass::Other;
 
-    resources::MaterialConsts consts;
-    std::shared_ptr<vulkan::AllocatedBuffer> material_data;
-
-    std::vector<vk::raii::DescriptorSetLayout> descriptor_set_layouts;
     std::vector<vk::raii::DescriptorSet> descriptor_sets;
-
     WeakRef<Pipeline> pipeline;
+
+    resources::MaterialConsts consts;
     WeakRef<Texture> color_texture;
     WeakRef<Texture> metallic_roughness_texture;
-
-    WeakRef<Shader> shader;
 };
 
 } // portal

@@ -28,6 +28,8 @@ public:
     void copy_from(Ref<Resource> other) override;
 
     [[nodiscard]] const vulkan::AllocatedImage& get_image() const { return *image; }
+    [[nodiscard]] vulkan::AllocatedImage& get_image() { return *image; }
+
     [[nodiscard]] const Buffer& get_data() const { return data; }
 
     vulkan::AllocatedImage& get();

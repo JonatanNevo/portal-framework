@@ -18,6 +18,32 @@ static auto logger = Log::get_logger("Resources");
 #define VK_HANDLE_CAST(raii_obj) reinterpret_cast<uint64_t>(static_cast<decltype(raii_obj)::CType>(*(raii_obj)))
 
 
+vk::ShaderStageFlagBits to_vk_shader_stage(const ShaderStage stage)
+{
+#define CASE(FROM, TO)             \
+case portal::ShaderStage::FROM:    \
+return vk::ShaderStageFlagBits::TO
+
+    switch (stage)
+    {
+    CASE(All, eAll);
+    CASE(Vertex, eVertex);
+    CASE(Fragment, eFragment);
+    CASE(Geometry, eGeometry);
+    CASE(Compute, eCompute);
+    CASE(RayGeneration, eRaygenKHR);
+    CASE(Intersection, eIntersectionKHR);
+    CASE(AnyHit, eAnyHitKHR);
+    CASE(ClosestHit, eClosestHitKHR);
+    CASE(Miss, eMissKHR);
+    CASE(Callable, eCallableKHR);
+    CASE(Mesh, eMeshEXT);
+    }
+
+#undef CASE
+    return vk::ShaderStageFlagBits::eAll;
+}
+
 GpuContext::GpuContext(
     vk::raii::Device& device,
     vk::raii::CommandBuffer& commandBuffer,
@@ -110,7 +136,7 @@ vk::raii::Sampler GpuContext::create_sampler(const vk::SamplerCreateInfo create_
     return device.createSampler(create_info);
 }
 
-vk::raii::DescriptorSetLayout GpuContext::create_descriptor_set_layout(vulkan::DescriptorLayoutBuilder builder)
+vk::raii::DescriptorSetLayout GpuContext::create_descriptor_set_layout(vulkan::DescriptorLayoutBuilder& builder)
 {
     return builder.build(device);
 }
@@ -125,7 +151,7 @@ vk::raii::PipelineLayout GpuContext::create_pipeline_layout(const vk::PipelineLa
     return device.createPipelineLayout(pipeline_layout_info);
 }
 
-vk::raii::ShaderModule GpuContext::create_shader_module(Buffer code)
+vk::raii::ShaderModule GpuContext::create_shader_module(const Buffer code)
 {
     const vk::ShaderModuleCreateInfo shader_module_create_info{
         .codeSize = code.size * sizeof(char),
@@ -145,9 +171,21 @@ std::vector<vk::DescriptorSetLayout>& GpuContext::get_global_descriptor_layouts(
     return global_descriptor_layouts;
 }
 
-void GpuContext::write_descriptor_set(vulkan::DescriptorWriter& writer, vk::raii::DescriptorSet& set)
+void GpuContext::write_descriptor_sets(Ref<Shader> shader, std::vector<vk::raii::DescriptorSet>& sets, const size_t skip)
 {
-    writer.update_set(device, set);
+    PORTAL_ASSERT(shader->descriptor_writers.size() - skip == sets.size(), "Number of descriptor sets does not match number of descriptor writers");
+
+    size_t skipped = 0;
+    for (size_t i = 0; i < shader->descriptor_writers.size(); ++i)
+    {
+        if (skipped < skip)
+        {
+            skipped++;
+            continue;
+        }
+
+        shader->descriptor_writers[i].update_set(device, sets[i - skip]);
+    }
 }
 
 vk::Format GpuContext::get_draw_image_format()
@@ -199,6 +237,14 @@ void GpuContext::populate_image(const void* data, vulkan::AllocatedImage& image)
 
             if (image.get_mip_levels() > 1)
                 generate_mipmaps(command_buffer, image);
+            else
+                vulkan::transition_image_layout(
+                    command_buffer,
+                    image.get_handle(),
+                    image.get_mip_levels(),
+                    vk::ImageLayout::eTransferDstOptimal,
+                    vk::ImageLayout::eShaderReadOnlyOptimal
+                    );
         }
         );
 }

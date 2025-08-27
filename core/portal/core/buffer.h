@@ -154,7 +154,7 @@ struct Buffer
     PORTAL_FORCE_INLINE void write(const void* new_data, const size_t data_size, const size_t offset = 0)
     {
         PORTAL_ASSERT(offset + data_size <= size, "Buffer overflow");
-        memcpy(static_cast<uint8_t*>(const_cast<void*>(data)) + offset, new_data, data_size);
+        std::memcpy(static_cast<uint8_t*>(const_cast<void*>(data)) + offset, new_data, data_size);
     }
 
     PORTAL_FORCE_INLINE explicit operator bool() const

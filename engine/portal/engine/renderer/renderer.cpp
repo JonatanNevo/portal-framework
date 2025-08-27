@@ -31,7 +31,6 @@
 #include <ranges>
 
 #include "portal/engine/renderer/descriptor_writer.h"
-#include "portal/engine/renderer/pipeline_builder.h"
 #include "portal/engine/renderer/base/allocated.h"
 #include "portal/engine/renderer/scene/gltf_scene.h"
 #include "portal/engine/renderer/scene/scene_node.h"
@@ -751,6 +750,7 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
 
         current_frame.global_descriptor_set = current_frame.frame_descriptors.allocate(scene_descriptor_set_layout);
 
+        // TODO: create "global shader library" which will reflect the global changing data to write this
         vulkan::DescriptorWriter writer;
         writer.write_buffer(0, current_frame.scene_data_buffer, sizeof(vulkan::GPUSceneData), 0, vk::DescriptorType::eUniformBuffer);
         writer.update_set(device, current_frame.global_descriptor_set);

@@ -52,8 +52,8 @@ void GLTFMetallicRoughness::build_pipelines(
     // build the stage-create-info for both vertex and fragment stages. This lets
     // the pipeline know the shader modules per stage
     vulkan::PipelineBuilder builder;
-    builder.add_shader(module, vk::ShaderStageFlagBits::eVertex, "vert_main")
-           .add_shader(module, vk::ShaderStageFlagBits::eFragment, "frag_main")
+    builder.add_shader(module, ShaderStage::Vertex, "vert_main")
+           .add_shader(module, ShaderStage::Fragment, "frag_main")
            .set_input_topology(vk::PrimitiveTopology::eTriangleList)
            .set_polygon_mode(vk::PolygonMode::eFill)
            .set_cull_mode(vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise)

@@ -14,7 +14,7 @@ namespace portal::vulkan
 class PipelineBuilder
 {
 public:
-    PipelineBuilder& add_shader(const vk::ShaderModule& module, vk::ShaderStageFlagBits stage, std::string_view entry_point);
+    PipelineBuilder& add_shader(const vk::ShaderModule& module, ShaderStage stage, std::string_view entry_point);
 
     PipelineBuilder& set_vertex_bindings(const std::vector<vk::VertexInputBindingDescription>& descriptions);
     PipelineBuilder& set_vertex_attributes(const std::vector<vk::VertexInputAttributeDescription>& attribute_descriptions);

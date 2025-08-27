@@ -8,22 +8,16 @@ struct SceneData
     float4 sunlight_color;
 }
 
-struct GLTFMaterialData{   
-	float4 colorFactors;
-	float4 metal_rough_factors;
+struct MaterialData {
+    float4 color_factors;
+    float4 metal_rough_factors;
+
+    Sampler2D color_texture;
+    Sampler2D metal_rough_texture;
 }
 
-[[vk::binding(0, 0)]]
-ConstantBuffer<SceneData> scene_data;
-
-[[vk::binding(0, 1)]]
-ConstantBuffer<GLTFMaterialData> gltf_material_data;
-
-[[vk::binding(1, 1)]]
-Sampler2D color_texture;
-
-[[vk::binding(2, 1)]]
-Sampler2D metal_rough_texture;
+ParameterBlock<SceneData> scene_data;
+ParameterBlock<MaterialData> material_data;
 
 struct Vertex
 {
@@ -51,7 +45,7 @@ VertexOutput vert_main(uint vertexID : SV_VertexID, [[push_constant]] uniform fl
     VertexOutput out;
     out.position = mul(scene_data.view_proj, mul(render_matrix, position));
     out.normal = mul(render_matrix, float4(v.normal, 0.0f)).xyz;
-    out.color = v.color.rgb * gltf_material_data.colorFactors.rgb;
+    out.color = v.color.rgb * material_data.color_factors.rgb;
     out.uv = float2(v.uv_x, v.uv_y);
     return out;
 }
@@ -61,7 +55,7 @@ float4 frag_main(VertexOutput in) : SV_Target
 {
     float light_value = max(dot(in.normal, scene_data.sunlight_direction.xyz), 0.1f);
 
-    float3 color = in.color * color_texture.Sample(in.uv).rgb;
+    float3 color = in.color * material_data.color_texture.Sample(in.uv).rgb;
     float3 ambient = color *scene_data.ambient_color.rgb;
 
     return float4(color * light_value * scene_data.sunlight_color.w + ambient, 1.f );
