@@ -13,10 +13,10 @@
 #include "portal/engine/resources/database/resource_database.h"
 #include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/resources/resources/resource.h"
-#include "portal/engine/resources/gpu_context.h"
+#include "../../../portal/engine/renderer/vulkan/gpu_context.h"
 #include "portal/engine/strings/string_id.h"
 #include "portal/core/buffer.h"
-#include "portal/engine/renderer/allocated_image.h"
+#include "../../../portal/engine/renderer/vulkan/vulkan_image.h"
 
 using namespace portal;
 using namespace portal::resources;
@@ -45,7 +45,7 @@ public:
         *reinterpret_cast<vk::raii::Queue*>(&mock_queue)
     ) {}
 
-    MOCK_METHOD(vulkan::AllocatedImage, create_image, (void* data, vulkan::ImageBuilder image_builder), (const, override));
+    MOCK_METHOD(renderer::vulkan::VulkanImage, create_image, (void* data, vulkan::ImageBuilder image_builder), (const, override));
 
 private:
     int mock_device{};
@@ -64,7 +64,7 @@ protected:
         // Set up default GPU context expectations
         EXPECT_CALL(*mock_gpu_context, create_image(testing::_, testing::_))
             .WillRepeatedly(testing::Invoke([](void*, const vulkan::ImageBuilder&) {
-                return vulkan::AllocatedImage{}; // Return by value, will be moved
+                return renderer::vulkan::VulkanImage{}; // Return by value, will be moved
             }));
 
         registry.initialize(mock_gpu_context, mock_database);
@@ -124,7 +124,7 @@ TEST_F(ResourceRegistryTest, InitializesCorrectly)
     // Set up GPU context expectations
     EXPECT_CALL(*new_gpu_context, create_image(testing::_, testing::_))
         .WillRepeatedly(testing::Invoke([](void*, const vulkan::ImageBuilder&) {
-            return vulkan::AllocatedImage{};
+            return renderer::vulkan::VulkanImage{};
         }));
 
     EXPECT_NO_THROW(new_registry.initialize(new_gpu_context, new_database));
@@ -283,7 +283,7 @@ protected:
         // Set up default GPU context expectations
         EXPECT_CALL(*mock_gpu_context, create_image(testing::_, testing::_))
             .WillRepeatedly(testing::Invoke([](void*, const vulkan::ImageBuilder&) {
-                return vulkan::AllocatedImage{};
+                return renderer::vulkan::VulkanImage{};
             }));
 
         registry.initialize(mock_gpu_context, mock_database);

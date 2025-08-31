@@ -13,29 +13,29 @@
 
 #include "portal/engine/renderer/descriptor_layout_builder.h"
 #include "portal/engine/resources/resource_registry.h"
-#include "../../shaders/shader.h"
+#include "portal/engine/renderer/shaders/shader_cache.h"
 #include "portal/engine/resources/source/resource_source.h"
-#include "portal/engine/shaders/shader_compiler.h"
 
 namespace portal::resources
 {
 
 static auto logger = Log::get_logger("Resources");
 
-ShaderLoader::ShaderLoader(ResourceRegistry* registry, const std::shared_ptr<GpuContext>& context) : ResourceLoader(registry), context(context)
+ShaderLoader::ShaderLoader(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context) : ResourceLoader(registry), context(context)
 {
     slang::createGlobalSession(slang_session.writeRef());
 }
 
 bool ShaderLoader::load(const std::shared_ptr<ResourceSource> source) const
 {
-    auto shader = registry->get<Shader>(source->get_meta().source_id);
     auto meta = source->get_meta();
+    auto shader_cache = registry->get<renderer::ShaderCache>(meta.source_id);
+    shader_cache->load_source(source->load());
 
     if (meta.format == SourceFormat::Shader)
-        return load_shader(source, shader);
+        return true; // no work needs to be done on the loader anymore.
     if (meta.format == SourceFormat::PrecompiledShader)
-        return load_precompiled_shader(source, shader);
+        return load_precompiled_shader(source, shader_cache);
 
     LOGGER_ERROR("Unknown shader format: {}", meta.format);
     return false;
@@ -46,8 +46,9 @@ void ShaderLoader::load_default(Ref<Resource>& resource) const
     LOGGER_WARN("No default shader loader for resource: {}", resource->id);
 }
 
-bool ShaderLoader::load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<Shader>&) const
+bool ShaderLoader::load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<renderer::ShaderCache>&) const
 {
+    // TODO: load shader cache from disk / memory
     auto data = source->load();
 
     // const auto builder = vulkan::DescriptorLayoutBuilder{}
@@ -78,36 +79,9 @@ bool ShaderLoader::load_precompiled_shader(const std::shared_ptr<ResourceSource>
     return true;
 }
 
-bool ShaderLoader::load_shader(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const
-{
-    compile_shaders(source, shader);
-    return true;
-}
-
-void diagnose_if_needed(const Slang::ComPtr<slang::IBlob>& diagnostics_blob)
-{
-    if (diagnostics_blob != nullptr)
-    {
-        const auto diagnostics = static_cast<const char*>(diagnostics_blob->getBufferPointer());
-        LOGGER_TRACE("slang diagnostics: {}", diagnostics);
-    }
-}
-
-void ShaderLoader::compile_shaders(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const
-{
-    const auto meta = source->get_meta();
-    const auto data = source->load();
-
-    ShaderCompiler compiler;
-    auto compiled_shader = compiler.compile({.name = meta.source_id, .shader_path = meta.source_path, .shader_data = data});
-
-    auto& [code, reflection] = compiled_shader;
-    shader->code = Buffer::copy(code);
-    shader->set_shader_reflection(reflection, context.get());
-}
 
 // vk::DescriptorType to_descriptor_type(slang::TypeLayoutReflection* layout)
-// {8
+// {
 //     const auto kind = layout->getKind();
 //     switch (kind)
 //     {
@@ -202,43 +176,7 @@ void ShaderLoader::compile_shaders(const std::shared_ptr<ResourceSource>& source
 //     LOGGER_WARN("Unknown type kind");
 //     return vk::DescriptorType::eUniformBuffer;
 // }
-//
-// vk::ShaderStageFlagBits to_shader_stage(const SlangStage stage)
-// {
-//     switch (stage)
-//     {
-//     case SLANG_STAGE_NONE:
-//         return vk::ShaderStageFlagBits::eAll;
-//     case SLANG_STAGE_VERTEX:
-//         return vk::ShaderStageFlagBits::eVertex;
-//     case SLANG_STAGE_HULL:
-//         return vk::ShaderStageFlagBits::eTessellationControl;
-//     case SLANG_STAGE_DOMAIN:
-//         return vk::ShaderStageFlagBits::eTessellationEvaluation;
-//     case SLANG_STAGE_GEOMETRY:
-//         return vk::ShaderStageFlagBits::eGeometry;
-//     case SLANG_STAGE_FRAGMENT:
-//         return vk::ShaderStageFlagBits::eFragment;
-//     case SLANG_STAGE_COMPUTE:
-//         return vk::ShaderStageFlagBits::eCompute;
-//     case SLANG_STAGE_RAY_GENERATION:
-//         return vk::ShaderStageFlagBits::eRaygenKHR;
-//     case SLANG_STAGE_INTERSECTION:
-//         return vk::ShaderStageFlagBits::eIntersectionKHR;
-//     case SLANG_STAGE_ANY_HIT:
-//         return vk::ShaderStageFlagBits::eAnyHitKHR;
-//     case SLANG_STAGE_CLOSEST_HIT:
-//         return vk::ShaderStageFlagBits::eClosestHitKHR;
-//     case SLANG_STAGE_MISS:
-//         return vk::ShaderStageFlagBits::eMissKHR;
-//     case SLANG_STAGE_CALLABLE:
-//         return vk::ShaderStageFlagBits::eCallableKHR;
-//     case SLANG_STAGE_MESH:
-//         return vk::ShaderStageFlagBits::eMeshEXT;
-//     default:
-//         return vk::ShaderStageFlagBits::eAll;
-//     }
-// }
+
 //
 // void populate_descriptors(vulkan::DescriptorLayoutBuilder& builder, slang::VariableLayoutReflection* scope)
 // {

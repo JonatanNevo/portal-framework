@@ -9,11 +9,11 @@
 
 namespace portal::scene
 {
-Node::Node(StringId id): id(id) {}
+Node::Node(const StringId& id): id(id) {}
 
 void Node::refresh_transform(const glm::mat4& parent_matrix)
 {
-    PORTAL_PROF_ZONE;
+    PORTAL_PROF_ZONE();
     world_transform = parent_matrix * local_transform;
     for (auto& child : children)
     {

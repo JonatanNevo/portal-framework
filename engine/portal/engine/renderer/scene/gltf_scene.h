@@ -11,7 +11,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include "renderable.h"
-#include "portal/engine/renderer/allocated_buffer.h"
+#include "../vulkan/allocated_buffer.h"
 #include "portal/engine/renderer/descriptor_allocator.h"
 
 namespace portal
@@ -21,7 +21,7 @@ struct SceneNode;
 namespace vulkan {
     struct MeshAsset;
     struct GLTFMaterial;
-    class AllocatedImage;
+    class Image;
 }
 
 struct GLTFScene final : public Renderable
@@ -29,13 +29,13 @@ struct GLTFScene final : public Renderable
 public:
     std::unordered_map<std::string, std::shared_ptr<vulkan::MeshAsset>> meshes;
     std::unordered_map<std::string, std::shared_ptr<SceneNode>> nodes;
-    std::unordered_map<std::string, vulkan::AllocatedImage> images;
+    std::unordered_map<std::string, renderer::vulkan::Image> images;
     std::unordered_map<std::string, std::shared_ptr<vulkan::GLTFMaterial>> materials;
 
     std::vector<std::shared_ptr<SceneNode>> top_nodes;
     std::vector<vk::raii::Sampler> samplers;
     vulkan::DescriptorAllocator descriptor_allocator;
-    vulkan::AllocatedBuffer material_data;
+    renderer::vulkan::AllocatedBuffer material_data;
 
     vk::raii::Device* device;
 

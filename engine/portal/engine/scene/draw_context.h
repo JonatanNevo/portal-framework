@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "portal/engine/renderer/allocated_buffer.h"
+#include "../renderer/vulkan/allocated_buffer.h"
 #include "portal/engine/resources/resources/material.h"
 #include "portal/engine/resources/resources/mesh.h"
 
@@ -16,7 +16,7 @@ struct RenderObject
 {
     uint32_t index_count = 0;
     uint32_t first_index = 0;
-    std::shared_ptr<vulkan::AllocatedBuffer> index_buffer = nullptr;
+    std::shared_ptr<renderer::vulkan::AllocatedBuffer> index_buffer = nullptr;
 
     WeakRef<Material> material = nullptr;
     resources::Bounds bounds{};

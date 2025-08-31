@@ -13,8 +13,8 @@
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/engine/strings/string_id.h"
 #include "portal/core/buffer.h"
-#include "portal/engine/resources/gpu_context.h"
-#include "portal/engine/renderer/allocated_image.h"
+#include "../../../portal/engine/renderer/vulkan/gpu_context.h"
+#include "../../../portal/engine/renderer/vulkan/vulkan_image.h"
 
 using namespace portal::resources;
 using namespace portal;
@@ -30,7 +30,7 @@ public:
     // Create mock constructor that calls the real constructor with mock objects
     MockGpuContext() : GpuContext(g_device, g_command_buffer, g_queue) {}
 
-    MOCK_METHOD(vulkan::AllocatedImage, create_image, (void* data, vulkan::ImageBuilder image_builder), (const, override));
+    MOCK_METHOD(renderer::vulkan::VulkanImage, create_image, (void* data, vulkan::ImageBuilder image_builder), (const, override));
 };
 
 // Mock ResourceSource for testing
@@ -49,10 +49,10 @@ protected:
         mock_gpu_context = std::make_shared<testing::StrictMock<MockGpuContext>>();
         mock_source = std::make_shared<MockResourceSource>();
 
-        // Set up default expectations for create_image using ByMove since AllocatedImage is move-only
+        // Set up default expectations for create_image using ByMove since Image is move-only
         EXPECT_CALL(*mock_gpu_context, create_image(testing::_, testing::_))
             .WillRepeatedly(testing::Invoke([](void*, const vulkan::ImageBuilder&) {
-                return vulkan::AllocatedImage{}; // Return by value, will be moved
+                return renderer::vulkan::VulkanImage{}; // Return by value, will be moved
             }));
 
         texture_resource = Ref<Texture>::create(STRING_ID("test_texture"));

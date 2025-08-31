@@ -7,7 +7,7 @@
 
 #include <expected>
 #include <filesystem>
-#include "vulkan_init.h"
+#include "vulkan/vulkan_init.h"
 
 namespace portal::vulkan
 {

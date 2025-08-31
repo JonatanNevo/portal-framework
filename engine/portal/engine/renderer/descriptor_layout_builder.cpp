@@ -5,7 +5,7 @@
 
 #include "descriptor_layout_builder.h"
 
-#include "portal/engine/renderer/vulkan_common.h"
+#include "vulkan/vulkan_common.h"
 
 namespace portal::vulkan
 {

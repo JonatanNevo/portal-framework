@@ -7,7 +7,7 @@
 
 #include <portal/core/glm.h>
 
-#include "portal/engine/renderer/allocated_buffer.h"
+#include "vulkan/allocated_buffer.h"
 
 namespace portal::vulkan
 {
@@ -23,8 +23,8 @@ struct Vertex
 
 struct GPUMeshBuffers
 {
-    AllocatedBuffer index_buffer;
-    AllocatedBuffer vertex_buffer;
+    Buffer index_buffer;
+    Buffer vertex_buffer;
     vk::DeviceAddress vertex_buffer_address{};
 };
 

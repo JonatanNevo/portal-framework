@@ -83,6 +83,18 @@ public:
         );
     }
 
+    void add_value(const std::string_view string_view)
+    {
+        add_property(
+            reflection::Property{
+                Buffer{const_cast<void*>(static_cast<const void*>(string_view.data())), (string_view.size() * sizeof(typename std::string_view::value_type)) + 1},
+                reflection::PropertyType::character,
+                reflection::PropertyContainerType::null_term_string,
+                string_view.size() + 1
+            }
+        );
+    }
+
     template <reflection::GlmVec1 T>
     void add_value(T& t)
     {
@@ -196,7 +208,6 @@ public:
         );
     }
 
-protected:
     virtual void add_property(reflection::Property property) = 0;
 };
 
@@ -352,11 +363,11 @@ public:
     }
 
     template <typename T> requires std::is_enum_v<T>
-    T get_value()
+    void get_value(T& t)
     {
         std::underlying_type_t<T> underlying;
         get_value(underlying);
-        return static_cast<T>(underlying);
+        t = static_cast<T>(underlying);
     }
 
     template <Deserializable T>

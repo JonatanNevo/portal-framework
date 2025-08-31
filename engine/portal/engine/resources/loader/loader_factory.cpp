@@ -18,7 +18,7 @@ static auto logger = spdlog::get("Resources");
 
 std::unordered_map<StringId, std::shared_ptr<ResourceLoader>> loaders;
 
-void LoaderFactory::initialize(ResourceRegistry* registry, const std::shared_ptr<GpuContext>& context)
+void LoaderFactory::initialize(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context)
 {
     gpu_context = context;
     stub_loader = std::make_shared<StubLoader>(registry);

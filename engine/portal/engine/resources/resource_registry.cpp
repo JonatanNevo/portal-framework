@@ -96,7 +96,7 @@ void ResourceRegistry::set_default(const ResourceType type, const std::optional<
         LOGGER_DEBUG("Setting default resource of type {} to be loader dependent", type);
 }
 
-void ResourceRegistry::initialize(const std::shared_ptr<resources::GpuContext>& context, const std::shared_ptr<resources::ResourceDatabase>& database)
+void ResourceRegistry::initialize(const std::shared_ptr<renderer::vulkan::GpuContext>& context, const std::shared_ptr<resources::ResourceDatabase>& database)
 {
     LOGGER_INFO("Resource registry initialization...");
     gpu_context = context;

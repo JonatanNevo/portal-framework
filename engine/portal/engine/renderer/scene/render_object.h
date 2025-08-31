@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "portal/engine/renderer/allocated_buffer.h"
+#include "../vulkan/allocated_buffer.h"
 #include "portal/engine/renderer/rendering_types.h"
 
 namespace portal
@@ -16,7 +16,7 @@ struct RenderObject
 {
     uint32_t index_count = 0;
     uint32_t first_index = 0;
-    vulkan::AllocatedBuffer* index_buffer = nullptr;
+    renderer::vulkan::AllocatedBuffer* index_buffer = nullptr;
 
     MaterialInstance* material = nullptr;
     vulkan::Bounds bounds{};

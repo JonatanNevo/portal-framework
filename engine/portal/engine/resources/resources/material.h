@@ -5,15 +5,15 @@
 
 #pragma once
 
-#include "portal/engine/renderer/allocated_buffer.h"
-#include "portal/engine/resources/resources/pipeline.h"
 #include "portal/engine/resources/resources/resource.h"
-#include "../../shaders/shader.h"
 #include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/resources/resources/texture.h"
 
 namespace portal
 {
+namespace renderer {
+    class Pipeline;
+}
 
 namespace resources
 {
@@ -40,7 +40,7 @@ class Material final : public Resource
 {
 public:
     explicit Material(const StringId& id): Resource(id) {}
-    Ref<Pipeline> get_pipeline() const;
+    Ref<renderer::Pipeline> get_pipeline() const;
     const std::vector<vk::raii::DescriptorSet>& get_descriptor_sets() const;
 
     void copy_from(Ref<Resource> other) override;
@@ -50,8 +50,9 @@ public:
 
     resources::MaterialPass pass_type = resources::MaterialPass::Other;
 
+    std::vector<renderer::vulkan::AllocatedBuffer> material_data;
     std::vector<vk::raii::DescriptorSet> descriptor_sets;
-    WeakRef<Pipeline> pipeline;
+    WeakRef<renderer::Pipeline> pipeline;
 
     resources::MaterialConsts consts;
     WeakRef<Texture> color_texture;

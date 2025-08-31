@@ -7,33 +7,30 @@
 
 #include "slang-com-ptr.h"
 
-#include "portal/engine/resources/gpu_context.h"
+#include "portal/engine/renderer/vulkan/gpu_context.h"
 #include "portal/engine/resources/loader/loader.h"
-#include "../../shaders/shader.h"
+
+namespace portal::renderer {
+class ShaderCache;
+}
 
 namespace portal::resources
 {
 class ShaderLoader final : public ResourceLoader
 {
 public:
-    explicit ShaderLoader(ResourceRegistry* registry, const std::shared_ptr<GpuContext>& context);
+    explicit ShaderLoader(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context);
 
-    bool load(std::shared_ptr<ResourceSource> source) const override;
+    [[nodiscard]] bool load(std::shared_ptr<ResourceSource> source) const override;
 
     void load_default(Ref<Resource>& resource) const override;
 
 protected:
-    bool load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const;
-    bool load_shader(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const;
-
-    void compile_shaders(const std::shared_ptr<ResourceSource>& source, Ref<Shader>& shader) const;
-    // void reflect_shader(slang::ProgramLayout* layout, Ref<Shader>& shader) const;
-
-    // void describe_parameter_block(Shader::Layout& shader_layout, slang::TypeLayoutReflection* parameter_block) const;
+    bool load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<renderer::ShaderCache>& shader) const;
 
 private:
     Slang::ComPtr<slang::IGlobalSession> slang_session;
-    std::shared_ptr<GpuContext> context;
+    std::shared_ptr<renderer::vulkan::GpuContext> context;
 
 };
 } // portal

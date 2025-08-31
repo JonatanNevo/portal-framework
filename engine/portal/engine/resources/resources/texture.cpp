@@ -19,12 +19,12 @@ void Texture::copy_from(const Ref<Resource> other)
     sampler = other_texture->sampler;
 }
 
-vulkan::AllocatedImage& Texture::get()
+renderer::vulkan::VulkanImage& Texture::get()
 {
     return *image;
 }
 
-const vulkan::AllocatedImage& Texture::get() const
+const renderer::vulkan::VulkanImage& Texture::get() const
 {
     return *image;
 }

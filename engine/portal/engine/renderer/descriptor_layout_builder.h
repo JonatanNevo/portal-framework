@@ -7,7 +7,8 @@
 #include <vector>
 #include <vulkan/vulkan_raii.hpp>
 
-#include "portal/engine/shaders/shader_types.h"
+#include "portal/engine/strings/string_id.h"
+
 
 namespace portal::vulkan
 {

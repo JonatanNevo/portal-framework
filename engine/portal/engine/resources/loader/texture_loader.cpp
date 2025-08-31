@@ -10,9 +10,9 @@
 
 #include <portal/core/debug/profile.h>
 
-#include "portal/engine/renderer/allocated_buffer.h"
-#include "portal/engine/renderer/allocated_image.h"
-#include "portal/engine/resources/gpu_context.h"
+#include "../../renderer/vulkan/allocated_buffer.h"
+#include "../../renderer/vulkan/vulkan_image.h"
+#include "../../renderer/vulkan/gpu_context.h"
 #include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/resources/resources/texture.h"
@@ -113,7 +113,7 @@ void TextureLoader::load_default(Ref<Resource>& resource) const
     }
 }
 
-std::shared_ptr<vulkan::AllocatedImage> TextureLoader::build_image_from_memory(const StringId& id, void* data, const vk::Extent3D extent) const
+std::shared_ptr<renderer::vulkan::VulkanImage> TextureLoader::build_image_from_memory(const StringId& id, void* data, const vk::Extent3D extent) const
 {
     vulkan::ImageBuilder image_builder(extent);
     image_builder
