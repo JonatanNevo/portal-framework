@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include "log.h"
+#include "portal/core/concurrency/spin_lock.h"
 
 namespace portal
 {
@@ -102,7 +103,6 @@ private:
 };
 
 
-
 template <typename T = Timer::DefaultResolution>
 class ScopedTimer
 {
@@ -121,5 +121,35 @@ private:
     Timer timer;
 };
 
+class PerformanceProfiler
+{
+public:
+    struct PerFrameData
+    {
+        float time = 0.f;
+        uint32_t samples = 0;
+    };
+
+public:
+    void set_frame_timing(const char* name, float time);
+    void clear();
+
+private:
+    std::unordered_map<const char*, PerFrameData> data;
+    static SpinLock lock;
+};
+
+class ScopedPerformanceTimer
+{
+public:
+    ScopedPerformanceTimer(const char* name, PerformanceProfiler* profiler);
+    ~ScopedPerformanceTimer();
+private:
+    const char* name;
+    PerformanceProfiler* profiler;
+    Timer timer;
+};
+
+#define SCOPED_TIMER(name) ScopedTimer<Timer::DefaultResolution> timer__LINE__(name)
 
 } // namespace portal

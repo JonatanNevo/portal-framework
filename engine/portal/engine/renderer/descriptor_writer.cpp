@@ -5,7 +5,7 @@
 
 #include "descriptor_writer.h"
 
-#include "portal/engine/renderer/allocated_buffer.h"
+#include "vulkan/allocated_buffer.h"
 
 namespace portal::vulkan
 {
@@ -38,7 +38,7 @@ void DescriptorWriter::write_image(
 
 void DescriptorWriter::write_buffer(
     const uint32_t binding,
-    AllocatedBuffer& buffer,
+    renderer::vulkan::AllocatedBuffer& buffer,
     const size_t size,
     const size_t offset,
     const vk::DescriptorType type

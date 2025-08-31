@@ -4,8 +4,15 @@
 //
 
 #pragma once
+
 #include <atomic>
+#include <span>
 #include <type_traits>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include "portal/core/concurrency/spin_lock.h"
 
 namespace portal
 {
@@ -20,6 +27,12 @@ namespace ref_utils
 
 class RefCounted
 {
+public:
+    struct RefPoint
+    {
+        std::string location;
+    };
+
 public:
     virtual ~RefCounted() = default;
 
@@ -41,27 +54,27 @@ class Ref
 {
 
 public:
-    Ref(): instance(nullptr)
-    {
-        static_assert(std::is_base_of_v<RefCounted, T>, "T must inherit from RefCounted");
-    }
-
+    Ref(): instance(nullptr) {}
     Ref(nullptr_t) : instance(nullptr) {}
     Ref(T* instance): instance(instance)
     {
+        static_assert(std::is_base_of_v<RefCounted, T>, "T must inherit from RefCounted");
+
         inc_ref();
     }
 
-    template <typename T2> requires std::is_base_of_v<RefCounted, T2>
+    template <typename T2>
     Ref(const Ref<T2>& other)
     {
+        static_assert(std::is_base_of_v<RefCounted, T>, "T must inherit from RefCounted");
         instance = dynamic_cast<T*>(other.instance);
         inc_ref();
     }
 
-    template <typename T2> requires std::is_base_of_v<RefCounted, T2>
+    template <typename T2>
     Ref(Ref<T2>&& other) noexcept
     {
+        static_assert(std::is_base_of_v<RefCounted, T>, "T must inherit from RefCounted");
         instance = dynamic_cast<T*>(other.instance);
         other.instance = nullptr;
     }
@@ -102,9 +115,10 @@ public:
         return *this;
     }
 
-    template <typename T2> requires std::is_base_of_v<RefCounted, T2>
+    template <typename T2>
     Ref& operator=(const Ref<T2>& other)
     {
+        static_assert(std::is_base_of_v<RefCounted, T2>, "T must inherit from RefCounted");
         other.inc_ref();
         dec_ref();
 
@@ -112,9 +126,10 @@ public:
         return *this;
     }
 
-    template <typename T2> requires std::is_base_of_v<RefCounted, T2>
+    template <typename T2>
     Ref& operator=(Ref<T2>&& other)
     {
+        static_assert(std::is_base_of_v<RefCounted, T2>, "T must inherit from RefCounted");
         dec_ref();
 
         instance = dynamic_cast<T*>(other.instance);

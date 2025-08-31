@@ -11,7 +11,7 @@
 #include <tracy/Tracy.hpp>
 
 #include "portal/core/files/file_system.h"
-#include "vulkan_utils.h"
+#include "vulkan/vulkan_utils.h"
 #include "portal/engine/renderer/renderer.h"
 
 namespace portal

@@ -11,8 +11,8 @@
 #include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/engine/strings/string_id.h"
-#include "portal/engine/resources/gpu_context.h"
-#include "portal/engine/renderer/allocated_image.h"
+#include "../../../portal/engine/renderer/vulkan/gpu_context.h"
+#include "../../../portal/engine/renderer/vulkan/vulkan_image.h"
 
 using namespace portal::resources;
 using namespace portal;
@@ -28,7 +28,7 @@ public:
     // Create mock constructor that calls the real constructor with mock objects
     MockGpuContext() : GpuContext(g_device, g_command_buffer, g_queue) {}
 
-    MOCK_METHOD(vulkan::AllocatedImage, create_image, (void* data, vulkan::ImageBuilder image_builder), (const, override));
+    MOCK_METHOD(renderer::vulkan::VulkanImage, create_image, (void* data, vulkan::ImageBuilder image_builder), (const, override));
 };
 
 class LoaderFactoryTest : public ::testing::Test
@@ -41,7 +41,7 @@ protected:
         // Set up default mock behavior for create_image
         EXPECT_CALL(*gpu_context, create_image(testing::_, testing::_))
             .WillRepeatedly(testing::Invoke([](void*, vulkan::ImageBuilder) {
-                return vulkan::AllocatedImage{}; // Return by value, will be moved
+                return renderer::vulkan::VulkanImage{}; // Return by value, will be moved
             }));
 
         factory.initialize(gpu_context);
@@ -63,7 +63,7 @@ TEST_F(LoaderFactoryTest, InitializesCorrectly)
     // Set up mock behavior
     EXPECT_CALL(*new_gpu_context, create_image(testing::_, testing::_))
         .WillRepeatedly(testing::Invoke([](void*, vulkan::ImageBuilder) {
-            return vulkan::AllocatedImage{}; // Return by value, will be moved
+            return renderer::vulkan::VulkanImage{}; // Return by value, will be moved
         }));
 
     // Factory should initialize without throwing

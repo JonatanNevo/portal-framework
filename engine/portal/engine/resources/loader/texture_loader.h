@@ -6,7 +6,7 @@
 #pragma once
 #include <stb_image.h>
 
-#include "portal/engine/renderer/allocated_image.h"
+#include "../../renderer/vulkan/vulkan_image.h"
 #include "portal/engine/resources/loader/loader.h"
 #include "portal/engine/resources/resources/texture.h"
 
@@ -30,7 +30,7 @@ public:
     void load_default(Ref<Resource>& resource) const override;
 
 private:
-    std::shared_ptr<vulkan::AllocatedImage> build_image_from_memory(const StringId& id, void* data, vk::Extent3D extent) const;
+    std::shared_ptr<renderer::vulkan::VulkanImage> build_image_from_memory(const StringId& id, void* data, vk::Extent3D extent) const;
     Ref<Texture> create_default_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const;
 
     std::shared_ptr<GpuContext> gpu_context;

@@ -21,21 +21,21 @@
 namespace portal::hash
 {
 
-PORTAL_HASH_CONSTEXPR uint64_t hash(const char* data, const size_t length)
+PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* data, const size_t length)
 {
-    return rapidhash(data, length);
+    return ::rapidhash(data, length);
 }
 
-PORTAL_HASH_CONSTEXPR uint64_t hash(const std::string& str)
+PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string& str)
 {
-    return hash(str.c_str(), str.length());
+    return portal::hash::rapidhash(str.c_str(), str.length());
 }
 
 template <size_t n>
-PORTAL_HASH_CONSTEXPR uint64_t hash(const char (&data)[n])
+PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char (&data)[n])
 {
     // Exclude null terminator
-    return hash(data, n - 1);
+    return portal::hash::rapidhash(data, n - 1);
 }
 
 }

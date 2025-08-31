@@ -6,8 +6,10 @@
 #include "reference.h"
 
 #include <mutex>
+#include <ranges>
 #include <unordered_set>
 
+#include "../../../engine/portal/engine/strings/hash.h"
 #include "portal/core/concurrency/spin_lock.h"
 #include "portal/core/debug/assert.h"
 
@@ -53,6 +55,7 @@ void ref_utils::clean_all_references()
     if (lock_result)
         life_ref_lock.unlock();
 }
+
 
 void RefCounted::inc_ref() const
 {

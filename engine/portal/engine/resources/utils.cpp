@@ -7,8 +7,6 @@
 
 #include "portal/engine/resources/resources/material.h"
 #include "portal/engine/resources/resources/mesh.h"
-#include "portal/engine/resources/resources/pipeline.h"
-#include "../shaders/shader.h"
 #include "portal/engine/scene/scene.h"
 
 namespace portal::resources::utils
@@ -27,14 +25,11 @@ ResourceType to_resource_type(const Ref<Resource>& resource)
     if (resource.as<Material>())
         return ResourceType::Material;
 
-    if (resource.as<Shader>())
+    if (resource.as<renderer::ShaderCache>())
         return ResourceType::Shader;
 
     if (resource.as<Mesh>())
         return ResourceType::Mesh;
-
-    if (resource.as<Pipeline>())
-        return ResourceType::Pipeline;
 
     if (resource.as<Scene>())
         return ResourceType::Scene;
@@ -51,11 +46,9 @@ Ref<Resource> create_resource(const StringId& id, ResourceType type)
     case ResourceType::Texture:
         return Ref<Texture>::create(id);
     case ResourceType::Shader:
-        return Ref<Shader>::create(id);
+        return Ref<renderer::ShaderCache>::create(id);
     case ResourceType::Mesh:
         return Ref<Mesh>::create(id);
-    case ResourceType::Pipeline:
-        return Ref<Pipeline>::create(id);
     case ResourceType::Composite:
         return Ref<Scene>::create(id); // TODO: should this return scene?
     case ResourceType::Scene:

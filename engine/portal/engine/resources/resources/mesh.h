@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "portal/engine/renderer/allocated_buffer.h"
+#include "../../renderer/vulkan/allocated_buffer.h"
 #include "portal/engine/resources/resources/material.h"
 #include "portal/engine/resources/resources/resource.h"
 
@@ -29,8 +29,8 @@ namespace resources
     // TODO: move this to some other class?
     struct MeshData
     {
-        std::shared_ptr<vulkan::AllocatedBuffer> index_buffer;
-        std::shared_ptr<vulkan::AllocatedBuffer> vertex_buffer;
+        std::shared_ptr<renderer::vulkan::AllocatedBuffer> index_buffer;
+        std::shared_ptr<renderer::vulkan::AllocatedBuffer> vertex_buffer;
         vk::DeviceAddress vertex_buffer_address{};
 
         std::vector<Vertex> vertices;

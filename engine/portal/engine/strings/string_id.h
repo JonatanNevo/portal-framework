@@ -13,6 +13,8 @@
 
 namespace portal
 {
+class Deserializer;
+class Serializer;
 
 struct StringId
 {
@@ -25,6 +27,9 @@ struct StringId
     StringId(uint64_t id, const std::string& string);
 
     bool operator==(const StringId&) const;
+
+    void serialize(Serializer& s) const;
+    static StringId deserialize(Deserializer& d);
 };
 
 const auto INVALID_STRING_ID = StringId{uint64_t{0}, INVALID_STRING_VIEW};
@@ -36,7 +41,7 @@ struct std::hash<portal::StringId>
 {
     std::size_t operator()(const portal::StringId& id) const noexcept
     {
-        return std::hash<uint64_t>()(id.id);
+        return id.id;
     }
 };
 
@@ -55,5 +60,5 @@ struct fmt::formatter<portal::StringId>
     }
 };
 
-#define STRING_ID(string) portal::StringId(portal::hash::hash(string), std::string_view(string))
+#define STRING_ID(string) portal::StringId(portal::hash::rapidhash(string), std::string_view(string))
 

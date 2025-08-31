@@ -60,9 +60,9 @@ vk::SamplerMipmapMode extract_mipmap_mode(const fastgltf::Filter filter)
     return vk::SamplerMipmapMode::eLinear;
 }
 
-std::optional<AllocatedImage> load_image(vk::raii::Device& device, fastgltf::Asset& asset, fastgltf::Image& image, Renderer* renderer)
+std::optional<Image> load_image(vk::raii::Device& device, fastgltf::Asset& asset, fastgltf::Image& image, Renderer* renderer)
 {
-    AllocatedImage new_image = nullptr;
+    Image new_image = nullptr;
     int width, height, n_channels;
     std::visit(
         fastgltf::visitor{
@@ -338,14 +338,14 @@ std::optional<std::shared_ptr<GLTFScene>> load_gltf(vk::raii::Device& device, st
     // temporal arrays for all the objects to use while creating the GLTF data
     std::vector<std::shared_ptr<MeshAsset>> meshes;
     std::vector<std::shared_ptr<SceneNode>> nodes;
-    std::vector<AllocatedImage*> images;
+    std::vector<Image*> images;
     std::vector<std::shared_ptr<GLTFMaterial>> materials;
 
     // load all textures
 
     for ([[maybe_unused]] auto& image : gltf.images)
     {
-        std::optional<AllocatedImage> img = load_image(device, gltf, image, renderer);
+        std::optional<Image> img = load_image(device, gltf, image, renderer);
         if (img.has_value())
         {
             scene->images[image.name.c_str()] = std::move(img.value());
@@ -556,7 +556,6 @@ std::optional<std::shared_ptr<GLTFScene>> load_gltf(vk::raii::Device& device, st
             new_mesh->surfaces.push_back(new_surface);\
         }
 
-        new_mesh->mesh_buffers = renderer->upload_mesh(indices, vertices);
         new_mesh->vertices = vertices;
         new_mesh->indices = indices;
     }

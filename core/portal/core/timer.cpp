@@ -7,7 +7,9 @@
 
 namespace portal
 {
-Timer::Timer(): start_time{Clock::now()}, previous_tick{Clock::now()}
+SpinLock PerformanceProfiler::lock{};
+
+Timer::Timer() : start_time{Clock::now()}, previous_tick{Clock::now()}
 {
 }
 
@@ -29,5 +31,33 @@ void Timer::lap()
 bool Timer::is_running() const
 {
     return running;
+}
+
+void PerformanceProfiler::set_frame_timing(const char* name, float sampled_time)
+{
+    std::scoped_lock guard{lock};
+    if (!data.contains(name))
+        data[name] = {.time = 0.f, .samples = 0};
+
+    auto& [time, samples] = data[name];
+    time += sampled_time;
+    samples++;
+}
+
+void PerformanceProfiler::clear()
+{
+    std::scoped_lock guard{lock};
+    data.clear();
+}
+
+ScopedPerformanceTimer::ScopedPerformanceTimer(const char* name, PerformanceProfiler* profiler) : name(name), profiler(profiler)
+{
+    timer.start();
+}
+
+ScopedPerformanceTimer::~ScopedPerformanceTimer()
+{
+    const float time = timer.stop<Timer::DefaultResolution>();
+    profiler->set_frame_timing(name, time);
 }
 }

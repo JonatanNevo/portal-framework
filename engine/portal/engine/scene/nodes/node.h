@@ -21,7 +21,7 @@ namespace portal::scene
 
 struct Node: RefCounted
 {
-    explicit Node(StringId id);
+    explicit Node(const StringId& id);
 
     StringId id;
     WeakRef<Node> parent;

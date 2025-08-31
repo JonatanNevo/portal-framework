@@ -1,0 +1,514 @@
+//
+// Copyright © 2025 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
+//
+
+#include "vulkan_image.h"
+#include <vulkan/vulkan_format_traits.hpp>
+
+#include "portal/engine/renderer/vulkan/vulkan_context.h"
+#include "portal/engine/renderer/vulkan/vulkan_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_enum.h"
+#include "portal/engine/renderer/vulkan/vulkan_utils.h"
+
+namespace portal::renderer::vulkan
+{
+
+static auto logger = Log::get_logger("Vulkan");
+
+VulkanImage::VulkanImage(const image::Specification& spec, const Ref<VulkanContext>& context) : device(context->get_device()), spec(spec)
+{
+    PORTAL_ASSERT(spec.width > 0 && spec.height > 0, "Invalid image size");
+}
+
+void VulkanImage::resize(const size_t width, const size_t height)
+{
+    spec.width = width;
+    spec.height = height;
+    initialize();
+}
+
+void VulkanImage::initialize()
+{
+    release();
+
+    ImageBuilder builder(spec.width, spec.height, 1);
+
+    vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eSampled;
+    if (spec.usage == ImageUsage::Attachment)
+    {
+        if (utils::is_depth_format(spec.format))
+            usage |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+        else
+            usage |= vk::ImageUsageFlagBits::eColorAttachment;
+    }
+    if (spec.transfer || spec.usage == ImageUsage::Texture)
+    {
+        usage |= vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst;
+    }
+    if (spec.usage == ImageUsage::Storage)
+    {
+        usage |= vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferDst;
+    }
+
+    vk::ImageAspectFlags aspect_mask = utils::is_depth_format(spec.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+    if (utils::is_stencil_format(spec.format))
+        aspect_mask |= vk::ImageAspectFlagBits::eStencil;
+
+    const vk::Format format = to_format(spec.format);
+
+    const VmaMemoryUsage memory_usage = spec.usage == ImageUsage::HostRead ? VMA_MEMORY_USAGE_GPU_TO_CPU : VMA_MEMORY_USAGE_GPU_ONLY;
+
+    builder.with_usage(usage)
+           .with_image_type(vk::ImageType::e2D)
+           .with_format(format)
+           .with_mips_levels(spec.mips)
+           .with_array_layers(spec.layers)
+           .with_sample_count(vk::SampleCountFlagBits::e1)
+           .with_tiling(spec.usage == ImageUsage::HostRead ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal)
+           .with_vma_usage(memory_usage)
+           .with_vma_required_flags(vk::MemoryPropertyFlagBits::eDeviceLocal)
+           .with_debug_name(std::string(spec.name.string));
+
+    image_info.image = device->create_image(builder);
+
+    const vk::ImageViewCreateInfo view_info{
+        .image = image_info.image.get_handle(),
+        .viewType = spec.layers > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D,
+        .format = format,
+        .subresourceRange = {
+            .aspectMask = aspect_mask,
+            .baseMipLevel = 0,
+            .levelCount = static_cast<uint32_t>(spec.mips),
+            .baseArrayLayer = 0,
+            .layerCount = static_cast<uint32_t>(spec.layers)
+        }
+    };
+    image_info.view = device->create_image_view(view_info);
+    device->set_debug_name(image_info.view, fmt::format("default_image_view_{}", spec.name.string).c_str());
+
+    if (spec.create_sampler)
+    {
+        vk::SamplerCreateInfo sampler_info{
+            .maxAnisotropy = 1.f,
+            .addressModeU = vk::SamplerAddressMode::eClampToEdge,
+            .addressModeV = vk::SamplerAddressMode::eClampToEdge,
+            .addressModeW = vk::SamplerAddressMode::eClampToEdge,
+            .mipLodBias = 0.f,
+            .minLod = 0.f,
+            .maxLod = 100.f,
+            .borderColor = vk::BorderColor::eFloatOpaqueWhite,
+        };
+
+        if (utils::is_integer_format(spec.format))
+        {
+            sampler_info.minFilter = vk::Filter::eNearest;
+            sampler_info.magFilter = vk::Filter::eNearest;
+            sampler_info.mipmapMode = vk::SamplerMipmapMode::eNearest;
+        }
+        else
+        {
+            sampler_info.minFilter = vk::Filter::eLinear;
+            sampler_info.magFilter = vk::Filter::eLinear;
+            sampler_info.mipmapMode = vk::SamplerMipmapMode::eLinear;
+        }
+
+        image_info.sampler = device->create_sampler(sampler_info);
+        device->set_debug_name(image_info.sampler, fmt::format("default_sampler_{}", spec.name.string).c_str());
+    }
+
+    if (spec.usage == ImageUsage::Storage)
+    {
+        device->immediate_submit(
+            [&](const auto& command_buffer)
+            {
+                vk::ImageSubresourceRange range{
+                    .aspectMask = vk::ImageAspectFlagBits::eColor,
+                    .baseMipLevel = 0,
+                    .levelCount = static_cast<uint32_t>(spec.mips),
+                    .baseArrayLayer = 0,
+                    .layerCount = static_cast<uint32_t>(spec.layers)
+                };
+
+                portal::vulkan::transition_image_layout(
+                    command_buffer,
+                    image_info.image.get_handle(),
+                    range,
+                    vk::ImageLayout::eUndefined,
+                    vk::ImageLayout::eGeneral,
+                    vk::AccessFlagBits2::eNone,
+                    vk::AccessFlagBits2::eNone,
+                    vk::PipelineStageFlagBits2::eAllCommands,
+                    vk::PipelineStageFlagBits2::eAllCommands
+                    );
+            }
+            );
+    }
+
+    if (spec.usage == ImageUsage::HostRead)
+    {
+        device->immediate_submit(
+            [&](const auto& command_buffer)
+            {
+                vk::ImageSubresourceRange range{
+                    .aspectMask = vk::ImageAspectFlagBits::eColor,
+                    .baseMipLevel = 0,
+                    .levelCount = static_cast<uint32_t>(spec.mips),
+                    .baseArrayLayer = 0,
+                    .layerCount = static_cast<uint32_t>(spec.layers)
+                };
+
+                portal::vulkan::transition_image_layout(
+                    command_buffer,
+                    image_info.image.get_handle(),
+                    range,
+                    vk::ImageLayout::eUndefined,
+                    vk::ImageLayout::eTransferDstOptimal,
+                    vk::AccessFlagBits2::eNone,
+                    vk::AccessFlagBits2::eNone,
+                    vk::PipelineStageFlagBits2::eAllCommands,
+                    vk::PipelineStageFlagBits2::eAllCommands
+                    );
+            }
+            );
+    }
+}
+
+void VulkanImage::release()
+{
+    if (image_info.image.get_handle() == nullptr)
+        return;
+
+    // Submit async free?
+    per_layer_image_views.clear();
+    per_mip_image_views.clear();
+
+    image_info.image = nullptr;
+    image_info.sampler = nullptr;
+    image_info.view = nullptr;
+}
+
+bool VulkanImage::is_image_valid() const
+{
+    return descriptor_image_info.imageView != nullptr;
+}
+
+size_t VulkanImage::get_width() const
+{
+    return spec.width;
+}
+
+size_t VulkanImage::get_height() const
+{
+    return spec.height;
+}
+
+glm::uvec2 VulkanImage::get_size() const
+{
+    return {spec.width, spec.height};
+}
+
+vk::Format VulkanImage::get_format() const
+{
+    return to_format(spec.format);
+}
+
+bool VulkanImage::has_mip() const
+{
+    return spec.mips > 1;
+}
+
+float VulkanImage::get_aspect_ratio() const
+{
+    return static_cast<float>(spec.width) / static_cast<float>(spec.height);
+}
+
+int VulkanImage::get_closest_mip_level(const size_t width, const size_t height) const
+{
+    if (width > spec.width / 2 || height > spec.height / 2)
+        return 0;
+
+    const int a = glm::log2(glm::min(spec.width, spec.width));
+    const int b = glm::log2(glm::min(width, height));
+    return a - b;
+}
+
+std::pair<size_t, size_t> VulkanImage::get_mip_level_dimensions(const size_t mip_level) const
+{
+    return {spec.width >> mip_level, spec.height >> mip_level};
+}
+
+image::Specification& VulkanImage::get_specs()
+{
+    return spec;
+}
+
+const image::Specification& VulkanImage::get_spec() const
+{
+    return spec;
+}
+
+void VulkanImage::create_per_layer_image_view()
+{
+    PORTAL_ASSERT(spec.layers > 1, "Cannot create per layer image view for single layer image");
+
+    vk::ImageAspectFlags aspect_mask = utils::is_depth_format(spec.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+    if (utils::is_stencil_format(spec.format))
+        aspect_mask |= vk::ImageAspectFlagBits::eStencil;
+
+    const vk::Format format = to_format(spec.format);
+
+    per_layer_image_views.resize(spec.layers);
+    for (size_t i = 0; i < spec.layers; ++i)
+    {
+        const vk::ImageViewCreateInfo view_info{
+            .image = image_info.image.get_handle(),
+            .viewType = vk::ImageViewType::e2D,
+            .format = format,
+            .subresourceRange = {
+                .aspectMask = aspect_mask,
+                .baseMipLevel = 0,
+                .levelCount = static_cast<uint32_t>(spec.mips),
+                .baseArrayLayer = 0,
+                .layerCount = 1
+            }
+        };
+        per_layer_image_views[i] = device->create_image_view(view_info);
+        device->set_debug_name(per_layer_image_views[i], fmt::format("{}_layer_view_{}", spec.name.string, i).c_str());
+    }
+}
+
+vk::ImageView VulkanImage::get_mip_image_view(size_t mip_level)
+{
+    if (!per_mip_image_views.contains(mip_level))
+    {
+        vk::ImageAspectFlags aspect_mask = utils::is_depth_format(spec.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+        if (utils::is_stencil_format(spec.format))
+            aspect_mask |= vk::ImageAspectFlagBits::eStencil;
+
+        const vk::Format format = to_format(spec.format);
+
+        const vk::ImageViewCreateInfo view_info{
+            .image = image_info.image.get_handle(),
+            .viewType = vk::ImageViewType::e2D,
+            .format = format,
+            .subresourceRange = {
+                .aspectMask = aspect_mask,
+                .baseMipLevel = static_cast<uint32_t>(mip_level),
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1
+            }
+        };
+        per_mip_image_views[mip_level] = device->create_image_view(view_info);
+        device->set_debug_name(per_mip_image_views[mip_level], fmt::format("{}_mip_view_{}", spec.name.string, mip_level).c_str());
+    }
+    return per_mip_image_views.at(mip_level);
+}
+
+vk::ImageView VulkanImage::get_layer_image_view(const size_t layer)
+{
+    PORTAL_ASSERT(layer < spec.layers, "Invalid layer index");
+    return per_layer_image_views[layer];
+}
+
+VulkanImageInfo& VulkanImage::get_image_info()
+{
+    return image_info;
+}
+
+const vk::DescriptorImageInfo& VulkanImage::get_descriptor_image_info() const
+{
+    return descriptor_image_info;
+}
+
+Buffer VulkanImage::get_buffer() const
+{
+    return image_data;
+}
+
+Buffer& VulkanImage::get_buffer()
+{
+    return image_data;
+}
+
+void VulkanImage::set_data(const Buffer buffer)
+{
+    PORTAL_ASSERT(spec.transfer, "Image was not created with transfer bit");
+
+    if (!buffer)
+    {
+        LOGGER_WARN("Attempting to write an empty buffer");
+        return;
+    }
+
+    auto staging_buffer = AllocatedBuffer::create_staging_buffer(device, buffer.size, buffer.data);
+
+    device->immediate_submit(
+        [&](const auto& command_buffer)
+        {
+            vk::ImageSubresourceRange range{
+                .aspectMask = vk::ImageAspectFlagBits::eColor,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1
+            };
+
+            portal::vulkan::transition_image_layout(
+                command_buffer,
+                image_info.image.get_handle(),
+                range,
+                vk::ImageLayout::eUndefined,
+                vk::ImageLayout::eTransferDstOptimal,
+                vk::AccessFlagBits2::eNone,
+                vk::AccessFlagBits2::eTransferWrite,
+                vk::PipelineStageFlagBits2::eHost,
+                vk::PipelineStageFlagBits2::eTransfer
+                );
+
+            vk::BufferImageCopy copy_region{
+                .bufferOffset = 0,
+                .imageSubresource = {
+                    .aspectMask = vk::ImageAspectFlagBits::eColor,
+                    .mipLevel = 0,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1
+                },
+                .imageExtent = {
+                    static_cast<uint32_t>(spec.width),
+                    static_cast<uint32_t>(spec.height),
+                    1
+                }
+            };
+
+            command_buffer.copyBufferToImage(
+                staging_buffer.get_handle(),
+                image_info.image.get_handle(),
+                vk::ImageLayout::eTransferDstOptimal,
+                {copy_region}
+                );
+
+            portal::vulkan::transition_image_layout(
+                command_buffer,
+                image_info.image.get_handle(),
+                range,
+                vk::ImageLayout::eTransferDstOptimal,
+                descriptor_image_info.imageLayout,
+                vk::AccessFlagBits2::eTransferRead,
+                vk::AccessFlagBits2::eShaderRead,
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::PipelineStageFlagBits2::eFragmentShader
+                );
+        }
+        );
+
+    update_descriptor();
+}
+
+portal::Buffer VulkanImage::copy_to_host_buffer()
+{
+    const size_t buffer_size = utils::get_image_memory_size(spec.format, spec.width, spec.height);
+
+    BufferBuilder builder(buffer_size);
+    builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
+           .with_usage(vk::BufferUsageFlagBits::eTransferDst)
+           .with_sharing_mode(vk::SharingMode::eExclusive)
+           .with_vma_usage(VMA_MEMORY_USAGE_GPU_TO_CPU)
+           .with_debug_name("staging");
+
+    AllocatedBuffer staging_buffer = device->create_buffer(builder);
+
+    // TODO: support copy of mips?
+    constexpr uint32_t mip_count = 1;
+    uint32_t mip_width = spec.width;
+    uint32_t mip_height = spec.height;
+
+    device->immediate_submit(
+        [&](const vk::raii::CommandBuffer& command_buffer)
+        {
+            constexpr vk::ImageSubresourceRange range{
+                .aspectMask = vk::ImageAspectFlagBits::eColor,
+                .baseMipLevel = 0,
+                .levelCount = mip_count,
+                .baseArrayLayer = 0,
+                .layerCount = 1
+            };
+
+            portal::vulkan::transition_image_layout(
+                command_buffer,
+                image_info.image.get_handle(),
+                range,
+                descriptor_image_info.imageLayout,
+                vk::ImageLayout::eTransferSrcOptimal,
+                vk::AccessFlagBits2::eNone,
+                vk::AccessFlagBits2::eTransferRead,
+                vk::PipelineStageFlagBits2::eAllCommands,
+                vk::PipelineStageFlagBits2::eTransfer
+                );
+
+            uint32_t mip_data_offset = 0;
+            for (uint32_t mip = 0; mip < mip_count; mip++)
+            {
+                vk::BufferImageCopy copy_region{
+                    .bufferImageHeight = mip_data_offset,
+                    .imageSubresource = {
+                        .aspectMask = vk::ImageAspectFlagBits::eColor,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1,
+                        .mipLevel = mip
+                    },
+                    .imageExtent = {
+                        mip_width,
+                        mip_height,
+                        1
+                    }
+                };
+
+                command_buffer.copyImageToBuffer(
+                    image_info.image.get_handle(),
+                    vk::ImageLayout::eTransferSrcOptimal,
+                    staging_buffer.get_handle(),
+                    {copy_region}
+                    );
+
+                mip_data_offset += utils::get_image_memory_size(spec.format, mip_width, mip_height);
+                mip_width = std::max(1u, mip_width / 2);
+                mip_height = std::max(1u, mip_height / 2);
+            }
+
+            portal::vulkan::transition_image_layout(
+                command_buffer,
+                image_info.image.get_handle(),
+                range,
+                vk::ImageLayout::eTransferSrcOptimal,
+                descriptor_image_info.imageLayout,
+                vk::AccessFlagBits2::eTransferRead,
+                vk::AccessFlagBits2::eNone,
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::PipelineStageFlagBits2::eTopOfPipe
+                );
+        }
+        );
+
+    const auto mapped_memory = staging_buffer.map();
+
+    return Buffer::copy(mapped_memory, buffer_size);
+}
+
+void VulkanImage::update_descriptor()
+{
+    if (utils::is_depth_format(spec.format))
+        descriptor_image_info.imageLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+    else if (spec.usage == ImageUsage::Storage)
+        descriptor_image_info.imageLayout = vk::ImageLayout::eGeneral;
+    else if (spec.usage == ImageUsage::HostRead)
+        descriptor_image_info.imageLayout = vk::ImageLayout::eTransferDstOptimal;
+    else
+        descriptor_image_info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
+    descriptor_image_info.imageView = image_info.view;
+    descriptor_image_info.sampler = image_info.sampler;
+}
+
+}

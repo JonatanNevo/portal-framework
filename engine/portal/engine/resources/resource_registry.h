@@ -9,7 +9,7 @@
 #include <concurrentqueue/concurrentqueue.h>
 
 #include "portal/core/concurrency/spin_lock.h"
-#include "portal/engine/resources/gpu_context.h"
+#include "../renderer/vulkan/gpu_context.h"
 #include "portal/engine/resources/loader/loader_factory.h"
 #include "portal/engine/strings/string_id.h"
 #include "utils.h"
@@ -35,7 +35,7 @@ public:
      * @param context The GPU context used for resource loading operations
      * @param database The resource database containing metadata and source information for resources
      */
-    void initialize(const std::shared_ptr<resources::GpuContext>& context, const std::shared_ptr<resources::ResourceDatabase>& database);
+    void initialize(const std::shared_ptr<renderer::vulkan::GpuContext>& context, const std::shared_ptr<resources::ResourceDatabase>& database);
 
     /**
      * Shutdown and cleanup the resource registry.
@@ -159,7 +159,7 @@ protected:
     void load_default(Ref<Resource>& resource, ResourceType type);
 
 private:
-    std::shared_ptr<resources::GpuContext> gpu_context;
+    std::shared_ptr<renderer::vulkan::GpuContext> gpu_context;
     std::unordered_map<ResourceType, ResourceMap> resource_map;
     std::unordered_map<ResourceType, std::optional<Ref<Resource>>> default_resources;\
 
