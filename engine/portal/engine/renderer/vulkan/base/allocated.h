@@ -9,6 +9,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include "portal/core/buffer.h"
+#include "portal/engine/renderer/vulkan/vulkan_common.h"
 #include "portal/engine/renderer/vulkan/base/allocated.h"
 #include "portal/engine/renderer/vulkan/base/vulkan_resource.h"
 
@@ -182,7 +183,7 @@ public:
      * @param offset The offset to start the copying into the mapped data. Defaults to 0.
      * @return The number of bytes copied.
      */
-    size_t update(const portal::Buffer& buffer, const size_t offset = 0);
+    size_t update(const portal::Buffer& buffer, const size_t offset = 0) const;
 
     /**
      * Copies an object as byte data into the buffer.  This is a convenience method that allows the user to
@@ -406,6 +407,12 @@ template <typename HandleType>
 size_t Allocated<HandleType>::update(const void* data, const size_t size, const size_t offset) const
 {
     return update(static_cast<const uint8_t*>(data), size, offset);
+}
+
+template <typename HandleType>
+size_t Allocated<HandleType>::update(const portal::Buffer& buffer, const size_t offset) const
+{
+    return update(buffer.data, buffer.size, offset);
 }
 
 template <typename HandleType>

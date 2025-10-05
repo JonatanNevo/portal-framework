@@ -6,6 +6,7 @@
 #include "vulkan_physical_device.h"
 
 #include "portal/core/log.h"
+#include "portal/engine/renderer/vulkan/vulkan_device.h"
 
 namespace portal::renderer::vulkan
 {
@@ -56,7 +57,7 @@ uint32_t rate_device_suitability(const vk::raii::PhysicalDevice& device)
     // Maximum possible size of textures affects graphics quality
     score += properties.limits.maxImageDimension2D;
 
-    LOGGER_DEBUG("Available Device: {}", properties.deviceName.data());
+    LOGGER_DEBUG("Gpu candidate: {} with score {}", properties.deviceName.data(), score);
     return score;
 }
 
@@ -74,7 +75,6 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(const vk::raii::Instance& instance)
     for (const auto& dev : physical_devices)
     {
         uint32_t score = rate_device_suitability(dev);
-        LOGGER_DEBUG("Gpu candidate: {} with score {}", dev.getProperties().deviceName.data(), score);
         candidates.insert(std::make_pair(score, dev));
     }
 
@@ -97,10 +97,10 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(const vk::raii::Instance& instance)
 
     auto device_extensions = physical_device.enumerateDeviceExtensionProperties();
     LOGGER_TRACE("Physical device has {} extensions: ", device_extensions.size());
-    for (auto& [extensionName, specVersion] : device_extensions)
+    for (auto& [extension_name, spec_version] : device_extensions)
     {
-        supported_extensions.emplace(extensionName);
-        LOGGER_TRACE("  {} [{}]", extensionName.data(), specVersion);
+        supported_extensions.emplace(std::string{extension_name.data(), extension_name.size()});
+        LOGGER_TRACE("  {} [v{}]", extension_name.data(), spec_version);
     }
 
     // Queue families
@@ -199,7 +199,7 @@ vk::Format VulkanPhysicalDevice::find_depth_format() const
 {
     // Since all depth formats may be optional, we need to find a suitable depth format to use
     // Start with the highest precision packed format
-    std::vector depth_format = {
+    std::vector possible_depth_formats = {
         vk::Format::eD32SfloatS8Uint,
         vk::Format::eD32Sfloat,
         vk::Format::eD24UnormS8Uint,
@@ -207,7 +207,7 @@ vk::Format VulkanPhysicalDevice::find_depth_format() const
         vk::Format::eD16Unorm
     };
 
-    for (const auto& format : depth_format)
+    for (const auto& format : possible_depth_formats)
     {
         auto format_prop = physical_device.getFormatProperties(format);
         if (format_prop.optimalTilingFeatures & vk::FormatFeatureFlagBits::eDepthStencilAttachment)

@@ -11,7 +11,7 @@
 #include "portal/engine/resources/loader/loader.h"
 
 namespace portal::renderer {
-class ShaderCache;
+class Shader;
 }
 
 namespace portal::resources
@@ -26,7 +26,7 @@ public:
     void load_default(Ref<Resource>& resource) const override;
 
 protected:
-    bool load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<renderer::ShaderCache>& shader) const;
+    bool load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<renderer::Shader>& shader) const;
 
 private:
     Slang::ComPtr<slang::IGlobalSession> slang_session;

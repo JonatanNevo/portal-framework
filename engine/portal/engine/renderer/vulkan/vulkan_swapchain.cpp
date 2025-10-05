@@ -71,7 +71,7 @@ void VulkanSwapchain::init(const Ref<VulkanContext>& vulkan_context, GLFWwindow*
     // Find a queue with present support
     // Will be used to present the swap chain images to the windowing system
     std::vector supports_present(queue_family_properties.size(), false);
-    for (size_t i = 0; i < queue_family_properties.size(); i++)
+    for (uint32_t i = 0; i < queue_family_properties.size(); i++)
     {
         supports_present[i] = physical_device->get_handle().getSurfaceSupportKHR(i, *surface);
     }
@@ -85,7 +85,7 @@ void VulkanSwapchain::init(const Ref<VulkanContext>& vulkan_context, GLFWwindow*
     size_t i = 0;
     for (auto& prop : queue_family_properties)
     {
-        if ((prop.queueFlags & vk::QueueFlagBits::eGraphics) != 0)
+        if ((prop.queueFlags & vk::QueueFlagBits::eGraphics) != vk::QueueFlagBits{0})
         {
             if (graphics_queue_index == std::numeric_limits<size_t>::max())
                 graphics_queue_index = i;
@@ -104,15 +104,14 @@ void VulkanSwapchain::init(const Ref<VulkanContext>& vulkan_context, GLFWwindow*
     {
         // If there's no queue that supports both present and graphics
         // try to find a separate present queue
-        i = 0;
-        for (auto& prop : queue_family_properties)
+        for (size_t index = 0; index < queue_family_properties.size(); ++index)
         {
-            if (supports_present[i])
+            if (supports_present[index])
             {
-                present_queue_index = i;
+                present_queue_index = index;
                 break;
             }
-            ++i;
+            ++index;
         }
     }
 
@@ -125,7 +124,7 @@ void VulkanSwapchain::init(const Ref<VulkanContext>& vulkan_context, GLFWwindow*
 }
 
 
-void VulkanSwapchain::create(size_t* request_width, size_t* request_height, const bool new_vsync)
+void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, const bool new_vsync)
 {
     vsync = new_vsync;
 
@@ -236,9 +235,9 @@ void VulkanSwapchain::create(size_t* request_width, size_t* request_height, cons
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         vk::ImageViewCreateInfo view_info{
+            .image = swap_chain_images[i],
             .viewType = vk::ImageViewType::e2D,
             .format = color_format,
-            .image = swap_chain_images[i],
             .components = {vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA},
             .subresourceRange = {
                 .aspectMask = vk::ImageAspectFlagBits::eColor,
@@ -249,7 +248,7 @@ void VulkanSwapchain::create(size_t* request_width, size_t* request_height, cons
             },
         };
 
-        auto& [image, image_view, command_pool, command_buffer] = images_data[i];
+        auto& [image, image_view, command_pool, command_buffer, last_used_frame] = images_data[i];
         image = swap_chain_images[i];
         image_view = device->get_handle().createImageView(view_info);
         device->set_debug_name(image_view, fmt::format("swapchain_image_view_{}", i).c_str());
@@ -259,7 +258,7 @@ void VulkanSwapchain::create(size_t* request_width, size_t* request_height, cons
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         const vk::CommandPoolCreateInfo pool_info{
-            .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer | vk::CommandPoolCreateFlagBits::eTransient,
+            .flags = vk::CommandPoolCreateFlagBits::eTransient,
             .queueFamilyIndex = static_cast<uint32_t>(present_queue_family_index),
         };
         command_pool = device->get_handle().createCommandPool(pool_info);
@@ -303,9 +302,6 @@ void VulkanSwapchain::create(size_t* request_width, size_t* request_height, cons
             );
         device->set_debug_name(data.wait_fence, fmt::format("swapchain_wait_fence_{}", frame_index).c_str());
     }
-
-    // TODO: create render target object?
-    Ref<VulkanRenderTarget>::create();
 }
 
 void VulkanSwapchain::destroy()
@@ -324,21 +320,29 @@ void VulkanSwapchain::on_resize(size_t new_width, size_t new_height)
 {
     LOGGER_INFO("Resizing swapchain to {}x{}", new_width, new_height);
     context->get_device()->wait_idle();
-    create(&new_width, &new_height, vsync);
+    create(reinterpret_cast<uint32_t*>(&new_width), reinterpret_cast<uint32_t*>(&new_height), vsync);
     context->get_device()->wait_idle();
 }
 
 void VulkanSwapchain::begin_frame()
 {
     PORTAL_PROF_ZONE();
-
-    current_frame = (current_frame + 1) % frames_in_flight;
-
     auto& frame = frame_data[current_frame];
     frame.deletion_queue.flush();
 
-    const auto current_image_index = acquire_next_image();
-    images_data[current_image_index].command_pool.reset();
+    current_image = acquire_next_image();
+    auto& image_data = images_data[current_image];
+
+    // If this image was used before, wait for the fence from the frame that last used it
+    if (image_data.last_used_frame != std::numeric_limits<size_t>::max())
+    {
+        PORTAL_PROF_ZONE("VulkanSwapchain::begin_frame - wait for image fence");
+        const auto& last_frame = frame_data[image_data.last_used_frame];
+        context->get_device()->wait_for_fences(std::span{&*last_frame.wait_fence, 1}, true);
+    }
+
+    image_data.command_pool.reset();
+    image_data.last_used_frame = current_frame;
 }
 
 void VulkanSwapchain::present()
@@ -348,8 +352,7 @@ void VulkanSwapchain::present()
     const auto& frame = frame_data[current_frame];
     const auto& image = images_data[current_image];
 
-    // TODO: check vk::PipelineStageFlagBits::eColorAttachmentOutput;
-    vk::PipelineStageFlags wait_destination_stage_mask = vk::PipelineStageFlagBits::eAllCommands;
+    vk::PipelineStageFlags wait_destination_stage_mask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 
     const vk::SubmitInfo submit_info{
         .waitSemaphoreCount = 1,
@@ -401,6 +404,7 @@ void VulkanSwapchain::present()
             on_resize(width, height);
         }
     }
+    current_frame = (current_frame + 1) % frames_in_flight;
 }
 
 size_t VulkanSwapchain::acquire_next_image()

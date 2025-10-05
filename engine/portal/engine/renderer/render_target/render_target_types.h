@@ -33,7 +33,7 @@ namespace render_target
 
     struct TextureSpecification
     {
-        ImageFormat format;
+        ImageFormat format{};
         bool blend = true;
         BlendMode blend_mode = BlendMode::SrcAlphaOneMinusSrcAlpha;
         AttachmentLoadOperator load_operator = AttachmentLoadOperator::Inherit;

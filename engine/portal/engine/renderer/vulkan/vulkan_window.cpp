@@ -23,7 +23,16 @@ static void glfw_error_callback(int error, const char* description)
 }
 
 VulkanWindow::VulkanWindow(const Ref<VulkanContext>& context, const WindowSpecification& spec) : spec(spec), context(context)
-{}
+{
+    if (!g_glfw_initialized)
+    {
+        const auto result = glfwInit();
+        PORTAL_ASSERT(result == GLFW_TRUE, "Failed to initialize GLFW");
+        glfwSetErrorCallback(glfw_error_callback);
+
+        g_glfw_initialized = true;
+    }
+}
 
 VulkanWindow::~VulkanWindow()
 {
@@ -37,15 +46,6 @@ void VulkanWindow::init()
     data.height = spec.height;
 
     LOGGER_INFO("Creating window {} ({}x{})", spec.title.string, spec.width, spec.height);
-
-    if (!g_glfw_initialized)
-    {
-        const auto result = glfwInit();
-        PORTAL_ASSERT(result == GLFW_TRUE, "Failed to initialize GLFW");
-        glfwSetErrorCallback(glfw_error_callback);
-
-        g_glfw_initialized = true;
-    }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -75,7 +75,7 @@ void VulkanWindow::init()
     // TODO: Set Icon if available?
 
     swapchain.init(context, window);
-    swapchain.create(&data.width, &data.height, spec.vsync);
+    swapchain.create(reinterpret_cast<uint32_t*>(&data.width), reinterpret_cast<uint32_t*>(&data.height), spec.vsync);
 
     // TODO: combine with `input` module
     glfwSetWindowUserPointer(window, this);

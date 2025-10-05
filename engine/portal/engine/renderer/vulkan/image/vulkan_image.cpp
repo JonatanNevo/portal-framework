@@ -10,13 +10,14 @@
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_utils.h"
+#include "portal/engine/renderer/vulkan/image/vulkan_sampler.h"
 
 namespace portal::renderer::vulkan
 {
 
 static auto logger = Log::get_logger("Vulkan");
 
-VulkanImage::VulkanImage(const image::Specification& spec, const Ref<VulkanContext>& context) : device(context->get_device()), spec(spec)
+VulkanImage::VulkanImage(const image::Specification& spec, const Ref<VulkanContext>& context) : Image(spec.name), device(context->get_device()), spec(spec)
 {
     PORTAL_ASSERT(spec.width > 0 && spec.height > 0, "Invalid image size");
 }
@@ -70,6 +71,9 @@ void VulkanImage::initialize()
            .with_vma_required_flags(vk::MemoryPropertyFlagBits::eDeviceLocal)
            .with_debug_name(std::string(spec.name.string));
 
+    if (spec.flags == image::Flags::CubeCompatible)
+        builder.with_flags(vk::ImageCreateFlagBits::eCubeCompatible);
+
     image_info.image = device->create_image(builder);
 
     const vk::ImageViewCreateInfo view_info{
@@ -89,32 +93,22 @@ void VulkanImage::initialize()
 
     if (spec.create_sampler)
     {
-        vk::SamplerCreateInfo sampler_info{
-            .maxAnisotropy = 1.f,
-            .addressModeU = vk::SamplerAddressMode::eClampToEdge,
-            .addressModeV = vk::SamplerAddressMode::eClampToEdge,
-            .addressModeW = vk::SamplerAddressMode::eClampToEdge,
-            .mipLodBias = 0.f,
-            .minLod = 0.f,
-            .maxLod = 100.f,
-            .borderColor = vk::BorderColor::eFloatOpaqueWhite,
+        SamplerSpecification sampler_spec{
+            .wrap = TextureWrap::Clamp,
         };
 
         if (utils::is_integer_format(spec.format))
         {
-            sampler_info.minFilter = vk::Filter::eNearest;
-            sampler_info.magFilter = vk::Filter::eNearest;
-            sampler_info.mipmapMode = vk::SamplerMipmapMode::eNearest;
+            sampler_spec.filter = TextureFilter::Nearest;
+            sampler_spec.mipmap_mode = SamplerMipmapMode::Nearest;
         }
         else
         {
-            sampler_info.minFilter = vk::Filter::eLinear;
-            sampler_info.magFilter = vk::Filter::eLinear;
-            sampler_info.mipmapMode = vk::SamplerMipmapMode::eLinear;
+            sampler_spec.filter = TextureFilter::Linear;
+            sampler_spec.mipmap_mode = SamplerMipmapMode::Linear;
         }
 
-        image_info.sampler = device->create_sampler(sampler_info);
-        device->set_debug_name(image_info.sampler, fmt::format("default_sampler_{}", spec.name.string).c_str());
+        image_info.sampler = Ref<VulkanSampler>::create(STRING_ID(fmt::format("default_sampler_{}", spec.name.string)), sampler_spec, device);
     }
 
     if (spec.usage == ImageUsage::Storage)
@@ -228,8 +222,8 @@ int VulkanImage::get_closest_mip_level(const size_t width, const size_t height) 
     if (width > spec.width / 2 || height > spec.height / 2)
         return 0;
 
-    const int a = glm::log2(glm::min(spec.width, spec.width));
-    const int b = glm::log2(glm::min(width, height));
+    const int a = static_cast<int>(glm::log2(glm::min(static_cast<float>(spec.width), static_cast<float>(spec.height))));
+    const int b = static_cast<int>(glm::log2(glm::min(static_cast<float>(width), static_cast<float>(height))));
     return a - b;
 }
 
@@ -258,7 +252,7 @@ void VulkanImage::create_per_layer_image_view()
 
     const vk::Format format = to_format(spec.format);
 
-    per_layer_image_views.resize(spec.layers);
+    per_layer_image_views.reserve(spec.layers);
     for (size_t i = 0; i < spec.layers; ++i)
     {
         const vk::ImageViewCreateInfo view_info{
@@ -273,7 +267,7 @@ void VulkanImage::create_per_layer_image_view()
                 .layerCount = 1
             }
         };
-        per_layer_image_views[i] = device->create_image_view(view_info);
+        per_layer_image_views.emplace_back(device->create_image_view(view_info));
         device->set_debug_name(per_layer_image_views[i], fmt::format("{}_layer_view_{}", spec.name.string, i).c_str());
     }
 }
@@ -300,8 +294,8 @@ vk::ImageView VulkanImage::get_mip_image_view(size_t mip_level)
                 .layerCount = 1
             }
         };
-        per_mip_image_views[mip_level] = device->create_image_view(view_info);
-        device->set_debug_name(per_mip_image_views[mip_level], fmt::format("{}_mip_view_{}", spec.name.string, mip_level).c_str());
+        per_mip_image_views.emplace(mip_level, std::move(device->create_image_view(view_info)));
+        device->set_debug_name(per_mip_image_views.at(mip_level), fmt::format("{}_mip_view_{}", spec.name.string, mip_level).c_str());
     }
     return per_mip_image_views.at(mip_level);
 }
@@ -421,8 +415,8 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
 
     // TODO: support copy of mips?
     constexpr uint32_t mip_count = 1;
-    uint32_t mip_width = spec.width;
-    uint32_t mip_height = spec.height;
+    auto mip_width = static_cast<uint32_t>(spec.width);
+    auto mip_height = static_cast<uint32_t>(spec.height);
 
     device->immediate_submit(
         [&](const vk::raii::CommandBuffer& command_buffer)
@@ -447,16 +441,16 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
                 vk::PipelineStageFlagBits2::eTransfer
                 );
 
-            uint32_t mip_data_offset = 0;
+            size_t mip_data_offset = 0;
             for (uint32_t mip = 0; mip < mip_count; mip++)
             {
                 vk::BufferImageCopy copy_region{
-                    .bufferImageHeight = mip_data_offset,
+                    .bufferImageHeight = static_cast<uint32_t>(mip_data_offset),
                     .imageSubresource = {
                         .aspectMask = vk::ImageAspectFlagBits::eColor,
+                        .mipLevel = mip,
                         .baseArrayLayer = 0,
                         .layerCount = 1,
-                        .mipLevel = mip
                     },
                     .imageExtent = {
                         mip_width,
@@ -508,7 +502,8 @@ void VulkanImage::update_descriptor()
         descriptor_image_info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
     descriptor_image_info.imageView = image_info.view;
-    descriptor_image_info.sampler = image_info.sampler;
+    if (image_info.sampler)
+        descriptor_image_info.sampler = image_info.sampler->get_vk_sampler();
 }
 
 }

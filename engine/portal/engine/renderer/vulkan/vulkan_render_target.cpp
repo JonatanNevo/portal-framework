@@ -6,6 +6,7 @@
 #include "vulkan_render_target.h"
 
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
+#include "portal/engine/renderer/vulkan/image/vulkan_image.h"
 #include "portal/engine/scene/draw_context.h"
 
 namespace portal::renderer::vulkan
@@ -47,12 +48,12 @@ VulkanRenderTarget::VulkanRenderTarget(
         if (utils::is_depth_format(attachment_spec.format))
         {
             image_spec.name = STRING_ID(fmt::format("{}_depth_attachment_{}", specs.name.string, index));
-            depth_attachment = Ref<VulkanImage>::create(specs, context);
+            depth_attachment = Ref<VulkanImage>::create(image_spec, context);
         }
         else
         {
             image_spec.name = STRING_ID(fmt::format("{}_color_attachment_{}", specs.name.string, index));
-            color_attachments.emplace_back(Ref<VulkanImage>::create(specs, context));
+            color_attachments.emplace_back(Ref<VulkanImage>::create(image_spec, context));
         }
 
         index++;

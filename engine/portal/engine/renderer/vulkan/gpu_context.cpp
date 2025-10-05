@@ -5,33 +5,21 @@
 
 #include "gpu_context.h"
 
-#include "portal/core/log.h"
-#include "allocated_buffer.h"
-#include "vulkan_image.h"
+#include "image/vulkan_image.h"
 #include "portal/engine/renderer/descriptor_writer.h"
-#include "vulkan_utils.h"
 #include "portal/engine/renderer/descriptor_layout_builder.h"
-#include "portal/engine/renderer/vulkan/pipeline_builder.h"
-#include "portal/engine/renderer/vulkan/vulkan_common.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
-#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_render_target.h"
+#include "portal/engine/renderer/vulkan/vulkan_device.h"
 
 namespace portal::renderer::vulkan
 {
 
 GpuContext::GpuContext(
-    vk::raii::Device& device,
+    const Ref<VulkanContext>& context,
     const Ref<RenderTarget>& render_target,
     const std::vector<vk::DescriptorSetLayout>& global_descriptor_layouts
-    ): render_target(render_target),
-        global_descriptor_layouts(global_descriptor_layouts),
-        device(device)
-{
-}
-
-vk::Device GpuContext::get_device() const
-{
-    return device;
+    ) : render_target(render_target), vulkan_context(context), global_descriptor_layouts(global_descriptor_layouts) {
 }
 
 Ref<RenderTarget> GpuContext::get_render_target() const
@@ -52,7 +40,12 @@ std::vector<vk::DescriptorSetLayout>& GpuContext::get_global_descriptor_layouts(
 
 void GpuContext::write_descriptor_set(portal::vulkan::DescriptorWriter& writer, vk::raii::DescriptorSet& set)
 {
-    writer.update_set(device, set);
+    writer.update_set(vulkan_context->get_device(), set);
+}
+
+Ref<VulkanContext> GpuContext::get_context() const
+{
+    return vulkan_context;
 }
 
 // void GpuContext::populate_image(const void* data, AllocatedImage& image, const vk::Extent3D extent, size_t mip_level) const

@@ -5,19 +5,23 @@
 
 #include "pipeline_builder.h"
 
+#include <ranges>
+
 #include "gpu_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_common.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
+#include "portal/engine/renderer/vulkan/vulkan_shader.h"
 
 namespace portal::renderer::vulkan
 {
 
-// PipelineBuilder& PipelineBuilder::add_shader(Ref<VulkanShader> shader)
-// {
-//     const std::vector<vk::PipelineShaderStageCreateInfo>& shader_create_infos = shader->get_shader_create_infos();
-//     shader_stages.append_range(shader_create_infos);
-//     return *this;
-// }
+
+PipelineBuilder& PipelineBuilder::add_shader(Ref<VulkanShaderVariant> shader)
+{
+    const std::vector<vk::PipelineShaderStageCreateInfo>& shader_create_infos = shader->get_shader_stage_create_infos();
+    shader_stages.append_range(shader_create_infos);
+    return *this;
+}
 
 PipelineBuilder& PipelineBuilder::set_vertex_bindings(const std::vector<vk::VertexInputBindingDescription>& descriptions)
 {
@@ -200,15 +204,12 @@ PipelineBuilder& PipelineBuilder::disable_color_blending(int index)
 
 PipelineBuilder& PipelineBuilder::set_color_attachment_formats(std::vector<ImageFormat>& formats)
 {
-    std::transform(
-        formats.begin(),
-        formats.end(),
-        color_formats,
+    color_formats = formats | std::views::transform(
         [](const ImageFormat format)
         {
             return to_format(format);
         }
-        );
+        ) | std::ranges::to<std::vector<vk::Format>>();
 
     pipeline_rendering_create_info.colorAttachmentCount = static_cast<uint32_t>(color_formats.size());
     pipeline_rendering_create_info.pColorAttachmentFormats = color_formats.data();

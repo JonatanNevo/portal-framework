@@ -26,5 +26,9 @@ vk::AccessFlagBits to_access_flag(ResourceAccessFlags flags);
 
 vk::Format to_format(const reflection::Property& prop);
 
+vk::Filter to_filter(TextureFilter filter);
+vk::SamplerAddressMode to_address_mode(TextureWrap warp);
+vk::SamplerMipmapMode to_mipmap_mode(SamplerMipmapMode mode);
+
 
 }

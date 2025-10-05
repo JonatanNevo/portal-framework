@@ -63,6 +63,6 @@ vk::raii::DescriptorSetLayout DescriptorLayoutBuilder::build(const vk::raii::Dev
             }
             );
     }
-    return std::move(set);
+    return set;
 }
 } // portal

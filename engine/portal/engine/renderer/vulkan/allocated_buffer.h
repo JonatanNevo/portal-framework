@@ -19,7 +19,8 @@ struct BufferBuilder final : public BuilderBase<BufferBuilder, vk::BufferCreateI
 public:
     explicit BufferBuilder(vk::DeviceSize size);
 
-    AllocatedBuffer build(Ref<VulkanDevice> device) const;
+    AllocatedBuffer build(const Ref<VulkanDevice>& device) const;
+    std::shared_ptr<AllocatedBuffer> build_shared(const Ref<VulkanDevice>& device) const;
     BufferBuilder& with_flags(vk::BufferCreateFlags flags);
     BufferBuilder& with_usage(vk::BufferUsageFlags usage);
 

@@ -11,6 +11,8 @@ namespace portal::renderer
 
 class RendererResource: public Resource
 {
+public:
+    explicit RendererResource(const StringId& id): Resource(id) {}
 };
 
 }

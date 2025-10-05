@@ -219,105 +219,105 @@ public:
     template <typename T> requires std::integral<T> || std::floating_point<T>
     void get_value(T& t)
     {
-        const auto property = get_property();
+        auto property = get_property();
 
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::scalar, "Property container type mismatch");
         PORTAL_ASSERT(property.type == reflection::get_property_type<T>(), "Property type mismatch");
         PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
-        t = *static_cast<T*>(property.value.data);
+        t = *property.value.as<T*>();
     }
 
     template <typename T> requires std::is_same_v<T, uint128_t>
     void get_value(T& t)
     {
-        const auto property = get_property();
+        auto property = get_property();
 
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::scalar, "Property container type mismatch");
         PORTAL_ASSERT(property.type == reflection::PropertyType::integer128, "Property type mismatch");
         PORTAL_ASSERT(property.value.size == sizeof(T), "Value size mismatch, expected: {} got {}", sizeof(T), property.value.size);
 
-        t = *static_cast<T*>(property.value.data);
+        t = *property.value.as<T*>();
     }
 
     template <reflection::Vector T> requires (!Serializable<typename T::value_type>)
     void get_value(T& t)
     {
-        const auto property = get_property();
+        auto property = get_property();
 
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::array, "Property container type mismatch");
         PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
 
         auto array_length = property.elements_number;
-        auto* data = static_cast<typename T::value_type*>(property.value.data);
+        auto* data = property.value.as<typename T::value_type*>();
         t = T(data, data + array_length);
     }
 
     template <reflection::String T>
     void get_value(T& t)
     {
-        const auto property = get_property();
+        auto property = get_property();
 
         PORTAL_ASSERT(property.type == reflection::PropertyType::character, "Property type mismatch");
 
-        size_t string_length;
+        size_t string_length = 0;
         if (property.container_type == reflection::PropertyContainerType::null_term_string)
             string_length = property.elements_number - 1;
         else if (property.container_type == reflection::PropertyContainerType::string)
             string_length = property.elements_number;
 
-        const auto* data = static_cast<const typename T::value_type*>(property.value.data);
+        const auto* data = property.value.as<const typename T::value_type*>();
         t = T(data, string_length);
     }
 
     template <reflection::GlmVec1 T>
     void get_value(T& t)
     {
-        const auto property = get_property();
+        auto property = get_property();
 
         PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
         PORTAL_ASSERT(property.elements_number == 1, "Property elements number mismatch");
 
-        t = T(*static_cast<typename T::value_type*>(property.value.data));
+        t = T(*property.value.as<typename T::value_type*>());
     }
 
     template <reflection::GlmVec2 T>
     void get_value(T& t)
     {
-        const auto property = get_property();
+        auto property = get_property();
 
         PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
         PORTAL_ASSERT(property.elements_number == 2, "Property elements number mismatch");
 
-        const auto* data = static_cast<const typename T::value_type*>(property.value.data);
+        const auto* data = property.value.as<const typename T::value_type*>();
         t = T(data[0], data[1]);
     }
 
     template <reflection::GlmVec3 T>
     void get_value(T& t)
     {
-        const auto property = get_property();
+        auto property = get_property();
 
         PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
         PORTAL_ASSERT(property.elements_number == 3, "Property elements number mismatch");
 
-        const auto* data = static_cast<const typename T::value_type*>(property.value.data);
+        const auto* data = property.value.as<const typename T::value_type*>();
         t = T(data[0], data[1], data[2]);
     }
 
     template <reflection::GlmVec4 T>
     void get_value(T& t)
     {
-        const auto property = get_property();
+        auto property = get_property();
 
         PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
         PORTAL_ASSERT(property.elements_number == 4, "Property elements number mismatch");
 
-        const auto* data = static_cast<const typename T::value_type*>(property.value.data);
+        const auto* data = property.value.as<const typename T::value_type*>();
         t = T(data[0], data[1], data[2], data[3]);
     }
 

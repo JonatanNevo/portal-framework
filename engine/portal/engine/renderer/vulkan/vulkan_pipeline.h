@@ -23,7 +23,7 @@ public:
 
     void initialize() override;
 
-    [[nodiscard]] Ref<Shader> get_shader() const override;
+    [[nodiscard]] Ref<ShaderVariant> get_shader() const override;
 
     bool is_dynamic_line_width() const;
 

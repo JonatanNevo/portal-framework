@@ -12,7 +12,7 @@
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/engine/strings/string_id.h"
 #include "../../../portal/engine/renderer/vulkan/gpu_context.h"
-#include "../../../portal/engine/renderer/vulkan/vulkan_image.h"
+#include "../../../portal/engine/renderer/vulkan/image/vulkan_image.h"
 
 using namespace portal::resources;
 using namespace portal;

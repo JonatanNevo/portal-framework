@@ -5,18 +5,23 @@
 
 #pragma once
 
-#include "../../renderer/vulkan/allocated_buffer.h"
-#include "portal/engine/resources/resources/material.h"
+#include <portal/engine/renderer/vulkan/allocated_buffer.h>
 #include "portal/engine/resources/resources/resource.h"
 
 namespace portal
 {
+namespace renderer {
+    class Material;
+}
+
 namespace scene {
     class MeshNode;
 }
 
 namespace resources
 {
+    class GltfLoader;
+
     struct Vertex
     {
         glm::vec3 position;
@@ -51,7 +56,7 @@ namespace resources
         uint32_t start_index{};
         uint32_t count{};
         Bounds bounds{};
-        WeakRef<Material> material{};
+        WeakRef<renderer::Material> material{};
     };
 }
 

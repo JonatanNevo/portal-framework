@@ -96,16 +96,50 @@ enum class TextureFilter
     Cubic
 };
 
+enum class SamplerMipmapMode
+{
+    None,
+    Linear,
+    Nearest
+};
+
+enum class TextureType
+{
+    None,
+    Texture,
+    TextureCube
+};
+
+struct SamplerSpecification
+{
+    TextureWrap wrap = TextureWrap::Repeat;
+    TextureFilter filter = TextureFilter::Nearest;
+
+    SamplerMipmapMode mipmap_mode = SamplerMipmapMode::Nearest;
+    float min_lod = 0.f;
+    float max_lod = 1000.f;
+};
+
 namespace image
 {
+    enum class Flags
+    {
+        None,
+        CubeCompatible
+    };
+
     struct Specification
     {
         ImageFormat format = ImageFormat::RGBA8_UNorm;
         ImageUsage usage = ImageUsage::Texture;
+        Flags flags = Flags::None;
+
         // Will this image be used for transfer operations
         bool transfer = false;
         size_t width = 1;
         size_t height = 1;
+        size_t depth = 1;
+
         size_t mips = 1;
         size_t layers = 1;
         bool create_sampler = true;
@@ -128,6 +162,21 @@ namespace image
         glm::uvec4 uint_values;
     };
 }
+
+struct TextureSpecification
+{
+    ImageFormat format = ImageFormat::RGBA8_UNorm;
+    TextureType type = TextureType::Texture;
+    size_t width = 1;
+    size_t height = 1;
+    size_t depth = 1;
+
+    std::optional<SamplerSpecification> sampler_spec = std::nullopt;
+
+    bool generate_mipmaps = true;
+    bool storage = false;
+    bool store_locally = false;
+};
 
 namespace utils
 {
@@ -182,8 +231,6 @@ namespace utils
         default:
             return false;
         }
-        return false;
-
     }
 }
 

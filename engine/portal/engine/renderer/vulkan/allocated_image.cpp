@@ -55,15 +55,15 @@ ImageBuilder& ImageBuilder::with_image_type(const vk::ImageType type)
     return *this;
 }
 
-ImageBuilder& ImageBuilder::with_array_layers(const uint32_t layers)
+ImageBuilder& ImageBuilder::with_array_layers(const size_t layers)
 {
-    create_info.arrayLayers = layers;
+    create_info.arrayLayers = static_cast<uint32_t>(layers);
     return *this;
 }
 
-ImageBuilder& ImageBuilder::with_mips_levels(const uint32_t levels)
+ImageBuilder& ImageBuilder::with_mips_levels(const size_t levels)
 {
-    create_info.mipLevels = levels;
+    create_info.mipLevels = static_cast<uint32_t>(levels);
     return *this;
 }
 

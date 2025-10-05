@@ -7,8 +7,13 @@
 #include <fastgltf/core.hpp>
 
 #include "portal/engine/resources/loader/loader.h"
-#include "portal/engine/resources/resources/material.h"
 #include "portal/engine/scene/scene.h"
+
+namespace portal::renderer {
+class ShaderVariant;
+class Pipeline;
+class Shader;
+}
 
 namespace portal::renderer::vulkan
 {
@@ -34,7 +39,7 @@ protected:
     void load_mesh(size_t index, const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) const;
     std::vector<Ref<Scene>> load_scenes(const fastgltf::Asset& asset) const;
 
-    Ref<renderer::Pipeline> create_pipeline(const StringId& name, const Ref<renderer::Shader>& shader, bool depth) const;
+    Ref<renderer::Pipeline> create_pipeline(const StringId& name, const Ref<renderer::ShaderVariant>& shader, bool depth) const;
 
 private:
     std::shared_ptr<renderer::vulkan::GpuContext> gpu_context;

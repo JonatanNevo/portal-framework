@@ -14,10 +14,7 @@ namespace portal::renderer::vulkan
 
 constexpr std::array DEVICE_EXTENSIONS = {
     vk::KHRSwapchainExtensionName,
-    vk::KHRSpirv14ExtensionName,
-    vk::KHRSynchronization2ExtensionName,
-    vk::KHRCreateRenderpass2ExtensionName,
-    vk::EXTCalibratedTimestampsExtensionName,
+    vk::KHRCalibratedTimestampsExtensionName,
 #if defined(PORTAL_PLATFORM_MACOS)
     vk::KHRPortabilitySubsetExtensionName
 #endif

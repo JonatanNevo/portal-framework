@@ -15,8 +15,8 @@ namespace portal::renderer
 
 struct CompiledShader
 {
-    Buffer code;
-    ShaderReflection reflection;
+    Buffer code = nullptr;
+    ShaderReflection reflection{};
 };
 
 class ShaderCompiler
@@ -27,7 +27,7 @@ public:
         StringId name;
         std::filesystem::path shader_path;
         Buffer shader_data;
-        std::vector<std::pair<std::string, std::string>> defines;
+        std::vector<ShaderDefine> defines;
     };
 
 public:

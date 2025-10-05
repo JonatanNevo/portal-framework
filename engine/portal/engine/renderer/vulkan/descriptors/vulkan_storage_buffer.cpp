@@ -1,0 +1,103 @@
+//
+// Copyright © 2025 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
+//
+
+#include "vulkan_storage_buffer.h"
+
+#include "portal/engine/renderer/vulkan/vulkan_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
+
+namespace portal::renderer::vulkan
+{
+VulkanStorageBuffer::VulkanStorageBuffer(const StorageBufferSpecification& spec, const Ref<VulkanDevice>& device) : device(device), spec(spec)
+{
+    init();
+}
+
+VulkanStorageBuffer::~VulkanStorageBuffer()
+{
+    release();
+}
+
+void VulkanStorageBuffer::set_data(const Buffer data, const size_t offset)
+{
+    PORTAL_ASSERT(!spec.gpu_only, "Cannot set data on a GPU only buffer");
+
+    local_storage.write(data, offset);
+
+    [[maybe_unused]] const auto updated = buffer.update(local_storage, 0);
+    PORTAL_ASSERT(updated == spec.size, "Failed to update buffer");
+}
+
+const Buffer& VulkanStorageBuffer::get_data() const
+{
+    return local_storage;
+}
+
+void VulkanStorageBuffer::resize(const size_t new_size)
+{
+    spec.size = new_size;
+    init();
+}
+
+vk::DescriptorBufferInfo& VulkanStorageBuffer::get_descriptor_buffer_info()
+{
+    return descriptor_buffer_info;
+}
+
+void VulkanStorageBuffer::release()
+{
+    buffer = AllocatedBuffer();
+    local_storage = Buffer();
+}
+
+void VulkanStorageBuffer::init()
+{
+    release();
+
+    BufferBuilder builder(spec.size);
+    builder.with_usage(vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eStorageBuffer)
+           .with_debug_name(spec.debug_name.string.data());
+
+    if (spec.gpu_only)
+    {
+        builder.with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
+    }
+    else
+    {
+        builder.with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
+               .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT);
+    }
+
+    buffer = device->create_buffer(builder);
+
+    local_storage = Buffer::allocate(spec.size);
+    descriptor_buffer_info = {
+        .buffer = buffer.get_handle(),
+        .offset = 0,
+        .range = spec.size
+    };
+}
+
+
+VulkanStorageBufferSet::VulkanStorageBufferSet(size_t buffer_size, size_t size, const Ref<VulkanDevice>& device): size(size)
+{
+    for (auto i = 0; i < size; i++)
+    {
+        buffers[i] = Ref<VulkanStorageBuffer>::create(StorageBufferSpecification{buffer_size}, device);
+    }
+}
+
+
+Ref<StorageBuffer> VulkanStorageBufferSet::get(const size_t index)
+{
+    PORTAL_ASSERT(buffers.contains(index), "Invalid buffer index");
+    return buffers[index];
+}
+
+void VulkanStorageBufferSet::set(const Ref<StorageBuffer> buffer, const size_t index)
+{
+    buffers[index] = buffer.as<VulkanStorageBuffer>();
+}
+} // portal
