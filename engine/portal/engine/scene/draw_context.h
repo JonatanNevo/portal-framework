@@ -5,9 +5,12 @@
 
 #pragma once
 
-#include "../renderer/vulkan/allocated_buffer.h"
-#include "portal/engine/resources/resources/material.h"
+#include <portal/engine/renderer/vulkan/allocated_buffer.h>
 #include "portal/engine/resources/resources/mesh.h"
+
+namespace portal::renderer {
+class Material;
+}
 
 namespace portal::scene
 {
@@ -18,7 +21,7 @@ struct RenderObject
     uint32_t first_index = 0;
     std::shared_ptr<renderer::vulkan::AllocatedBuffer> index_buffer = nullptr;
 
-    WeakRef<Material> material = nullptr;
+    WeakRef<renderer::Material> material = nullptr;
     resources::Bounds bounds{};
 
     glm::mat4 transform = glm::mat4(1.0f);

@@ -13,8 +13,8 @@
 
 #include "portal/engine/renderer/descriptor_layout_builder.h"
 #include "portal/engine/resources/resource_registry.h"
-#include "portal/engine/renderer/shaders/shader_cache.h"
 #include "portal/engine/resources/source/resource_source.h"
+#include "portal/engine/renderer/shaders/shader.h"
 
 namespace portal::resources
 {
@@ -29,13 +29,14 @@ ShaderLoader::ShaderLoader(ResourceRegistry* registry, const std::shared_ptr<ren
 bool ShaderLoader::load(const std::shared_ptr<ResourceSource> source) const
 {
     auto meta = source->get_meta();
-    auto shader_cache = registry->get<renderer::ShaderCache>(meta.source_id);
-    shader_cache->load_source(source->load());
+    auto shader = registry->get<renderer::Shader>(meta.source_id);
+    shader.as<renderer::vulkan::VulkanShader>()->initialize(context->get_context());
+    shader->load_source(source->load());
 
     if (meta.format == SourceFormat::Shader)
         return true; // no work needs to be done on the loader anymore.
     if (meta.format == SourceFormat::PrecompiledShader)
-        return load_precompiled_shader(source, shader_cache);
+        return load_precompiled_shader(source, shader);
 
     LOGGER_ERROR("Unknown shader format: {}", meta.format);
     return false;
@@ -46,7 +47,7 @@ void ShaderLoader::load_default(Ref<Resource>& resource) const
     LOGGER_WARN("No default shader loader for resource: {}", resource->id);
 }
 
-bool ShaderLoader::load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<renderer::ShaderCache>&) const
+bool ShaderLoader::load_precompiled_shader(const std::shared_ptr<ResourceSource>& source, Ref<renderer::Shader>&) const
 {
     // TODO: load shader cache from disk / memory
     auto data = source->load();

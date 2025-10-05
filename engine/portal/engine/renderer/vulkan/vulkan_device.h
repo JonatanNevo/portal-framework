@@ -5,8 +5,10 @@
 
 #pragma once
 #include "portal/core/reference.h"
-#include "portal/engine/renderer/vulkan/allocated_image.h"
+
+#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
 #include "portal/engine/renderer/vulkan/allocated_buffer.h"
+#include "portal/engine/renderer/vulkan/allocated_image.h"
 #include "portal/engine/renderer/vulkan/vulkan_common.h"
 #include "portal/engine/strings/string_id.h"
 
@@ -16,8 +18,8 @@ class DescriptorLayoutBuilder;
 
 namespace portal::renderer::vulkan
 {
+struct BufferBuilder;
 class PipelineBuilder;
-class VulkanPhysicalDevice;
 
 class VulkanDevice final : public RefCounted
 {
@@ -37,6 +39,7 @@ public:
     // Object Creation
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     [[nodiscard]] AllocatedBuffer create_buffer(const BufferBuilder& builder);
+    [[nodiscard]] std::shared_ptr<AllocatedBuffer> create_buffer_shared(const BufferBuilder& builder);
     [[nodiscard]] AllocatedImage create_image(const ImageBuilder& builder);
     [[nodiscard]] vk::raii::ImageView create_image_view(const vk::ImageViewCreateInfo& info) const;
     [[nodiscard]] vk::raii::Sampler create_sampler(const vk::SamplerCreateInfo& info) const;
@@ -87,7 +90,7 @@ public:
         using HandleType = std::remove_cv_t<std::remove_reference_t<T>>;
 
         uint64_t object_handle;
-        if constexpr (requires { HandleType::CppType; })
+        if constexpr (requires { typename HandleType::CppType; })
         {
             // RAII wrapper type (like vk::raii::Buffer)
             object_handle = VK_HANDLE_CAST(handle);
@@ -95,7 +98,7 @@ public:
         else
         {
             // Plain handle type (like vk::Buffer)
-            object_handle = reinterpret_cast<uint64_t>(static_cast<HandleType::CType>(handle));
+            object_handle = reinterpret_cast<uint64_t>(static_cast<typename HandleType::CType>(handle));
         }
 
         set_debug_name(HandleType::objectType, object_handle, name);

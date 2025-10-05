@@ -6,6 +6,7 @@
 #include "allocated_buffer.h"
 
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
 
 namespace portal::renderer::vulkan
 {
@@ -27,9 +28,14 @@ AllocatedBuffer AllocatedBuffer::create_staging_buffer(Ref<VulkanDevice> device,
 
 BufferBuilder::BufferBuilder(const vk::DeviceSize size) : ParentType(vk::BufferCreateInfo{.size = size}) {}
 
-AllocatedBuffer BufferBuilder::build(Ref<VulkanDevice> device) const
+AllocatedBuffer BufferBuilder::build(const Ref<VulkanDevice>& device) const
 {
     return {device, *this};
+}
+
+std::shared_ptr<AllocatedBuffer> BufferBuilder::build_shared(const Ref<VulkanDevice>& device) const
+{
+    return std::shared_ptr<AllocatedBuffer>(new AllocatedBuffer{device, *this});
 }
 
 BufferBuilder& BufferBuilder::with_flags(const vk::BufferCreateFlags flags)

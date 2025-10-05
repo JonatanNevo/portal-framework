@@ -54,13 +54,13 @@ size_t get_format_bytes_per_pixel(ImageFormat format)
     return 0;
 }
 
-size_t utils::calculate_mip_count(const size_t width, const size_t height)
+size_t utils::calculate_mip_count(const size_t width, const size_t height, const size_t depth)
 {
-    return static_cast<size_t>(glm::floor(glm::log2(static_cast<float>(glm::min(width, height))))) + 1;
+    return static_cast<size_t>(glm::floor(glm::log2(static_cast<float>(glm::min(glm::min(width, height), depth))))) + 1;
 }
 
-size_t utils::get_image_memory_size(const ImageFormat format, const size_t width, const size_t height)
+size_t utils::get_image_memory_size(const ImageFormat format, const size_t width, const size_t height, const size_t depth)
 {
-    return get_format_bytes_per_pixel(format) * width * height;
+    return get_format_bytes_per_pixel(format) * width * height * depth;
 }
 } // portal

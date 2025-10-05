@@ -1,0 +1,89 @@
+//
+// Copyright © 2025 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
+//
+
+#include "vulkan_uniform_buffer.h"
+
+#include "portal/engine/renderer/vulkan/vulkan_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
+
+namespace portal::renderer::vulkan
+{
+VulkanUniformBuffer::VulkanUniformBuffer(const size_t size, const Ref<VulkanDevice>& device) : size(size), device(device)
+{
+    init();
+}
+
+VulkanUniformBuffer::~VulkanUniformBuffer()
+{
+    release();
+}
+
+void VulkanUniformBuffer::set_data(const Buffer data, const size_t offset)
+{
+    local_storage.write(data, offset); // TODO: do we need this not in debug?
+
+    [[maybe_unused]] const auto updated = buffer.update(local_storage, 0);
+    PORTAL_ASSERT(updated == size, "Failed to update buffer");
+}
+
+const Buffer& VulkanUniformBuffer::get_data() const
+{
+    return local_storage;
+}
+
+const vk::DescriptorBufferInfo& VulkanUniformBuffer::get_descriptor_buffer_info() const
+{
+    return descriptor_buffer_info;
+}
+
+void VulkanUniformBuffer::release()
+{
+    buffer = AllocatedBuffer();
+    local_storage = Buffer();
+}
+
+void VulkanUniformBuffer::init()
+{
+    release();
+
+    local_storage = Buffer::allocate(size);
+    local_storage.zero_initialize();
+
+    BufferBuilder builder(size);
+    builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
+           .with_usage(vk::BufferUsageFlagBits::eUniformBuffer)
+           .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
+           .with_debug_name("uniform_buffer");
+    buffer = device->create_buffer(builder);
+    [[maybe_unused]] const auto written = buffer.update(local_storage, 0);
+    PORTAL_ASSERT(written == size, "Failed to update buffer");
+
+    descriptor_buffer_info = {
+        .buffer = buffer.get_handle(),
+        .offset = 0,
+        .range = size
+    };
+}
+
+VulkanUniformBufferSet::VulkanUniformBufferSet(size_t buffer_size, const size_t size, const Ref<VulkanDevice>& device): size(size)
+{
+    for (auto i = 0; i < size; i++)
+    {
+        buffers[i] = Ref<VulkanUniformBuffer>::create(buffer_size, device);
+    }
+}
+
+Ref<UniformBuffer> VulkanUniformBufferSet::get(const size_t index)
+{
+    PORTAL_ASSERT(buffers.contains(index), "Invalid buffer index");
+    return buffers[index];
+}
+
+void VulkanUniformBufferSet::set(const Ref<UniformBuffer> buffer, const size_t index)
+{
+    buffers[index] = buffer.as<VulkanUniformBuffer>();
+}
+
+} // portal

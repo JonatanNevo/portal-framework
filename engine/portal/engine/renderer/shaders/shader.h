@@ -5,9 +5,11 @@
 
 #pragma once
 
+#include <filesystem>
+
 #include "portal/core/buffer.h"
 #include "portal/core/reflection/concepts.h"
-#include "portal/engine/renderer/vulkan/vulkan_image.h"
+#include "../vulkan/image/vulkan_image.h"
 #include "portal/engine/renderer/shaders/shader_types.h"
 #include "portal/engine/renderer/descriptor_writer.h"
 
@@ -20,28 +22,50 @@ class Serializer;
 namespace portal::renderer
 {
 struct CompiledShader;
-class Texture;
 
 namespace vulkan
 {
     class VulkanImage;
-    class VulkanShader;
+    class VulkanShaderVariant;
     class GpuContext;
 }
 
 
-class Shader : public RefCounted
+class ShaderVariant : public RefCounted
 {
 public:
-    virtual void reload(bool force_compile = false) = 0; // TODO: ?
-
-    [[nodiscard]] virtual uint64_t get_hash() const = 0;
     [[nodiscard]] virtual StringId get_name() const = 0;
 
-    virtual void set_macro(const std::string& name, const std::string& value) = 0;
+    virtual const std::unordered_map<StringId, shader_reflection::ShaderResourceDeclaration>& get_shader_resources() const = 0;
+    virtual const ShaderReflection& get_reflection() const = 0;
+};
 
-    virtual const std::unordered_map<StringId, ShaderBuffer>& get_shader_buffers() const = 0;
-    virtual const std::unordered_map<StringId, ShaderResourceDeclaration>& get_shader_resources() const = 0;
+/**
+ * Generates and caches `ShaderVariant` resource for multiple materials per shader.
+ */
+class Shader : public Resource
+{
+public:
+    explicit Shader(const StringId& id);
+
+    void load_source(Buffer&& new_source);
+    /**
+     * Compiles the shader with a given list of permutations (defines)
+     *
+     * @param permutations A list of permutations (name, value)
+     * @return The hash to fetch the shader code with.
+     */
+    uint64_t compile_with_permutations(std::vector<ShaderDefine>& permutations);
+
+    virtual WeakRef<ShaderVariant> get_shader(uint64_t shader_hash) = 0;
+
+protected:
+    uint64_t calculate_permutations_hash(const std::vector<ShaderDefine>& permutations) const;
+
+protected:
+    std::filesystem::path source_path;
+    Buffer source;
+    std::unordered_map<uint64_t, CompiledShader> shaders;
 };
 
 // namespace details

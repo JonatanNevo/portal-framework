@@ -15,9 +15,7 @@
 #include "portal/engine/renderer/camera.h"
 #include "portal/engine/renderer/deletion_queue.h"
 #include "portal/engine/renderer/descriptor_allocator.h"
-#include "portal/engine/renderer/loader.h"
 #include "portal/engine/renderer/rendering_types.h"
-#include "portal/engine/renderer/scene/gltf_scene.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "vulkan/gpu_context.h"
 #include "portal/engine/scene/draw_context.h"
@@ -26,6 +24,7 @@
 namespace portal
 {
 namespace renderer::vulkan {
+    class VulkanPipeline;
     class VulkanWindow;
 }
 
@@ -59,7 +58,8 @@ public:
     std::shared_ptr<renderer::vulkan::GpuContext> get_gpu_context();
 
     void begin_frame();
-    void end_frame() const;
+    void end_frame();
+    void clean_frame();
 
     void update_imgui(float delta_time);
     void update_scene(float delta_time);
@@ -75,6 +75,7 @@ private:
     void init_descriptors();
 
     void init_imgui();
+    void init_gpu_context();
 
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
 

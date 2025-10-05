@@ -8,7 +8,7 @@
 #include "portal/engine/resources/resources/resource.h"
 #include "image_types.h"
 #include "portal/core/buffer.h"
-#include "portal/engine/renderer/RendererResource.h"
+#include "portal/engine/renderer/renderer_resource.h"
 
 namespace portal::renderer
 {
@@ -16,6 +16,8 @@ namespace portal::renderer
 class Image: public RendererResource
 {
 public:
+    explicit Image(const StringId& id): RendererResource(id) {}
+
     virtual void resize(size_t width, size_t height) = 0;
     virtual void initialize() = 0; // TODO: ??
     virtual void release() = 0; // TODO: ??
@@ -50,7 +52,7 @@ class ImageView: public RendererResource
 
 namespace utils
 {
-    size_t calculate_mip_count(size_t width, size_t height);
-    size_t get_image_memory_size(ImageFormat format, size_t width, size_t height);
+    size_t calculate_mip_count(size_t width, size_t height, size_t depth = 1);
+    size_t get_image_memory_size(ImageFormat format, size_t width, size_t height, size_t depth = 1);
 }
 } // portal

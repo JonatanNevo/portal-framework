@@ -69,6 +69,11 @@ AllocatedBuffer VulkanDevice::create_buffer(const BufferBuilder& builder)
     return builder.build({this});
 }
 
+std::shared_ptr<AllocatedBuffer> VulkanDevice::create_buffer_shared(const BufferBuilder& builder)
+{
+    return builder.build_shared({this});
+}
+
 AllocatedImage VulkanDevice::create_image(const ImageBuilder& builder)
 {
     return builder.build({this});
@@ -76,7 +81,8 @@ AllocatedImage VulkanDevice::create_image(const ImageBuilder& builder)
 
 vk::raii::ImageView VulkanDevice::create_image_view(const vk::ImageViewCreateInfo& info) const
 {
-    return device.createImageView(info);
+    auto image_view =  device.createImageView(info);
+    return image_view;
 }
 
 vk::raii::Sampler VulkanDevice::create_sampler(const vk::SamplerCreateInfo& info) const
@@ -110,7 +116,6 @@ vk::raii::Pipeline VulkanDevice::create_pipeline(PipelineBuilder& builder) const
 void VulkanDevice::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function)
 {
     device.resetFences({immediate_command_buffer.fence});
-    immediate_command_buffer.command_buffer.reset();
 
     immediate_command_buffer.command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
     function(immediate_command_buffer.command_buffer);
@@ -128,6 +133,9 @@ void VulkanDevice::immediate_submit(std::function<void(vk::raii::CommandBuffer&)
 
     get_transfer_queue().submit2({submit_info}, immediate_command_buffer.fence);
     wait_for_fences({immediate_command_buffer.fence}, true, std::numeric_limits<uint64_t>::max());
+
+    immediate_command_buffer.command_pool.reset({});
+    // No need to reallocate; the existing buffer handle remains valid and is reset by pool reset in RAII
 }
 
 void VulkanDevice::wait_for_fences(const vk::ArrayProxy<const vk::Fence> fences, const bool wait_all, const size_t timeout) const
@@ -166,7 +174,7 @@ void VulkanDevice::initialize_immediate_commands()
 {
     const auto indices = physical_device->get_queue_family_indices();
     const vk::CommandPoolCreateInfo pool_info{
-        .flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer | vk::CommandPoolCreateFlagBits::eTransient,
+        .flags = vk::CommandPoolCreateFlagBits::eTransient,
         .queueFamilyIndex = static_cast<uint32_t>(indices.transfer), // TODO: should this be transfer or graphics?
     };
 

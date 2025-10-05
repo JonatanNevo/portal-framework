@@ -4,12 +4,20 @@
 //
 
 #pragma once
-#include <stb_image.h>
 
-#include "../../renderer/vulkan/vulkan_image.h"
+#include <vulkan/vulkan.hpp>
 #include "portal/engine/resources/loader/loader.h"
-#include "portal/engine/resources/resources/texture.h"
 
+namespace portal::renderer
+{
+namespace vulkan
+{
+    class GpuContext;
+    class VulkanImage;
+}
+
+class Texture;
+}
 
 namespace vk::raii
 {
@@ -18,23 +26,21 @@ class CommandBuffer;
 
 namespace portal::resources
 {
-class GpuContext;
 
 class TextureLoader final : public ResourceLoader
 {
 public:
-    explicit TextureLoader(ResourceRegistry* registry, const std::shared_ptr<GpuContext>& context);
+    explicit TextureLoader(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context);
 
     void initialize() override;
     [[nodiscard]] bool load(std::shared_ptr<ResourceSource> source) const override;
     void load_default(Ref<Resource>& resource) const override;
 
 private:
-    std::shared_ptr<renderer::vulkan::VulkanImage> build_image_from_memory(const StringId& id, void* data, vk::Extent3D extent) const;
-    Ref<Texture> create_default_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const;
+    Ref<renderer::Texture> create_default_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const;
 
-    std::shared_ptr<GpuContext> gpu_context;
-    WeakRef<Texture> missing_texture;
+    std::shared_ptr<renderer::vulkan::GpuContext> gpu_context;
+    WeakRef<renderer::Texture> missing_texture;
 };
 
 } // portal

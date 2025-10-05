@@ -31,7 +31,7 @@ public:
     std::shared_ptr<ResourceLoader> get(ResourceType type);
 
 private:
-    const std::shared_ptr<renderer::vulkan::GpuContext> gpu_context;
+    std::shared_ptr<renderer::vulkan::GpuContext> gpu_context;
     std::shared_ptr<StubLoader> stub_loader;
 };
 

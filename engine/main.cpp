@@ -19,25 +19,27 @@ int main()
     portal::Log::init({.default_log_level = portal::Log::LogLevel::Trace});
     try
     {
-        portal::Ref<portal::renderer::vulkan::VulkanContext> context;
-        context->init();
+        auto context = portal::Ref<portal::renderer::vulkan::VulkanContext>::create();
 
         const portal::WindowSpecification window_spec;
         portal::renderer::vulkan::VulkanWindow window(context, window_spec);
 
         portal::Renderer renderer;
+
+        context->init();
+        window.init();
         renderer.init(context, &window);
-        //
-        // auto resource_database = std::make_shared<portal::FolderResourceDatabase>("C:/Code/portal-framework/engine/resources");
-        // auto registry = portal::ResourceRegistry();
-        // registry.initialize(renderer.get_gpu_context(), resource_database);
-        //
-        // // auto shader = registry.immediate_load<portal::Shader>(STRING_ID("PBR/pbr.slang"));;
-        // {
-        //     registry.immediate_load<portal::Scene>(STRING_ID("game/ABeautifulGame.gltf"));
-        //     auto scene = registry.get<portal::Scene>(STRING_ID("Scene0-Scene"));
-        //     renderer.set_scene(scene);
-        // }
+
+        auto resource_database = std::make_shared<portal::FolderResourceDatabase>("C:/Code/portal-framework/engine/resources");
+        auto registry = ResourceRegistry();
+        registry.initialize(renderer.get_gpu_context(), resource_database);
+
+        // auto shader = registry.immediate_load<portal::Shader>(STRING_ID("PBR/pbr.slang"));;
+        {
+            registry.immediate_load<portal::Scene>(STRING_ID("game/ABeautifulGame.gltf"));
+            auto scene = registry.get<portal::Scene>(STRING_ID("Scene0-Scene"));
+            renderer.set_scene(scene);
+        }
 
         size_t current_frame_count = 0;
         float last_frame_time = 0;
@@ -61,7 +63,8 @@ int main()
                 {
                     window.get_swapchain().begin_frame();
 
-                    // Reset descriptor pools
+                    // Resets descriptor pools
+                    renderer.clean_frame();
                     renderer.begin_frame();
 
                     {
@@ -77,8 +80,8 @@ int main()
                     }
 
                     renderer.end_frame();
-
                     window.swap_buffers();
+
 
                     current_frame_count = (current_frame_count + 1) % window.get_swapchain().get_frames_in_flight();
                 }
@@ -90,7 +93,7 @@ int main()
             }
         }
 
-        // registry.shutdown();
+        registry.shutdown();
         renderer.cleanup();
     }
     catch (const std::exception& e)

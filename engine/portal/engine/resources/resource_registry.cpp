@@ -21,7 +21,7 @@ static auto logger = Log::get_logger("Resources");
 
 Ref<Resource> ResourceRegistry::load(StringId id, const ResourceType type)
 {
-    PORTAL_PROF_ZONE;
+    PORTAL_PROF_ZONE();
     if (resource_map[type].contains(id))
         return resource_map[type].at(id);
 
@@ -38,7 +38,7 @@ Ref<Resource> ResourceRegistry::load(StringId id, const ResourceType type)
 
 Ref<Resource> ResourceRegistry::immediate_load(const StringId& id, const ResourceType type)
 {
-    PORTAL_PROF_ZONE;
+    PORTAL_PROF_ZONE();
     if (resource_map[type].contains(id))
         return resource_map[type].at(id);
 
@@ -67,7 +67,7 @@ Ref<Resource>& ResourceRegistry::get(const StringId& id, const ResourceType type
 
 void ResourceRegistry::unload(ResourceSignature signature)
 {
-    PORTAL_PROF_ZONE;
+    PORTAL_PROF_ZONE();
     LOGGER_TRACE("Unloading resource: {}", signature.id);
     const auto it = resource_map[signature.type].find(signature.id);
     if (it == resource_map[signature.type].end())
@@ -139,23 +139,23 @@ Ref<Resource>& ResourceRegistry::create_resource_ref(const ResourceSignature& si
     return resource_ref;
 }
 
-void ResourceRegistry::load_default(Ref<Resource>& resource, ResourceType type)
+void ResourceRegistry::load_default(Ref<Resource>&, ResourceType)
 {
-    const auto default_resource = default_resources[type];
-    if (default_resource.has_value())
-    {
-        resource->copy_from(default_resource.value());
-    }
-    else
-    {
-        const auto loader = loader_factory.get(type);
-        loader->load_default(resource);
-    }
+    // const auto default_resource = default_resources[type];
+    // if (default_resource.has_value())
+    // {
+    //     resource->copy_from(default_resource.value());
+    // }
+    // else
+    // {
+    //     const auto loader = loader_factory.get(type);
+    //     loader->load_default(resource);
+    // }
 }
 
 void ResourceRegistry::resource_load_loop(const std::stop_token& stoken)
 {
-    PORTAL_PROF_ZONE;
+    PORTAL_PROF_ZONE();
     ResourceRequest request;
     while (!stoken.stop_requested())
     {
@@ -172,7 +172,7 @@ void ResourceRegistry::resource_load_loop(const std::stop_token& stoken)
 
 void ResourceRegistry::load_resource(const std::shared_ptr<resources::ResourceSource>& source)
 {
-    PORTAL_PROF_ZONE;
+    PORTAL_PROF_ZONE();
     const auto meta = source->get_meta();
     const auto& loader = loader_factory.get(meta.resource_type);
     auto ref = get(meta.source_id, meta.resource_type);

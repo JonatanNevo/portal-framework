@@ -5,6 +5,7 @@
 
 #include "descriptor_writer.h"
 
+#include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "vulkan/allocated_buffer.h"
 
 namespace portal::vulkan
@@ -69,11 +70,11 @@ void DescriptorWriter::clear() {
     writes.clear();
 }
 
-void DescriptorWriter::update_set(const vk::raii::Device& device, const vk::raii::DescriptorSet& set) {
+void DescriptorWriter::update_set(const Ref<renderer::vulkan::VulkanDevice>& device, const vk::raii::DescriptorSet& set) {
     for (auto& write : writes) {
         write.dstSet = set;
     }
 
-    device.updateDescriptorSets(writes, {});
+    device->get_handle().updateDescriptorSets(writes, {});
 }
 }

@@ -12,10 +12,10 @@
 
 #include "portal/core/reference.h"
 #include "portal/engine/renderer/deletion_queue.h"
+#include "portal/engine/renderer/vulkan/vulkan_context.h"
 
 namespace portal::renderer::vulkan
 {
-class VulkanContext;
 
 struct SwapchainImageData
 {
@@ -24,6 +24,9 @@ struct SwapchainImageData
 
     vk::raii::CommandPool command_pool = nullptr;
     vk::raii::CommandBuffer command_buffer = nullptr;
+
+    // Track which frame last used this image
+    size_t last_used_frame = std::numeric_limits<size_t>::max();
 };
 
 struct FrameInFlightData
@@ -32,7 +35,7 @@ struct FrameInFlightData
     vk::raii::Semaphore image_available_semaphore = nullptr;
     vk::raii::Semaphore render_finished_semaphore = nullptr;
     // Fence to signal that command buffers are ready to be reused
-    vk::raii::Fence wait_fence;
+    vk::raii::Fence wait_fence = nullptr;
 
     DeletionQueue deletion_queue = {};
 };
@@ -43,7 +46,7 @@ public:
     VulkanSwapchain() = default;
 
     void init(const Ref<VulkanContext>& vulkan_context, GLFWwindow* window);
-    void create(size_t* request_width, size_t* request_height, bool new_vsync);
+    void create(uint32_t* request_width, uint32_t* request_height, bool new_vsync);
     void destroy();
 
     void on_resize(size_t new_width, size_t new_height);
@@ -60,6 +63,7 @@ public:
     [[nodiscard]] size_t get_frames_in_flight() const { return frames_in_flight; }
 
     vk::raii::CommandBuffer& get_current_draw_command_buffer() { return images_data[current_image].command_buffer; }
+    vk::raii::CommandPool& get_current_draw_command_pool() { return images_data[current_image].command_pool; }
     vk::raii::ImageView& get_current_draw_image_view() { return images_data[current_image].image_view; }
     vk::Image get_current_draw_image() const { return images_data[current_image].image; }
 

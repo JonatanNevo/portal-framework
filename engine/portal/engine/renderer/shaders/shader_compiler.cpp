@@ -647,6 +647,7 @@ return portal::renderer::DescriptorType::TO
 
             // Process entry point parameters for push constants only
             process_entry_point_parameters(reflection, entry_point_layout);
+            reflection.stages.push_back({.stage = current_stage, .entry_point = entry_point_layout->getName()});
         }
 
         LOGGER_TRACE("===========================");
@@ -670,11 +671,11 @@ return portal::renderer::DescriptorType::TO
         const auto field_count = type_layout->getFieldCount();
         LOGGER_TRACE("Processing {} fields in variable layout", field_count);
 
-        size_t parameter_block_space_counter = 0; // Assign sequential spaces to parameter blocks
+        int parameter_block_space_counter = 0; // Assign sequential spaces to parameter blocks
         bool has_parameter_block = false;
         bool has_global_variables = false;
 
-        for (size_t field_idx = 0; field_idx < field_count; ++field_idx)
+        for (unsigned int field_idx = 0; field_idx < field_count; ++field_idx)
         {
             const auto field = type_layout->getFieldByIndex(field_idx);
             if (!field) continue;
@@ -687,7 +688,7 @@ return portal::renderer::DescriptorType::TO
 
             // Get binding information
             const auto space = field->getBindingSpace();
-            const auto binding_index = field->getBindingIndex();
+            const size_t binding_index = field->getBindingIndex();
 
             LOGGER_TRACE("Field '{}': space={}, binding={}", field_name, space, binding_index);
 
@@ -736,7 +737,8 @@ return portal::renderer::DescriptorType::TO
             {
                 has_parameter_block = true;
                 // Assign our own sequential space instead of using what Slang reports
-                process_parameter_block_parameter(reflection, field_name, field_type_layout, parameter_block_space_counter, binding_index);
+                // Parameter blocks always start at binding 0 for the uniform buffer
+                process_parameter_block_parameter(reflection, field_name, field_type_layout, parameter_block_space_counter, 0);
                 parameter_block_space_counter++;
                 break;
             }
@@ -763,7 +765,9 @@ return portal::renderer::DescriptorType::TO
         const auto param_count = entry_point_layout->getParameterCount();
         LOGGER_TRACE("Processing {} entry point parameters for stage {}", param_count, static_cast<int>(current_stage));
 
-        for (size_t param_idx = 0; param_idx < param_count; ++param_idx)
+        size_t total_size = 0;
+        int64_t range_offset = -1;
+        for (unsigned param_idx = 0; param_idx < param_count; ++param_idx)
         {
             const auto param = entry_point_layout->getParameterByIndex(param_idx);
             if (!param) continue;
@@ -786,9 +790,26 @@ return portal::renderer::DescriptorType::TO
                 // Only process if it has a valid offset (indicating push constant)
                 if (offset != static_cast<size_t>(-1) && size > 0)
                 {
-                    process_push_constant_parameter(reflection, param_name, param_type_layout, offset);
+                    total_size += size;
+                    if (range_offset == -1)
+                        range_offset = offset;
+
+                    LOGGER_TRACE("Push Constant Range:");
+                    LOGGER_TRACE("  Name: {}", param_name);
+                    LOGGER_TRACE("  Size: {}", size);
+                    LOGGER_TRACE("  Offset: {}", offset);
+                    LOGGER_TRACE("-------------------");
                 }
             }
+        }
+
+        if (total_size > 0)
+        {
+            shader_reflection::PushConstantsRange push_range;
+            push_range.stage = current_stage;
+            push_range.offset = range_offset;
+            push_range.size = total_size;
+            reflection.push_constants.push_back(push_range);
         }
     }
 
@@ -796,7 +817,7 @@ return portal::renderer::DescriptorType::TO
     void ShaderCompiler::process_buffer_uniforms(shader_reflection::BufferDescriptor& buffer, slang::TypeLayoutReflection* type_layout, StringId buffer_name, size_t buffer_offset)
     {
         const auto field_count = type_layout->getFieldCount();
-        for (size_t i = 0; i < field_count; ++i)
+        for (unsigned int i = 0; i < field_count; ++i)
         {
             const auto field = type_layout->getFieldByIndex(i);
             const auto field_layout = field->getTypeLayout();
@@ -858,7 +879,7 @@ return portal::renderer::DescriptorType::TO
             reflection.descriptor_sets.resize(descriptor_set + 1);
 
         auto& desc_set = reflection.descriptor_sets[descriptor_set];
-        shader_reflection::UniformBuffer uniform_buffer;
+        shader_reflection::BufferDescriptor uniform_buffer;
         uniform_buffer.type = DescriptorType::UniformBuffer;
         uniform_buffer.stage = ShaderStage::All;
         uniform_buffer.binding_point = binding_index;
@@ -878,8 +899,9 @@ return portal::renderer::DescriptorType::TO
 
         desc_set.uniform_buffers[binding_index] = uniform_buffer;
 
-        reflection.Resources[name_id] = shader_reflection::ShaderResourceDeclaration{
+        reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
             .name = name_id,
+            .type = DescriptorType::UniformBuffer,
             .set = descriptor_set,
             .binding_index = binding_index,
             .count = 1
@@ -904,7 +926,7 @@ return portal::renderer::DescriptorType::TO
         size_t resource_binding_counter = 1; // Resources in parameter blocks start from binding 1, 0 is for uniform buffer
 
         // First pass: process resources within the parameter block
-        for (size_t i = 0; i < field_count; ++i)
+        for (unsigned int i = 0; i < field_count; ++i)
         {
             const auto field = element_type_layout->getFieldByIndex(i);
             if (!field) continue;
@@ -926,7 +948,7 @@ return portal::renderer::DescriptorType::TO
                     // Combined texture sampler
                     const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
 
-                    shader_reflection::ImageSampler image_sampler;
+                    shader_reflection::ImageSamplerDescriptor image_sampler;
                     image_sampler.type = DescriptorType::CombinedImageSampler;
                     image_sampler.stage = ShaderStage::All;
                     image_sampler.binding_point = resource_binding_counter;
@@ -937,11 +959,12 @@ return portal::renderer::DescriptorType::TO
 
                     desc_set.image_samplers[resource_binding_counter] = image_sampler;
 
-                    reflection.Resources[resource_name_id] = shader_reflection::ShaderResourceDeclaration{
+                    reflection.resources[resource_name_id] = shader_reflection::ShaderResourceDeclaration{
                         .name = resource_name_id,
+                        .type = DescriptorType::CombinedImageSampler,
                         .set = descriptor_set,
                         .binding_index = resource_binding_counter,
-                        .count = 1
+                        .count = get_array_size(field_layout)
                     };
 
                     LOGGER_TRACE("Parameter Block Resource - Combined Image Sampler:");
@@ -956,7 +979,7 @@ return portal::renderer::DescriptorType::TO
                     // Separate texture/sampler
                     const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
 
-                    shader_reflection::Image image;
+                    shader_reflection::ImageSamplerDescriptor image;
                     image.type = DescriptorType::SampledImage;
                     image.stage = ShaderStage::All;
                     image.binding_point = resource_binding_counter;
@@ -967,11 +990,12 @@ return portal::renderer::DescriptorType::TO
 
                     desc_set.images[resource_binding_counter] = image;
 
-                    reflection.Resources[resource_name_id] = shader_reflection::ShaderResourceDeclaration{
+                    reflection.resources[resource_name_id] = shader_reflection::ShaderResourceDeclaration{
                         .name = resource_name_id,
+                        .type = DescriptorType::SampledImage,
                         .set = descriptor_set,
                         .binding_index = resource_binding_counter,
-                        .count = 1
+                        .count = get_array_size(field_layout)
                     };
 
                     LOGGER_TRACE("Parameter Block Resource - Separate Image:");
@@ -994,7 +1018,7 @@ return portal::renderer::DescriptorType::TO
         {
             const auto buffer_size = element_type_layout->getSize();
 
-            shader_reflection::UniformBuffer uniform_buffer;
+            shader_reflection::BufferDescriptor uniform_buffer;
             uniform_buffer.type = DescriptorType::UniformBuffer;
             uniform_buffer.stage = ShaderStage::All;
             uniform_buffer.binding_point = binding_index;
@@ -1013,8 +1037,9 @@ return portal::renderer::DescriptorType::TO
 
             desc_set.uniform_buffers[binding_index] = uniform_buffer;
 
-            reflection.Resources[name_id] = shader_reflection::ShaderResourceDeclaration{
+            reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
                 .name = name_id,
+                .type = DescriptorType::UniformBuffer,
                 .set = descriptor_set,
                 .binding_index = binding_index,
                 .count = 1
@@ -1035,7 +1060,7 @@ return portal::renderer::DescriptorType::TO
 
         auto& desc_set = reflection.descriptor_sets[descriptor_set];
 
-        shader_reflection::ImageSampler image_sampler;
+        shader_reflection::ImageSamplerDescriptor image_sampler;
         image_sampler.type = DescriptorType::CombinedImageSampler;
         image_sampler.stage = current_stage;
         image_sampler.binding_point = binding_index;
@@ -1052,11 +1077,12 @@ return portal::renderer::DescriptorType::TO
         LOGGER_TRACE("  Array Size: {}", image_sampler.array_size);
         LOGGER_TRACE("-------------------");
 
-        reflection.Resources[name_id] = shader_reflection::ShaderResourceDeclaration{
+        reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
             .name = name_id,
+            .type = DescriptorType::CombinedImageSampler,
             .set = descriptor_set,
             .binding_index = binding_index,
-            .count = 1
+            .count = get_array_size(type_layout)
         };
     }
 
@@ -1074,7 +1100,7 @@ return portal::renderer::DescriptorType::TO
         auto& desc_set = reflection.descriptor_sets[descriptor_set];
 
         // For now, assume separate textures - can be extended later
-        shader_reflection::Image image;
+        shader_reflection::ImageSamplerDescriptor image;
         image.type = DescriptorType::SampledImage;
         image.stage = current_stage;
         image.binding_point = binding_index;
@@ -1091,11 +1117,12 @@ return portal::renderer::DescriptorType::TO
         LOGGER_TRACE("  Array Size: {}", image.array_size);
         LOGGER_TRACE("-------------------");
 
-        reflection.Resources[name_id] = shader_reflection::ShaderResourceDeclaration{
+        reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
             .name = name_id,
+            .type = DescriptorType::SampledImage,
             .set = descriptor_set,
             .binding_index = binding_index,
-            .count = 1
+            .count = get_array_size(type_layout)
         };
     }
 

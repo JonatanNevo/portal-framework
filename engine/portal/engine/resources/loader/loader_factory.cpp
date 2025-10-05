@@ -51,8 +51,6 @@ std::shared_ptr<ResourceLoader> LoaderFactory::get(const ResourceType type)
         break;
     case ResourceType::Composite:
         return loaders[STRING_ID("glFT")];
-    case ResourceType::Pipeline:
-        break;
     case ResourceType::Scene:
         return loaders[STRING_ID("glFT")];
     case ResourceType::Unknown:

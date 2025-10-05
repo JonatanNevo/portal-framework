@@ -323,4 +323,64 @@ vk::Format to_format(const reflection::Property& prop)
     PORTAL_ASSERT(false, "Unsupported container type");
     return vk::Format::eUndefined;
 }
+
+vk::Filter to_filter(const TextureFilter filter)
+{
+#define CASE(FROM, TO)                      \
+case portal::renderer::TextureFilter::FROM: \
+return vk::Filter::TO
+
+    switch (filter)
+    {
+    CASE(Linear, eLinear);
+    CASE(Nearest, eNearest);
+    CASE(Cubic, eCubicIMG);
+    default:
+        break;
+    }
+
+    PORTAL_ASSERT(false, "Unknown texture filter");
+    return vk::Filter::eLinear;
+#undef CASE
+}
+
+vk::SamplerAddressMode to_address_mode(const TextureWrap warp)
+{
+#define CASE(FROM, TO)                    \
+case portal::renderer::TextureWrap::FROM: \
+return vk::SamplerAddressMode::TO
+
+    switch (warp)
+    {
+    CASE(Clamp, eClampToEdge);
+    CASE(Repeat, eRepeat);
+    default:
+        break;
+    }
+
+    PORTAL_ASSERT(false, "Unknown texture warp");
+    return vk::SamplerAddressMode::eClampToEdge;
+
+#undef CASE
+}
+
+vk::SamplerMipmapMode to_mipmap_mode(const SamplerMipmapMode mode)
+{
+#define CASE(FROM, TO) \
+case portal::renderer::SamplerMipmapMode::FROM: \
+return vk::SamplerMipmapMode::TO
+
+    switch (mode)
+    {
+    CASE(Linear, eLinear);
+    CASE(Nearest, eNearest);
+    default:
+        break;
+    }
+
+    PORTAL_ASSERT(false, "Unknown sampler mipmap mode");
+    return vk::SamplerMipmapMode::eNearest;
+
+#undef CASE
+}
 }

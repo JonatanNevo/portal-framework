@@ -24,8 +24,8 @@ public:
 
     ImageBuilder& with_format(vk::Format format);
     ImageBuilder& with_image_type(vk::ImageType type);
-    ImageBuilder& with_array_layers(uint32_t layers);
-    ImageBuilder& with_mips_levels(uint32_t levels);
+    ImageBuilder& with_array_layers(size_t layers);
+    ImageBuilder& with_mips_levels(size_t levels);
     ImageBuilder& with_sample_count(vk::SampleCountFlagBits sample_count);
     ImageBuilder& with_tiling(vk::ImageTiling tiling);
     ImageBuilder& with_usage(vk::ImageUsageFlags usage);

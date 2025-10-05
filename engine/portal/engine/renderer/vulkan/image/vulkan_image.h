@@ -7,11 +7,12 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
-#include "base/builder_base.h"
+#include "../base/builder_base.h"
 #include "portal/engine/renderer/image/image.h"
 #include "portal/engine/renderer/vulkan/allocated_image.h"
 #include "portal/engine/renderer/vulkan/gpu_context.h"
 #include "portal/engine/renderer/vulkan/base/allocated.h"
+#include "portal/engine/renderer/vulkan/image/vulkan_sampler.h"
 
 namespace portal::renderer::vulkan
 {
@@ -21,7 +22,7 @@ struct VulkanImageInfo
 {
     AllocatedImage image = nullptr;
     vk::raii::ImageView view = nullptr;
-    vk::raii::Sampler sampler = nullptr;
+    Ref<VulkanSampler> sampler = nullptr;
 };
 
 class VulkanImage final : public Image
@@ -77,7 +78,6 @@ private:
     std::vector<vk::raii::ImageView> per_layer_image_views;
     std::unordered_map<size_t, vk::raii::ImageView> per_mip_image_views;
     vk::DescriptorImageInfo descriptor_image_info;
-
 };
 
 } // vulkan

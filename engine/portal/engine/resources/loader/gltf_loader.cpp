@@ -11,13 +11,11 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "portal/core/debug/profile.h"
-#include "portal/engine/renderer/shaders/shader_cache.h"
+#include "portal/engine/renderer/shaders/shader_types.h"
 #include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/resources/loader/loader_factory.h"
-#include "portal/engine/resources/resources/material.h"
 #include "portal/engine/resources/resources/mesh.h"
 #include "portal/engine/renderer/vulkan/vulkan_pipeline.h"
-#include "portal/engine/resources/resources/texture.h"
 #include "portal/engine/resources/source/file_source.h"
 #include "portal/engine/resources/source/memory_source.h"
 #include "portal/engine/resources/source/resource_source.h"
@@ -25,6 +23,10 @@
 #include "portal/engine/scene/nodes/mesh_node.h"
 #include "portal/engine/scene/nodes/node.h"
 #include "portal/engine/renderer/vulkan/gpu_context.h"
+#include "portal/engine/renderer/vulkan/vulkan_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_material.h"
+#include "portal/engine/renderer/vulkan/vulkan_shader.h"
+#include "portal/engine/renderer/vulkan/image/vulkan_texture.h"
 
 
 namespace portal::resources
@@ -34,36 +36,36 @@ static auto logger = Log::get_logger("Resources");
 // const auto SHADER = "mesh.shading.slang.spv";
 const auto SHADER = STRING_ID("pbr.slang");
 
-vk::Filter extract_filter(const fastgltf::Filter filter)
+renderer::TextureFilter extract_filter(const fastgltf::Filter filter)
 {
     switch (filter)
     {
     case fastgltf::Filter::Nearest:
     case fastgltf::Filter::NearestMipMapNearest:
     case fastgltf::Filter::NearestMipMapLinear:
-        return vk::Filter::eNearest;
+        return renderer::TextureFilter::Nearest;
     case fastgltf::Filter::Linear:
     case fastgltf::Filter::LinearMipMapLinear:
     case fastgltf::Filter::LinearMipMapNearest:
-        return vk::Filter::eLinear;
+        return renderer::TextureFilter::Linear;
     }
-    return vk::Filter::eLinear;
+    return renderer::TextureFilter::Linear;
 }
 
-vk::SamplerMipmapMode extract_mipmap_mode(const fastgltf::Filter filter)
+renderer::SamplerMipmapMode extract_mipmap_mode(const fastgltf::Filter filter)
 {
     switch (filter)
     {
     case fastgltf::Filter::Nearest:
     case fastgltf::Filter::NearestMipMapNearest:
     case fastgltf::Filter::LinearMipMapNearest:
-        return vk::SamplerMipmapMode::eNearest;
+        return renderer::SamplerMipmapMode::Nearest;
     case fastgltf::Filter::Linear:
     case fastgltf::Filter::NearestMipMapLinear:
     case fastgltf::Filter::LinearMipMapLinear:
-        return vk::SamplerMipmapMode::eLinear;
+        return renderer::SamplerMipmapMode::Linear;
     }
-    return vk::SamplerMipmapMode::eLinear;
+    return renderer::SamplerMipmapMode::Linear;
 }
 
 StringId create_name(ResourceType type, size_t index, std::string_view name)
@@ -71,11 +73,12 @@ StringId create_name(ResourceType type, size_t index, std::string_view name)
     return STRING_ID(fmt::format("{}{}-{}", type, index, name));
 }
 
-GltfLoader::GltfLoader(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context) : ResourceLoader(registry), gpu_context(context) {}
+GltfLoader::GltfLoader(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context) : ResourceLoader(registry),
+    gpu_context(context) {}
 
 bool GltfLoader::load(const std::shared_ptr<ResourceSource> source) const
 {
-    PORTAL_PROF_ZONE;
+    PORTAL_PROF_ZONE();
 
     const auto data = source->load();
     auto data_result = fastgltf::GltfDataBuffer::FromBytes(data.as<std::byte*>(), data.size);
@@ -158,7 +161,7 @@ void GltfLoader::load_texture(
     const size_t index = texture.imageIndex.value();
     auto texture_name = texture.name.empty() ? image.name : texture.name;
 
-    auto texture_resource = registry->get<Texture>(create_name(ResourceType::Texture, index, texture_name.c_str()));
+    auto texture_resource = registry->get<renderer::Texture>(create_name(ResourceType::Texture, index, texture_name.c_str()));
     if (texture_resource->is_valid())
         return;
 
@@ -264,142 +267,129 @@ void GltfLoader::load_texture(
         return;
     }
 
-    texture_resource = registry->immediate_load(image_source).as<Texture>();
+    auto vulkan_texture = registry->immediate_load(image_source).as<renderer::vulkan::VulkanTexture>();
 
     auto sampler_index = texture.samplerIndex;
     PORTAL_ASSERT(sampler_index.has_value(), "Texture references invalid sampler: {}", texture_name);
 
     const auto sampler = asset.samplers[sampler_index.value()];
-    const vk::SamplerCreateInfo sampler_info{
-        .magFilter = extract_filter(sampler.magFilter.value_or(fastgltf::Filter::Nearest)),
-        .minFilter = extract_filter(sampler.minFilter.value_or(fastgltf::Filter::Nearest)),
-        .mipmapMode = extract_mipmap_mode(sampler.minFilter.value_or(fastgltf::Filter::Nearest)),
-        .minLod = 0,
-        .maxLod = vk::LodClampNone,
+    renderer::SamplerSpecification sampler_spec = {
+        .filter = extract_filter(sampler.magFilter.value_or(fastgltf::Filter::Nearest)),
+        .mipmap_mode = extract_mipmap_mode(sampler.minFilter.value_or(fastgltf::Filter::Nearest)),
+        .min_lod = 0,
+        .max_lod = vk::LodClampNone,
     };
 
-    texture_resource->sampler = std::make_shared<vk::raii::Sampler>(gpu_context->create_sampler(sampler_info));
+    const auto sampler_ref = Ref<renderer::vulkan::VulkanSampler>::create(
+        STRING_ID(fmt::format("{}-sampler", image.name)),
+        sampler_spec,
+        gpu_context->get_context()->get_device()
+        );
+    vulkan_texture->set_sampler(sampler_ref);
 }
+
+enum class MaterialPass
+{
+    Transparent,
+    MainColor
+};
 
 void GltfLoader::load_material(
     size_t index,
     const fastgltf::Asset& asset,
-    const fastgltf::Material& material
+    const fastgltf::Material& gltf_material
     ) const
 {
     static bool set_default = false;
     // TODO: move to material loader
-    auto material_name = create_name(ResourceType::Material, index, material.name);
-    auto resource = registry->get<Material>(material_name);
+    auto material_name = create_name(ResourceType::Material, index, gltf_material.name);
+    auto resource = registry->get<renderer::Material>(material_name);
 
     if (resource->is_valid())
         return;
 
     std::vector<renderer::ShaderDefine> defines;
 
-    const MaterialConsts consts{
-        .color_factors = {
-            material.pbrData.baseColorFactor[0],
-            material.pbrData.baseColorFactor[1],
-            material.pbrData.baseColorFactor[2],
-            material.pbrData.baseColorFactor[3]
-        },
-        .metal_rough_factors = {
-            material.pbrData.metallicFactor,
-            material.pbrData.roughnessFactor,
-            0.f,
-            0.f
-        }
+    glm::vec4 color_factors = {
+        gltf_material.pbrData.baseColorFactor[0],
+        gltf_material.pbrData.baseColorFactor[1],
+        gltf_material.pbrData.baseColorFactor[2],
+        gltf_material.pbrData.baseColorFactor[3]
     };
-    resource->consts = consts;
 
-    if (material.alphaMode == fastgltf::AlphaMode::Blend)
-        resource->pass_type = MaterialPass::Transparent;
+    glm::vec4 metallic_factors = {
+        gltf_material.pbrData.metallicFactor,
+        gltf_material.pbrData.roughnessFactor,
+        0.f,
+        0.f
+    };
+
+    MaterialPass pass_type;
+    if (gltf_material.alphaMode == fastgltf::AlphaMode::Blend)
+        pass_type = MaterialPass::Transparent;
     else
-        resource->pass_type = MaterialPass::MainColor;
+        pass_type = MaterialPass::MainColor;
 
-    if (material.pbrData.baseColorTexture.has_value())
-    {
-        auto texture = asset.textures[material.pbrData.baseColorTexture.value().textureIndex];
-        auto image = asset.images[texture.imageIndex.value()];
-        auto texture_name = texture.name.empty() ? image.name : texture.name;
-
-        auto image_ref = registry->get<Texture>(create_name(ResourceType::Texture, texture.imageIndex.value(), texture_name));
-
-        resource->color_texture = image_ref;
-    }
-    else
-    {
-        resource->color_texture = registry->get<Texture>(Texture::BLACK_TEXTURE_ID);
-    }
-
-    PORTAL_ASSERT(resource->color_texture->is_valid(), "Material references invalid image: {} ", resource->color_texture->id);
-
-    if (material.pbrData.metallicRoughnessTexture.has_value())
-    {
-        auto texture = asset.textures[material.pbrData.metallicRoughnessTexture.value().textureIndex];
-        auto image = asset.images[texture.imageIndex.value()];
-        auto texture_name = texture.name.empty() ? image.name : texture.name;
-
-        auto image_ref = registry->get<Texture>(create_name(ResourceType::Texture, texture.imageIndex.value(), texture_name));
-
-        resource->metallic_roughness_texture = image_ref;
-    }
-    else
-    {
-        resource->metallic_roughness_texture = registry->get<Texture>(Texture::WHITE_TEXTURE_ID);
-    }
-
-    auto shader_cache = registry->immediate_load<renderer::ShaderCache>(SHADER);
+    auto shader_cache = registry->immediate_load<renderer::vulkan::VulkanShader>(SHADER);
     auto hash = shader_cache->compile_with_permutations(defines);
-    auto shader = shader_cache->get_shader(hash, gpu_context).lock();
-    if (resource->pass_type == MaterialPass::Transparent)
-        resource->pipeline = create_pipeline(STRING_ID("transparent_pipeline"), shader, false);
-    else
-        resource->pipeline = create_pipeline(STRING_ID("color_pipeline"), shader, true);
-
-    auto& pipeline = resource->pipeline;
+    auto shader = shader_cache->get_shader(hash).lock();
 
     auto global_descriptor_sets = gpu_context->get_global_descriptor_layouts();
 
-    size_t skipped = 0;
-    resource->descriptor_sets.clear();
-    for (const auto& layout : pipeline->get_descriptor_set_layouts())
-    {
-        if (skipped < global_descriptor_sets.size())
-        {
-            skipped++;
-            continue;
-        }
+    renderer::MaterialSpecification spec{
+        .id = material_name,
+        .shader = shader,
+        .set_start_index = global_descriptor_sets.size(),
+        .default_texture = registry->get<renderer::Texture>(renderer::Texture::MISSING_TEXTURE_ID),
+    };
 
-        resource->descriptor_sets.push_back(gpu_context->create_descriptor_set(layout));
+    auto material = resource.as<renderer::vulkan::VulkanMaterial>();
+    material->initialize(spec, gpu_context->get_context());
+
+    if (gltf_material.pbrData.baseColorTexture.has_value())
+    {
+        auto texture = asset.textures[gltf_material.pbrData.baseColorTexture.value().textureIndex];
+        auto image = asset.images[texture.imageIndex.value()];
+        auto texture_name = texture.name.empty() ? image.name : texture.name;
+
+        auto image_ref = registry->get<renderer::Texture>(create_name(ResourceType::Texture, texture.imageIndex.value(), texture_name));
+
+        material->set(STRING_ID("material_data.color_texture"), image_ref);
+    }
+    else
+    {
+        material->set(STRING_ID("material_data.color_texture"),registry->get<renderer::Texture>(renderer::Texture::WHITE_TEXTURE_ID));
     }
 
-    PORTAL_ASSERT(resource->pipeline->is_valid(), "Material references invalid pipeline: transparent_pipeline");
-
-    auto vertex_shader = pipeline->get_shader(vk::ShaderStageFlagBits::eVertex);
-    [[maybe_unused]] auto fragment_shader = pipeline->get_shader(vk::ShaderStageFlagBits::eFragment);
-    PORTAL_ASSERT(vertex_shader == fragment_shader, "currently vertex and fragment are the same shader");
-
+    if (gltf_material.pbrData.metallicRoughnessTexture.has_value())
     {
-        auto bind_context = vertex_shader->start_binding_context();
+        auto texture = asset.textures[gltf_material.pbrData.metallicRoughnessTexture.value().textureIndex];
+        auto image = asset.images[texture.imageIndex.value()];
+        auto texture_name = texture.name.empty() ? image.name : texture.name;
 
-        resource->material_data = bind_context.make_buffers(gpu_context);
+        auto image_ref = registry->get<renderer::Texture>(create_name(ResourceType::Texture, texture.imageIndex.value(), texture_name));
 
-        bind_context.bind(STRING_ID("material_data.color_factors"), consts.color_factors);
-        bind_context.bind(STRING_ID("material_data.metal_rough_factors"), consts.metal_rough_factors);
-        bind_context.bind_texture(STRING_ID("material_data.color_texture"), resource->color_texture.lock());
-        bind_context.bind_texture(STRING_ID("material_data.metal_rough_texture"), resource->metallic_roughness_texture.lock());
-
-        bind_context.write_to_sets(resource->descriptor_sets, gpu_context);
+        material->set(STRING_ID("material_data.metal_rough_texture"), image_ref);
+    }
+    else
+    {
+        material->set(STRING_ID("material_data.metal_rough_texture"),registry->get<renderer::Texture>(renderer::Texture::WHITE_TEXTURE_ID));
     }
 
-    resource->set_state(ResourceState::Loaded);
+    if (pass_type == MaterialPass::Transparent)
+        material->set_pipeline(create_pipeline(STRING_ID("transparent_pipeline"), shader, false));
+    else
+        material->set_pipeline(create_pipeline(STRING_ID("color_pipeline"), shader, true));
+
+    material->set(STRING_ID("material_data.color_factors"), color_factors);
+    material->set(STRING_ID("material_data.metal_rough_factors"), metallic_factors);
+
+    material->set_state(ResourceState::Loaded);
 
     if (!set_default)
     {
         set_default = true;
-        registry->set_default(ResourceType::Material, resource);
+        registry->set_default(ResourceType::Material, material);
     }
 }
 
@@ -505,12 +495,12 @@ void GltfLoader::load_mesh(
         if (p.materialIndex.has_value())
         {
             auto& material = asset.materials[p.materialIndex.value()];
-            surface.material = registry->get<Material>(create_name(ResourceType::Material, p.materialIndex.value(), material.name.c_str()));
+            surface.material = registry->get<renderer::Material>(create_name(ResourceType::Material, p.materialIndex.value(), material.name.c_str()));
         }
         else
         {
             // TODO: put something here
-            surface.material = registry->get<Material>(STRING_ID("default_material"));
+            surface.material = registry->get<renderer::Material>(STRING_ID("default_material"));
         }
 
         //loop the vertices of this surface, find min/max bounds
@@ -549,8 +539,8 @@ void GltfLoader::load_mesh(
                      )
                  .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
 
-    mesh_resource->mesh_data.index_buffer = gpu_context->create_buffer_shared(index_builder);
-    mesh_resource->mesh_data.vertex_buffer = gpu_context->create_buffer_shared(vertex_builder);
+    mesh_resource->mesh_data.index_buffer = gpu_context->get_context()->get_device()->create_buffer_shared(index_builder);
+    mesh_resource->mesh_data.vertex_buffer = gpu_context->get_context()->get_device()->create_buffer_shared(vertex_builder);
     mesh_resource->mesh_data.vertex_buffer_address = mesh_resource->mesh_data.vertex_buffer->get_device_address();
 
     renderer::vulkan::BufferBuilder builder(vertex_buffer_size + index_buffer_size);
@@ -558,11 +548,11 @@ void GltfLoader::load_mesh(
            .with_usage(vk::BufferUsageFlagBits::eTransferSrc)
            .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
            .with_debug_name("staging");
-    auto staging_buffer = gpu_context->create_buffer(builder);
+    auto staging_buffer = gpu_context->get_context()->get_device()->create_buffer(builder);
     auto offset = staging_buffer.update(mesh_resource->mesh_data.vertices.data(), vertex_buffer_size, 0);
     offset += staging_buffer.update(mesh_resource->mesh_data.indices.data(), index_buffer_size, offset);
 
-    gpu_context->immediate_submit(
+    gpu_context->get_context()->get_device()->immediate_submit(
         [&](const vk::raii::CommandBuffer& command_buffer)
         {
             vk::BufferCopy vertex_copy{
@@ -679,10 +669,19 @@ std::vector<Ref<Scene>> GltfLoader::load_scenes(const fastgltf::Asset& asset) co
     return scenes;
 }
 
-Ref<renderer::Pipeline> GltfLoader::create_pipeline(const StringId& name, const Ref<renderer::Shader>& shader, const bool depth) const
+static Ref<renderer::vulkan::VulkanPipeline> g_transparent_pipeline;
+static Ref<renderer::vulkan::VulkanPipeline> g_color_pipeline;
+
+Ref<renderer::Pipeline> GltfLoader::create_pipeline(const StringId& name, const Ref<renderer::ShaderVariant>& shader, const bool depth) const
 {
+    if (name == STRING_ID("transparent_pipeline") && g_transparent_pipeline != nullptr)
+        return g_transparent_pipeline;
+
+    if (name == STRING_ID("color_pipeline") && g_color_pipeline != nullptr)
+        return g_color_pipeline;
+
     // TODO: add pipeline cache
-    renderer::pipeline::Specification pipeline_spec {
+    renderer::pipeline::Specification pipeline_spec{
         .shader = shader,
         .render_target = gpu_context->get_render_target(),
         .topology = renderer::PrimitiveTopology::Triangles,
@@ -693,7 +692,15 @@ Ref<renderer::Pipeline> GltfLoader::create_pipeline(const StringId& name, const 
         .wireframe = false,
         .debug_name = name
     };
-    return Ref<renderer::vulkan::VulkanPipeline>::create(pipeline_spec, gpu_context);
+    auto pipeline =  Ref<renderer::vulkan::VulkanPipeline>::create(pipeline_spec, gpu_context->get_context());
+
+    if (name == STRING_ID("color_pipeline"))
+        g_color_pipeline = pipeline;
+
+    if (name == STRING_ID("transparent_pipeline"))
+        g_transparent_pipeline = pipeline;
+
+    return pipeline;
 }
 
 } // portal

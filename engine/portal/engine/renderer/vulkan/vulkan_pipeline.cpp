@@ -8,6 +8,7 @@
 #include "pipeline_builder.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_shader.h"
 
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"
@@ -45,12 +46,12 @@ void VulkanPipeline::initialize()
 
     auto device = context->get_device();
 
-    auto shader = spec.shader.as<VulkanShader>;
+    auto shader = spec.shader.as<VulkanShaderVariant>();
 
     // Create the pipeline layout used to generate the rendering pipelines that are based on this descriptor set layout
     // In a more complex scenario you would have different pipeline layouts for different descriptor set layouts that could be reused
-    std::vector<vk::DescriptorSetLayout> layouts = shader->get_descriptor_layouts();
-    std::vector<vk::PushConstantRange> push_constants = shader->get_push_constants();
+    auto layouts = shader->get_descriptor_layouts();
+    auto& push_constants = shader->get_push_constant_ranges();
 
     const vk::PipelineLayoutCreateInfo pipeline_layout_info = {
         .setLayoutCount = static_cast<uint32_t>(layouts.size()),
@@ -72,29 +73,32 @@ void VulkanPipeline::initialize()
 
     builder.set_color_attachment_number(color_attachment_count);
     std::vector<ImageFormat> color_formats;
-    ImageFormat depth_format = ImageFormat::None;
-
+    auto depth_format = ImageFormat::None;
     color_formats.reserve(color_attachment_count);
 
-    for (size_t i = 0; i < color_attachment_count; ++i)
-    {
-        if (!render_target->get_spec().blend)
-            break;
+    const auto& rt_spec = render_target->get_spec();
+    const auto& atts = rt_spec.attachments.attachments;
 
-        const auto& attachment_spec = render_target->get_spec().attachments.attachments[i];
+    size_t color_index = 0;
+    for (size_t i = 0; i < atts.size(); ++i)
+    {
+        const auto& attachment_spec = atts[i];
 
         if (utils::is_depth_format(attachment_spec.format))
         {
-            PORTAL_ASSERT(depth_format != ImageFormat::None && depth_format == attachment_spec.format, "Multiple depth formats not supported");
+            if (depth_format != ImageFormat::None)
+                PORTAL_ASSERT(depth_format == attachment_spec.format, "Multiple depth formats not supported");
             depth_format = attachment_spec.format;
+            continue;
         }
-        else
-            color_formats.push_back(attachment_spec.format);
+
+        color_formats.push_back(attachment_spec.format);
 
         const auto blend_mode = render_target->get_spec().blend_mode == render_target::BlendMode::None
             ? attachment_spec.blend_mode
             : render_target->get_spec().blend_mode;
-        builder.set_blend(i, render_target->get_spec().blend, blend_mode);
+        builder.set_blend(color_index, render_target->get_spec().blend, blend_mode);
+        color_index++;
     }
 
     builder.set_color_attachment_formats(color_formats)
@@ -110,12 +114,12 @@ void VulkanPipeline::initialize()
 
     // TODO: vertex binding??
 
-    // builder.add_shader(shader);
-    auto created_pipeline = device->create_pipeline(builder);
-    pipeline = std::move(created_pipeline);
+    builder.add_shader(shader);
+    pipeline = device->create_pipeline(builder);
+    device->set_debug_name(pipeline, spec.debug_name);
 }
 
-Ref<Shader> VulkanPipeline::get_shader() const
+Ref<ShaderVariant> VulkanPipeline::get_shader() const
 {
     return spec.shader;
 }
