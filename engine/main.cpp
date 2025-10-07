@@ -7,6 +7,7 @@
 
 #include "portal/core/log.h"
 #include "portal/engine/application/window.h"
+#include "portal/engine/events/window_events.h"
 #include "portal/engine/renderer/renderer.h"
 #include "portal/engine/renderer/vulkan/vulkan_window.h"
 #include "portal/engine/resources/resource_registry.h"
@@ -45,7 +46,25 @@ int main()
         float last_frame_time = 0;
         float frame_time = 0;
         float time_step = 0;
-        constexpr bool running = true;
+        bool running = true;
+
+        auto on_resize = [&](portal::WindowResizeEvent& e)-> bool
+        {
+            if (e.get_width() == 0 || e.get_height() == 0)
+                return false;
+
+            window.get_swapchain().on_resize(e.get_width(), e.get_height());
+            renderer.on_resize(e.get_width(), e.get_height());
+            return false;
+        };
+
+        auto on_event = [&](portal::Event& event) -> void
+        {
+            portal::EventDispatcher dispatcher(event);
+            dispatcher.dispatch<WindowCloseEvent>([&](WindowCloseEvent& e) { running = false; return false; });
+            dispatcher.dispatch<WindowResizeEvent>([&](WindowResizeEvent& e) { return on_resize(e); } );
+        };
+        window.set_event_callback(on_event);
 
         // Main run loop
         {
@@ -93,8 +112,10 @@ int main()
             }
         }
 
-        registry.shutdown();
         renderer.cleanup();
+        registry.shutdown();
+        window.shutdown();
+        context.reset();
     }
     catch (const std::exception& e)
     {
@@ -104,5 +125,7 @@ int main()
     {
         LOG_FATAL("Fatal unknown exception caught");
     }
+
+    ref_utils::clean_all_references();
     portal::Log::shutdown();
 }

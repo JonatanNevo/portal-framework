@@ -9,6 +9,7 @@
 
 #include "portal/core/log.h"
 #include "portal/core/debug/assert.h"
+#include "portal/engine/events/window_events.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 
 namespace portal::renderer::vulkan
@@ -78,7 +79,7 @@ void VulkanWindow::init()
     swapchain.create(reinterpret_cast<uint32_t*>(&data.width), reinterpret_cast<uint32_t*>(&data.height), spec.vsync);
 
     // TODO: combine with `input` module
-    glfwSetWindowUserPointer(window, this);
+    glfwSetWindowUserPointer(window, &data);
 
     const bool raw_mouse_motion_supported = glfwRawMouseMotionSupported();
     if (raw_mouse_motion_supported)
@@ -87,20 +88,25 @@ void VulkanWindow::init()
         LOGGER_WARN("Raw mouse motion not supported");
 
     // Set GLFW callbacks
-    // glfwSetWindowSizeCallback(window, [](GLFWwindow* handle, [[maybe_unused]] int width, [[maybe_unused]] int height)
-    // {
-    //     [[maybe_unused]] auto& window = *static_cast<VulkanWindow*>(glfwGetWindowUserPointer(handle));
-    //
-    //     // TODO: some event system to notify
-    // }
-    // );
-    //
-    // glfwSetWindowCloseCallback(window, [](GLFWwindow* handle)
-    // {
-    //     [[maybe_unused]] auto& window = *static_cast<VulkanWindow*>(glfwGetWindowUserPointer(handle));
-    //
-    //     // TODO: some event system to notify
-    // });
+    glfwSetWindowSizeCallback(window, [](GLFWwindow* handle, const int width, const int height)
+    {
+        [[maybe_unused]] auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(handle));
+
+        WindowResizeEvent event(static_cast<size_t>(width), static_cast<size_t>(height));
+
+        data.event_callback(event);
+        data.width = event.get_width();
+        data.height = event.get_height();
+    }
+    );
+
+    glfwSetWindowCloseCallback(window, [](GLFWwindow* handle)
+    {
+        [[maybe_unused]] const auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(handle));
+
+        WindowCloseEvent event;
+        data.event_callback(event);
+    });
     //      glfwSetInputMode(m_Window, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
     // glfwSetKeyCallback
     // glfwSetCharCallback
@@ -213,6 +219,11 @@ StringId VulkanWindow::get_title() const
 VulkanSwapchain& VulkanWindow::get_swapchain()
 {
     return swapchain;
+}
+
+void VulkanWindow::set_event_callback(const std::function<void(Event&)> callback)
+{
+    data.event_callback = callback;
 }
 
 

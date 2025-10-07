@@ -6,6 +6,7 @@
 #pragma once
 
 #include <vulkan/vulkan_raii.hpp>
+#include <memory>
 
 
 namespace portal::vulkan
@@ -20,7 +21,15 @@ public:
         float ratio;
     };
 
-    void init(vk::raii::Device* init_device, uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios);
+    DescriptorAllocator(vk::raii::Device* device, uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios);
+
+    ~DescriptorAllocator() = default;
+    DescriptorAllocator(const DescriptorAllocator&) = delete;
+    DescriptorAllocator& operator=(const DescriptorAllocator&) = delete;
+
+    DescriptorAllocator(DescriptorAllocator&& other) noexcept;
+    DescriptorAllocator& operator=(DescriptorAllocator&& other) noexcept;
+
     void clear_pools();
     void destroy_pools();
     std::vector<vk::raii::DescriptorSet> handle_pool_resize(vk::raii::DescriptorPool& descriptor_pool, vk::DescriptorSetAllocateInfo& info);
@@ -29,8 +38,9 @@ public:
 
 private:
     vk::raii::DescriptorPool get_pool();
-    vk::raii::DescriptorPool create_pool(uint32_t set_count, std::span<PoolSizeRatio> pool_ratios) const;
+    [[nodiscard]] vk::raii::DescriptorPool create_pool(uint32_t set_count, std::span<PoolSizeRatio> pool_ratios) const;
 
+private:
     std::vector<PoolSizeRatio> ratios;
     std::vector<vk::raii::DescriptorPool> full_pools;
     std::vector<vk::raii::DescriptorPool> ready_pools;

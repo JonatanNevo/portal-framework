@@ -22,7 +22,6 @@ class VulkanContext;
 class VulkanMaterial final : public Material
 {
 public:
-    VulkanMaterial() = default;
     ~VulkanMaterial() override;
 
     void initialize(const MaterialSpecification& new_spec, const Ref<VulkanContext>& context);
@@ -69,7 +68,7 @@ private:
 
     std::unordered_map<StringId, UniformPointer> uniforms;
     std::unordered_map<StringId, Ref<BufferDescriptor>> buffers;
-    VulkanDescriptorSetManager descriptor_manager{};
+    std::unique_ptr<VulkanDescriptorSetManager> descriptor_manager;
 };
 
 }

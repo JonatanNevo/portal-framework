@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#include "portal/engine/events/event.h"
 #include "portal/engine/strings/string_id.h"
 
 namespace portal
@@ -48,8 +49,7 @@ public:
     virtual void set_title(StringId title) = 0;
     [[nodiscard]] virtual StringId get_title() const = 0;
 
-    // TODO: set event callback?
-
+    virtual void set_event_callback(std::function<void(Event&)> callback) = 0;
 };
 
 } // portal

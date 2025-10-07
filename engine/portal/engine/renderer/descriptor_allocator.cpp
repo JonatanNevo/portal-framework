@@ -7,18 +7,38 @@
 
 namespace portal::vulkan
 {
-void DescriptorAllocator::init(vk::raii::Device* init_device, const uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios)
+
+DescriptorAllocator::DescriptorAllocator(vk::raii::Device* device, const uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios)
+    : sets_per_pool(static_cast<uint32_t>(max_sets * 1.5)),
+      device(device)
 {
-    device = init_device;
-    ratios.clear();
-    for (auto r : pool_ratios)
-    {
-        ratios.push_back(r);
-    }
+    ratios.append_range(pool_ratios);
 
     auto new_pool = create_pool(max_sets, pool_ratios);
-    sets_per_pool = static_cast<uint32_t>(max_sets * 1.5); //grow it next allocation
     ready_pools.push_back(std::move(new_pool));
+}
+
+DescriptorAllocator::DescriptorAllocator(DescriptorAllocator&& other) noexcept
+    : ratios(std::exchange(other.ratios, {})),
+      full_pools(std::exchange(other.full_pools, {})),
+      ready_pools(std::exchange(other.ready_pools, {})),
+      sets_per_pool(std::exchange(other.sets_per_pool, 0)),
+      device(std::exchange(other.device, nullptr))
+{}
+
+DescriptorAllocator& DescriptorAllocator::operator=(DescriptorAllocator&& other) noexcept
+{
+    if (&other == this)
+        return *this;
+
+    clear_pools();
+    ratios = std::exchange(other.ratios, {});
+    full_pools = std::exchange(other.full_pools, {});
+    ready_pools = std::exchange(other.ready_pools, {});
+    sets_per_pool = std::exchange(other.sets_per_pool, 0);
+    device = std::exchange(other.device, nullptr);
+
+    return *this;
 }
 
 void DescriptorAllocator::clear_pools()
@@ -96,7 +116,7 @@ vk::raii::DescriptorPool DescriptorAllocator::get_pool()
         if (sets_per_pool > 4092)
             sets_per_pool = 4092;
     }
- return new_pool;
+    return new_pool;
 }
 
 vk::raii::DescriptorPool DescriptorAllocator::create_pool(const uint32_t set_count, std::span<PoolSizeRatio> pool_ratios) const

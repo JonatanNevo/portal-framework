@@ -183,7 +183,7 @@ PipelineBuilder& PipelineBuilder::set_blend(const size_t index, const bool enabl
     return *this;
 }
 
-PipelineBuilder& PipelineBuilder::disable_color_blending(int index)
+PipelineBuilder& PipelineBuilder::disable_color_blending(const int index)
 {
     if (index == -1)
     {
@@ -194,7 +194,7 @@ PipelineBuilder& PipelineBuilder::disable_color_blending(int index)
         attachment.colorWriteMask = color_write_mask;
         return *this;
     }
-    PORTAL_ASSERT(index < color_blend_attachments.size(), "Color attachment index out of range");
+    PORTAL_ASSERT(static_cast<size_t>(index) < color_blend_attachments.size(), "Color attachment index out of range");
     auto& attachment = color_blend_attachments[index];
     attachment.blendEnable = false;
     attachment.colorWriteMask = color_write_mask;

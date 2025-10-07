@@ -41,15 +41,15 @@ void VulkanMaterial::initialize(const MaterialSpecification& new_spec, const Ref
         .default_texture = spec.default_texture,
         .frame_in_flights = 3 // TODO: get it from somewhere?
     };
-    descriptor_manager = VulkanDescriptorSetManager(descriptor_spec, device);
+    descriptor_manager = VulkanDescriptorSetManager::create_unique(descriptor_spec, device);
 
-    for (const auto& [name, decl] : descriptor_manager.input_declarations)
+    for (const auto& [name, decl] : descriptor_manager->input_declarations)
     {
         switch (decl.type)
         {
         case DescriptorType::CombinedImageSampler:
         {
-            descriptor_manager.set_input(name, new_spec.default_texture);
+            descriptor_manager->set_input(name, new_spec.default_texture);
             break;
         }
         default:
@@ -59,8 +59,8 @@ void VulkanMaterial::initialize(const MaterialSpecification& new_spec, const Ref
 
     allocate_storage();
 
-    PORTAL_ASSERT(descriptor_manager.validate(), "Failed to validate descriptor manager");
-    descriptor_manager.bake();
+    PORTAL_ASSERT(descriptor_manager->validate(), "Failed to validate descriptor manager");
+    descriptor_manager->bake();
 }
 
 void VulkanMaterial::set_pipeline(const Ref<VulkanPipeline>& new_pipeline)
@@ -75,32 +75,32 @@ Ref<VulkanPipeline> VulkanMaterial::get_pipeline() const
 
 void VulkanMaterial::set(const StringId bind_point, const Ref<Texture> texture)
 {
-    descriptor_manager.set_input(bind_point, texture);
+    descriptor_manager->set_input(bind_point, texture);
 }
 
 void VulkanMaterial::set(const StringId bind_point, const Ref<Image> image)
 {
-    descriptor_manager.set_input(bind_point, image);
+    descriptor_manager->set_input(bind_point, image);
 }
 
 void VulkanMaterial::set(const StringId bind_point, const Ref<ImageView> image)
 {
-    descriptor_manager.set_input(bind_point, image);
+    descriptor_manager->set_input(bind_point, image);
 }
 
 Ref<Texture> VulkanMaterial::get_texture(const StringId bind_point)
 {
-    return descriptor_manager.get_input(bind_point).as<Texture>();
+    return descriptor_manager->get_input(bind_point).as<Texture>();
 }
 
 Ref<Image> VulkanMaterial::get_image(const StringId bind_point)
 {
-    return descriptor_manager.get_input(bind_point).as<Image>();
+    return descriptor_manager->get_input(bind_point).as<Image>();
 }
 
 Ref<ImageView> VulkanMaterial::get_image_view(const StringId bind_point)
 {
-    return descriptor_manager.get_input(bind_point).as<ImageView>();
+    return descriptor_manager->get_input(bind_point).as<ImageView>();
 }
 
 Ref<ShaderVariant> VulkanMaterial::get_shader()
@@ -115,11 +115,11 @@ StringId VulkanMaterial::get_id()
 
 vk::DescriptorSet VulkanMaterial::get_descriptor_set(const size_t index)
 {
-    if (descriptor_manager.get_first_set_index() == std::numeric_limits<size_t>::max())
+    if (descriptor_manager->get_first_set_index() == std::numeric_limits<size_t>::max())
         return nullptr;
 
-    descriptor_manager.invalidate_and_update(index);
-    return descriptor_manager.get_descriptor_sets(index)[0];
+    descriptor_manager->invalidate_and_update(index);
+    return descriptor_manager->get_descriptor_sets(index)[0];
 }
 
 
@@ -202,7 +202,7 @@ void VulkanMaterial::allocate_storage()
 
             auto buffer = Ref<VulkanUniformBuffer>::create(data.size, device);
             buffers[resource.name] = buffer.as<BufferDescriptor>();
-            descriptor_manager.set_input(data.name, buffer.as<UniformBuffer>());
+            descriptor_manager->set_input(data.name, buffer.as<UniformBuffer>());
         }
 
         if (resource.type == DescriptorType::StorageBuffer)
@@ -217,7 +217,7 @@ void VulkanMaterial::allocate_storage()
             };
             auto buffer = Ref<VulkanStorageBuffer>::create(buf_spec, device);
             buffers[resource.name] = buffer.as<BufferDescriptor>();
-            descriptor_manager.set_input(data.name, buffer.as<StorageBuffer>());
+            descriptor_manager->set_input(data.name, buffer.as<StorageBuffer>());
         }
 
         if (!buffer_uniforms.empty())

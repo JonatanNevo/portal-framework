@@ -52,6 +52,7 @@ public:
     [[nodiscard]] StringId get_title() const override;
 
     [[nodiscard]] VulkanSwapchain& get_swapchain();
+    void set_event_callback(std::function<void(Event&)> callback) override;
 
     // TODO: temp!!!
     GLFWwindow* window = nullptr;
@@ -60,12 +61,13 @@ private:
     {
         StringId title{};
         size_t width, height;
+
+        std::function<void(Event&)> event_callback;
     };
 
     VulkanSwapchain swapchain;
 
     GLFWcursor* cursors[9] = {};
-
     WindowSpecification spec;
 
     WindowData data{};

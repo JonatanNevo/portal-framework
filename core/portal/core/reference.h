@@ -6,10 +6,10 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <span>
 #include <type_traits>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include "portal/core/concurrency/spin_lock.h"
@@ -17,11 +17,24 @@
 namespace portal
 {
 
+#define REF_DEBUG
+
 namespace ref_utils
 {
-    void add_to_live(void* instance);
-    void remove_from_live(void* instance);
-    bool is_live(void* instance);
+    struct LiveReference
+    {
+        void* instance;
+        std::function<void(void*)> destructor{};
+#ifdef REF_DEBUG
+        std::string debug_name{};
+#endif
+
+        constexpr bool operator==(const LiveReference& other) const;
+    };
+
+    void add_to_live(const LiveReference& instance);
+    void remove_from_live(const LiveReference& instance);
+    bool is_live(const LiveReference& instance);
     void clean_all_references();
 }
 
@@ -52,11 +65,11 @@ private:
 template <typename T>
 class Ref
 {
-
 public:
-    Ref(): instance(nullptr) {}
+    Ref() : instance(nullptr) {}
     Ref(nullptr_t) : instance(nullptr) {}
-    Ref(T* instance): instance(instance)
+
+    Ref(T* instance) : instance(instance)
     {
         static_assert(std::is_base_of_v<RefCounted, T>, "T must inherit from RefCounted");
 
@@ -91,7 +104,7 @@ public:
         dec_ref();
     }
 
-    Ref(const Ref& other): instance(other.instance)
+    Ref(const Ref& other) : instance(other.instance)
     {
         inc_ref();
     }
@@ -171,6 +184,7 @@ public:
     {
         return instance;
     }
+
     const T* get() const
     {
         return instance;
@@ -213,12 +227,26 @@ public:
     }
 
 private:
+    static void deleter(void* pointer)
+    {
+        const T* t_pointer = static_cast<T*>(pointer);
+        delete t_pointer;
+    }
+
     void inc_ref() const
     {
         if (instance)
         {
             instance->inc_ref();
-            ref_utils::add_to_live(instance);
+            ref_utils::add_to_live(
+                {
+                    instance,
+                    deleter,
+#ifdef REF_DEBUG
+                    typeid(T).name()
+#endif
+                }
+                );
         }
     }
 
@@ -230,8 +258,15 @@ private:
 
             if (instance->get_ref() == 0)
             {
-                delete instance;
-                ref_utils::remove_from_live(instance);
+                ref_utils::remove_from_live(
+                    {
+                        instance,
+                        deleter,
+#ifdef REF_DEBUG
+                        typeid(T).name()
+#endif
+                    }
+                    );
                 instance = nullptr;
             }
         }
@@ -241,6 +276,7 @@ private:
     friend class Ref;
     template <typename T2>
     friend class WeakRef;
+
     mutable T* instance;
 };
 
@@ -270,7 +306,7 @@ public:
     T& operator*() { return *instance; }
     const T& operator*() const { return *instance; }
 
-    bool is_valid() const { return instance ? ref_utils::is_live(instance) : false; }
+    bool is_valid() const { return instance ? ref_utils::is_live({instance, {}}) : false; }
     operator bool() const { return is_valid(); }
 
     Ref<T> lock() const
@@ -288,3 +324,12 @@ private:
     T* instance = nullptr;
 };
 } // portal
+
+template <>
+struct std::hash<portal::ref_utils::LiveReference>
+{
+    size_t operator()(const portal::ref_utils::LiveReference& ref) const noexcept
+    {
+        return reinterpret_cast<size_t>(ref.instance);
+    }
+};

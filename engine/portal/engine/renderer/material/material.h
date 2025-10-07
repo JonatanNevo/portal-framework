@@ -75,9 +75,9 @@ public:
             );
     }
 
-    virtual void set(const StringId bind_point, Ref<Texture> texture) = 0;
-    virtual void set(const StringId bind_point, Ref<renderer::Image> image) = 0;
-    virtual void set(const StringId bind_point, Ref<renderer::ImageView> image) = 0;
+    virtual void set(StringId bind_point, Ref<Texture> texture) = 0;
+    virtual void set(StringId bind_point, Ref<renderer::Image> image) = 0;
+    virtual void set(StringId bind_point, Ref<renderer::ImageView> image) = 0;
 
     template <typename T> requires std::integral<std::remove_const_t<T>> || std::floating_point<std::remove_const_t<T>>
     T& get(const StringId bind_point)
@@ -88,7 +88,7 @@ public:
             1
         };
         get_property(bind_point, prop);
-        return *reinterpret_cast<T*>(prop.value.data());
+        return *prop.value.as<T*>();
     }
 
     template <reflection::IsVec T>
@@ -100,7 +100,7 @@ public:
             T::length()
         };
         get_property(bind_point, prop);
-        return *reinterpret_cast<T*>(prop.value.data());
+        return *prop.value.as<T*>();
     }
 
     template <reflection::IsMatrix T>
@@ -112,7 +112,7 @@ public:
             T::length() * T::length()
         };
         get_property(bind_point, prop);
-        return *reinterpret_cast<T*>(prop.value.data());
+        return *prop.value.as<T*>();
     }
 
     virtual Ref<Texture> get_texture(const StringId bind_point) = 0;

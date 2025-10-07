@@ -48,13 +48,7 @@
 namespace portal
 {
 
-static auto logger = Log::get_logger("Renderer");
-
-#ifndef PORTAL_DIST
-constexpr bool enable_validation_layers = true;
-#else
-constexpr bool enable_validation_layers = false;
-#endif
+[[maybe_unused]] static auto logger = Log::get_logger("Renderer");
 
 void Renderer::init(const Ref<renderer::vulkan::VulkanContext>& new_context, renderer::vulkan::VulkanWindow* new_window)
 {
@@ -548,6 +542,12 @@ void Renderer::draw_imgui() const
         );
 }
 
+void Renderer::on_resize(size_t new_width, size_t new_height)
+{
+    render_target->resize(new_width, new_height, true);
+    camera.on_resize(static_cast<uint32_t>(new_width), static_cast<uint32_t>(new_height));
+}
+
 std::shared_ptr<renderer::vulkan::GpuContext> Renderer::get_gpu_context()
 {
     return gpu_context;
@@ -587,7 +587,9 @@ void Renderer::init_descriptors()
         {vk::DescriptorType::eStorageImage, 1}
     };
 
-    frame_data.resize(window->get_swapchain().get_frames_in_flight());
+    frame_data.clear();
+    frame_data.reserve(window->get_swapchain().get_frames_in_flight());
+
     for (size_t i = 0; i < window->get_swapchain().get_frames_in_flight(); ++i)
     {
         std::vector<vulkan::DescriptorAllocator::PoolSizeRatio> frame_sizes = {
@@ -595,10 +597,13 @@ void Renderer::init_descriptors()
             {vk::DescriptorType::eStorageBuffer, 3},
             {vk::DescriptorType::eUniformBuffer, 3},
             {vk::DescriptorType::eCombinedImageSampler, 4},
-        };
+        };;
 
-        frame_data[i].frame_descriptors = vulkan::DescriptorAllocator();
-        frame_data[i].frame_descriptors.init(&context->get_device()->get_handle(), 1000, frame_sizes);
+        frame_data.emplace_back(
+            FrameData{
+                .frame_descriptors = vulkan::DescriptorAllocator(&context->get_device()->get_handle(), 1000, frame_sizes)
+            }
+            );
 
         deletion_queue.push_deleter(
             [&, i]

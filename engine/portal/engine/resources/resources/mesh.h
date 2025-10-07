@@ -64,7 +64,7 @@ class Mesh final: public Resource
 {
 public:
     explicit Mesh(const StringId& id): Resource(id) {}
-    void copy_from(Ref<Resource> other) override;;
+    void copy_from(Ref<Resource> other) override;
 
 public:
     friend class resources::GltfLoader;

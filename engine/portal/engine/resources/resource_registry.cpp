@@ -123,7 +123,6 @@ void ResourceRegistry::shutdown()
     loader_factory.shutdown();
     default_resources.clear();
     resource_map.clear();
-    ref_utils::clean_all_references();
 }
 
 Ref<Resource>& ResourceRegistry::create_resource_ref(const ResourceSignature& signature)

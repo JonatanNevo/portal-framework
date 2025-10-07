@@ -294,7 +294,7 @@ vk::ImageView VulkanImage::get_mip_image_view(size_t mip_level)
                 .layerCount = 1
             }
         };
-        per_mip_image_views.emplace(mip_level, std::move(device->create_image_view(view_info)));
+        per_mip_image_views.emplace(mip_level, device->create_image_view(view_info));
         device->set_debug_name(per_mip_image_views.at(mip_level), fmt::format("{}_mip_view_{}", spec.name.string, mip_level).c_str());
     }
     return per_mip_image_views.at(mip_level);

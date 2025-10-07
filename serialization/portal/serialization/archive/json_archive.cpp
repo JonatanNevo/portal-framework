@@ -175,6 +175,9 @@ nlohmann::json JsonArchive::prepare_object(ArchiveObject* object)
         case reflection::PropertyContainerType::vector:
             LOG_ERROR_TAG("Json Archiver", "Cannot archive vector to json");
             break;
+        case reflection::PropertyContainerType::matrix:
+            LOG_ERROR_TAG("Json Archiver", "Cannot archive matrix to json");
+            break;
         case reflection::PropertyContainerType::invalid:
             break;
         }

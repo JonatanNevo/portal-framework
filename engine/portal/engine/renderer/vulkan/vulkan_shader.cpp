@@ -51,7 +51,7 @@ WeakRef<ShaderVariant> VulkanShader::get_shader(uint64_t shader_hash)
     return variant_map[shader_hash].as<ShaderVariant>();
 }
 
-VulkanShaderVariant::VulkanShaderVariant(const StringId& name, const Ref<VulkanContext>& context) : code(code),
+VulkanShaderVariant::VulkanShaderVariant(const StringId& name, const Ref<VulkanContext>& context) :
     name(name),
     device(context->get_device())
 {}
