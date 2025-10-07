@@ -84,10 +84,72 @@ bool is_compatible_input(DescriptorResourceType input, vk::DescriptorType type)
     }
 }
 
+VulkanDescriptorSetManager::~VulkanDescriptorSetManager()
+{
+    descriptor_sets.clear();
+    write_descriptors_map.clear();
+
+    descriptor_allocator.clear_pools();
+    descriptor_allocator.destroy_pools();
+}
+
+VulkanDescriptorSetManager VulkanDescriptorSetManager::create(const DescriptorSetManagerSpecification& spec, Ref<VulkanDevice> device)
+{
+    // TODO: use raios generated from shader
+    std::vector<portal::vulkan::DescriptorAllocator::PoolSizeRatio> pool_sizes =
+    {
+        {vk::DescriptorType::eSampler, 10},
+        {vk::DescriptorType::eCombinedImageSampler, 10},
+        {vk::DescriptorType::eSampledImage, 10},
+        {vk::DescriptorType::eStorageImage, 10},
+        {vk::DescriptorType::eUniformTexelBuffer, 10},
+        {vk::DescriptorType::eStorageTexelBuffer, 10},
+        {vk::DescriptorType::eUniformBuffer, 10},
+        {vk::DescriptorType::eStorageBuffer, 10},
+        {vk::DescriptorType::eUniformBufferDynamic, 10},
+        {vk::DescriptorType::eStorageBufferDynamic, 10},
+        {vk::DescriptorType::eInputAttachment, 10}
+    };
+
+    return VulkanDescriptorSetManager(spec, device, portal::vulkan::DescriptorAllocator(&device->get_handle(), 10 * 3, pool_sizes));
+}
+
+std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_unique(
+    const DescriptorSetManagerSpecification& spec,
+    Ref<VulkanDevice> device
+    )
+{
+    // TODO: use raios generated from shader
+    std::vector<portal::vulkan::DescriptorAllocator::PoolSizeRatio> pool_sizes =
+    {
+        {vk::DescriptorType::eSampler, 10},
+        {vk::DescriptorType::eCombinedImageSampler, 10},
+        {vk::DescriptorType::eSampledImage, 10},
+        {vk::DescriptorType::eStorageImage, 10},
+        {vk::DescriptorType::eUniformTexelBuffer, 10},
+        {vk::DescriptorType::eStorageTexelBuffer, 10},
+        {vk::DescriptorType::eUniformBuffer, 10},
+        {vk::DescriptorType::eStorageBuffer, 10},
+        {vk::DescriptorType::eUniformBufferDynamic, 10},
+        {vk::DescriptorType::eStorageBufferDynamic, 10},
+        {vk::DescriptorType::eInputAttachment, 10}
+    };
+
+    return std::unique_ptr<VulkanDescriptorSetManager>(
+        new VulkanDescriptorSetManager(
+            spec,
+            device,
+            portal::vulkan::DescriptorAllocator(&device->get_handle(), 10 * 3, pool_sizes)
+            )
+        );
+}
+
+
 VulkanDescriptorSetManager::VulkanDescriptorSetManager(
     const DescriptorSetManagerSpecification& spec,
-    const Ref<VulkanDevice>& device
-    ) : spec(spec), device(device)
+    const Ref<VulkanDevice>& device,
+    portal::vulkan::DescriptorAllocator&& descriptor_allocator
+    ) : spec(spec), device(device), descriptor_allocator(std::move(descriptor_allocator))
 {
     init();
 }
@@ -246,22 +308,6 @@ void VulkanDescriptorSetManager::bake()
     }
 
     // If valid, we can create descriptor sets
-    // TODO: use raios generated from shader
-    std::vector<portal::vulkan::DescriptorAllocator::PoolSizeRatio> pool_sizes =
-    {
-        {vk::DescriptorType::eSampler, 10},
-        {vk::DescriptorType::eCombinedImageSampler, 10},
-        {vk::DescriptorType::eSampledImage, 10},
-        {vk::DescriptorType::eStorageImage, 10},
-        {vk::DescriptorType::eUniformTexelBuffer, 10},
-        {vk::DescriptorType::eStorageTexelBuffer, 10},
-        {vk::DescriptorType::eUniformBuffer, 10},
-        {vk::DescriptorType::eStorageBuffer, 10},
-        {vk::DescriptorType::eUniformBufferDynamic, 10},
-        {vk::DescriptorType::eStorageBufferDynamic, 10},
-        {vk::DescriptorType::eInputAttachment, 10}
-    };
-    descriptor_allocator.init(&device->get_handle(), 10 * 3, pool_sizes);
 
     auto buffer_sets = get_buffer_sets();
     const size_t descriptor_set_count = spec.frame_in_flights;
@@ -272,7 +318,7 @@ void VulkanDescriptorSetManager::bake()
 
     for (const auto& [set, data] : input_resources)
     {
-        for (auto frame_index = 0; frame_index < descriptor_set_count; ++frame_index)
+        for (size_t frame_index = 0; frame_index < descriptor_set_count; ++frame_index)
         {
             auto layout = spec.shader.as<VulkanShaderVariant>()->get_descriptor_layout(set);
 
@@ -579,7 +625,13 @@ void VulkanDescriptorSetManager::invalidate_and_update(const size_t frame_index)
             write_descriptor_to_update.emplace_back(write_descriptor_set);
         }
 
-        LOGGER_DEBUG("{} - updating {} descriptors in set {} (frame index = {})", spec.shader->get_name(), write_descriptor_to_update.size(), set, frame_index);
+        LOGGER_DEBUG(
+            "{} - updating {} descriptors in set {} (frame index = {})",
+            spec.shader->get_name(),
+            write_descriptor_to_update.size(),
+            set,
+            frame_index
+            );
         device->get_handle().updateDescriptorSets(write_descriptor_to_update, {});
     }
 
@@ -604,7 +656,7 @@ const std::vector<vk::raii::DescriptorSet>& VulkanDescriptorSetManager::get_desc
     return descriptor_sets[frame_index];
 }
 
-void VulkanDescriptorSetManager::init()
+VulkanDescriptorSetManager& VulkanDescriptorSetManager::init()
 {
     const auto& reflection_descriptor_sets = spec.shader->get_reflection().descriptor_sets;
     const auto frames_in_flight = spec.frame_in_flights;
@@ -632,7 +684,7 @@ void VulkanDescriptorSetManager::init()
             // Set default textures
             if (to_descriptor_type(write_descriptor.descriptorType) == DescriptorType::CombinedImageSampler)
             {
-                for (auto i = 0; i < input.input.size(); i++)
+                for (size_t i = 0; i < input.input.size(); i++)
                 {
                     input.input[i] = spec.default_texture;
                 }
@@ -649,6 +701,8 @@ void VulkanDescriptorSetManager::init()
                                                                     .resource_handles = std::vector<void*>(write_descriptor.descriptorCount)};
         }
     }
+
+    return *this;
 }
 
 std::set<size_t> VulkanDescriptorSetManager::get_buffer_sets()

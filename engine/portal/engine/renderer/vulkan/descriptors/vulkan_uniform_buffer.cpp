@@ -69,7 +69,7 @@ void VulkanUniformBuffer::init()
 
 VulkanUniformBufferSet::VulkanUniformBufferSet(size_t buffer_size, const size_t size, const Ref<VulkanDevice>& device): size(size)
 {
-    for (auto i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
         buffers[i] = Ref<VulkanUniformBuffer>::create(buffer_size, device);
     }
@@ -84,6 +84,16 @@ Ref<UniformBuffer> VulkanUniformBufferSet::get(const size_t index)
 void VulkanUniformBufferSet::set(const Ref<UniformBuffer> buffer, const size_t index)
 {
     buffers[index] = buffer.as<VulkanUniformBuffer>();
+}
+
+void VulkanUniformBufferSet::set_data([[maybe_unused]] Buffer data, [[maybe_unused]] size_t offset)
+{
+
+}
+
+const Buffer& VulkanUniformBufferSet::get_data() const
+{
+    return buffers.at(0)->get_data();
 }
 
 } // portal

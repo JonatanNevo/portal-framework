@@ -68,6 +68,8 @@ public:
     void draw_geometry(const vk::raii::CommandBuffer& command_buffer);
     void draw_imgui() const;
 
+    void on_resize(size_t new_width, size_t new_height);
+
     FrameData& get_current_frame_data();
 
 private:

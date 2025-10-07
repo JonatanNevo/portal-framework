@@ -44,6 +44,9 @@ public:
     Ref<UniformBuffer> get(size_t index) override;
     void set(Ref<UniformBuffer> buffer, size_t index) override;
 
+    void set_data(Buffer data, size_t offset) override;
+    const Buffer& get_data() const override;
+
 private:
     size_t size;
     std::unordered_map<size_t, Ref<VulkanUniformBuffer>> buffers;

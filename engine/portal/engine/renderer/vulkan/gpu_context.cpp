@@ -10,7 +10,6 @@
 #include "portal/engine/renderer/descriptor_layout_builder.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"
-#include "portal/engine/renderer/vulkan/vulkan_device.h"
 
 namespace portal::renderer::vulkan
 {
@@ -26,12 +25,6 @@ Ref<RenderTarget> GpuContext::get_render_target() const
 {
     return render_target;
 }
-
-vk::raii::DescriptorSet GpuContext::create_descriptor_set(const vk::DescriptorSetLayout& layout)
-{
-    return descriptor_allocator.allocate(layout);
-}
-
 
 std::vector<vk::DescriptorSetLayout>& GpuContext::get_global_descriptor_layouts()
 {

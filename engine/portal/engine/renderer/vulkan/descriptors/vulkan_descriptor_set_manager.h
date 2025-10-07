@@ -17,8 +17,13 @@ class VulkanDevice;
 class VulkanDescriptorSetManager final : public DescriptorSetManager
 {
 public:
-    VulkanDescriptorSetManager() = default;
-    VulkanDescriptorSetManager(const DescriptorSetManagerSpecification& spec, const Ref<VulkanDevice>& device);
+    ~VulkanDescriptorSetManager() override;
+
+    static VulkanDescriptorSetManager create(const DescriptorSetManagerSpecification& spec, Ref<VulkanDevice> device);
+    static std::unique_ptr<VulkanDescriptorSetManager> create_unique(const DescriptorSetManagerSpecification& spec, Ref<VulkanDevice> device);
+
+    VulkanDescriptorSetManager(const VulkanDescriptorSetManager&) = delete;
+    VulkanDescriptorSetManager& operator=(const VulkanDescriptorSetManager&) = delete;
 
     void set_input(StringId name, Ref<UniformBufferSet> buffer) override;
     void set_input(StringId name, Ref<UniformBuffer> buffer) override;
@@ -27,7 +32,6 @@ public:
     void set_input(StringId name, Ref<Texture> texture) override;
     void set_input(StringId name, Ref<Image> image) override;
     void set_input(StringId name, Ref<ImageView> image) override;
-    void bind_buffer(StringId name);
 
     Ref<RefCounted> get_input(StringId name) override;
 
@@ -44,7 +48,9 @@ public:
     const std::vector<vk::raii::DescriptorSet>& get_descriptor_sets(size_t frame_index) const;
 
 private:
-    void init();
+    VulkanDescriptorSetManager(const DescriptorSetManagerSpecification& spec, const Ref<VulkanDevice>& device, portal::vulkan::DescriptorAllocator&& descriptor_allocator);
+
+    VulkanDescriptorSetManager& init();
     std::set<size_t> get_buffer_sets();
 
 public:
@@ -67,7 +73,6 @@ private:
     Ref<VulkanDevice> device;
 
     portal::vulkan::DescriptorAllocator descriptor_allocator;
-
 };
 
 }

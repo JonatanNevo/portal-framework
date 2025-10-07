@@ -81,11 +81,14 @@ void VulkanStorageBuffer::init()
 }
 
 
-VulkanStorageBufferSet::VulkanStorageBufferSet(size_t buffer_size, size_t size, const Ref<VulkanDevice>& device): size(size)
+VulkanStorageBufferSet::VulkanStorageBufferSet(const size_t buffer_size, const size_t size, const Ref<VulkanDevice>& device) : size(size)
 {
-    for (auto i = 0; i < size; i++)
+    for (size_t i = 0; i < size; i++)
     {
-        buffers[i] = Ref<VulkanStorageBuffer>::create(StorageBufferSpecification{buffer_size}, device);
+        buffers[i] = Ref<VulkanStorageBuffer>::create(
+            StorageBufferSpecification{buffer_size, true, STRING_ID(fmt::format("sub_storage_{}", i))},
+            device
+            );
     }
 }
 
@@ -99,5 +102,13 @@ Ref<StorageBuffer> VulkanStorageBufferSet::get(const size_t index)
 void VulkanStorageBufferSet::set(const Ref<StorageBuffer> buffer, const size_t index)
 {
     buffers[index] = buffer.as<VulkanStorageBuffer>();
+}
+
+void VulkanStorageBufferSet::set_data([[maybe_unused]] Buffer data, [[maybe_unused]] size_t offset) {
+}
+
+const Buffer& VulkanStorageBufferSet::get_data() const
+{
+    return buffers.at(0)->get_data();
 }
 } // portal

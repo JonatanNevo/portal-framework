@@ -18,7 +18,7 @@ public:
     [[nodiscard]] virtual size_t get_width() const = 0;
     [[nodiscard]] virtual size_t get_height() const = 0;
 
-    [[nodiscard]] virtual Ref<Image> get_image(size_t index = 0) const = 0;
+    [[nodiscard]] virtual Ref<Image> get_image(size_t index) const = 0;
     [[nodiscard]] virtual size_t get_color_attachment_count() const = 0;
 
     [[nodiscard]] virtual bool has_depth_attachment() const = 0;

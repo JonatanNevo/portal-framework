@@ -119,11 +119,9 @@ void VulkanRenderTarget::initialize()
 
 void VulkanRenderTarget::release()
 {
-    size_t index = 0;
     for (auto& image : color_attachments)
     {
         image->release();
-        index++;
     }
 
     if (depth_attachment)

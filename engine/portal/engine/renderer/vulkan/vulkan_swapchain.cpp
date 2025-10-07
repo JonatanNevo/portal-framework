@@ -111,7 +111,6 @@ void VulkanSwapchain::init(const Ref<VulkanContext>& vulkan_context, GLFWwindow*
                 present_queue_index = index;
                 break;
             }
-            ++index;
         }
     }
 

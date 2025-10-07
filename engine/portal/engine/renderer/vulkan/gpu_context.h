@@ -40,9 +40,8 @@ public:
         const Ref<RenderTarget>& render_target,
         const std::vector<vk::DescriptorSetLayout>& global_descriptor_layouts
         );
-    virtual ~GpuContext() = default;
 
-    virtual vk::raii::DescriptorSet create_descriptor_set(const vk::DescriptorSetLayout& layout);
+    virtual ~GpuContext() = default;
 
     virtual std::vector<vk::DescriptorSetLayout>& get_global_descriptor_layouts();
     virtual void write_descriptor_set(portal::vulkan::DescriptorWriter& writer, vk::raii::DescriptorSet& set);
@@ -54,7 +53,6 @@ public:
 private:
     Ref<RenderTarget> render_target;
     Ref<VulkanContext> vulkan_context;
-    portal::vulkan::DescriptorAllocator descriptor_allocator;
     std::vector<vk::DescriptorSetLayout> global_descriptor_layouts;
 };
 

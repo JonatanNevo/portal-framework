@@ -352,12 +352,34 @@ void copy_image_to_image(
     const vk::Extent2D dst_size
     )
 {
-    // TODO: use copy image when restrictions allow
+    // Calculate aspect ratios
+    const float src_aspect = static_cast<float>(src_size.width) / static_cast<float>(src_size.height);
+    const float dst_aspect = static_cast<float>(dst_size.width) / static_cast<float>(dst_size.height);
+
+    // Calculate scaled destination rectangle maintaining aspect ratio
+    auto scaled_width = static_cast<int32_t>(dst_size.width);
+    auto scaled_height = static_cast<int32_t>(dst_size.height);
+    int32_t offset_x = 0;
+    int32_t offset_y = 0;
+
+    if (src_aspect > dst_aspect)
+    {
+        // Source is wider - add letterboxing (black bars on top/bottom)
+        scaled_height = static_cast<int32_t>(static_cast<float>(dst_size.width) / src_aspect);
+        offset_y = (static_cast<int32_t>(dst_size.height) - scaled_height) / 2;
+    }
+    else if (src_aspect < dst_aspect)
+    {
+        // Source is taller - add pillarboxing (black bars on left/right)
+        scaled_width = static_cast<int32_t>(static_cast<float>(dst_size.height) * src_aspect);
+        offset_x = (static_cast<int32_t>(dst_size.width) - scaled_width) / 2;
+    }
+
     vk::ImageBlit2 blit_region{
         .srcSubresource = {vk::ImageAspectFlagBits::eColor, 0, 0, 1},
         .srcOffsets = std::array{vk::Offset3D{}, vk::Offset3D{static_cast<int32_t>(src_size.width), static_cast<int32_t>(src_size.height), 1}},
         .dstSubresource = {vk::ImageAspectFlagBits::eColor, 0, 0, 1},
-        .dstOffsets = std::array{vk::Offset3D{}, vk::Offset3D{static_cast<int32_t>(dst_size.width), static_cast<int32_t>(dst_size.height), 1}}
+        .dstOffsets = std::array{vk::Offset3D{offset_x, offset_y, 0}, vk::Offset3D{offset_x + scaled_width, offset_y + scaled_height, 1}}
     };
 
     const vk::BlitImageInfo2 blit_info = {
