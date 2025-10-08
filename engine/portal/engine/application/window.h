@@ -26,9 +26,6 @@ class Window
 public:
     virtual ~Window() = default;
 
-    virtual void init() = 0;
-    virtual void shutdown() = 0;
-
     virtual void process_events() = 0;
 
     virtual void swap_buffers() = 0; // TODO: ??

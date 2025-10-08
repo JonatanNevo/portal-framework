@@ -28,7 +28,6 @@ find_package(slang CONFIG REQUIRED)
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
-    find_package(portal-application CONFIG REQUIRED)
     find_package(portal-input CONFIG REQUIRED)
     find_package(portal-networking CONFIG REQUIRED)
     find_package(portal-serialization CONFIG REQUIRED)
@@ -50,7 +49,6 @@ add_library(portal::engine ALIAS portal-engine)
 target_link_libraries(portal-engine
         PUBLIC
         portal::core
-        portal::application
         portal::input
         portal::networking
         portal::serialization

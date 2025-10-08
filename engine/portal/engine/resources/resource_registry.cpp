@@ -31,7 +31,7 @@ Ref<Resource> ResourceRegistry::load(StringId id, const ResourceType type)
     PORTAL_ASSERT(meta.resource_type == ResourceType::Composite || meta.resource_type == type, "Request resource does not match source");
 
     LOGGER_TRACE("Requesting load for resource: {}", id);
-    asset_load_queue.enqueue({source});
+    asset_load_queue.enqueue({id, source});
 
     return create_resource_ref({.id = id, .type = type});
 }
@@ -47,15 +47,15 @@ Ref<Resource> ResourceRegistry::immediate_load(const StringId& id, const Resourc
 
     PORTAL_ASSERT(meta.resource_type == ResourceType::Composite || meta.resource_type == type, "Request resource does not match source");
 
-    load_resource({source});
+    load_resource(id, source);
 
     return resource_map[type][id];
 }
 
-Ref<Resource> ResourceRegistry::immediate_load(const std::shared_ptr<resources::ResourceSource>& source)
+Ref<Resource> ResourceRegistry::immediate_load(const StringId& id, const std::shared_ptr<resources::ResourceSource>& source)
 {
     const auto meta = source->get_meta();
-    load_resource({source});
+    load_resource(id, source);
 
     return resource_map[meta.resource_type][meta.source_id];
 }
@@ -160,7 +160,7 @@ void ResourceRegistry::resource_load_loop(const std::stop_token& stoken)
     {
         if (asset_load_queue.try_dequeue(request))
         {
-            load_resource(request.source);
+            load_resource(request.resource_id, request.source);
         }
         else
         {
@@ -169,12 +169,12 @@ void ResourceRegistry::resource_load_loop(const std::stop_token& stoken)
     }
 }
 
-void ResourceRegistry::load_resource(const std::shared_ptr<resources::ResourceSource>& source)
+void ResourceRegistry::load_resource(const StringId& resource_id, const std::shared_ptr<resources::ResourceSource>& source)
 {
     PORTAL_PROF_ZONE();
     const auto meta = source->get_meta();
     const auto& loader = loader_factory.get(meta.resource_type);
-    auto ref = get(meta.source_id, meta.resource_type);
+    auto ref = get(resource_id, meta.resource_type);
 
     LOGGER_TRACE("Loading resource: {}", ref->id);
 
@@ -184,7 +184,7 @@ void ResourceRegistry::load_resource(const std::shared_ptr<resources::ResourceSo
         return;
     }
 
-    const auto res = loader->load(source);
+    const auto res = loader->load(resource_id, source);
     if (res)
     {
         ref->set_state(ResourceState::Loaded);

@@ -17,9 +17,8 @@ namespace portal::renderer::vulkan
 class VulkanContext final : public RefCounted
 {
 public:
+    VulkanContext();
     ~VulkanContext() override;
-
-    void init();
 
     vk::raii::Instance& get_instance();
     Ref<VulkanDevice> get_device() const;

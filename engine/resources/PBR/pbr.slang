@@ -1,38 +1,6 @@
-#define DEBUG_NORMAL_SHADING 0
-#define DEBUG_NORMAL_TEXTURE 1
-#define DEBUG_NORMAL_GEOMETRY 2
-#define DEBUG_TANGENT 3
-#define DEBUG_BITANGENT 4
-#define DEBUG_ALPHA 5
-#define DEBUG_UV_0 6
-#define DEBUG_UV_1 7
-#define DEBUG_OCCLUSION 8
-#define DEBUG_EMISSIVE 9
-#define DEBUG_BASE_COLOR 10
-#define DEBUG_ROUGHNESS 11
-#define DEBUG_METALLIC 12
-#define DEBUG_CLEARCOAT_FACTOR 13
-#define DEBUG_CLEARCOAT_ROUGHNESS 14
-#define DEBUG_CLEARCOAT_NORMAL 15
-#define DEBUG_SHEEN_COLOR 16
-#define DEBUG_SHEEN_ROUGHNESS 17
-#define DEBUG_SPECULAR_FACTOR 18
-#define DEBUG_SPECULAR_COLOR 19
-#define DEBUG_TRANSMISSION_FACTOR 20
-#define DEBUG_VOLUME_THICKNESS 21
-#define DEBUG_DIFFUSE_TRANSMISSION_FACTOR 22
-#define DEBUG_DIFFUSE_TRANSMISSION_COLOR_FACTOR 23
-#define DEBUG_IRIDESCENCE_FACTOR 24
-#define DEBUG_IRIDESCENCE_THICKNESS 25
-#define DEBUG_ANISOTROPIC_STRENGTH 26
-#define DEBUG_ANISOTROPIC_DIRECTION 27
-#define DEBUG_NONE 100
-#define DEBUG DEBUG_NONE
-
-#define ALPHAMODE_OPAQUE 0
-#define ALPHAMODE_MASK 1
-#define ALPHAMODE_BLEND 2
-#define ALPHAMODE ALPHAMODE_MASK
+#ifndef LIGHT_COUNT
+#define LIGHT_COUNT 0
+#endif
 
 import tonemapping;
 import textures;
@@ -42,141 +10,111 @@ import lights;
 import ibl;
 import material_info;
 import animation;
-
-#ifdef MATERIAL_IRIDESCENCE
 import iridescence;
-#endif
+import common;
 
-ParameterBlock<SceneData> scene_data;
+enum AlphaMode
+{
+    None,
+    Opaque,
+    Mask
+}
 
-#ifdef USE_PUNCTUAL
-ParameterBlock<Light> lights[LIGHT_COUNT + 1];
-#endif
+extern static const bool use_instancing;
+extern static const AlphaMode alpha_mode;
 
-ParameterBlock<ImageBasedLightingData> ibl_data;
+extern static const bool has_ior;
+extern static const bool use_ibl;
 
-ParameterBlock<MaterialInputs> material_inputs;
+struct GlobalData
+{
+    SceneData scene_data;
+    Light lights[LIGHT_COUNT + 1];
+    ImageBasedLightingData ibl_data;
+}
 
-ParameterBlock<ScaledTexture> normal_texture;
-ParameterBlock<FactoredTexture> emissive_texture;
-ParameterBlock<ScaledTexture> occlusion_texture;
+struct ModelInfo
+{
+   float4x4 model_matrix;
+   float4x4 normal_matrix;
 
-#ifdef MATERIAL_METALLICROUGHNESS
-ParameterBlock<MaterialTexture> color_texture;
-ParameterBlock<MaterialTexture> metallic_roughness_texture;
-#endif 
+   MaterialInputs material_inputs;
+   Textures textures;
 
-#ifdef MATERIAL_SPECULARGLOSSINESS
-ParameterBlock<MaterialTexture> specular_glossiness_texture;
-ParameterBlock<MaterialTexture> diffuse_texture;
-#endif
+   // USE_INSTANCING
+   Conditional<float4x4, use_instancing> instance_model_matrix;
+   Conditional<float4x4, use_instancing> instance_normal_matrix;
 
-#ifdef MATERIAL_CLEARCOAT
-ParameterBlock<MaterialTexture> clearcoat_texture;
-ParameterBlock<MaterialTexture> clearcoat_roughness_texture;
-ParameterBlock<MaterialTexture> clearcoat_normal_texture;
-#endif
+   AnimationData animation_data;
 
-#ifdef MATERIAL_SHEEN
-ParameterBlock<MaterialTexture> sheen_texture;
-ParameterBlock<MaterialTexture> sheen_roughness_texture;
-#endif
+   float4 get_position(uint vertex_id, Vertex v)
+   {
+       float4 pos = float4(v.position, 1);
 
-#ifdef MATERIAL_SPECULAR
-ParameterBlock<MaterialTexture> specular_texture;
-ParameterBlock<MaterialTexture> specular_color_texture;
-#endif
+       if (use_morphing)
+       {
+           pos += animation_data.get_target_position(vertex_id);
+       }
 
-#ifdef MATERIAL_TRANSMISSION
-ParameterBlock<TransmissionTexture> transmission_texture;
-#endif
+       if (use_skinning)
+       {
+           pos = mul(animation_data.get_skinning_matrix(), pos);
+       }
 
-#ifdef MATERIAL_VOLUME
-ParameterBlock<MaterialTexture> thickness_texture;
-#endif
+       return pos;
+   }
 
-#ifdef MATERIAL_IRIDESCENCE
-ParameterBlock<MaterialTexture> iridescence_texture;
-ParameterBlock<MaterialTexture> iridescence_thickness_texture;
-#endif
+   float3 get_normal(uint vertex_id, Vertex v)
+   {
+       if (!v.normal.get().hasValue)
+           return float3(0);
 
-#ifdef MATERIAL_DIFFUSE_TRANSMISSION
-ParameterBlock<MaterialTexture> diffuse_transmission_texture;
-ParameterBlock<MaterialTexture> diffuse_transmission_color_texture;
-#endif
+        float3 normal = v.normal.get().value;
 
-#ifdef MATERIAL_ANISOTROPY
-ParameterBlock<MaterialTexture> anisotropy_texture;
-#endif
+        if (use_morphing)
+        {
+            normal += animation_data.get_target_normal(vertex_id);
+        }
 
-#ifdef USE_INSTANCING
-ParameterBlock<float4x4> instance_model_matrix;
-#endif
+        if (use_skinning)
+        {
+            normal = mul(float3x3(animation_data.get_skinning_matrix()), normal);
+        }
 
-#ifdef HAS_VERT_NORMAL_UV_TRANSFORM
-ParameterBlock<float3x3> normal_uv_transform;
-#endif
+        return normalize(normal);
+   }
 
-ParameterBlock<AnimationData> animation_data;
+   float3 get_tangent(uint vertex_id, Vertex v);
+   {
+        if (!v.tangent.get().hasValue)
+            return float3(0);
+
+        float3 tangent = v.tangent.get().value.xyz;
+
+        if (use_morphing)
+        {
+            tangent += animation_data.get_target_tangent(vertex_id);
+        }
+
+        if (use_skinning)
+        {
+            tangent = mul(float3x3(animation_data.get_skinning_matrix()), tangent);
+        }
+
+        return normalize(tangent);
+   }
+}
+
+ParameterBlock<GlobalData> global_data;
+ParameterBlock<ModelInfo> model_info;
+
 
 struct VertexOutput
 {
     float4 position: SV_Position;
     Vertex vertex;
-    float2 uv0;
-    float2 uv1;
+    Array<float2, uv_set_number> uv;
 };
-
-float4 get_position(uint vertex_id, Vertex v)
-{
-    float4 pos = float4(v.position, 1);
-
-#ifdef USE_MORPHING
-    pos += get_target_position(animation_data, vertex_id);
-#endif
-
-#ifdef USE_SKINNING
-    pos = mul(get_skinning_matrix(animation_data), pos);
-#endif
-
-    return pos;
-}
-
-#ifdef HAS_NORMAL_VEC3
-float3 get_normal(uint vertex_id, Vertex v)
-{
-    float3 normal = v.normal;
-
-#ifdef USE_MORPHING
-    normal += get_target_normal(animation_data, vertex_id);
-#endif
-
-#ifdef USE_SKINNING
-    normal = mul(float3x3(get_skinning_matrix(animation_data)), normal);
-#endif
-
-    return normalize(normal);
-}
-#endif
-
-#ifdef HAS_NORMAL_VEC3
-#ifdef HAS_TANGENT_VEC4
-float3 get_tangent(uint vertex_id, Vertex v)
-{
-    float3 tangent = v.tangent.xyz;
-
-#ifdef USE_MORPHING
-    tangent += get_target_tangent(animation_data, vertex_id);
-#endif
-
-#ifdef USE_SKINNING
-    tangent = mul(float3x3(get_skinning_matrix(animation_data)), tangent);
-#endif
-
-    return normalize(tangent);
-}
-#endif
-#endif
 
 
 [shader("vertex")]
@@ -184,74 +122,79 @@ VertexOutput vert_main(uint vertex_id : SV_VertexID, [[push_constant]] uniform V
 {
     Vertex v = vertex_buffer[vertex_id];
 
-#ifdef USE_INSTANCING
-    float4x4 model_matrix = instance_model_matrix;
-    float4x4 normal_matrix = transpose(inverse(model_matrix));
-#else
-    float4x4 model_matrix = model_info.model_matrix;
-    float4x4 normal_matrix = model_info.normal_matrix;
-#endif
+    float4x4 model_matrix, normal_matrix;
 
-#ifdef USE_SKINNING
-    float4 pos = get_position(vertex_id, v);
-#else
-    float4 pos = mul(model_matrix, get_position(vertex_id, v));
-#endif
+    if (use_instancing)
+    {
+        model_matrix = model_info.instance_model_matrix.get().value;
+        normal_matrix = model_info.instance_normal_matrix.get().value;
+    }
+    else
+    {
+        model_matrix = model_info.model_matrix;
+        normal_matrix = model_info.normal_matrix;
+    }
+
+    float4 pos;
+    if (use_skinning)
+    {
+        pos = model_info.get_position(vertex_id, v);
+    }
+    else
+    {
+        pos = mul(model_matrix, model_info.get_position(vertex_id, v));
+    }
 
     Vertex out_vertex;
     VertexOutput out;
     out.vertex = out_vertex;
     out.vertex.position = pos.xyz / pos.w;
 
-#ifdef HAS_NORMAL_VEC3
-#ifdef HAS_TANGENT_VEC4
-    float3 tangent = get_tangent(vertex_id, v);
-    float3 normal_w = normalize(float3(mul(normal_matrix, float4(get_normal(vertex_id, v), 0.0))));
-    float3 tangent_w = float3(mul(model_matrix, float4(tangent, 0)));
-    float3 bitangent_w = cross(normal_w, tangent_w) * v.tangent.w;
+    if (has_normal_vec3)
+    {
+        if (has_tangent_vec4)
+        {
+            float3 tangent = model_info.get_tangent(vertex_id, v);
+            float3 normal_w = normalize(mul(normal_matrix, float4(model_info.get_normal(vertex_id, v), 0.0)).xyz);
+            float3 tangent_w = mul(model_matrix, float4(tangent, 0.0)).xyz;
+            float3 bitangent_w = cross(normal_w, tangent_w) * v.tangent.get().value.w;
 
-#ifdef HAS_VERT_NORMAL_UV_TRANSFORM
-    tangent_w = mul(normal_uv_transform, tangent_w);
-    bitangent_w = mul(normal_uv_transform, bitangent_w);
-#endif
+            bitangent_w = normalize(bitangent_w);
+            tangent_w = normalize(tangent_w);
+            out.vertex.tbn = float3x3(tangent_w, bitangent_w, normal_w);
+        }
+        else
+        {
+            out.vertex.normal = normalize(mul(normal_matrix, float4(model_info.get_normal(vertex_id, v), 0.0)).xyz);
+        }
+    }
 
-    bitangent_w = normalize(bitangent_w);
-    tangent_w = normalize(tangent_w);
-    out.vertex.tbn = float3x3(tangent_w, bitangent_w, normal_w);
-#else
-    out.vertex.normal = normalize(float3(mul(normal_matrix, float4(get_normal(vertex_id, v), 0.0))));
-#endif
-#endif
+    out.uv[0] = float2(0.0, 0.0);
+    out.uv[1] = float2(0.0, 0.0);
 
-    out.uv0 = float2(0.0, 0.0);
-    out.uv1 = float2(0.0, 0.0);
+    if (has_texcoord_0)
+    {
+        out.uv[0] = v.uv0.get().value;
+    }
+    if (has_texcoord_1)
+    {
+        out.uv[1] = v.uv1.get().value;
+    }
 
-#ifdef HAS_TEXCOORD_0_VEC2
-    out.uv0 = v.uv0;
-#endif
+    if (use_morphing)
+    {
+        out.uv[0] += model_info.animation_data.get_target_tex_coord0(vertex_id);
+        out.uv[1] += model_info.animation_data.get_target_tex_coord1(vertex_id);
+    }
 
-#ifdef HAS_TEXCOORD_1_VEC2
-    out.uv1 = v.uv1;
-#endif
-
-#ifdef USE_MORPHING
-    out.uv0 += get_target_tex_coord0(animation_data, vertex_id);
-    out.uv1 += get_target_tex_coord1(animation_data, vertex_id);
-#endif
-
-#ifdef HAS_COLOR_0_VEC3
-    out.color = v.color;
-#ifdef USE_MORPHING
-    out.color = clamp(out.color + get_target_color0(animation_data, vertex_id).xyz, 0, 1.f);
-#endif
-#endif
-
-#ifdef HAS_COLOR_0_VEC4
-    out.color = v.color;
-#ifdef USE_MORPHING
-    out.color = clamp(out.color + get_target_color0(animation_data, vertex_id).xyz, 0, 1.f);
-#endif
-#endif
+    if (has_color)
+    {
+        out.vertex.color = v.color;
+        if (use_morphing)
+        {
+            out.vertex.color = clamp(out.vertex.color.get().value + model_info.animation_data.get_target_color(vertex_id), 0, 1.f);
+        }
+    }
 
     out.position = mul(model_info.model_matrix, pos);
 
@@ -261,16 +204,18 @@ VertexOutput vert_main(uint vertex_id : SV_VertexID, [[push_constant]] uniform V
 [shader("fragment")]
 float4 frag_main(VertexOutput in, [[push_constant]] uniform ModelInfo model_info) : SV_Target
 {
-    float4 base_color = get_base_color(material_inputs, in.uv0, in.uv1);
+    float4 base_color = model_info.material_inputs.get_base_color(model_info.textures, in.uv);
 
-#if ALPHAMODE == ALPHAMODE_OPAQUE
-    base_color.a = 1.0;
-#endif
+    if (alpha_mode == AlphaMode::Opaque)
+    {
+        base_color.a = 1.0;
+    }
 
     float3 color = float3(0);
 
-    float3 v = normalize(scene_data.camera - in.position.xyz);
-    NormalInfo normal_info = get_normal_info(in.vertex, normal_texture, normal_texture.scale, v, in.uv0, in.uv1);
+    float3 v = normalize(global_data.scene_data.camera - in.position.xyz);
+
+    NormalInfo normal_info = get_normal_info(in.vertex, model_info.textures, v, in.uv);
     float3 n = normal_info.normal;
     float3 t = normal_info.tangent;
     float3 b = normal_info.bitangent;
@@ -291,45 +236,56 @@ float4 frag_main(VertexOutput in, [[push_constant]] uniform ModelInfo model_info
     material.f90 = float3(1.0);
     material.f90_dielectric = material.f90;
 
-#ifdef MATERIAL_IOR
-    material = get_ior_info(material_inputs, material);
-#endif
+    if (has_ior)
+    {
+        model_info.material_inputs.get_ior_info(material);
+    }
 
-#ifdef MATERIAL_METALLICROUGHNESS
-    material = get_metallic_roughness_info(material_inputs, material, in.uv0, in.uv1);
-#endif
+    if (has_metalic_roughness)
+    {
+        model_info.material_inputs.get_metallic_roughness_info(model_info.textures, in.uv, material);
+    }
 
-#ifdef MATERIAL_SHEEN
-    material = get_sheen_info(material_inputs, material, in.uv0, in.uv1);
-#endif
+    if (has_sheen)
+    {
+        model_info.material_inputs.get_sheen_info(model_info.textures, in.uv, material);
+    }
 
-#ifdef MATERIAL_CLEARCOAT
-    material = get_clearcoat_info(material_inputs, material, normal_info, in.uv0, in.uv1);
-#endif
+    if (has_clearcoat)
+    {
+        model_info.material_inputs.get_clearcoat_info(model_info.textures, in.uv, normal_info, material);
+    }
 
-#ifdef MATERIAL_SPECULAR
-    material = get_specular_info(material_inputs, material, in.uv0, in.uv1);
-#endif
+    if (has_specular)
+    {
+        model_info.material_inputs.get_specular_info(model_info.textures, in.uv, material);
+    }
 
-#ifdef MATERIAL_TRANSMISSION
-    material = get_transmission_info(material_inputs, material, in.uv0, in.uv1);
-#endif
+    if (has_transmission)
+    {
+        model_info.material_inputs.get_transmission_info(model_info.textures, in.uv, material);
+    }
 
-#ifdef MATERIAL_VOLUME
-    material = get_volume_info(material_inputs, material, in.uv0, in.uv1);
-#endif
+    if (has_volume)
+    {
+        model_info.material_inputs.get_volume_info(model_info.textures, in.uv, material);
+    }
 
-#ifdef MATERIAL_IRIDESCENCE
-    material = get_iridescence_info(material_inputs, material, in.uv0, in.uv1);
-#endif
+    if (has_iridescence)
+    {
+        model_info.material_inputs.get_iridescence_info(model_info.textures, in.uv, material);
+    }
 
-#ifdef MATERIAL_DIFFUSE_TRANSMISSION
-    material = get_diffuse_transmission_info(material_inputs, material, in.uv0, in.uv1);
-#endif
+    if (has_diffuse_transmission)
+    {
+        model_info.material_inputs.get_diffuse_transmission_info(model_info.textures, in.uv, material);
+    }
 
-#ifdef MATERIAL_ANISOTROPY
-    material = get_anisotropy_info(material_inputs, material, normal_info, in.uv0, in.uv1);
-#endif
+    if (has_anisotropy)
+    {
+        model_info.material_inputs.get_anisotropy_info(model_info.textures, in.uv, normal_info, material);
+    }
+
 
     material.perceptual_roughness = clamp(material.perceptual_roughness, 0.0, 1.0);
     material.metallic = clamp(material.metallic, 0.0, 1.0);
@@ -356,26 +312,32 @@ float4 frag_main(VertexOutput in, [[push_constant]] uniform ModelInfo model_info
     float albedo_sheen_scaling = 1.f;
     float diffuse_transmission_thickness = 1.0;
 
-#ifdef MATERIAL_IRIDESCENCE
-    float3 iridescenceFresnel_dielectric = eval_iridescence(1.0, material.iridescence_ior, n_dot_v, material.iridescence_thickness, material.f0_dielectric);
-    float3 iridescenceFresnel_metallic = eval_iridescence(1.0, material.iridescence_ior, n_dot_v, material.iridescence_thickness, base_color.rgb);
+    if (has_iridescence)
+    {
+        float3 iridescenceFresnel_dielectric = eval_iridescence(1.0, material.iridescence_ior, n_dot_v, material.iridescence_thickness, material.f0_dielectric);
+        float3 iridescenceFresnel_metallic = eval_iridescence(1.0, material.iridescence_ior, n_dot_v, material.iridescence_thickness, base_color.rgb);
 
-    if (material.iridescence_thickness == 0.0) {
-        material.iridescence_factor = 0.0;
+        if (material.iridescence_thickness == 0.0) {
+            material.iridescence_factor = 0.0;
+        }
     }
-#endif
 
-#ifdef MATERIAL_DIFFUSE_TRANSMISSION
-#ifdef MATERIAL_VOLUME
-    diffuse_transmission_thickness = material.thickness *
-        (length(float3(model_info.model_matrix[0].xyz)) + length(float3(model_info.model_matrix[1].xyz)) + length(float3(model_info.model_matrix[2].xyz))) / 3.0;
-#endif
-#endif
+    if (has_diffuse_transmission)
+    {
+        if (has_volume)
+        {
+            diffuse_transmission_thickness = material.thickness *
+                                             (length(float3(model_info.model_matrix[0].xyz)) + length(float3(model_info.model_matrix[1].xyz)) + length(float3(model_info.model_matrix[2].xyz))) / 3.0;
+        }
+    }
 
-#ifdef MATERIAL_CLEARCOAT
-    clearcoat_factor = material.clearcoat_factor;
-    clearcoat_fresnel = f_schlick(material.clearcoat_f0, material.clearcoat_f90, clamped_dot(material.clearcoat_normal, v));
-#endif
+    if (has_clearcoat)
+    {
+        clearcoat_factor = material.clearcoat_factor;
+        clearcoat_fresnel = f_schlick(material.clearcoat_f0, material.clearcoat_f90, clamped_dot(material.clearcoat_normal, v));
+    }
+
+    if (use)
 
     // Calculate lighting contribution from image based lighting source (IBL)
 #if defined(USE_IBL) || defined(MATERIAL_TRANSMISSION)

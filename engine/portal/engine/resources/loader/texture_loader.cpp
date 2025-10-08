@@ -63,10 +63,10 @@ void TextureLoader::initialize()
     missing_texture = create_default_texture(renderer::Texture::MISSING_TEXTURE_ID, pixels, missing_extent);
 }
 
-bool TextureLoader::load(const std::shared_ptr<ResourceSource> source) const
+bool TextureLoader::load(StringId id, const std::shared_ptr<ResourceSource> source) const
 {
     PORTAL_PROF_ZONE();
-    auto texture = registry->get<renderer::vulkan::VulkanTexture>(source->get_meta().source_id);
+    auto texture = registry->get<renderer::vulkan::VulkanTexture>(id);
     if (!texture)
     {
         LOGGER_ERROR("Failed to load texture: resource is not a Texture: {}", texture->id);

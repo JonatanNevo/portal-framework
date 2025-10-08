@@ -26,12 +26,13 @@ ShaderLoader::ShaderLoader(ResourceRegistry* registry, const std::shared_ptr<ren
     slang::createGlobalSession(slang_session.writeRef());
 }
 
-bool ShaderLoader::load(const std::shared_ptr<ResourceSource> source) const
+bool ShaderLoader::load(StringId id, const std::shared_ptr<ResourceSource> source) const
 {
     auto meta = source->get_meta();
-    auto shader = registry->get<renderer::Shader>(meta.source_id);
+    auto shader = registry->get<renderer::Shader>(id);
     shader.as<renderer::vulkan::VulkanShader>()->initialize(context->get_context());
-    shader->load_source(source->load());
+    // TODO: use global shader path somehow
+    shader->load_source(source->load(), meta.source_path);
 
     if (meta.format == SourceFormat::Shader)
         return true; // no work needs to be done on the loader anymore.

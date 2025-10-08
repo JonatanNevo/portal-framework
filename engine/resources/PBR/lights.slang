@@ -3,6 +3,9 @@ module lights;
 import functions;
 import brdf;
 
+public extern const static bool has_lights;
+public extern const static int light_count;
+
 // KHR_lights_punctual extension.
 // see https://github.com/KhronosGroup/glTF/tree/master/extensions/2.0/Khronos/KHR_lights_punctual
 
