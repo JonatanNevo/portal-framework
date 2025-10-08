@@ -101,10 +101,11 @@ public:
      * Synchronously load a resource from a source.
      * This function blocks until the resource is fully loaded.
      *
+     * @param id The unique identifier of the resource to load
      * @param source The resource source containing load data
      * @return A reference to the fully loaded resource
      */
-    Ref<Resource> immediate_load(const std::shared_ptr<resources::ResourceSource>& source);
+    Ref<Resource> immediate_load(const StringId& id, const std::shared_ptr<resources::ResourceSource>& source);
 
     /**
      * Get a reference to an existing resource of type T.
@@ -147,13 +148,14 @@ public:
 protected:
     struct ResourceRequest
     {
+        StringId resource_id;
         std::shared_ptr<resources::ResourceSource> source;
     };
     using ResourceMap = std::unordered_map<StringId, Ref<Resource>>;
 
 
     void resource_load_loop(const std::stop_token& stoken);
-    void load_resource(const std::shared_ptr<resources::ResourceSource>& source);
+    void load_resource(const StringId& resource_id, const std::shared_ptr<resources::ResourceSource>& source);
 
     Ref<Resource>& create_resource_ref(const ResourceSignature& signature);
     void load_default(Ref<Resource>& resource, ResourceType type);

@@ -15,6 +15,11 @@ public struct ImageBasedLightingData
     public Sampler2D sheen_energy_lookup_table;
     public float3x3 rotation;
     public float intensity;
+
+    public float albedo_sheen_scaling_lut(float ndot_v, float sheen_roughness_factor)
+    {
+        return sheen_energy_lookup_table.Sample(float2(ndot_v, sheen_roughness_factor)).r;
+    }
 }
 
 

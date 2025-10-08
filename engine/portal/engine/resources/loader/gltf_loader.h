@@ -29,7 +29,7 @@ class GltfLoader final : public ResourceLoader
 public:
     GltfLoader(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context);
 
-    bool load(std::shared_ptr<ResourceSource> source) const override;
+    bool load(StringId id, std::shared_ptr<ResourceSource> source) const override;
     void load_default(Ref<Resource>& resource) const override;
 protected:
     static fastgltf::Asset load_from_source(const std::shared_ptr<ResourceSource>& source, fastgltf::GltfDataGetter& data);

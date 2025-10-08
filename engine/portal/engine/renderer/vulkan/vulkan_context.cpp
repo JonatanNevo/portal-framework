@@ -113,20 +113,9 @@ bool check_validation_layer_support(const std::span<const char* const> validatio
     return true;
 }
 
-VulkanContext::~VulkanContext()
+VulkanContext::VulkanContext()
 {
-    allocation::shutdown();
-
-    PORTAL_ASSERT(device->get_ref() > 1, "Dangling reference for device");
-    device = nullptr;
-
-    PORTAL_ASSERT(physical_device->get_ref() > 1, "Dangling reference for physical device");
-    physical_device = nullptr;
-}
-
-void VulkanContext::init()
-{
-    PORTAL_PROF_ZONE();
+     PORTAL_PROF_ZONE();
 
     LOGGER_INFO("Initializing vulkan context");
     PORTAL_ASSERT(glfwVulkanSupported(), "glfw must support vulkan");
@@ -245,6 +234,17 @@ void VulkanContext::init()
     device = Ref<VulkanDevice>::create(physical_device, feature_chain);
 
     allocation::init(instance, physical_device->get_handle(), device->get_handle());
+}
+
+VulkanContext::~VulkanContext()
+{
+    allocation::shutdown();
+
+    PORTAL_ASSERT(device->get_ref() > 1, "Dangling reference for device");
+    device = nullptr;
+
+    PORTAL_ASSERT(physical_device->get_ref() > 1, "Dangling reference for physical device");
+    physical_device = nullptr;
 }
 
 vk::raii::Instance& VulkanContext::get_instance()

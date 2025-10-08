@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SlangPersistentStateComponentConfig">
+    <option name="explicitSlangdLocation" value="C:\Code\portal-framework\build\ninja-multi\vcpkg_installed\x64-windows\tools\shader-slang" />
+  </component>
+</project>

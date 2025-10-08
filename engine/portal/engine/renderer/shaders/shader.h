@@ -48,14 +48,15 @@ class Shader : public Resource
 public:
     explicit Shader(const StringId& id);
 
-    void load_source(Buffer&& new_source);
+    void load_source(Buffer&& new_source, const std::filesystem::path& shader_path);
+
     /**
      * Compiles the shader with a given list of permutations (defines)
      *
      * @param permutations A list of permutations (name, value)
      * @return The hash to fetch the shader code with.
      */
-    uint64_t compile_with_permutations(std::vector<ShaderDefine>& permutations);
+    uint64_t compile_with_permutations(const std::vector<ShaderDefine>& permutations);
 
     virtual WeakRef<ShaderVariant> get_shader(uint64_t shader_hash) = 0;
 

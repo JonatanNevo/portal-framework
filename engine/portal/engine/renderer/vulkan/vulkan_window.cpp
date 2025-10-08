@@ -16,33 +16,9 @@ namespace portal::renderer::vulkan
 {
 static auto logger = Log::get_logger("Vulkan");
 
-static bool g_glfw_initialized = false;
-
-static void glfw_error_callback(int error, const char* description)
-{
-    LOGGER_ERROR("GLFW error {}: {}", error, description);
-}
-
 VulkanWindow::VulkanWindow(const Ref<VulkanContext>& context, const WindowSpecification& spec) : spec(spec), context(context)
 {
-    if (!g_glfw_initialized)
-    {
-        const auto result = glfwInit();
-        PORTAL_ASSERT(result == GLFW_TRUE, "Failed to initialize GLFW");
-        glfwSetErrorCallback(glfw_error_callback);
-
-        g_glfw_initialized = true;
-    }
-}
-
-VulkanWindow::~VulkanWindow()
-{
-    shutdown();
-}
-
-void VulkanWindow::init()
-{
-    data.title = spec.title;
+     data.title = spec.title;
     data.width = spec.width;
     data.height = spec.height;
 
@@ -134,11 +110,9 @@ void VulkanWindow::init()
     }
 }
 
-void VulkanWindow::shutdown()
+VulkanWindow::~VulkanWindow()
 {
     swapchain.destroy();
-    glfwTerminate();
-    g_glfw_initialized = false;
 }
 
 void VulkanWindow::process_events()

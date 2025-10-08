@@ -76,7 +76,7 @@ StringId create_name(ResourceType type, size_t index, std::string_view name)
 GltfLoader::GltfLoader(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context) : ResourceLoader(registry),
     gpu_context(context) {}
 
-bool GltfLoader::load(const std::shared_ptr<ResourceSource> source) const
+bool GltfLoader::load(StringId id, const std::shared_ptr<ResourceSource> source) const
 {
     PORTAL_PROF_ZONE();
 
@@ -84,7 +84,7 @@ bool GltfLoader::load(const std::shared_ptr<ResourceSource> source) const
     auto data_result = fastgltf::GltfDataBuffer::FromBytes(data.as<std::byte*>(), data.size);
     if (!data_result)
     {
-        LOGGER_ERROR("Failed to load glTF from: {}, error: {}", source->get_meta().source_id, fastgltf::getErrorMessage(data_result.error()));
+        LOGGER_ERROR("Failed to load glTF from: {}, error: {}", id, fastgltf::getErrorMessage(data_result.error()));
         return false;
     }
 
@@ -120,7 +120,7 @@ bool GltfLoader::load(const std::shared_ptr<ResourceSource> source) const
     if (scenes.empty())
         return false;
 
-    auto& root_resource = registry->get(source->get_meta().source_id, ResourceType::Scene);
+    auto& root_resource = registry->get(id, ResourceType::Scene);
     root_resource = scenes.front();
     return true;
 }
@@ -267,7 +267,8 @@ void GltfLoader::load_texture(
         return;
     }
 
-    auto vulkan_texture = registry->immediate_load(image_source).as<renderer::vulkan::VulkanTexture>();
+    auto vulkan_texture = registry->immediate_load(create_name(ResourceType::Texture, index, texture_name.c_str()), image_source).as<
+        renderer::vulkan::VulkanTexture>();
 
     auto sampler_index = texture.samplerIndex;
     PORTAL_ASSERT(sampler_index.has_value(), "Texture references invalid sampler: {}", texture_name);
@@ -358,7 +359,7 @@ void GltfLoader::load_material(
     }
     else
     {
-        material->set(STRING_ID("material_data.color_texture"),registry->get<renderer::Texture>(renderer::Texture::WHITE_TEXTURE_ID));
+        material->set(STRING_ID("material_data.color_texture"), registry->get<renderer::Texture>(renderer::Texture::WHITE_TEXTURE_ID));
     }
 
     if (gltf_material.pbrData.metallicRoughnessTexture.has_value())
@@ -373,7 +374,7 @@ void GltfLoader::load_material(
     }
     else
     {
-        material->set(STRING_ID("material_data.metal_rough_texture"),registry->get<renderer::Texture>(renderer::Texture::WHITE_TEXTURE_ID));
+        material->set(STRING_ID("material_data.metal_rough_texture"), registry->get<renderer::Texture>(renderer::Texture::WHITE_TEXTURE_ID));
     }
 
     if (pass_type == MaterialPass::Transparent)
@@ -692,7 +693,7 @@ Ref<renderer::Pipeline> GltfLoader::create_pipeline(const StringId& name, const 
         .wireframe = false,
         .debug_name = name
     };
-    auto pipeline =  Ref<renderer::vulkan::VulkanPipeline>::create(pipeline_spec, gpu_context->get_context());
+    auto pipeline = Ref<renderer::vulkan::VulkanPipeline>::create(pipeline_spec, gpu_context->get_context());
 
     if (name == STRING_ID("color_pipeline"))
         g_color_pipeline = pipeline;

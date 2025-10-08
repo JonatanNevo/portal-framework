@@ -1,5 +1,16 @@
 module tonemapping;
 
+enum ToneMapping
+{
+    NONE = 0,
+    ACES_NARKOWICZ = 1,           // TONEMAP_ACES_NARKOWICZ
+    ACES_HILL = 2,                // TONEMAP_ACES_HILL
+    ACES_HILL_EXPOSURE_BOOST = 3, // TONEMAP_ACES_HILL_EXPOSURE_BOOST
+    KHR_PBR_NEUTRAL = 4           // TONEMAP_KHR_PBR_NEUTRAL 
+}
+
+extern static const ToneMapping tone_mapping = ToneMapping.NONE;
+
 static const float GAMMA = 2.2;
 static const float INVERSE_GAMMA = 1.0 / GAMMA;
 
@@ -77,8 +88,7 @@ public float3 tonemap_aces_hill(float3 color)
 }
 
 // Khronos PBR neutral tone mapping
-#ifdef TONEMAP_KHR_PBR_NEUTRAL
-public float3 tonemap_khronos_pbr_neutral(float3 color )
+public float3 tonemap_khronos_pbr_neutral(float3 color)
 {
     const float start_compression = 0.8 - 0.04;
     const float desaturation = 0.15;
@@ -97,31 +107,33 @@ public float3 tonemap_khronos_pbr_neutral(float3 color )
     float g = 1. - 1. / (desaturation * (peak - newPeak) + 1.);
     return lerp(color, newPeak * float3(1, 1, 1), g);
 }
-#endif
 
 public float3 tonemap(float exposure, float3 color)
 {
     color *= exposure;
 
-#ifdef TONEMAP_ACES_NARKOWICZ
-    color = tonemap_aces_markowicz(color);
-#endif
+    switch (tone_mapping)
+    {
+        case ToneMapping.NONE:
+            break;
+        case ToneMapping.ACES_NARKOWICZ:
+            color = tonemap_aces_markowicz(color);
+            break;
+        case ToneMapping.ACES_HILL:
+            color = tonemap_aces_hill(color);
+            break;
+        case ToneMapping.ACES_HILL_EXPOSURE_BOOST:
+            // boost exposure as discussed in https://github.com/mrdoob/three.js/pull/19621
+            // this factor is based on the exposure correction of Krzysztof Narkowicz in his
+            // implemetation of ACES tone mapping
+            color /= 0.6;
+            color = tonemap_aces_hill(color);
+            break;
+        case ToneMapping.KHR_PBR_NEUTRAL:
+            color = tonemap_khronos_pbr_neutral(color);
+            break;
 
-#ifdef TONEMAP_ACES_HILL
-    color = tonemap_aces_hill(color);
-#endif
-
-#ifdef TONEMAP_ACES_HILL_EXPOSURE_BOOST
-    // boost exposure as discussed in https://github.com/mrdoob/three.js/pull/19621
-    // this factor is based on the exposure correction of Krzysztof Narkowicz in his
-    // implemetation of ACES tone mapping
-    color /= 0.6;
-    color = tonemap_aces_hill(color);
-#endif
-
-#ifdef TONEMAP_KHR_PBR_NEUTRAL
-    color = tonemap_khronos_pbr_neutral(color);
-#endif
-
+    }
+    
     return linear_to_sRGB(color);
 }

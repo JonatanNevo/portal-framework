@@ -66,7 +66,6 @@ public:
 
     void draw_geometry();
     void draw_geometry(const vk::raii::CommandBuffer& command_buffer);
-    void draw_imgui() const;
 
     void on_resize(size_t new_width, size_t new_height);
 
@@ -76,7 +75,6 @@ private:
     void init_swap_chain();
     void init_descriptors();
 
-    void init_imgui();
     void init_gpu_context();
 
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);

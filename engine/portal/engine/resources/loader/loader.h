@@ -11,7 +11,6 @@ namespace portal
 class ResourceRegistry;
 }
 
-
 namespace portal::resources
 {
 class ResourceSource;
@@ -28,9 +27,10 @@ public:
     /**
      * Loads the resource from a source
      * This function will block until the resource is loaded.
+     * @param id The id of the resource to load
      * @param source The source of the resource
      */
-    virtual bool load(std::shared_ptr<ResourceSource> source) const = 0;
+    virtual bool load(StringId id, std::shared_ptr<ResourceSource> source) const = 0;
 
     /**
      * Loads instantly the default resource for the given resource type.
@@ -46,7 +46,7 @@ class StubLoader final : public ResourceLoader
 {
 public:
     explicit StubLoader(ResourceRegistry* registry) : ResourceLoader(registry) {}
-    bool load(std::shared_ptr<ResourceSource>) const override { return false; };
+    bool load(StringId, std::shared_ptr<ResourceSource>) const override { return false; };
     void load_default(Ref<Resource>&) const override {};
 };
 }

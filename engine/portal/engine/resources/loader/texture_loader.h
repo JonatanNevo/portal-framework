@@ -33,7 +33,7 @@ public:
     explicit TextureLoader(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context);
 
     void initialize() override;
-    [[nodiscard]] bool load(std::shared_ptr<ResourceSource> source) const override;
+    [[nodiscard]] bool load(StringId id, std::shared_ptr<ResourceSource> source) const override;
     void load_default(Ref<Resource>& resource) const override;
 
 private:

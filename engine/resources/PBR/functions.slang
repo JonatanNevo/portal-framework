@@ -2,56 +2,27 @@ module functions;
 
 public static const float M_PI = 3.141592653589793;
 
+public extern static const bool has_normal_vec3;
+public extern static const bool has_tangent_vec4;
+public extern static const bool has_color;
+public extern static const bool has_texcoord_0;
+public extern static const bool has_texcoord_1;
+
+static const bool has_tbn = has_normal_vec3 && has_tangent_vec4;
+
 public struct Vertex
 {
     public float3 position;
 
-    #ifdef HAS_NORMAL_VEC3
-    #ifdef HAS_TANGENT_VEC4
-    public float3x3 tbn;
-    public float4 tangent;
-    #else
-    public float3 normal;
-    #endif
-    #endif
+    public Conditional<float3x3, has_tbn> tbn;
+    public Conditional<float4, has_tangent_vec4> tangent;
 
-    #ifdef HAS_COLOR_0_VEC3
-    public float3 color;
-    #endif
-    #ifdef HAS_COLOR_0_VEC4
-    public float4 color;
-    #endif
+    public Conditional<float3, has_normal_vec3 && !has_tangent_vec4> normal;
 
-    #ifdef HAS_TEXCOORD_0_VEC2
-    public float2 uv0;
-    #endif
+    public Conditional<float4, has_color> color;
 
-    #ifdef HAS_TEXCOORD_1_VEC2
-    public float2 uv1;
-    #endif
-}
-
-public float4 get_vertex_color(Vertex vert)
-{
-    float4 color = float4(1.f);
-
-#ifdef HAS_COLOR_0_VEC3
-    color.rgb = vert.color;
-#endif
-#ifdef HAS_COLOR_0_VEC4
-    color = vert.color;
-#endif
-
-    return color;
-}
-
-public struct NormalInfo
-{
-    public float3 geometry_normal;
-    public float3 tangent;
-    public float3 bitangent;
-    public float3 normal;
-    public float3 normal_tex; // Normal from texture, scaling is accounted for.
+    public Conditional<float2, has_texcoord_0> uv0;
+    public Conditional<float2, has_texcoord_1> uv1;
 }
 
 public float clamped_dot(float3 x, float3 y)

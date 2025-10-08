@@ -20,12 +20,13 @@ static auto logger = Log::get_logger("Shader");
 Shader::Shader(const StringId& id) : Resource(id)
 {}
 
-void Shader::load_source(Buffer&& new_source)
+void Shader::load_source(Buffer&& new_source, const std::filesystem::path& shader_path)
 {
+    source_path = shader_path;
     source = std::move(new_source);
 }
 
-uint64_t Shader::compile_with_permutations(std::vector<ShaderDefine>& permutations)
+uint64_t Shader::compile_with_permutations(const std::vector<ShaderDefine>& permutations)
 {
     const auto permutations_hash = calculate_permutations_hash(permutations);
 

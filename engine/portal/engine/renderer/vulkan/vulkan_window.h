@@ -28,9 +28,6 @@ public:
     VulkanWindow(const Ref<VulkanContext>& context, const WindowSpecification& spec);
     ~VulkanWindow() override;
 
-    void init() override;
-    void shutdown() override;
-
     void process_events() override;
 
     void swap_buffers() override;

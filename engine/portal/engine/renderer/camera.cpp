@@ -9,8 +9,6 @@
 #include <glm/ext/quaternion_trigonometric.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "portal/application/application.h"
-
 namespace portal
 {
 
