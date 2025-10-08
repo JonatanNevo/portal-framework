@@ -15,6 +15,7 @@
 #include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/renderer/shaders/shader.h"
+#include "portal/engine/renderer/vulkan/vulkan_shader.h"
 
 namespace portal::resources
 {

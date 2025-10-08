@@ -38,6 +38,11 @@ else ()
     option(TRACY_ENABLE "Enable Tracy profiling" OFF)
 endif ()
 find_package(Tracy CONFIG REQUIRED)
+option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
+if(PORTAL_FIND_PACAKGE)
+    find_package(llvm-adt CONFIG REQUIRED)
+endif ()
+unset(PORTAL_FIND_PACAKGE CACHE)
 
 add_library(portal-core STATIC ${CORE_SOURCES})
 add_library(portal::core ALIAS portal-core)
@@ -51,6 +56,7 @@ target_sources(portal-core PUBLIC
 set_target_properties(portal-core PROPERTIES EXPORT_NAME core)
 target_link_libraries(portal-core
         PUBLIC
+        llvm::adt
         spdlog::spdlog
         glm::glm
 )

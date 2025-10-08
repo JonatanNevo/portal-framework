@@ -22,10 +22,3 @@ target_link_libraries(portal-engine-test
 
 include(GoogleTest)
 gtest_discover_tests(portal-engine-test)
-
-
-add_executable(portal-engine-benchmark ${BENCHMARK_SOURCES} bench_main.cpp)
-target_link_libraries(portal-engine-benchmark
-        portal-engine
-        benchmark::benchmark
-)
