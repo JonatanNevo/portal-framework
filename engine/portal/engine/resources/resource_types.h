@@ -17,21 +17,21 @@ namespace portal
 
 enum class ResourceState: uint8_t
 {
-    Empty   = 0,      // The resource is not loaded, and has no data
-    Loaded  = BIT(0), // The resource is loaded and ready to use
-    Missing = BIT(1), // The resource was not found in the database
-    Invalid = BIT(2), // The resource is not yet valid, e.g. not yet loaded
-    Error   = BIT(3), // The resource failed to load.
+    Unknown = 0,
+    Loaded  = 1,
+    Missing = 2,
+    Invalid = 3,
+    Error   = 4,
 };
 
 enum class ResourceType: uint16_t
 {
-    Unknown = 0,
-    Material = 1,
-    Texture = 2,
-    Shader = 3,
-    Mesh = 4,
-    Scene = 6,
+    Unknown   = 0,
+    Material  = 1,
+    Texture   = 2,
+    Shader    = 3,
+    Mesh      = 4,
+    Scene     = 6,
     Composite = std::numeric_limits<uint16_t>::max(),
 };
 
@@ -52,6 +52,24 @@ namespace utils
         if (resource_type == "Scene")
             return ResourceType::Scene;
         return ResourceType::Unknown;
+    }
+
+    inline const char* to_string(const ResourceState resource_state)
+    {
+        switch (resource_state)
+        {
+        case ResourceState::Unknown:
+            return "Unknown";
+        case ResourceState::Loaded:
+            return "Loaded";
+        case ResourceState::Missing:
+            return "Missing";
+        case ResourceState::Invalid:
+            return "Invalid";
+        case ResourceState::Error:
+            return "Error";
+        }
+        return "Unknown";
     }
 
     inline const char* to_string(const ResourceType resource_type)
@@ -94,7 +112,7 @@ struct fmt::formatter<portal::ResourceType>
     }
 };
 
-template<>
+template <>
 struct std::hash<portal::ResourceType>
 {
     size_t operator()(const portal::ResourceType& type) const noexcept

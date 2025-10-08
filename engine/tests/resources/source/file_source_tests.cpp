@@ -232,5 +232,5 @@ TEST_F(FileSourceTest, HandlesPreprocessedShaderFormat)
     FileSource source(test_dir / "shader.spv");
     auto meta = source.get_meta();
     EXPECT_EQ(ResourceType::Shader, meta.resource_type);
-    EXPECT_EQ(SourceFormat::Preprocessed, meta.format);
+    EXPECT_EQ(SourceFormat::PrecompiledShader, meta.format);
 }

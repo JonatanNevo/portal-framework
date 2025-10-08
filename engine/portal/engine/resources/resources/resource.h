@@ -39,7 +39,7 @@ public:
     [[nodiscard]] ResourceState get_state() const { return state; }
     void set_state(const ResourceState new_state) { this->state = new_state; }
 protected:
-    ResourceState state = ResourceState::Empty;
+    ResourceState state = ResourceState::Unknown;
 };
 
 }

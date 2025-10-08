@@ -65,7 +65,7 @@ target_sources(llvm-adt PUBLIC
         FILES ${LLVM_HEADER}
 )
 
-target_include_directories(llvm-adt PUBLIC
+target_include_directories(llvm-adt SYSTEM PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/llvm/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/llvm/include>
         $<INSTALL_INTERFACE:include>
