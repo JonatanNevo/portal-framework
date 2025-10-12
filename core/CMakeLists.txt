@@ -149,6 +149,7 @@ endif ()
 
 
 if (PORTAL_BUILD_TESTS)
+    target_compile_definitions(portal-core PUBLIC PORTAL_TEST)
     add_subdirectory(tests)
 endif ()
 unset(PORTAL_BUILD_TESTS CACHE)
