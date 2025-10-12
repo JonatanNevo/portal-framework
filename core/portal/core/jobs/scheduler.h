@@ -5,11 +5,13 @@
 
 #pragma once
 
+#include <__msvc_ranges_to.hpp>
 #include <coroutine>
 #include <cstdint>
 #include <span>
 #include <concurrentqueue/concurrentqueue.h>
 
+#include "llvm/ADT/SmallVector.h"
 #include "portal/core/jobs/job.h"
 #include "portal/platform/core/hal/thread.h"
 
@@ -58,14 +60,119 @@ public:
     //
     // Once this call returns, the JobList that was given as a parameter
     // has been consumed, and you should not re-use it.
-    void wait_for_jobs(std::span<const Job> jobs);
-    void wait_for_jobs(std::vector<Job>&& jobs);
-    void wait_for_jobs(std::initializer_list<Job> jobs);
-    void wait_for_job(Job job);
+    void wait_for_jobs(std::span<JobBase> jobs);
 
-    void dispatch_jobs(std::span<const Job> jobs, Counter* counter = nullptr);
-    void dispatch_jobs(std::initializer_list<Job> jobs, Counter* counter = nullptr);
-    void dispatch_job(Job job, Counter* counter = nullptr);
+    template <typename... Results>
+    std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(std::tuple<Job<Results>...> jobs)
+    {
+        llvm::SmallVector<JobBase> job_list;
+        job_list.reserve(std::tuple_size_v<std::tuple<Job<Results>...>>);
+
+        std::apply(
+            [&](auto&... job)
+            {
+                (job_list.push_back(JobBase::handle_type::from_address(job.handle.address())), ...);
+            },
+            jobs
+            );
+
+        wait_for_jobs(job_list);
+
+        // Extract results into tuple
+        return std::apply(
+            [](auto&... job) -> std::tuple<std::expected<Results, JobResultStatus>...>
+            {
+                return std::tuple<std::expected<Results, JobResultStatus>...>{job.result()...};
+            },
+            jobs
+        );
+    }
+
+    template <typename... Results>
+    std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(Job<Results>... jobs)
+    {
+        return wait_for_jobs(std::tuple<Job<Results>...>{std::move(jobs)...});
+    }
+
+    template <typename Result>
+    llvm::SmallVector<Result> wait_for_jobs(const std::span<Job<Result>> jobs)
+    {
+        llvm::SmallVector<JobBase> job_list;
+        job_list.reserve(jobs.size());
+        for (const auto& job : jobs)
+            job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
+
+        wait_for_jobs(job_list);
+
+        llvm::SmallVector<Result> results;
+        results.reserve(jobs.size());
+        for (auto& job : jobs)
+        {
+            auto res = job.result();
+            results.push_back(res.value());
+        }
+
+        return results;
+    }
+
+    void wait_for_jobs(const std::span<Job<>> jobs)
+    {
+        llvm::SmallVector<JobBase> job_list;
+        job_list.reserve(jobs.size());
+        for (const auto& job : jobs)
+            job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
+
+        wait_for_jobs(job_list);
+    }
+
+    template <typename Result> requires std::is_void_v<Result>
+    void wait_for_job(Job<Result> job)
+    {
+        wait_for_jobs(std::move(job));
+    }
+
+    template<typename Result> requires !std::is_void_v<Result>
+    Result wait_for_job(Job<Result> job)
+    {
+        return std::get<0>(wait_for_jobs(std::move(job))).value();
+    }
+
+    void dispatch_jobs(std::span<JobBase> jobs, Counter* counter = nullptr);
+
+    void dispatch_job(JobBase job, Counter* counter = nullptr);
+
+    template <typename... Results>
+    void dispatch_jobs(std::tuple<Job<Results...>> jobs, Counter* counter = nullptr)
+    {
+        llvm::SmallVector<JobBase> job_list;
+
+        job_list.reserve(std::tuple_size_v<std::tuple<Job<Results...>>>);
+        std::apply(
+            [&](auto&... job)
+            {
+                (job_list.push_back(JobBase::handle_type::from_address(job.handle.address())), ...);
+            },
+            jobs
+            );
+
+        dispatch_jobs(job_list, counter);
+    }
+
+    template <typename Result>
+    void dispatch_jobs(std::span<Job<Result>> jobs, Counter* counter = nullptr)
+    {
+        llvm::SmallVector<JobBase> job_list(jobs.size());
+        for (const auto& job : jobs)
+            job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
+
+        dispatch_jobs(job_list, counter);
+    }
+
+    template <typename Result>
+    void dispatch_job(Job<Result> job, Counter* counter = nullptr)
+    {
+        dispatch_job(JobBase::handle_type::from_address(job.handle.address()), counter);
+    }
 
     HandleType pop_job();
 
@@ -84,5 +191,6 @@ private:
 
     moodycamel::ConcurrentQueue<void*> pending_jobs;
 };
+
 
 } // portal

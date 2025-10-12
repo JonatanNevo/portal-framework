@@ -7,6 +7,7 @@
 
 #include <atomic>
 #include <coroutine>
+#include <expected>
 #include <optional>
 
 #include "portal/core/log.h"
@@ -20,18 +21,19 @@ namespace jobs {
     struct Counter;
 }
 
-struct JobPromise;
-
-struct [[nodiscard]] Job : std::coroutine_handle<JobPromise>
+enum class JobResultStatus
 {
-    using promise_type = JobPromise;
+    Unknown,
+    Missing,
+    VoidType
 };
+
 
 struct SuspendJob
 {
     constexpr bool await_ready() noexcept { return false; }
 
-    void await_suspend(std::coroutine_handle<JobPromise> handle) noexcept;
+    void await_suspend(std::coroutine_handle<> handle) noexcept;
     void await_resume() noexcept {};
 };
 
@@ -39,21 +41,14 @@ struct FinalizeJob
 {
     constexpr bool await_ready() noexcept { return false; }
 
-    void await_suspend(std::coroutine_handle<JobPromise> handle) noexcept;
+    void await_suspend(std::coroutine_handle<> handle) noexcept;
     void await_resume() noexcept {};
 };
 
 struct JobPromise
 {
-    Job get_return_object()
-    {
-        return { Job::from_promise(*this) };
-    }
-
     std::suspend_always initial_suspend() noexcept { return {}; }
     FinalizeJob final_suspend() noexcept { return {}; }
-
-    void return_void() noexcept {}
 
     void unhandled_exception() noexcept
     {
@@ -63,58 +58,61 @@ struct JobPromise
     jobs::Scheduler* scheduler = nullptr;
     jobs::Counter* counter;
 };
-
-}
-
-/**
-namespace portal
-{
-class JobList;
-
-namespace jobs {
-    class Scheduler;
-    struct Counter;
-}
-
 
 template <typename Result>
 struct ResultPromise;
 
-template <typename Result = void>
-struct [[nodiscard]] Job : std::coroutine_handle<ResultPromise<Result>>
+struct JobBase
 {
-    using promise_type = ResultPromise<Result>;
-};
+    using handle_type = std::coroutine_handle<JobPromise>;
+    handle_type handle;
 
-struct SuspendJob
-{
-    constexpr bool await_ready() noexcept { return false; }
+    bool dispatched = false;
 
-    void await_suspend(std::coroutine_handle<JobPromise> handle) noexcept;
-    void await_resume() noexcept {};
-};
+    JobBase(const handle_type handle): handle(handle) {}
+    JobBase(const JobBase&) = delete;
+    JobBase(JobBase&& other) noexcept: handle(std::exchange(other.handle, nullptr)) {}
 
-struct FinalizeJob
-{
-    constexpr bool await_ready() noexcept { return false; }
-
-    void await_suspend(std::coroutine_handle<JobPromise> handle) noexcept;
-    void await_resume() noexcept {};
-};
-
-struct JobPromise
-{
-    std::suspend_always initial_suspend() noexcept { return {}; }
-    FinalizeJob final_suspend() noexcept { return {}; }
-
-    void unhandled_exception() noexcept
+    JobBase& operator=(const JobBase&) = delete;
+    JobBase& operator=(JobBase&& other) noexcept
     {
-        LOG_ERROR_TAG("Task", "Unhandled exception in task");
+        if (this == &other)
+            return *this;
+
+        if (handle && !dispatched)
+        {
+            handle.destroy();
+        }
+
+        dispatched = other.dispatched;
+        handle = std::exchange(other.handle, nullptr);
+        return *this;
     }
 
-    jobs::Scheduler* scheduler = nullptr;
-    jobs::Counter* counter;
+    virtual ~JobBase()
+    {
+        if (handle && !dispatched)
+        {
+            handle.destroy();
+        }
+    }
 };
+
+template <typename Result = void>
+struct [[nodiscard]] Job final : JobBase
+{
+    using promise_type = ResultPromise<Result>;
+    using handle_type = std::coroutine_handle<promise_type>;
+
+    std::expected<Result, JobResultStatus> result() const
+    {
+        auto result_handle = handle_type::from_address(handle.address());
+        return result_handle.promise().get_result();
+    }
+
+    Job(handle_type result_handle): JobBase(JobBase::handle_type::from_address(result_handle.address())) {};
+};
+
 
 template <typename Result>
 struct ResultPromise: JobPromise
@@ -123,12 +121,20 @@ struct ResultPromise: JobPromise
 
     Job<Result> get_return_object()
     {
-        return { Job<Result>::from_promise(*this) };
+        return { Job<Result>::handle_type::from_promise(*this) };
     }
 
     void return_value(Result value)
     {
         result = std::move(value);
+    }
+
+    std::expected<Result, JobResultStatus> get_result() const
+    {
+        if constexpr (std::is_move_assignable_v<Result> || std::is_move_constructible_v<Result>)
+            return std::move(result);
+
+        return result;
     }
 };
 
@@ -137,7 +143,12 @@ struct ResultPromise<void>: JobPromise
 {
     Job<void> get_return_object()
     {
-        return { Job<void>::from_promise(*this) };
+        return { Job<void>::handle_type::from_promise(*this) };
+    }
+
+    std::expected<void, JobResultStatus> get_result() const
+    {
+        return std::unexpected { JobResultStatus::VoidType };
     }
 
     void return_void() noexcept {}
@@ -145,4 +156,3 @@ struct ResultPromise<void>: JobPromise
 
 
 }
-*/

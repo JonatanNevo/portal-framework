@@ -80,7 +80,7 @@ jobs::Scheduler::~Scheduler()
     threads.clear();
 }
 
-void jobs::Scheduler::wait_for_jobs(const std::span<const Job> jobs)
+void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs)
 {
     Counter counter{};
 
@@ -138,33 +138,19 @@ void jobs::Scheduler::wait_for_jobs(const std::span<const Job> jobs)
     }
 }
 
-void jobs::Scheduler::wait_for_jobs(std::vector<Job>&& jobs)
-{
-    wait_for_jobs(std::span{jobs.begin(), jobs.end()});
-}
-
-void jobs::Scheduler::wait_for_jobs(const std::initializer_list<Job> jobs)
-{
-    wait_for_jobs(std::span{jobs.begin(), jobs.end()});
-}
-
-void jobs::Scheduler::wait_for_job(Job job)
-{
-    wait_for_jobs({job});
-}
-
-void jobs::Scheduler::dispatch_jobs(const std::span<const Job> jobs, Counter* counter)
+void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, Counter* counter)
 {
     llvm::SmallVector<void*> job_pointers;
     job_pointers.reserve(jobs.size());
 
-    for (const auto& job : jobs)
+    for (auto& job : jobs)
     {
-        auto& [scheduler, promise_counter] = job.promise();
+        job.dispatched = true;
+        auto& [scheduler, promise_counter] = job.handle.promise();
         scheduler = this;
         if (counter)
             promise_counter = counter;
-        job_pointers.push_back(job.address());
+        job_pointers.push_back(job.handle.address());
     }
 
     pending_jobs.enqueue_bulk(job_pointers.begin(), job_pointers.size());
@@ -172,14 +158,9 @@ void jobs::Scheduler::dispatch_jobs(const std::span<const Job> jobs, Counter* co
         counter->count.fetch_add(jobs.size(), std::memory_order_release);
 }
 
-void jobs::Scheduler::dispatch_jobs(const std::initializer_list<Job> jobs, Counter* counter)
+void jobs::Scheduler::dispatch_job(JobBase job, Counter* counter)
 {
-    dispatch_jobs(std::span{jobs.begin(), jobs.end()}, counter);
-}
-
-void jobs::Scheduler::dispatch_job(Job job, Counter* counter)
-{
-    dispatch_jobs({job}, counter);
+    dispatch_jobs(std::span{&job, 1}, counter);
 }
 
 jobs::Scheduler::HandleType jobs::Scheduler::pop_job()
@@ -226,7 +207,7 @@ void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, WorkerQue
         {
             if (handle_address)
             {
-                Job::from_address(handle_address).resume();
+                JobBase::handle_type::from_address(handle_address).resume();
             }
             continue;
         }

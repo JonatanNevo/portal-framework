@@ -11,15 +11,17 @@
 namespace portal
 {
 
-void SuspendJob::await_suspend(const std::coroutine_handle<JobPromise> handle) noexcept
+void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 {
     // At this point the coroutine pointed to by handle has been fully suspended. This is guaranteed by the c++ standard.
 
-    auto& [scheduler, counter] = handle.promise();
+    auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
+
+    auto& [scheduler, counter] = job_promise_handler.promise();
 
     // Put the current coroutine to the back of the scheduler queue as it has been fully suspended at this point.
     // We are pausing the job so no need to pass on the counter
-    scheduler->dispatch_job(static_cast<Job>(handle), nullptr);
+    scheduler->dispatch_job({job_promise_handler}, nullptr);
 
     if (counter)
     {
@@ -52,9 +54,11 @@ void SuspendJob::await_suspend(const std::coroutine_handle<JobPromise> handle) n
     // Note: Once we drop off here, control will return to where the resume()  command that brought us here was issued.
 }
 
-void FinalizeJob::await_suspend(const std::coroutine_handle<JobPromise> handle) noexcept
+void FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 {
-    const auto counter = handle.promise().counter;
+    auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
+
+    const auto counter = job_promise_handler.promise().counter;
     if (counter)
     {
         const auto value = counter->count.fetch_sub(1, std::memory_order_acq_rel) - 1;
@@ -64,7 +68,5 @@ void FinalizeJob::await_suspend(const std::coroutine_handle<JobPromise> handle) 
             counter->blocking.notify_all();
         }
     }
-
-    handle.destroy();
 }
 }
