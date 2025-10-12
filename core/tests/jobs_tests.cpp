@@ -54,7 +54,7 @@ struct ExecutionTracker
 // Section 1.1: Single Job Execution Tests
 // ============================================================================
 
-Job simple_job(bool& executed)
+Job<> simple_job(bool& executed)
 {
     executed = true;
     co_return;
@@ -70,7 +70,7 @@ TEST(JobTest, SingleJobCompletes)
     EXPECT_TRUE(executed);
 }
 
-Job void_return_job(int& counter)
+Job<> void_return_job(int& counter)
 {
     ++counter;
     co_return;
@@ -86,7 +86,7 @@ TEST(JobTest, JobReturnsVoidProperly)
     EXPECT_EQ(counter, 1);
 }
 
-Job job_for_lifecycle_test()
+Job<> job_for_lifecycle_test()
 {
     co_return;
 }
@@ -95,37 +95,30 @@ Job job_for_lifecycle_test()
 // Section 6.1: Multi-Threading Tests
 // ============================================================================
 
-Job write_thread_id(int index, std::vector<std::thread::id>& thread_ids)
+Job<int> get_thread_id(int i)
 {
-    thread_ids[index] = std::this_thread::get_id();
-    co_return;
+    co_return i;
 }
 
 TEST(JobTest, MultiThreadedExecution)
 {
     jobs::Scheduler scheduler = jobs::Scheduler::create(1);
 
-    std::vector<std::thread::id> thread_ids(5);
-
-    std::vector<Job> jobs{};
+    std::vector<Job<int>> jobs{};
     for (int i = 0; i < 5; ++i)
     {
-        jobs.push_back(write_thread_id(i, thread_ids));
+        jobs.emplace_back(get_thread_id(i));
     }
 
-    scheduler.wait_for_jobs(jobs);
+    scheduler.wait_for_jobs<int>(jobs);
 
     // Validate that there are two distinct thread ids
     std::set<std::thread::id> distinct_thread_ids;
 
-    for (const auto& thread_id : thread_ids)
-    {
-        distinct_thread_ids.insert(thread_id);
-    }
     EXPECT_EQ(distinct_thread_ids.size(), 2);
 }
 
-Job inner_coroutine(int i, int j, ExecutionTracker* tracker = nullptr)
+Job<> inner_coroutine(int i, int j, ExecutionTracker* tracker = nullptr)
 {
     if (tracker)
     {
@@ -136,7 +129,7 @@ Job inner_coroutine(int i, int j, ExecutionTracker* tracker = nullptr)
     co_return;
 }
 
-Job outer_coroutine(int i, jobs::Scheduler& scheduler, ExecutionTracker* tracker = nullptr)
+Job<> outer_coroutine(int i, jobs::Scheduler& scheduler, ExecutionTracker* tracker = nullptr)
 {
     if (tracker)
     {
@@ -144,7 +137,7 @@ Job outer_coroutine(int i, jobs::Scheduler& scheduler, ExecutionTracker* tracker
     }
 
 
-    std::vector<Job> jobs{};
+    std::vector<Job<>> jobs{};
     for (size_t j = 0; j < 5; ++j)
     {
         jobs.push_back(inner_coroutine(i, j, tracker));
@@ -152,7 +145,7 @@ Job outer_coroutine(int i, jobs::Scheduler& scheduler, ExecutionTracker* tracker
 
 
     co_await SuspendJob();
-    scheduler.wait_for_jobs(jobs);
+    scheduler.wait_for_jobs<void>(jobs);
 
     co_return;
 }
@@ -162,13 +155,13 @@ TEST(JobTest, JobWithinJob)
     jobs::Scheduler scheduler = jobs::Scheduler::create(1);
     ExecutionTracker tracker;
 
-    std::vector<Job> jobs{};
+    std::vector<Job<>> jobs{};
     for (int i = 0; i < 20; ++i)
     {
         jobs.push_back(outer_coroutine(i, scheduler, &tracker));
     }
 
-    scheduler.wait_for_jobs(jobs);
+    scheduler.wait_for_jobs<void>(jobs);
 
 
     // Verify all outer coroutines executed
