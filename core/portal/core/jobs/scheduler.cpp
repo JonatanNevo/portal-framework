@@ -94,12 +94,12 @@ void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs)
             // If we're on a worker thread, try to steal from our own queue
             if (tl_current_worker_queue != nullptr)
             {
-                void* worker_handle = nullptr;
+                JobBase::handle_type worker_handle = nullptr;
                 if (tl_current_worker_queue->queue.try_dequeue(worker_handle))
                 {
                     if (worker_handle)
                     {
-                        handle = HandleType::from_address(worker_handle);
+                        handle = worker_handle;
                     }
                 }
             }
@@ -140,17 +140,17 @@ void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs)
 
 void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, Counter* counter)
 {
-    llvm::SmallVector<void*> job_pointers;
+    llvm::SmallVector<JobBase::handle_type> job_pointers;
     job_pointers.reserve(jobs.size());
 
     for (auto& job : jobs)
     {
         job.dispatched = true;
-        auto& [scheduler, promise_counter] = job.handle.promise();
+        auto& [scheduler, promise_counter, _] = job.handle.promise();
         scheduler = this;
         if (counter)
             promise_counter = counter;
-        job_pointers.push_back(job.handle.address());
+        job_pointers.push_back(job.handle);
     }
 
     pending_jobs.enqueue_bulk(job_pointers.begin(), job_pointers.size());
@@ -163,15 +163,15 @@ void jobs::Scheduler::dispatch_job(JobBase job, Counter* counter)
     dispatch_jobs(std::span{&job, 1}, counter);
 }
 
-jobs::Scheduler::HandleType jobs::Scheduler::pop_job()
+JobBase::handle_type jobs::Scheduler::pop_job()
 {
-    void* pointer = nullptr;
-    pending_jobs.try_dequeue(pointer);
+    JobBase::handle_type handle = nullptr;
+    pending_jobs.try_dequeue(handle);
 
-    return HandleType::from_address(pointer);
+    return handle;
 }
 
-bool jobs::Scheduler::try_distribute_to_worker(const HandleType& handle)
+bool jobs::Scheduler::try_distribute_to_worker(const JobBase::handle_type& handle)
 {
     if (worker_queues.empty())
         return false;
@@ -180,7 +180,7 @@ bool jobs::Scheduler::try_distribute_to_worker(const HandleType& handle)
     for (auto& worker_queue : worker_queues)
     {
         auto& [queue, has_work] = worker_queue;
-        if (&worker_queue != tl_current_worker_queue && queue.try_enqueue(handle.address()))
+        if (&worker_queue != tl_current_worker_queue && queue.try_enqueue(handle))
         {
             has_work.test_and_set(std::memory_order_release);
             has_work.notify_one();
@@ -200,14 +200,14 @@ void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, WorkerQue
 
     while (!token.stop_requested())
     {
-        void* handle_address = nullptr;
+        JobBase::handle_type handle = nullptr;
 
         // Try to dequeue from our own queue
-        if (worker_queue.queue.try_dequeue(handle_address))
+        if (worker_queue.queue.try_dequeue(handle))
         {
-            if (handle_address)
+            if (handle)
             {
-                JobBase::handle_type::from_address(handle_address).resume();
+                handle.resume();
             }
             continue;
         }

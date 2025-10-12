@@ -3,7 +3,7 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include "stack_allocator.h"
+#include "portal/core/memory/stack_allocator.h"
 
 #include <stdexcept>
 

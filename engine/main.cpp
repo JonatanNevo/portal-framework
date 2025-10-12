@@ -16,13 +16,23 @@
 
 using namespace portal;
 
+Job<int> c()
+{
+    LOG_INFO("C");
+    co_return 1;
+}
+
 int main()
 {
     Log::init({.default_log_level = Log::LogLevel::Trace});
 
     jobs::Scheduler scheduler = jobs::Scheduler::create(1);
 
-    scheduler.wait_for_job(c());
+    std::vector<Job<int>> a;
+    a.emplace_back(c());
+    a.emplace_back(c());
+
+    [[maybe_unused]] auto result = scheduler.wait_for_jobs(std::span{a});
 
 
     LOG_INFO("COMPLETE");

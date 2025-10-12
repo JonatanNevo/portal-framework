@@ -32,14 +32,12 @@ struct WorkerQueueTraits : public moodycamel::ConcurrentQueueDefaultTraits
 
 struct WorkerQueue
 {
-    moodycamel::ConcurrentQueue<void*, WorkerQueueTraits> queue{1};
+    moodycamel::ConcurrentQueue<JobBase::handle_type, WorkerQueueTraits> queue{1};
     std::atomic_flag has_work{};
 };
 
 class Scheduler
 {
-    using HandleType = std::coroutine_handle<JobPromise>;
-
 public:
     ~Scheduler();
 
@@ -82,7 +80,7 @@ public:
         return std::apply(
             [](auto&... job) -> std::tuple<std::expected<Results, JobResultStatus>...>
             {
-                return std::tuple<std::expected<Results, JobResultStatus>...>{job.result()...};
+                return std::tuple<std::expected<Results, JobResultStatus>...>{std::move(job.result())...};
             },
             jobs
         );
@@ -94,8 +92,8 @@ public:
         return wait_for_jobs(std::tuple<Job<Results>...>{std::move(jobs)...});
     }
 
-    template <typename Result>
-    llvm::SmallVector<Result> wait_for_jobs(const std::span<Job<Result>> jobs)
+    template <typename Result> requires !std::is_void_v<Result>
+    auto wait_for_jobs(const std::span<Job<Result>> jobs)
     {
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(jobs.size());
@@ -115,7 +113,8 @@ public:
         return results;
     }
 
-    void wait_for_jobs(const std::span<Job<>> jobs)
+    template <typename Result> requires std::is_void_v<Result>
+    void wait_for_jobs(const std::span<Job<Result>> jobs)
     {
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(jobs.size());
@@ -145,7 +144,6 @@ public:
     void dispatch_jobs(std::tuple<Job<Results...>> jobs, Counter* counter = nullptr)
     {
         llvm::SmallVector<JobBase> job_list;
-
         job_list.reserve(std::tuple_size_v<std::tuple<Job<Results...>>>);
         std::apply(
             [&](auto&... job)
@@ -161,7 +159,8 @@ public:
     template <typename Result>
     void dispatch_jobs(std::span<Job<Result>> jobs, Counter* counter = nullptr)
     {
-        llvm::SmallVector<JobBase> job_list(jobs.size());
+        llvm::SmallVector<JobBase> job_list;
+        job_list.reserve(jobs.size());
         for (const auto& job : jobs)
             job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
 
@@ -174,12 +173,12 @@ public:
         dispatch_job(JobBase::handle_type::from_address(job.handle.address()), counter);
     }
 
-    HandleType pop_job();
+    JobBase::handle_type pop_job();
 
 private:
     Scheduler(size_t worker_number);
 
-    bool try_distribute_to_worker(const HandleType& handle);
+    bool try_distribute_to_worker(const JobBase::handle_type& handle);
     static void worker_thread_loop(const std::stop_token& token, WorkerQueue& worker_queue);
 
     // Thread-local pointer to identify if current thread is a worker and which queue it owns
@@ -189,7 +188,7 @@ private:
     std::vector<WorkerQueue> worker_queues;
     std::vector<Thread> threads;
 
-    moodycamel::ConcurrentQueue<void*> pending_jobs;
+    moodycamel::ConcurrentQueue<JobBase::handle_type> pending_jobs;
 };
 
 

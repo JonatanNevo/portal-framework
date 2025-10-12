@@ -11,13 +11,22 @@
 namespace portal
 {
 
+constexpr static size_t JOB_POOL_SIZE = 1024;
+#if defined(PORTAL_TEST)
+static BucketPoolAllocator<512, JOB_POOL_SIZE, SpinLock, true> g_job_promise_allocator{};
+#else
+static BucketPoolAllocator<512, JOB_POOL_SIZE> g_job_promise_allocator{};
+#endif
+
+static std::pmr::synchronized_pool_resource g_job_result_allocator{};
+
 void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 {
     // At this point the coroutine pointed to by handle has been fully suspended. This is guaranteed by the c++ standard.
 
     auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
 
-    auto& [scheduler, counter] = job_promise_handler.promise();
+    auto& [scheduler, counter, _] = job_promise_handler.promise();
 
     // Put the current coroutine to the back of the scheduler queue as it has been fully suspended at this point.
     // We are pausing the job so no need to pass on the counter
@@ -68,5 +77,45 @@ void FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
             counter->blocking.notify_all();
         }
     }
+}
+
+void* JobPromise::operator new([[maybe_unused]] size_t n) noexcept
+{
+    static size_t counter = 0;
+    PORTAL_ASSERT(n <= g_job_promise_allocator.bucket_size, "Attempting to allocate more than bucket size");
+    counter++;
+    try
+    {
+        return g_job_promise_allocator.alloc();
+    }
+    catch (std::bad_alloc&)
+    {
+        return nullptr;
+    }
+}
+
+void JobPromise::operator delete(void* ptr) noexcept
+{
+    g_job_promise_allocator.free(ptr);
+}
+
+size_t JobPromise::get_allocated_size() noexcept
+{
+#if defined(PORTAL_TEST)
+    return g_job_promise_allocator.get_allocation_size();
+#else
+    return 0;
+#endif
+}
+
+
+void* JobPromise::allocate_result(const size_t size) noexcept
+{
+    return g_job_result_allocator.allocate(size);
+}
+
+void JobPromise::deallocate_result(void* ptr, const size_t size) noexcept
+{
+    return g_job_result_allocator.deallocate(ptr, size);
 }
 }

@@ -5,8 +5,8 @@
 
 #include <gtest/gtest.h>
 
-#include "portal/engine/allocators/pool_allocator.h"
-#include "portal/engine/allocators/stack_allocator.h"
+#include "portal/core/memory/pool_allocator.h"
+#include "portal/core/memory/stack_allocator.h"
 
 class TestObject
 {
