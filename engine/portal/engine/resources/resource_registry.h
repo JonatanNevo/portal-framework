@@ -5,18 +5,15 @@
 
 #pragma once
 
-#include <thread>
 #include <concurrentqueue/concurrentqueue.h>
 
-#include "portal/core/concurrency/spin_lock.h"
-#include "../renderer/vulkan/gpu_context.h"
+#include "portal/engine/renderer/vulkan/gpu_context.h"
 #include "portal/engine/resources/loader/loader_factory.h"
 #include "portal/engine/strings/string_id.h"
 #include "utils.h"
 #include "portal/core/reference.h"
-#include "portal/core/thread.h"
 #include "portal/core/concurrency/reentrant_spin_lock.h"
-#include "portal/core/debug/profile.h"
+#include "portal/platform/core/hal/thread.h"
 
 namespace portal
 {
@@ -163,7 +160,7 @@ protected:
 private:
     std::shared_ptr<renderer::vulkan::GpuContext> gpu_context;
     std::unordered_map<ResourceType, ResourceMap> resource_map;
-    std::unordered_map<ResourceType, std::optional<Ref<Resource>>> default_resources;\
+    std::unordered_map<ResourceType, std::optional<Ref<Resource>>> default_resources;
 
     ReentrantSpinLock<> resource_lock;
     Thread asset_loader_thread;

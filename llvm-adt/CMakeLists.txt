@@ -58,6 +58,7 @@ file(GLOB_RECURSE LLVM_HEADER CONFIGURE_DEPENDS "llvm/include/*.h")
 
 add_library(llvm-adt STATIC ${LLVM_SOURCES})
 add_library(llvm::adt ALIAS llvm-adt)
+target_link_libraries(llvm-adt PRIVATE ntdll)
 
 target_sources(llvm-adt PUBLIC
         FILE_SET HEADERS

@@ -55,8 +55,8 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
     renderer->init(vulkan_context, std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window).get());
 
     const auto resource_database = std::make_shared<portal::FolderResourceDatabase>("C:/Code/portal-framework/engine/resources");
-    resource_registry = std::make_shared<ResourceRegistry>();
-    resource_registry->initialize(renderer->get_gpu_context(), resource_database);
+    // resource_registry = std::make_shared<ResourceRegistry>();
+    // resource_registry->initialize(renderer->get_gpu_context(), resource_database);
 
     engine_context = std::make_shared<EngineContext>(
         renderer.get(),

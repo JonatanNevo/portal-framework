@@ -12,7 +12,7 @@
 #include "portal/engine/resources/loader/loader.h"
 #include "resources/resource.h"
 #include "source/resource_source.h"
-#include "portal/core/thread.h"
+#include "portal/platform/core/hal/thread.h"
 
 namespace portal
 {
@@ -103,7 +103,7 @@ void ResourceRegistry::initialize(const std::shared_ptr<renderer::vulkan::GpuCon
     resource_database = database;
     loader_factory.initialize(this, gpu_context);
     asset_loader_thread = Thread(
-        "Asset Loader Thread",
+        ThreadSpecification{"Asset Loader Thread"},
         [&](const std::stop_token& token)
         {
             resource_load_loop(token);
