@@ -20,7 +20,7 @@ enum class ResourceState: uint8_t
     Unknown = 0,
     Loaded  = 1,
     Missing = 2,
-    Invalid = 3,
+    Pending = 3,
     Error   = 4,
 };
 
@@ -64,8 +64,8 @@ namespace utils
             return "Loaded";
         case ResourceState::Missing:
             return "Missing";
-        case ResourceState::Invalid:
-            return "Invalid";
+        case ResourceState::Pending:
+            return "Pending";
         case ResourceState::Error:
             return "Error";
         }

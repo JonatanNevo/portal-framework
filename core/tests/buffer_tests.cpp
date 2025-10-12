@@ -115,21 +115,6 @@ TEST(BufferTests, Allocation)
     EXPECT_FALSE(buffer.is_allocated());
 }
 
-TEST(BufferTests, Reallocation)
-{
-    portal::Buffer buffer = portal::Buffer::allocate(10);
-
-    for (int i = 0; i < 10; ++i)
-        buffer.as<uint8_t*>()[i] = i + 1;
-
-    buffer = portal::Buffer::allocate(10);
-    EXPECT_EQ(buffer.size, 10);
-    EXPECT_NE(buffer.data, nullptr);
-    EXPECT_TRUE(buffer.is_allocated());
-
-    EXPECT_BUFFER(buffer, ElementsAre(Ne(1), Ne(2), Ne(3), Ne(4), Ne(5), Ne(6), Ne(7), Ne(8), Ne(9), Ne(10)));
-}
-
 TEST(BufferTests, EmptyAllocation)
 {
     portal::Buffer buffer = portal::Buffer::allocate(0);

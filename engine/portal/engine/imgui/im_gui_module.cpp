@@ -9,6 +9,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
+#include "portal/core/debug/profile.h"
 #include "portal/engine/engine_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_utils.h"
 #include "portal/engine/renderer/vulkan/vulkan_window.h"
