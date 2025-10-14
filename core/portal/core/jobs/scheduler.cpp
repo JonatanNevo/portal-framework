@@ -26,9 +26,6 @@ namespace portal
 
 static auto logger = Log::get_logger("Core");
 
-// Thread-local storage to identify if we're on a worker thread
-thread_local jobs::WorkerQueue* jobs::Scheduler::tl_current_worker_queue = nullptr;
-
 jobs::Scheduler jobs::Scheduler::create(int32_t num_worker_threads)
 {
     if (num_worker_threads < 0)
@@ -41,44 +38,62 @@ jobs::Scheduler jobs::Scheduler::create(int32_t num_worker_threads)
     LOGGER_INFO("Initializing scheduler with {} worker threads", num_worker_threads);
 
     // Create the scheduler first so worker queues are in their final location
-    Scheduler scheduler(num_worker_threads);
+    return Scheduler{static_cast<size_t>(num_worker_threads)};
+}
 
-    // Now create threads with references to worker queues in their final location
-    for (int i = 0; i < num_worker_threads; ++i)
+JobBase::handle_type jobs::Scheduler::try_dequeue_job() const
+{
+    JobBase::handle_type handle = nullptr;
+    pending_jobs->try_dequeue(handle);
+    return handle;
+}
+
+jobs::Scheduler::Scheduler(const size_t worker_number): pending_jobs(std::make_shared<moodycamel::BlockingConcurrentQueue<JobBase::handle_type>>())
+{
+    threads.reserve(worker_number);
+    for (int i = 0; i < worker_number; ++i)
     {
-        scheduler.threads.emplace_back(
+        threads.emplace_back(
             ThreadSpecification{
                 .name = fmt::format("Worker Thread {}", i),
                 .affinity = ThreadAffinity::CoreLean,
                 .core = static_cast<uint16_t>(i)
             },
-            worker_thread_loop,
-            scheduler.worker_queues[i]
+            [&](const std::stop_token& stop_token)
+            {
+                worker_thread_loop(stop_token, pending_jobs);
+            }
             );
     }
-
-    return std::move(scheduler);
 }
 
-jobs::Scheduler::Scheduler(const size_t worker_number) : worker_queues(worker_number)
+Job<> empty_job()
 {
-    threads.reserve(worker_number);
+    co_return;
 }
 
 
 jobs::Scheduler::~Scheduler()
 {
-    // Wake up any threads that are waiting on their flag
-    for (auto& [queue, has_work] : worker_queues)
+    if (!threads.empty())
     {
-        has_work.test_and_set(std::memory_order_release);
-        has_work.notify_one();
-    }
+        llvm::SmallVector<Job<>> empty_jobs;
+        for (auto& thread : threads)
+        {
+            thread.request_stop();
+            empty_jobs.push_back(empty_job());
+        }
 
-    // We must wait until all the threads have been joined.
-    // Deleting a Thread object implicitly stops (sets the stop_token) and joins.
-    threads.clear();
+        // Dispatch an empty job to awaken worker threads
+        dispatch_jobs(std::span{empty_jobs.data(), empty_jobs.size()});
+
+        for (auto& thread : threads)
+        {
+            thread.join();
+        }
+    }
 }
+
 
 void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs)
 {
@@ -88,22 +103,9 @@ void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs)
 
     while (counter.count.load(std::memory_order_acquire) > 0)
     {
-        auto handle = pop_job();
+        auto handle = try_dequeue_job();
         if (handle == nullptr)
         {
-            // If we're on a worker thread, try to steal from our own queue
-            if (tl_current_worker_queue != nullptr)
-            {
-                JobBase::handle_type worker_handle = nullptr;
-                if (tl_current_worker_queue->queue.try_dequeue(worker_handle))
-                {
-                    if (worker_handle)
-                    {
-                        handle = worker_handle;
-                    }
-                }
-            }
-
             // If still no job found (either not a worker or worker queue is empty)
             if (handle == nullptr)
             {
@@ -126,15 +128,8 @@ void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs)
             }
         }
 
-        // Try to distribute to a worker thread queue
-        if (try_distribute_to_worker(handle))
-        {
-            // Successfully offloaded to a worker thread
-            continue;
-        }
-
-        // All worker threads have full queues, execute on current thread
-        handle();
+        handle.promise().add_switch_information(SwitchType::Resume);
+        handle.resume();
     }
 }
 
@@ -146,14 +141,14 @@ void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, Counter* coun
     for (auto& job : jobs)
     {
         job.dispatched = true;
-        auto& [scheduler, promise_counter, _] = job.handle.promise();
+        auto& [scheduler, promise_counter, _, __] = job.handle.promise();
         scheduler = this;
         if (counter)
             promise_counter = counter;
         job_pointers.push_back(job.handle);
     }
 
-    pending_jobs.enqueue_bulk(job_pointers.begin(), job_pointers.size());
+    pending_jobs->enqueue_bulk(job_pointers.begin(), job_pointers.size());
     if (counter)
         counter->count.fetch_add(jobs.size(), std::memory_order_release);
 }
@@ -163,63 +158,20 @@ void jobs::Scheduler::dispatch_job(JobBase job, Counter* counter)
     dispatch_jobs(std::span{&job, 1}, counter);
 }
 
-JobBase::handle_type jobs::Scheduler::pop_job()
+void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, JobQueue pending_jobs)
 {
-    JobBase::handle_type handle = nullptr;
-    pending_jobs.try_dequeue(handle);
-
-    return handle;
-}
-
-bool jobs::Scheduler::try_distribute_to_worker(const JobBase::handle_type& handle)
-{
-    if (worker_queues.empty())
-        return false;
-
-    int worker_idx = 0;
-    for (auto& worker_queue : worker_queues)
-    {
-        auto& [queue, has_work] = worker_queue;
-        if (&worker_queue != tl_current_worker_queue && queue.try_enqueue(handle))
-        {
-            has_work.test_and_set(std::memory_order_release);
-            has_work.notify_one();
-            return true;
-        }
-        worker_idx++;
-    }
-
-    // No free worker thead was found, defaulting to scheduler's thread
-    return false;
-}
-
-void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, WorkerQueue& worker_queue)
-{
-    // Set thread-local to identify this as a worker thread and which queue it owns
-    tl_current_worker_queue = &worker_queue;
-
     while (!token.stop_requested())
     {
         JobBase::handle_type handle = nullptr;
-
-        // Try to dequeue from our own queue
-        if (worker_queue.queue.try_dequeue(handle))
+        pending_jobs->wait_dequeue(handle);
+        if (handle)
         {
-            if (handle)
-            {
-                handle.resume();
-            }
-            continue;
+            handle.promise().add_switch_information(SwitchType::Resume);
+            handle.resume();
         }
 
-        // No work available in our queue, wait for notification from try_distribute_to_worker
-        worker_queue.has_work.wait(false, std::memory_order_acquire);
-
-        // After wake up, clear the flag for next wait cycle
-        worker_queue.has_work.clear(std::memory_order_release);
     }
 
-    tl_current_worker_queue = nullptr;
     LOGGER_TRACE("[worker_thread] Thread {} stopped", std::this_thread::get_id());
 }
 } // portal
