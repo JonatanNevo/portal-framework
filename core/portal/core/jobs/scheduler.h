@@ -9,7 +9,7 @@
 #include <coroutine>
 #include <cstdint>
 #include <span>
-#include <concurrentqueue/concurrentqueue.h>
+#include <concurrentqueue/blockingconcurrentqueue.h>
 
 #include "llvm/ADT/SmallVector.h"
 #include "portal/core/jobs/job.h"
@@ -25,19 +25,10 @@ struct Counter
     std::atomic_flag blocking;
 };
 
-struct WorkerQueueTraits : public moodycamel::ConcurrentQueueDefaultTraits
-{
-    static constexpr size_t BLOCK_SIZE = 2;
-};
-
-struct WorkerQueue
-{
-    moodycamel::ConcurrentQueue<JobBase::handle_type, WorkerQueueTraits> queue{1};
-    std::atomic_flag has_work{};
-};
-
 class Scheduler
 {
+    using JobQueue = std::shared_ptr<moodycamel::BlockingConcurrentQueue<JobBase::handle_type>>;
+
 public:
     ~Scheduler();
 
@@ -173,22 +164,17 @@ public:
         dispatch_job(JobBase::handle_type::from_address(job.handle.address()), counter);
     }
 
-    JobBase::handle_type pop_job();
+    [[nodiscard]] JobBase::handle_type try_dequeue_job() const;
 
 private:
-    Scheduler(size_t worker_number);
+    explicit Scheduler(size_t worker_number);
 
-    bool try_distribute_to_worker(const JobBase::handle_type& handle);
-    static void worker_thread_loop(const std::stop_token& token, WorkerQueue& worker_queue);
+    static void worker_thread_loop(const std::stop_token& token, JobQueue pending_jobs);
 
-    // Thread-local pointer to identify if current thread is a worker and which queue it owns
-    static thread_local WorkerQueue* tl_current_worker_queue;
 
 private:
-    std::vector<WorkerQueue> worker_queues;
     std::vector<Thread> threads;
-
-    moodycamel::ConcurrentQueue<JobBase::handle_type> pending_jobs;
+    JobQueue pending_jobs;
 };
 
 

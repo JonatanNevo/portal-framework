@@ -36,42 +36,62 @@ enum class JobResultStatus
 };
 
 
-struct SuspendJob
+class SuspendJob
 {
+public:
     constexpr bool await_ready() noexcept { return false; }
 
     void await_suspend(std::coroutine_handle<> handle) noexcept;
     void await_resume() noexcept {};
 };
 
-struct FinalizeJob
+class FinalizeJob
 {
+public:
     constexpr bool await_ready() noexcept { return false; }
 
     void await_suspend(std::coroutine_handle<> handle) noexcept;
     void await_resume() noexcept {};
 };
 
-
-struct JobPromise
+enum class SwitchType
 {
+    Start,
+    Resume,
+    Pause,
+    Finish,
+    Error
+};
+
+struct SwitchInformation
+{
+    std::thread::id thread_id;
+    std::chrono::time_point<std::chrono::system_clock> time;
+    SwitchType type;
+};
+
+class JobPromise
+{
+public:
     jobs::Scheduler* scheduler = nullptr;
     jobs::Counter* counter = nullptr;
     void* result = nullptr;
+    std::vector<SwitchInformation> switch_information;
+
+    JobPromise();
 
     std::suspend_always initial_suspend() noexcept { return {}; }
     FinalizeJob final_suspend() noexcept { return {}; }
 
-    void unhandled_exception() noexcept
-    {
-        LOG_ERROR_TAG("Task", "Unhandled exception in task");
-    }
+    void unhandled_exception() noexcept;
 
     template <typename Result>
     std::expected<Result, JobResultStatus> get_result()
     {
         return std::move(*static_cast<Result*>(result));
     }
+
+    void add_switch_information(SwitchType type);
 
     template <typename Result> requires !std::is_void_v<Result>
     void initialize_result()
@@ -101,9 +121,9 @@ protected:
 };
 
 
-
-struct JobBase
+class JobBase
 {
+public:
     using handle_type = std::coroutine_handle<JobPromise>;
     handle_type handle;
 
@@ -144,11 +164,12 @@ struct JobBase
 };
 
 template <typename Result>
-struct ResultPromise;
+class ResultPromise;
 
 template <typename Result = void>
-struct [[nodiscard]] Job final : JobBase
+class [[nodiscard]] Job final : public JobBase
 {
+public:
     using promise_type = ResultPromise<Result>;
     using handle_type = std::coroutine_handle<promise_type>;
 
@@ -165,6 +186,7 @@ struct [[nodiscard]] Job final : JobBase
     };
 
     Job(Job&& other) noexcept : JobBase(std::move(other)) {}
+
     Job& operator=(Job&& other) noexcept
     {
         if (this == &other)
@@ -190,28 +212,30 @@ struct [[nodiscard]] Job final : JobBase
 };
 
 template <>
-struct [[nodiscard]] Job<void> final : JobBase
+class [[nodiscard]] Job<void> final : public JobBase
 {
+public:
     using promise_type = ResultPromise<void>;
     using handle_type = std::coroutine_handle<promise_type>;
 
     std::expected<void, JobResultStatus> result()
     {
-        return std::unexpected{ JobResultStatus::VoidType };
+        return std::unexpected{JobResultStatus::VoidType};
     }
 
-    Job(handle_type result_handle) : JobBase(JobBase::handle_type::from_address(result_handle.address())) {};
+    Job(const handle_type result_handle) : JobBase(JobBase::handle_type::from_address(result_handle.address())) {};
 
     Job(Job&& other) noexcept = default;
     Job& operator=(Job&& other) noexcept = default;
 };
 
 template <typename Result>
-struct ResultPromise : JobPromise
+class ResultPromise : public JobPromise
 {
+public:
     Job<Result> get_return_object()
     {
-        auto handle = std::coroutine_handle<ResultPromise>::from_promise(*this);
+        const auto handle = std::coroutine_handle<ResultPromise>::from_promise(*this);
         return {handle};
     }
 
@@ -222,11 +246,12 @@ struct ResultPromise : JobPromise
 };
 
 template <>
-struct ResultPromise<void> : JobPromise
+class ResultPromise<void> : public JobPromise
 {
+public:
     Job<void> get_return_object()
     {
-        auto handle = std::coroutine_handle<ResultPromise>::from_promise(*this);
+        const auto handle = std::coroutine_handle<ResultPromise>::from_promise(*this);
         return Job{handle};
     }
 

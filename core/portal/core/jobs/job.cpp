@@ -25,8 +25,9 @@ void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
     // At this point the coroutine pointed to by handle has been fully suspended. This is guaranteed by the c++ standard.
 
     auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
+    job_promise_handler.promise().add_switch_information(SwitchType::Pause);
 
-    auto& [scheduler, counter, _] = job_promise_handler.promise();
+    auto& [scheduler, counter, _, switch_information] = job_promise_handler.promise();
 
     // Put the current coroutine to the back of the scheduler queue as it has been fully suspended at this point.
     // We are pausing the job so no need to pass on the counter
@@ -52,10 +53,11 @@ void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
         // that does the scheduling and removing elements from the
         // queue.
 
-        const auto next_handle = scheduler->pop_job();
+        const auto next_handle = scheduler->try_dequeue_job();
         if (next_handle)
         {
             PORTAL_ASSERT(!next_handle.done(), "Job is already done");
+            next_handle.promise().add_switch_information(SwitchType::Resume);
             next_handle.resume();
         }
     }
@@ -66,6 +68,7 @@ void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 void FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 {
     auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
+    job_promise_handler.promise().add_switch_information(SwitchType::Finish);
 
     const auto counter = job_promise_handler.promise().counter;
     if (counter)
@@ -77,6 +80,30 @@ void FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
             counter->blocking.notify_all();
         }
     }
+}
+
+JobPromise::JobPromise()
+{
+    switch_information.reserve(16);
+}
+
+
+void JobPromise::unhandled_exception() noexcept
+{
+    add_switch_information(SwitchType::Error);
+
+    LOG_ERROR_TAG("Task", "Unhandled exception in task");
+}
+
+void JobPromise::add_switch_information(SwitchType type)
+{
+    switch_information.push_back(
+        {
+            std::this_thread::get_id(),
+            std::chrono::system_clock::now(),
+            type,
+        }
+        );
 }
 
 void* JobPromise::operator new([[maybe_unused]] size_t n) noexcept
