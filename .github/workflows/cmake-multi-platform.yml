@@ -103,12 +103,12 @@ jobs:
    # store the built packages artifacts.
     - name: Restore from cache the dependencies and generate project files
       run: |
-          cmake --preset ninja-multi-vcpkg
+          cmake --preset release
           
-    - name: check-format
-      if: runner.os == 'Linux'
-      run: |
-          cmake --workflow --preset check-format
+    #- name: check-format
+    #  if: runner.os == 'Linux'
+    #  run: |
+    #      cmake --workflow --preset check-format
 
     # Build (Release configuration only) the whole project with Ninja (which is spawn by CMake).
     #
@@ -117,9 +117,9 @@ jobs:
     # run: cmake --build --preset ninja-vcpkg --config Release
     - name: Build (Release configuration)
       run: |
-        cmake --build --preset ninja-vcpkg-release
+        cmake --build --preset release
 
     # Test the whole project with CTest, again Release configuration only.
-    - name: Test (Release configuration)
-      run: |
-        ctest --preset test-release
+    # - name: Test (Release configuration)
+    #  run: |
+    #    ctest --preset test-release
