@@ -31,7 +31,7 @@ Job<> simple_job(bool& executed)
 
 TEST_F(JobTest, SingleJobCompletes)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
     bool executed = false;
 
     scheduler.wait_for_job(simple_job(executed));
@@ -47,7 +47,7 @@ Job<> void_return_job(int& counter)
 
 TEST_F(JobTest, JobReturnsVoidProperly)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
     int counter = 0;
 
     scheduler.wait_for_job(void_return_job(counter));
@@ -80,7 +80,7 @@ Job<int> job_returns_int(int value)
 
 TEST_F(JobTest, JobReturnsValue)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
 
     auto result = scheduler.wait_for_job(job_returns_int(42));
 
@@ -94,7 +94,7 @@ Job<std::string> job_returns_string(std::string value)
 
 TEST_F(JobTest, JobReturnsMultipleValues)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
 
     std::vector<Job<int>> jobs;
     for (int i = 0; i < 5; ++i)
@@ -113,7 +113,7 @@ TEST_F(JobTest, JobReturnsMultipleValues)
 
 TEST_F(JobTest, ResultReturnsStdExpectedWithValue)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
 
     auto job = job_returns_int(123);
     scheduler.wait_for_job(std::move(job));
@@ -164,7 +164,7 @@ Job<MoveOnlyType> job_returns_move_only(int value)
 
 TEST_F(JobTest, MoveOnlyReturnTypes)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
 
     auto result = scheduler.wait_for_job(job_returns_move_only(999));
 
@@ -189,7 +189,7 @@ Job<> job_with_suspension(int& counter)
 
 TEST_F(JobTest, JobSuspendsAndResumesCorrectly)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
     int counter = 0;
 
     scheduler.wait_for_job(job_with_suspension(counter));
@@ -214,7 +214,7 @@ Job<> job_with_multiple_suspensions(std::vector<int>& execution_order)
 
 TEST_F(JobTest, MultipleSuspensionsInSingleJob)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
     std::vector<int> execution_order;
 
     scheduler.wait_for_job(job_with_multiple_suspensions(execution_order));
@@ -250,7 +250,7 @@ Job<int> job_with_suspension_at_different_points(int suspend_point)
 
 TEST_F(JobTest, SuspensionAtDifferentPointsInJobExecution)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
 
     auto result1 = scheduler.wait_for_job(job_with_suspension_at_different_points(1));
     EXPECT_EQ(result1, 60);
@@ -268,7 +268,7 @@ TEST_F(JobTest, SuspensionAtDifferentPointsInJobExecution)
 
 TEST_F(JobTest, FinalSuspendDecrementsCounterCount)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
     jobs::Counter counter{};
 
     std::vector<Job<>> jobs;
@@ -277,7 +277,7 @@ TEST_F(JobTest, FinalSuspendDecrementsCounterCount)
     jobs.push_back(simple_job(*(new bool())));
 
     // Dispatch with counter
-    scheduler.dispatch_jobs(std::span{jobs}, &counter);
+    scheduler.dispatch_jobs(std::span{jobs}, JobPriority::Normal, &counter);
 
     // Counter should be incremented to 3
     EXPECT_EQ(counter.count.load(), 3);
@@ -296,7 +296,7 @@ TEST_F(JobTest, FinalSuspendDecrementsCounterCount)
 
 TEST_F(JobTest, CounterUnblocksWhenLastJobFinalizes)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(1);
+    jobs::Scheduler scheduler{0};
 
     std::vector<Job<>> jobs;
     bool executed = false;
@@ -340,7 +340,7 @@ TEST_F(JobTest, JobBaseMoveAssignmentTransfersHandle)
 
 TEST_F(JobTest, DestructorDestroysHandleOnlyIfNotDispatched)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(0);
+    jobs::Scheduler scheduler{0};
 
     {
         auto job = job_for_lifecycle_test();

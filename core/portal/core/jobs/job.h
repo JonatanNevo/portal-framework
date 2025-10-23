@@ -93,14 +93,14 @@ public:
 
     void add_switch_information(SwitchType type);
 
-    template <typename Result> requires !std::is_void_v<Result>
+    template <typename Result> requires (!std::is_void_v<Result>)
     void initialize_result()
     {
         result = allocate_result(sizeof(Result));
         new(result) Result();
     }
 
-    template <typename Result> requires !std::is_void_v<Result>
+    template <typename Result> requires (!std::is_void_v<Result>)
     void destroy_result()
     {
         if (result)
@@ -181,7 +181,7 @@ public:
 
     Job(handle_type result_handle) : JobBase(JobBase::handle_type::from_address(result_handle.address()))
     {
-        handle.promise().initialize_result<Result>();
+        handle.promise().template initialize_result<Result>();
         owning_result = true;
     };
 
@@ -194,7 +194,7 @@ public:
 
         if (owning_result)
         {
-            handle.promise().destroy_result<Result>();
+            handle.promise().template destroy_result<Result>();
         }
 
         JobBase::operator=(std::move(other));
@@ -206,7 +206,7 @@ public:
     {
         if (owning_result)
         {
-            handle.promise().destroy_result<Result>();
+            handle.promise().template destroy_result<Result>();
         }
     }
 };

@@ -78,7 +78,7 @@ private:
 private:
     class ResourceRequest
     {
-        ResourceHandle handle;
+        [[maybe_unused]] ResourceHandle handle;
         std::promise<Resource> resource_promise;
     };
 

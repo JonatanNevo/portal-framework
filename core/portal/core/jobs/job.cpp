@@ -31,7 +31,8 @@ void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 
     // Put the current coroutine to the back of the scheduler queue as it has been fully suspended at this point.
     // We are pausing the job so no need to pass on the counter
-    scheduler->dispatch_job({job_promise_handler}, nullptr);
+    // TODO: save the priority somewhere?
+    scheduler->dispatch_job({job_promise_handler}, JobPriority::Normal, nullptr);
 
     if (counter)
     {
@@ -53,6 +54,7 @@ void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
         // that does the scheduling and removing elements from the
         // queue.
 
+        // TODO: should we pull from the local queue as well?
         const auto next_handle = scheduler->try_dequeue_job();
         if (next_handle)
         {
@@ -74,7 +76,7 @@ void FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
     if (counter)
     {
         const auto value = counter->count.fetch_sub(1, std::memory_order_acq_rel) - 1;
-        if (value == 0)
+        if (value <= 0)
         {
             counter->blocking.clear(std::memory_order_release);
             counter->blocking.notify_all();
@@ -108,9 +110,7 @@ void JobPromise::add_switch_information(SwitchType type)
 
 void* JobPromise::operator new([[maybe_unused]] size_t n) noexcept
 {
-    static size_t counter = 0;
     PORTAL_ASSERT(n <= g_job_promise_allocator.bucket_size, "Attempting to allocate more than bucket size");
-    counter++;
     try
     {
         return g_job_promise_allocator.alloc();

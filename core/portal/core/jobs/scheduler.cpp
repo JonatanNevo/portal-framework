@@ -26,32 +26,28 @@ namespace portal
 
 static auto logger = Log::get_logger("Core");
 
-jobs::Scheduler jobs::Scheduler::create(int32_t num_worker_threads)
+thread_local size_t jobs::Scheduler::tls_worker_id = std::numeric_limits<size_t>::max();
+
+jobs::Scheduler::Scheduler(const int32_t num_worker_threads)
+    : global_jobs(std::make_shared<QueueSet<>>())
 {
+    PORTAL_ASSERT(num_worker_threads >= 0, "Number of worker threads cannot be negative");
+
     if (num_worker_threads < 0)
     {
         // If negative, then this means that we must count backwards from the number of available hardware threads
-        num_worker_threads = static_cast<int32_t>(std::thread::hardware_concurrency()) + num_worker_threads;
+        num_workers = static_cast<int32_t>(std::thread::hardware_concurrency()) + num_worker_threads;
+    }
+    else
+    {
+        num_workers = num_worker_threads;
     }
 
-    PORTAL_ASSERT(num_worker_threads >= 0, "Number of worker threads cannot be negative");
     LOGGER_INFO("Initializing scheduler with {} worker threads", num_worker_threads);
 
-    // Create the scheduler first so worker queues are in their final location
-    return Scheduler{static_cast<size_t>(num_worker_threads)};
-}
-
-JobBase::handle_type jobs::Scheduler::try_dequeue_job() const
-{
-    JobBase::handle_type handle = nullptr;
-    pending_jobs->try_dequeue(handle);
-    return handle;
-}
-
-jobs::Scheduler::Scheduler(const size_t worker_number): pending_jobs(std::make_shared<moodycamel::BlockingConcurrentQueue<JobBase::handle_type>>())
-{
-    threads.reserve(worker_number);
-    for (int i = 0; i < worker_number; ++i)
+    contexts = std::vector<WorkerContext>(num_workers);
+    threads.reserve(num_workers);
+    for (size_t i = 0; i < num_workers; ++i)
     {
         threads.emplace_back(
             ThreadSpecification{
@@ -59,9 +55,9 @@ jobs::Scheduler::Scheduler(const size_t worker_number): pending_jobs(std::make_s
                 .affinity = ThreadAffinity::CoreLean,
                 .core = static_cast<uint16_t>(i)
             },
-            [&](const std::stop_token& stop_token)
+            [&, index = i](const std::stop_token& stop_token)
             {
-                worker_thread_loop(stop_token, pending_jobs);
+                worker_thread_loop(stop_token, index);
             }
             );
     }
@@ -95,11 +91,11 @@ jobs::Scheduler::~Scheduler()
 }
 
 
-void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs)
+void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs, const JobPriority priority)
 {
     Counter counter{};
 
-    dispatch_jobs(jobs, &counter);
+    dispatch_jobs(jobs, priority, &counter);
 
     while (counter.count.load(std::memory_order_acquire) > 0)
     {
@@ -133,7 +129,7 @@ void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs)
     }
 }
 
-void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, Counter* counter)
+void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, const JobPriority priority, Counter* counter)
 {
     llvm::SmallVector<JobBase::handle_type> job_pointers;
     job_pointers.reserve(jobs.size());
@@ -148,30 +144,122 @@ void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, Counter* coun
         job_pointers.push_back(job.handle);
     }
 
-    pending_jobs->enqueue_bulk(job_pointers.begin(), job_pointers.size());
+    if (tls_worker_id < num_workers) {
+        auto& context = contexts.at(tls_worker_id);
+        context.queue.submit_job_batch(job_pointers, priority);
+    } else {
+        global_jobs->enqueue_bulk(priority, job_pointers.begin(), job_pointers.size());
+    }
+
     if (counter)
         counter->count.fetch_add(jobs.size(), std::memory_order_release);
 }
 
-void jobs::Scheduler::dispatch_job(JobBase job, Counter* counter)
+void jobs::Scheduler::dispatch_job(JobBase job, const JobPriority priority, Counter* counter)
 {
-    dispatch_jobs(std::span{&job, 1}, counter);
+    dispatch_jobs(std::span{&job, 1}, priority, counter);
 }
 
-void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, JobQueue pending_jobs)
+void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, size_t worker_id)
 {
+    tls_worker_id = worker_id;
+    auto& context = contexts.at(tls_worker_id);
+
+    constexpr size_t CACHE_SIZE = 64;
+    JobBase::handle_type job_cache[CACHE_SIZE];
+    size_t cached_count = 0;
+
+    constexpr uint32_t STEAL_CHECK_INTERVAL = 128;
+    uint32_t iterations_since_steal_check = 0;
+
     while (!token.stop_requested())
     {
-        JobBase::handle_type handle = nullptr;
-        pending_jobs->wait_dequeue(handle);
-        if (handle)
+        if (cached_count > 0)
         {
-            handle.promise().add_switch_information(SwitchType::Resume);
-            handle.resume();
+            execute_job(job_cache[--cached_count]);
+            continue;
         }
 
+        const size_t dequeued = context.queue.try_pop_bulk(job_cache, CACHE_SIZE);
+        if (dequeued > 0)
+        {
+            cached_count = dequeued;
+            continue;
+        }
+
+        if (++iterations_since_steal_check >= STEAL_CHECK_INTERVAL)
+        {
+            context.queue.migrate_jobs_to_stealable();
+            iterations_since_steal_check = 0;
+        }
+
+        const size_t stolen = try_steal(job_cache, CACHE_SIZE);
+        if (stolen > 0) {
+            cached_count = stolen;
+            continue;
+        }
+
+        size_t total = 0;
+
+        const size_t high_count = global_jobs->try_dequeue_bulk(JobPriority::High, job_cache, CACHE_SIZE);
+        total += high_count;
+
+        if (total < CACHE_SIZE)
+        {
+            const size_t normal_count = global_jobs->try_dequeue_bulk(JobPriority::Normal, job_cache + total, total - CACHE_SIZE);
+            total += normal_count;
+        }
+
+        if (total < CACHE_SIZE)
+        {
+            const size_t low_count = global_jobs->try_dequeue_bulk(JobPriority::Low, job_cache + total, total - CACHE_SIZE);
+            total += low_count;
+        }
+
+        if (total > 0)
+        {
+            cached_count = total;
+            continue;
+        }
+
+        std::this_thread::yield();
     }
 
     LOGGER_TRACE("[worker_thread] Thread {} stopped", std::this_thread::get_id());
+}
+
+size_t jobs::Scheduler::try_steal(JobBase::handle_type* jobs, size_t max_size)
+{
+    auto& context = contexts[tls_worker_id];
+
+    // Allows self stealing, if we reach this part it means that we are out of local work
+    const size_t victim_id = context.rng() % num_workers;
+    return contexts[victim_id].queue.attempt_steal(jobs, max_size);
+}
+
+void jobs::Scheduler::execute_job(const JobBase::handle_type& job)
+{
+    if (job)
+    {
+        job.promise().add_switch_information(SwitchType::Resume);
+        job.resume();
+    }
+}
+
+
+JobBase::handle_type jobs::Scheduler::try_dequeue_job() const
+{
+    JobBase::handle_type handle = nullptr;
+
+    if (global_jobs->try_dequeue(JobPriority::High, handle))
+        return handle;
+
+    if (global_jobs->try_dequeue(JobPriority::Normal, handle))
+        return handle;
+
+    if (global_jobs->try_dequeue(JobPriority::Low, handle))
+        return handle;
+
+    return handle;
 }
 } // portal

@@ -145,7 +145,7 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(const vk::raii::Instance& instance)
 
     if (requested_queue_types & vk::QueueFlagBits::eTransfer)
     {
-        if (queue_family_indices.transfer != queue_family_indices.graphics)
+        if (queue_family_indices.transfer != queue_family_indices.graphics && queue_family_indices.transfer != queue_family_indices.compute)
         {
             queue_create_infos.emplace_back(
                 vk::DeviceQueueCreateInfo{

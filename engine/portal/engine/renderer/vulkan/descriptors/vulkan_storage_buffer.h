@@ -50,7 +50,6 @@ public:
     const Buffer& get_data() const override;
 
 private:
-    size_t size;
     std::unordered_map<size_t, Ref<VulkanStorageBuffer>> buffers;
 };
 
