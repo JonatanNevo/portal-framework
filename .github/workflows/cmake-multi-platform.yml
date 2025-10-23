@@ -48,14 +48,15 @@ jobs:
             
     steps:
       - uses: actions/checkout@v4
-        # with:
-        #   submodules: true
+        with:
+          submodules: true
 
       - uses: lukka/get-cmake@latest
 
       - uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: 'vcpkg.json'
+          runVcpkgInstall: true
 
       # Note: if the preset misses the "configuration", it is possible to explicitly select the
       # configuration with the additional `--config` flag, e.g.:
