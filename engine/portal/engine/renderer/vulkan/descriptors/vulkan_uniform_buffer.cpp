@@ -67,7 +67,7 @@ void VulkanUniformBuffer::init()
     };
 }
 
-VulkanUniformBufferSet::VulkanUniformBufferSet(size_t buffer_size, const size_t size, const Ref<VulkanDevice>& device): size(size)
+VulkanUniformBufferSet::VulkanUniformBufferSet(size_t buffer_size, const size_t size, const Ref<VulkanDevice>& device)
 {
     for (size_t i = 0; i < size; i++)
     {

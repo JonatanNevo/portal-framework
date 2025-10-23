@@ -26,7 +26,7 @@ int main()
 {
     Log::init({.default_log_level = Log::LogLevel::Trace});
 
-    jobs::Scheduler scheduler = jobs::Scheduler::create(1);
+    jobs::Scheduler scheduler{1};
 
     std::vector<Job<int>> a;
     a.emplace_back(c());
@@ -37,8 +37,6 @@ int main()
 
     LOG_INFO("COMPLETE");
 
-    //
-    //
     // ApplicationSpecification spec;
     // Application app{spec};
     // app.run();

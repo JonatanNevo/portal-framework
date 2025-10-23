@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <__msvc_ranges_to.hpp>
 #include <coroutine>
 #include <cstdint>
 #include <span>
@@ -13,6 +12,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "portal/core/jobs/job.h"
+#include "portal/core/jobs/worker_queue.h"
 #include "portal/platform/core/hal/thread.h"
 
 
@@ -27,9 +27,19 @@ struct Counter
 
 class Scheduler
 {
-    using JobQueue = std::shared_ptr<moodycamel::BlockingConcurrentQueue<JobBase::handle_type>>;
+    struct WorkerContext
+    {
+        WorkerQueue queue;
+        std::mt19937 rng{std::random_device{}()};
+        size_t worker_id;
+    };
 
 public:
+    // Create a scheduler with as many hardware threads as possible
+    //  0 ... No worker threads, just one main thread
+    //  n ... n number of worker threads
+    // -1 ... As many worker threads as cpus, -1
+    explicit Scheduler(int32_t num_worker_threads);
     ~Scheduler();
 
     Scheduler(const Scheduler&) = delete;
@@ -37,22 +47,16 @@ public:
     Scheduler& operator=(const Scheduler&) = delete;
     Scheduler& operator=(Scheduler&&) = delete;
 
-    // Create a scheduler with as many hardware threads as possible
-    //  0 ... No worker threads, just one main thread
-    //  n ... n number of worker threads
-    // -1 ... As many worker threads as cpus, -1
-    static Scheduler create(int32_t num_worker_threads = 0);
-
     // Execute all jobs in the job list, then free the job list object
     // this takes possession of the job list object, and acts as if it was
     // a blocking call.
     //
     // Once this call returns, the JobList that was given as a parameter
     // has been consumed, and you should not re-use it.
-    void wait_for_jobs(std::span<JobBase> jobs);
+    void wait_for_jobs(std::span<JobBase> jobs, JobPriority priority = JobPriority::Normal);
 
     template <typename... Results>
-    std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(std::tuple<Job<Results>...> jobs)
+    std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(std::tuple<Job<Results>...> jobs, const JobPriority priority = JobPriority::Normal)
     {
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(std::tuple_size_v<std::tuple<Job<Results>...>>);
@@ -65,7 +69,7 @@ public:
             jobs
             );
 
-        wait_for_jobs(job_list);
+        wait_for_jobs(job_list, priority);
 
         // Extract results into tuple
         return std::apply(
@@ -78,20 +82,20 @@ public:
     }
 
     template <typename... Results>
-    std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(Job<Results>... jobs)
+    std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(Job<Results>... jobs, const JobPriority priority = JobPriority::Normal)
     {
-        return wait_for_jobs(std::tuple<Job<Results>...>{std::move(jobs)...});
+        return wait_for_jobs(std::tuple<Job<Results>...>{std::move(jobs)...}, priority);
     }
 
-    template <typename Result> requires !std::is_void_v<Result>
-    auto wait_for_jobs(const std::span<Job<Result>> jobs)
+    template <typename Result> requires (!std::is_void_v<Result>)
+    auto wait_for_jobs(const std::span<Job<Result>> jobs, const JobPriority priority = JobPriority::Normal)
     {
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(jobs.size());
         for (const auto& job : jobs)
             job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
 
-        wait_for_jobs(job_list);
+        wait_for_jobs(job_list, priority);
 
         llvm::SmallVector<Result> results;
         results.reserve(jobs.size());
@@ -105,34 +109,34 @@ public:
     }
 
     template <typename Result> requires std::is_void_v<Result>
-    void wait_for_jobs(const std::span<Job<Result>> jobs)
+    void wait_for_jobs(const std::span<Job<Result>> jobs, const JobPriority priority = JobPriority::Normal)
     {
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(jobs.size());
         for (const auto& job : jobs)
             job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
 
-        wait_for_jobs(job_list);
+        wait_for_jobs(job_list, priority);
     }
 
     template <typename Result> requires std::is_void_v<Result>
-    void wait_for_job(Job<Result> job)
+    void wait_for_job(Job<Result> job, const JobPriority priority = JobPriority::Normal)
     {
-        wait_for_jobs(std::move(job));
+        wait_for_jobs(std::tuple<Job<Result>>{std::move(job)}, priority);
     }
 
-    template<typename Result> requires !std::is_void_v<Result>
-    Result wait_for_job(Job<Result> job)
+    template<typename Result> requires (!std::is_void_v<Result>)
+    Result wait_for_job(Job<Result> job, const JobPriority priority = JobPriority::Normal)
     {
-        return std::get<0>(wait_for_jobs(std::move(job))).value();
+        return std::get<0>(wait_for_jobs(std::tuple<Job<Result>>{std::move(job)}, priority)).value();
     }
 
-    void dispatch_jobs(std::span<JobBase> jobs, Counter* counter = nullptr);
+    void dispatch_jobs(std::span<JobBase> jobs, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr);
 
-    void dispatch_job(JobBase job, Counter* counter = nullptr);
+    void dispatch_job(JobBase job, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr);
 
     template <typename... Results>
-    void dispatch_jobs(std::tuple<Job<Results...>> jobs, Counter* counter = nullptr)
+    void dispatch_jobs(std::tuple<Job<Results...>> jobs, const JobPriority priority = JobPriority::Normal, Counter* counter = nullptr)
     {
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(std::tuple_size_v<std::tuple<Job<Results...>>>);
@@ -144,37 +148,41 @@ public:
             jobs
             );
 
-        dispatch_jobs(job_list, counter);
+        dispatch_jobs(job_list, priority, counter);
     }
 
     template <typename Result>
-    void dispatch_jobs(std::span<Job<Result>> jobs, Counter* counter = nullptr)
+    void dispatch_jobs(std::span<Job<Result>> jobs, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr)
     {
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(jobs.size());
         for (const auto& job : jobs)
             job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
 
-        dispatch_jobs(job_list, counter);
+        dispatch_jobs(job_list, priority, counter);
     }
 
     template <typename Result>
-    void dispatch_job(Job<Result> job, Counter* counter = nullptr)
+    void dispatch_job(Job<Result> job, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr)
     {
-        dispatch_job(JobBase::handle_type::from_address(job.handle.address()), counter);
+        dispatch_job(JobBase::handle_type::from_address(job.handle.address()), priority, counter);
     }
 
-    [[nodiscard]] JobBase::handle_type try_dequeue_job() const;
+    JobBase::handle_type try_dequeue_job() const;
+private:
+    void worker_thread_loop(const std::stop_token& token, size_t worker_id);
+    size_t try_steal(JobBase::handle_type* jobs, size_t max_size);
+    static void execute_job(const JobBase::handle_type& job);
 
 private:
-    explicit Scheduler(size_t worker_number);
+    size_t num_workers;
 
-    static void worker_thread_loop(const std::stop_token& token, JobQueue pending_jobs);
+    static thread_local size_t tls_worker_id;
 
-
-private:
+    std::vector<WorkerContext> contexts;
     std::vector<Thread> threads;
-    JobQueue pending_jobs;
+
+    std::shared_ptr<QueueSet<>> global_jobs;
 };
 
 

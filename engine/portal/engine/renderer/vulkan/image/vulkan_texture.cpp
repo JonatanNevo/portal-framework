@@ -463,7 +463,7 @@ void VulkanTexture::generate_mipmaps()
                         .dstImageLayout = vk::ImageLayout::eTransferDstOptimal,
                         .regionCount = 1,
                         .pRegions = &blit,
-                        .filter = utils::to_filter(spec.sampler_spec.value_or({}).filter),
+                        .filter = utils::to_filter(spec.sampler_spec.value_or(SamplerSpecification{}).filter),
                     };
                     command_buffer.blitImage2(blit_info);
 

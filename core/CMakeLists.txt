@@ -84,7 +84,7 @@ elseif (APPLE)
             FILES ${MACOS_HEADER}
     )
     target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=macos)
-    target_compile_options(portal-core PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fexperimental-library> $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libstdc++>)
+    target_compile_options(portal-core PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fexperimental-library> $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 
 elseif (UNIX)
     set(PORTAL_PLATFORM_LINUX ON CACHE BOOL "Linux platform" FORCE)

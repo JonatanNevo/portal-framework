@@ -51,7 +51,7 @@ Job<> outer_coroutine(int i, jobs::Scheduler& scheduler, ExecutionTracker* track
 
 TEST_F(JobTest, JobWithinJob)
 {
-    jobs::Scheduler scheduler = jobs::Scheduler::create(1);
+    jobs::Scheduler scheduler{1};
     ExecutionTracker tracker;
 
     std::vector<Job<>> jobs;

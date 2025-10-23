@@ -68,7 +68,6 @@ private:
     WindowSpecification spec;
 
     WindowData data{};
-    float last_frame_time = 0.f;
 
     Ref<VulkanContext> context;
 };

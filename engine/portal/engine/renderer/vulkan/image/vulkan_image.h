@@ -73,7 +73,6 @@ private:
     Buffer image_data;
 
     VulkanImageInfo image_info;
-    vk::DeviceSize allocation_size = 0;
 
     std::vector<vk::raii::ImageView> per_layer_image_views;
     std::unordered_map<size_t, vk::raii::ImageView> per_mip_image_views;

@@ -205,16 +205,18 @@ VulkanContext::VulkanContext()
 
     physical_device = Ref<VulkanPhysicalDevice>::create(instance);
 
+    auto available_features = physical_device->get_features();
+
     VulkanDevice::Features feature_chain = {
         {
             .features = {
-                .independentBlend = true,
-                .sampleRateShading = true,
-                .fillModeNonSolid = true,
-                .wideLines = true,
-                .samplerAnisotropy = true,
-                .pipelineStatisticsQuery = true,
-                .shaderStorageImageReadWithoutFormat = true,
+                .independentBlend = available_features.independentBlend,
+                .sampleRateShading = available_features.sampleRateShading,
+                .fillModeNonSolid = available_features.fillModeNonSolid,
+                .wideLines = available_features.wideLines,
+                .samplerAnisotropy = available_features.samplerAnisotropy,
+                .pipelineStatisticsQuery = available_features.pipelineStatisticsQuery,
+                .shaderStorageImageReadWithoutFormat = available_features.shaderStorageImageReadWithoutFormat,
             }},
         {
             .shaderDrawParameters = true

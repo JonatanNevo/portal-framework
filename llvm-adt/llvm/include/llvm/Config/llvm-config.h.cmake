@@ -25,9 +25,27 @@ This is a C header that can be included in the llvm-c headers. */
 #cmakedefine01 LLVM_ENABLE_THREADS
 
 /* Define if this is Unixish platform */
-#cmakedefine LLVM_ON_UNIX
+#cmakedefine01 LLVM_ON_UNIX
 
 /* Define to 1 if you have the <sysexits.h> header file. */
 #cmakedefine01 HAVE_SYSEXITS_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#cmakedefine HAVE_UNISTD_H ${HAVE_UNISTD_H}
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#cmakedefine HAVE_SYS_MMAN_H ${HAVE_SYS_MMAN_H}
+
+/* Define to 1 if you have the `getpagesize' function. */
+#cmakedefine HAVE_GETPAGESIZE ${HAVE_GETPAGESIZE}
+
+/* Define to 1 if you have the <pthread.h> header file. */
+#cmakedefine HAVE_PTHREAD_H ${HAVE_PTHREAD_H}
+
+/* Have pthread_rwlock_init */
+#cmakedefine HAVE_PTHREAD_RWLOCK_INIT ${HAVE_PTHREAD_RWLOCK_INIT}
+
+/* Define to 1 if you have the `futimens' function. */
+#cmakedefine HAVE_FUTIMENS ${HAVE_FUTIMENS}
 
 #endif

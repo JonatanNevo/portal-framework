@@ -81,7 +81,7 @@ void VulkanStorageBuffer::init()
 }
 
 
-VulkanStorageBufferSet::VulkanStorageBufferSet(const size_t buffer_size, const size_t size, const Ref<VulkanDevice>& device) : size(size)
+VulkanStorageBufferSet::VulkanStorageBufferSet(const size_t buffer_size, const size_t size, const Ref<VulkanDevice>& device)
 {
     for (size_t i = 0; i < size; i++)
     {
