@@ -1,4 +1,4 @@
-name: Cross Platform Build
+name: Build
 
 on:
   push:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.os }}-${{ github.workflow }}
+    name: ${{ github.workflow }} ${{ matrix.os }}-${{ matrix.c_compiler }}
     runs-on: ${{ matrix.os }}
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
@@ -48,13 +48,12 @@ jobs:
             
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: true
+        # with:
+        #   submodules: true
 
       - uses: lukka/get-cmake@latest
 
-      - name: Restore from cache and setup vcpkg executable and data files.
-        uses: lukka/run-vcpkg@v11
+      - uses: lukka/run-vcpkg@v11
         with:
           vcpkgJsonGlob: 'vcpkg.json'
 
@@ -64,9 +63,9 @@ jobs:
       #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
       #   testPreset: 'ninja-vcpkg'
       #   testPresetAdditionalArgs: "[`--config`, `Release`]"
-      - name: Run CMake+vcpkg+Ninja+CTest to build packages and generate/build/test the code.
-        uses: lukka/run-cmake@v10
+      - uses: lukka/run-cmake@v10
         with:
           configurePreset: 'release'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}', '-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
           buildPreset: 'release'
           # testPreset: 'test-release'
