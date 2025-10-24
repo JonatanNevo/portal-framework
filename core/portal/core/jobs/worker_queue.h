@@ -62,12 +62,7 @@ struct QueueSet
         const auto prio_int = static_cast<uint8_t>(priority);
         PORTAL_ASSERT(prio_int < N, "Priority must be in the range of exciting queues");
 
-        auto size = queues[prio_int].size_approx();
-        auto res =  queues[prio_int].try_dequeue(item);
-
-        if (size != 0)
-            LOG_INFO("Dequeues from queue of size: {}", size);
-        return res;
+        return queues[prio_int].try_dequeue(item);
     }
 
     template <typename It>
@@ -93,13 +88,16 @@ public:
 
     size_t attempt_steal(JobBase::handle_type* jobs, size_t max_count);
 
+    std::array<std::atomic<size_t>, 3>& get_local_count() { return local_count; }
+    std::array<std::atomic<size_t>, 3>& get_stealable_count() { return stealable_count; }
+
 private:
     // TODO: have scsp queue here
     QueueSet<> local_set;
     QueueSet<> stealable_set;
 
-    std::array<std::atomic<uint32_t>, 3> local_count = {0, 0, 0};
-    std::array<std::atomic<uint32_t>, 3> stealable_count = {0, 0, 0};
+    std::array<std::atomic<size_t>, 3> local_count = {0, 0, 0};
+    std::array<std::atomic<size_t>, 3> stealable_count = {0, 0, 0};
 };
 
 } // portal

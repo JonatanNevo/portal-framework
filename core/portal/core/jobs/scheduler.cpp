@@ -29,7 +29,7 @@ static auto logger = Log::get_logger("Core");
 thread_local size_t jobs::Scheduler::tls_worker_id = std::numeric_limits<size_t>::max();
 
 jobs::Scheduler::Scheduler(const int32_t num_worker_threads)
-    : global_jobs(std::make_shared<QueueSet<>>())
+    : global_jobs(std::make_shared<QueueSet<>>()), stats(num_worker_threads)
 {
     PORTAL_ASSERT(num_worker_threads >= 0, "Number of worker threads cannot be negative");
 
@@ -144,10 +144,14 @@ void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, const JobPrio
         job_pointers.push_back(job.handle);
     }
 
-    if (tls_worker_id < num_workers) {
+    if (tls_worker_id < num_workers)
+    {
         auto& context = contexts.at(tls_worker_id);
         context.queue.submit_job_batch(job_pointers, priority);
-    } else {
+        stats.record_job_submitted(tls_worker_id, priority, jobs.size());
+    }
+    else
+    {
         global_jobs->enqueue_bulk(priority, job_pointers.begin(), job_pointers.size());
     }
 
@@ -172,6 +176,9 @@ void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, size_t wo
     constexpr uint32_t STEAL_CHECK_INTERVAL = 128;
     uint32_t iterations_since_steal_check = 0;
 
+    constexpr uint32_t SAMPLE_INTERVAL = 1000;
+    uint32_t iterations_since_sample = 0;
+
     while (!token.stop_requested())
     {
         if (cached_count > 0)
@@ -184,6 +191,7 @@ void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, size_t wo
         if (dequeued > 0)
         {
             cached_count = dequeued;
+            stats.record_queue_hit(worker_id, JobStats::QueueType::Local);
             continue;
         }
 
@@ -193,36 +201,65 @@ void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, size_t wo
             iterations_since_steal_check = 0;
         }
 
-        const size_t stolen = try_steal(job_cache, CACHE_SIZE);
-        if (stolen > 0) {
-            cached_count = stolen;
-            continue;
+#if ENABLE_JOB_STATS
+        if (++iterations_since_sample >= SAMPLE_INTERVAL)
+        {
+            const size_t local_depth =
+                context.queue.get_local_count()[0].load(std::memory_order_relaxed) +
+                context.queue.get_local_count()[1].load(std::memory_order_relaxed) +
+                context.queue.get_local_count()[2].load(std::memory_order_relaxed);
+
+            const size_t stealable_depth =
+                context.queue.get_stealable_count()[0].load(std::memory_order_relaxed) +
+                context.queue.get_stealable_count()[1].load(std::memory_order_relaxed) +
+                context.queue.get_stealable_count()[2].load(std::memory_order_relaxed);
+
+            stats.record_queue_depth(worker_id, local_depth, stealable_depth);
+            iterations_since_sample = 0;
         }
+#endif
 
         size_t total = 0;
-
         const size_t high_count = global_jobs->try_dequeue_bulk(JobPriority::High, job_cache, CACHE_SIZE);
         total += high_count;
 
         if (total < CACHE_SIZE)
         {
-            const size_t normal_count = global_jobs->try_dequeue_bulk(JobPriority::Normal, job_cache + total, total - CACHE_SIZE);
+            const size_t normal_count = global_jobs->try_dequeue_bulk(JobPriority::Normal, job_cache + total, CACHE_SIZE - total);
             total += normal_count;
         }
 
         if (total < CACHE_SIZE)
         {
-            const size_t low_count = global_jobs->try_dequeue_bulk(JobPriority::Low, job_cache + total, total - CACHE_SIZE);
+            const size_t low_count = global_jobs->try_dequeue_bulk(JobPriority::Low, job_cache + total, CACHE_SIZE - total);
             total += low_count;
         }
-
         if (total > 0)
         {
             cached_count = total;
+            stats.record_queue_hit(worker_id, JobStats::QueueType::Global);
             continue;
         }
 
+        const size_t stolen = try_steal(job_cache, CACHE_SIZE);
+        if (stolen > 0)
+        {
+            cached_count = stolen;
+            stats.record_queue_hit(worker_id, JobStats::QueueType::Stealable);
+            continue;
+        }
+
+        // If we reach this place, it means that there is no work to do
+#if ENABLE_JOB_STATS
+        auto idle_start = std::chrono::high_resolution_clock::now();
+#endif
         std::this_thread::yield();
+
+#if ENABLE_JOB_STATS
+        auto idle_end = std::chrono::high_resolution_clock::now();
+        auto idle_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(idle_end - idle_start);
+        stats.record_idle_time(worker_id, idle_duration.count());
+#endif
     }
 
     LOGGER_TRACE("[worker_thread] Thread {} stopped", std::this_thread::get_id());
@@ -234,21 +271,54 @@ size_t jobs::Scheduler::try_steal(JobBase::handle_type* jobs, size_t max_size)
 
     // Allows self stealing, if we reach this part it means that we are out of local work
     const size_t victim_id = context.rng() % num_workers;
-    return contexts[victim_id].queue.attempt_steal(jobs, max_size);
+    if (victim_id == tls_worker_id) return 0;
+
+    const auto stolen = contexts[victim_id].queue.attempt_steal(jobs, max_size);
+#if ENABLE_JOB_STATS
+    if (stolen > 0)
+    {
+        stats.record_steal_attempt(tls_worker_id, true, stolen);
+        stats.record_job_stolen_from_me(victim_id, stolen);
+    }
+    else
+    {
+        stats.record_steal_attempt(tls_worker_id, false, 0);
+    }
+#endif
+
+    return stolen;
 }
 
 void jobs::Scheduler::execute_job(const JobBase::handle_type& job)
 {
+#if ENABLE_JOB_STATS
+    const auto start = std::chrono::high_resolution_clock::now();
+#endif
+
     if (job)
     {
         job.promise().add_switch_information(SwitchType::Resume);
         job.resume();
     }
+
+#if ENABLE_JOB_STATS
+    const auto end = std::chrono::high_resolution_clock::now();
+    const auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+    stats.record_job_executed(tls_worker_id, duration.count());
+#endif
 }
 
 
-JobBase::handle_type jobs::Scheduler::try_dequeue_job() const
+JobBase::handle_type jobs::Scheduler::try_dequeue_job()
 {
+    if (tls_worker_id < num_workers)
+    {
+        auto& context = contexts[tls_worker_id];
+        const auto local_handle = context.queue.try_pop();
+        if (local_handle)
+            return local_handle.value();
+    }
+
     JobBase::handle_type handle = nullptr;
 
     if (global_jobs->try_dequeue(JobPriority::High, handle))
