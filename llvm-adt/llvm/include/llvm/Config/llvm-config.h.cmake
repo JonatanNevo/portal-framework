@@ -25,7 +25,7 @@ This is a C header that can be included in the llvm-c headers. */
 #cmakedefine01 LLVM_ENABLE_THREADS
 
 /* Define if this is Unixish platform */
-#cmakedefine01 LLVM_ON_UNIX
+#cmakedefine LLVM_ON_UNIX
 
 /* Define to 1 if you have the <sysexits.h> header file. */
 #cmakedefine01 HAVE_SYSEXITS_H

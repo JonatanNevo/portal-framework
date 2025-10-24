@@ -22,17 +22,17 @@ namespace portal
 Job<std::thread::id> get_thread_id()
 {
     auto thread_id = std::this_thread::get_id();
-    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    std::this_thread::sleep_for(std::chrono::nanoseconds(10));
     co_await SuspendJob();
     co_return thread_id;
 }
 
 TEST_F(JobTest, MultiThreadedExecution)
 {
-    jobs::Scheduler scheduler{1};
+    jobs::Scheduler scheduler{2};
 
     std::vector<Job<std::thread::id>> jobs;
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < 1000; ++i)
     {
         jobs.push_back(get_thread_id());
     }
@@ -47,7 +47,9 @@ TEST_F(JobTest, MultiThreadedExecution)
         LOG_INFO("Thread {} ran {} jobs ", std::format("{}", tid), count);
 
     // With 1 worker thread + main thread, we should see 2 distinct thread IDs
-    EXPECT_EQ(thread_appearances.size(), 2) << "Expected 2 distinct threads (main + 1 worker)";
+    EXPECT_EQ(thread_appearances.size(), 3) << "Expected 2 distinct threads (main + 1 worker)";
+    scheduler.get_stats().aggregate();
+    scheduler.get_stats().log();
 }
 
 } // namespace portal

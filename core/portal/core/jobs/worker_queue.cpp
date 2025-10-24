@@ -63,14 +63,14 @@ size_t WorkerQueue::try_pop_bulk(JobBase::handle_type* jobs, size_t max_count)
 
     if (total < max_count)
     {
-        const size_t normal_count = local_set.try_dequeue_bulk(JobPriority::Normal, jobs + total, total - max_count);
+        const size_t normal_count = local_set.try_dequeue_bulk(JobPriority::Normal, jobs + total, max_count - total);
         total += normal_count;
         local_count[static_cast<uint8_t>(JobPriority::Normal)].fetch_sub(normal_count, std::memory_order_relaxed);
     }
 
     if (total < max_count)
     {
-        const size_t low_count = local_set.try_dequeue_bulk(JobPriority::Low, jobs + total, total - max_count);
+        const size_t low_count = local_set.try_dequeue_bulk(JobPriority::Low, jobs + total, max_count - total);
         total += low_count;
         local_count[static_cast<uint8_t>(JobPriority::Low)].fetch_sub(low_count, std::memory_order_relaxed);
     }
@@ -87,8 +87,8 @@ void WorkerQueue::migrate_jobs_to_stealable()
         const JobPriority priority,
         QueueSet<>& local_queue,
         QueueSet<>& stealable_queue,
-        std::atomic<uint32_t>& local_cnt,
-        std::atomic<uint32_t>& stealable_cnt
+        std::atomic<size_t>& local_cnt,
+        std::atomic<size_t>& stealable_cnt
         )
     {
         if (local_cnt.load(std::memory_order_relaxed) > THRESHOLD)

@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "portal/core/jobs/job.h"
+#include "portal/core/jobs/job_stats.h"
 #include "portal/core/jobs/worker_queue.h"
 #include "portal/platform/core/hal/thread.h"
 
@@ -43,7 +44,6 @@ public:
     ~Scheduler();
 
     Scheduler(const Scheduler&) = delete;
-    Scheduler(Scheduler&&) = default;
     Scheduler& operator=(const Scheduler&) = delete;
     Scheduler& operator=(Scheduler&&) = delete;
 
@@ -168,11 +168,17 @@ public:
         dispatch_job(JobBase::handle_type::from_address(job.handle.address()), priority, counter);
     }
 
-    JobBase::handle_type try_dequeue_job() const;
+    JobBase::handle_type try_dequeue_job();
+
+    JobStats& get_stats() { return stats; }
+    const JobStats& get_stats() const { return stats; }
+
 private:
     void worker_thread_loop(const std::stop_token& token, size_t worker_id);
+    void worker_thread_iteration();
+
     size_t try_steal(JobBase::handle_type* jobs, size_t max_size);
-    static void execute_job(const JobBase::handle_type& job);
+    void execute_job(const JobBase::handle_type& job);
 
 private:
     size_t num_workers;
@@ -183,6 +189,7 @@ private:
     std::vector<Thread> threads;
 
     std::shared_ptr<QueueSet<>> global_jobs;
+    JobStats stats;
 };
 
 
