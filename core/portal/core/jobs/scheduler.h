@@ -28,11 +28,19 @@ struct Counter
 
 class Scheduler
 {
+public:
     struct WorkerContext
     {
         WorkerQueue queue;
         std::mt19937 rng{std::random_device{}()};
         size_t worker_id;
+    };
+
+    enum class WorkerIterationState
+    {
+        Executed,
+        FilledCache,
+        EmptyQueue
     };
 
 public:
@@ -168,17 +176,17 @@ public:
         dispatch_job(JobBase::handle_type::from_address(job.handle.address()), priority, counter);
     }
 
-    JobBase::handle_type try_dequeue_job();
-
     JobStats& get_stats() { return stats; }
     const JobStats& get_stats() const { return stats; }
 
+    WorkerIterationState worker_thread_iteration();
 private:
     void worker_thread_loop(const std::stop_token& token, size_t worker_id);
-    void worker_thread_iteration();
 
     size_t try_steal(JobBase::handle_type* jobs, size_t max_size);
     void execute_job(const JobBase::handle_type& job);
+
+    size_t try_dequeue_global(JobBase::handle_type* jobs, size_t max_count) const;
 
 private:
     size_t num_workers;

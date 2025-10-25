@@ -122,6 +122,7 @@ public:
 
 private:
     std::vector<ThreadStats> thread_stats;
+    ThreadStats main_stats;
     GlobalStats global_stats{};
     std::chrono::steady_clock::time_point start_time;
     mutable std::mutex stats_mutex;

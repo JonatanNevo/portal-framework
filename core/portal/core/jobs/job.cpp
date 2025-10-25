@@ -54,14 +54,12 @@ void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
         // that does the scheduling and removing elements from the
         // queue.
 
-        // TODO: should we pull from the local queue as well?
-        const auto next_handle = scheduler->try_dequeue_job();
-        if (next_handle)
+        jobs::Scheduler::WorkerIterationState state;
+        do
         {
-            PORTAL_ASSERT(!next_handle.done(), "Job is already done");
-            next_handle.promise().add_switch_information(SwitchType::Resume);
-            next_handle.resume();
+            state = scheduler->worker_thread_iteration();
         }
+        while (state == jobs::Scheduler::WorkerIterationState::FilledCache);
     }
 
     // Note: Once we drop off here, control will return to where the resume()  command that brought us here was issued.
@@ -69,13 +67,13 @@ void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 
 void FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 {
-    auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
+    const auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
     job_promise_handler.promise().add_switch_information(SwitchType::Finish);
 
     const auto counter = job_promise_handler.promise().counter;
     if (counter)
     {
-        const auto value = counter->count.fetch_sub(1, std::memory_order_acq_rel) - 1;
+        const auto value = counter->count.fetch_sub(1, std::memory_order_release) - 1;
         if (value <= 0)
         {
             counter->blocking.clear(std::memory_order_release);
