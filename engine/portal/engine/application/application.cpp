@@ -54,7 +54,7 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
     renderer = std::make_shared<Renderer>();
     renderer->init(vulkan_context, std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window).get());
 
-    const auto resource_database = std::make_shared<portal::FolderResourceDatabase>("/Users/jonatann/Code/personal/portal-framework/engine/resources");
+    const auto resource_database = std::make_shared<portal::FolderResourceDatabase>(R"(C:\Code\portal-framework\engine\resources)");
     // resource_registry = std::make_shared<ResourceRegistry>();
     // resource_registry->initialize(renderer->get_gpu_context(), resource_database);
 
@@ -63,6 +63,10 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
         resource_registry.get(),
         window.get()
         );
+
+    PORTAL_ASSERT(engine_context->renderer != nullptr, "Null renderer");
+    PORTAL_ASSERT(engine_context->window != nullptr, "Null window");
+    PORTAL_ASSERT(engine_context->resource_registry != nullptr, "Null resource registry");
 
     // TODO: remove this
     imgui_module = std::make_unique<ImGuiModule>(engine_context);
