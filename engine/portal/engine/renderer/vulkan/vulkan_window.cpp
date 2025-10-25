@@ -6,6 +6,7 @@
 #include "vulkan_window.h"
 
 #include <imgui.h>
+#include <stb_image.h>
 
 #include "portal/core/log.h"
 #include "portal/core/debug/assert.h"
@@ -50,6 +51,10 @@ VulkanWindow::VulkanWindow(const Ref<VulkanContext>& context, const WindowSpecif
     }
 
     // TODO: Set Icon if available?
+    // TODO: Use resource registry here
+    GLFWimage icon;
+    icon.pixels = stbi_load(R"(C:\Code\portal-framework\engine\resources\portal_icon_64x64.png)", &icon.width, &icon.height, 0, 4);
+    glfwSetWindowIcon(window, 1, &icon);
 
     swapchain.init(context, window);
     swapchain.create(reinterpret_cast<uint32_t*>(&data.width), reinterpret_cast<uint32_t*>(&data.height), spec.vsync);
