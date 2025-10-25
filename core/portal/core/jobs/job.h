@@ -9,13 +9,11 @@
 #include <coroutine>
 #include <expected>
 #include <optional>
-#include <memory_resource>
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
 #include "portal/core/log.h"
 #include "portal/core/jobs/job.h"
-#include "portal/core/memory/pool_allocator.h"
 #include "portal/core/memory/stack_allocator.h"
 
 namespace portal
@@ -73,11 +71,6 @@ struct SwitchInformation
 class JobPromise
 {
 public:
-    jobs::Scheduler* scheduler = nullptr;
-    jobs::Counter* counter = nullptr;
-    void* result = nullptr;
-    std::vector<SwitchInformation> switch_information;
-
     JobPromise();
 
     std::suspend_always initial_suspend() noexcept { return {}; }
@@ -113,11 +106,24 @@ public:
     void* operator new(size_t n) noexcept;
     void operator delete(void* ptr) noexcept;
 
+    void set_scheduler(jobs::Scheduler* scheduler_ptr) noexcept;
+    void set_counter(jobs::Counter* counter_ptr) noexcept;
+
     [[nodiscard]] static size_t get_allocated_size() noexcept;
+    [[nodiscard]] jobs::Counter* get_counter() const noexcept { return counter; }
+    [[nodiscard]] jobs::Scheduler* get_scheduler() const noexcept { return scheduler; }
 
 protected:
     static void* allocate_result(size_t size) noexcept;
     static void deallocate_result(void* ptr, size_t size) noexcept;
+
+protected:
+    void* result = nullptr;
+
+    jobs::Counter* counter = nullptr;
+    jobs::Scheduler* scheduler = nullptr;
+
+    std::vector<SwitchInformation> switch_information;
 };
 
 
@@ -126,9 +132,6 @@ class JobBase
 public:
     using handle_type = std::coroutine_handle<JobPromise>;
     handle_type handle;
-
-    bool dispatched = false;
-    bool owning_result = false;
 
     JobBase(const handle_type handle) : handle(handle) {}
 
@@ -161,6 +164,14 @@ public:
             handle.destroy();
         }
     }
+
+    void set_dispatched();
+    void set_scheduler(jobs::Scheduler* scheduler_ptr) const noexcept;
+    void set_counter(jobs::Counter* counter_ptr) const noexcept;
+
+protected:
+    bool dispatched = false;
+    bool owning_result = false;
 };
 
 template <typename Result>

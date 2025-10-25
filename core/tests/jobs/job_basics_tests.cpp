@@ -137,9 +137,25 @@ TEST_F(JobTest, ResultReturnsErrorWhenJobNotDispatched)
     // Call result() without dispatching the job
     auto result = job.result();
 
-    // The result should not have a value since the job never ran
-    // Note: The actual behavior depends on implementation -
-    // the promise may have uninitialized data
+    // The job was never dispatched, so it never ran and never set a result value.
+    // The result storage was initialized with default value (0 for int).
+    // This test verifies we can safely call result() even if the job didn't run.
+    ASSERT_TRUE(result.has_value()) << "Result should be available (default initialized)";
+    EXPECT_EQ(result.value(), 0) << "Result should be default initialized to 0";
+}
+
+TEST_F(JobTest, ResultOnVoidJobReturnsVoidTypeError)
+{
+    jobs::Scheduler scheduler{0};
+    int counter = 0;
+    auto job = void_return_job(counter);
+
+    scheduler.wait_for_job(std::move(job));
+
+    // Calling result() on Job<void> should compile but return VoidType error
+    auto result = job.result();
+    EXPECT_FALSE(result.has_value()) << "Job<void>::result() should not have a value";
+    EXPECT_EQ(result.error(), JobResultStatus::VoidType) << "Error should be VoidType";
 }
 
 // Move-only type for testing
@@ -271,10 +287,10 @@ TEST_F(JobTest, FinalSuspendDecrementsCounterCount)
     jobs::Scheduler scheduler{0};
     jobs::Counter counter{};
 
+    std::vector<uint8_t> flags(3, false);
     std::vector<Job<>> jobs;
-    jobs.push_back(simple_job(*(new bool())));
-    jobs.push_back(simple_job(*(new bool())));
-    jobs.push_back(simple_job(*(new bool())));
+    for (auto& val : flags)
+        jobs.push_back(simple_job(reinterpret_cast<bool&>(val)));
 
     // Dispatch with counter
     scheduler.dispatch_jobs(std::span{jobs}, JobPriority::Normal, &counter);
