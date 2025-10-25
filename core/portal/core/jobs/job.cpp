@@ -5,8 +5,12 @@
 
 #include "job.h"
 
+#include <future>
+#include <memory_resource>
+
 #include "portal/core/debug/assert.h"
 #include "portal/core/jobs/scheduler.h"
+#include "portal/core/memory/pool_allocator.h"
 
 namespace portal
 {
@@ -27,7 +31,9 @@ void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
     auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
     job_promise_handler.promise().add_switch_information(SwitchType::Pause);
 
-    auto& [scheduler, counter, _, switch_information] = job_promise_handler.promise();
+    const auto& promise = job_promise_handler.promise();
+    auto* counter = promise.get_counter();
+    auto* scheduler = promise.get_scheduler();
 
     // Put the current coroutine to the back of the scheduler queue as it has been fully suspended at this point.
     // We are pausing the job so no need to pass on the counter
@@ -70,7 +76,7 @@ void FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
     const auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
     job_promise_handler.promise().add_switch_information(SwitchType::Finish);
 
-    const auto counter = job_promise_handler.promise().counter;
+    const auto counter = job_promise_handler.promise().get_counter();
     if (counter)
     {
         const auto value = counter->count.fetch_sub(1, std::memory_order_release) - 1;
@@ -124,6 +130,16 @@ void JobPromise::operator delete(void* ptr) noexcept
     g_job_promise_allocator.free(ptr);
 }
 
+void JobPromise::set_scheduler(jobs::Scheduler* scheduler_ptr) noexcept
+{
+    scheduler = scheduler_ptr;
+}
+
+void JobPromise::set_counter(jobs::Counter* counter_ptr) noexcept
+{
+    counter = counter_ptr;
+}
+
 size_t JobPromise::get_allocated_size() noexcept
 {
 #if defined(PORTAL_TEST)
@@ -142,5 +158,20 @@ void* JobPromise::allocate_result(const size_t size) noexcept
 void JobPromise::deallocate_result(void* ptr, const size_t size) noexcept
 {
     return g_job_result_allocator.deallocate(ptr, size);
+}
+
+void JobBase::set_dispatched()
+{
+    dispatched = true;
+}
+
+void JobBase::set_scheduler(jobs::Scheduler* scheduler_ptr) const noexcept
+{
+    handle.promise().set_scheduler(scheduler_ptr);
+}
+
+void JobBase::set_counter(jobs::Counter* counter_ptr) const noexcept
+{
+    handle.promise().set_counter(counter_ptr);
 }
 }

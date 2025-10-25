@@ -45,20 +45,24 @@ Comprehensive test plan for the Portal Framework job system covering all feature
 
 ### 2.1 Basic Operations ✗
 - ✗ **Test**: Counter::count increments on dispatch_jobs
-- ✗ **Test**: Counter::count decrements on job completion
+- ✗ **Test**: Counter::count decrements on job completion (FinalizeJob)
 - ✗ **Test**: Counter reaches zero after all jobs complete
+- ✗ **Test**: Counter NOT modified when job suspends (SuspendJob)
 
 ### 2.2 Blocking/Unblocking ✗
 - ✗ **Test**: blocking flag prevents multiple threads from blocking
 - ✗ **Test**: Counter unblocks when count reaches zero
 - ✗ **Test**: notify_all wakes all waiting threads
-- ✗ **Test**: SuspendJob clears blocking flag to wake waiting threads
+- ✗ **Test**: FinalizeJob notifies ONLY when count reaches zero
+- ✗ **Test**: SuspendJob does NOT notify counter (removed in latest version)
 
 ### 2.3 Memory Ordering ✗
-- ✗ **Test**: fetch_add uses release ordering
-- ✗ **Test**: fetch_sub uses acq_rel ordering
+- ✗ **Test**: fetch_add uses release ordering (dispatch_jobs)
+- ✗ **Test**: fetch_sub uses release ordering (FinalizeJob)
 - ✗ **Test**: load uses acquire ordering in wait loops
 - ✗ **Test**: Blocking flag uses proper acquire/release
+- ✗ **Test**: test_and_set uses acquire ordering
+- ✗ **Test**: clear uses release ordering
 
 ---
 
@@ -72,11 +76,11 @@ Comprehensive test plan for the Portal Framework job system covering all feature
 - ✗ **Test**: Scheduler with more threads than hardware cores
 
 ### 3.2 Job Distribution ✗
-- ✗ **Test**: Jobs distributed across worker threads via WorkerQueue
-- ✗ **Test**: Job executed on main thread when all workers full
-- ✗ **Test**: try_distribute_to_worker skips current worker's queue
+- ✗ **Test**: Jobs dispatched to current worker's local queue (when called from worker thread)
+- ✗ **Test**: Jobs dispatched to global queue (when called from non-worker thread)
+- ✗ **Test**: tls_worker_id correctly identifies current worker thread
+- ✗ **Test**: Jobs dispatched from main thread go to global queue
 - ✗ **Test**: Single job on single-threaded scheduler
-- ✗ **Test**: More jobs than worker queue capacity
 
 ### 3.3 wait_for_jobs API ⧗
 - ✓ **Test**: wait_for_jobs(std::span<JobBase>) returns when complete
@@ -95,41 +99,61 @@ Comprehensive test plan for the Portal Framework job system covering all feature
 - ✗ **Test**: dispatch_job single job overload
 - ✗ **Test**: Dispatched jobs have dispatched=true flag set
 
-### 3.5 Nested wait_for_jobs Support ⧗
+#### 3.5 Nested wait_for_jobs Support ⧗
 - ⧗ **Test**: Worker thread can call wait_for_jobs (nested)
-- ✗ **Test**: Worker processes own queue during nested wait
-- ✗ **Test**: Thread-local tl_current_worker_queue set correctly
+- ✗ **Test**: Worker processes jobs via worker_thread_iteration during nested wait
+- ✗ **Test**: Thread-local tls_worker_id set correctly per worker
 - ✗ **Test**: Multiple levels of nested wait_for_jobs
-- ✗ **Test**: Worker doesn't distribute to own queue
+- ✗ **Test**: wait_for_jobs calls worker_thread_iteration in loop
 
-### 3.6 Destructor & Cleanup ✗
-- ✗ **Test**: Destructor sets has_work flags on all WorkerQueues
+### 3.6 worker_thread_iteration ✗
+- ✗ **Test**: Returns Executed when job from cache executed
+- ✗ **Test**: Returns FilledCache when bulk dequeue succeeds
+- ✗ **Test**: Returns EmptyQueue when no jobs available
+- ✗ **Test**: Processes local queue first (if worker thread)
+- ✗ **Test**: Falls back to global queue when local empty
+- ✗ **Test**: Attempts work stealing when both queues empty
+- ✗ **Test**: Thread-local job cache reduces dequeue overhead
+- ✗ **Test**: Drains cache fully before next dequeue (FilledCache loop)
+
+### 3.7 Destructor & Cleanup ✗
+- ✗ **Test**: Destructor dispatches empty jobs to wake workers
 - ✗ **Test**: Worker threads stop gracefully via stop_token
 - ✗ **Test**: Scheduler destruction with pending jobs
-- ✗ **Test**: tl_current_worker_queue cleared on thread exit
+- ✗ **Test**: tls_worker_id reset on thread exit
 
 ---
 
-## 4. **WorkerQueue & ConcurrentQueue**
+## 4. **WorkerQueue & QueueSet**
 
-### 4.1 Basic Operations ✗
-- ✗ **Test**: try_enqueue succeeds when space available
-- ✗ **Test**: try_enqueue fails when queue full (BLOCK_SIZE limit)
-- ✗ **Test**: try_dequeue returns job when available
-- ✗ **Test**: try_dequeue returns nullptr when empty
+### 4.1 WorkerQueue Operations ✗
+- ✗ **Test**: submit_job adds to local_set with correct priority
+- ✗ **Test**: submit_job_batch processes span of jobs
+- ✗ **Test**: try_pop returns job from local_set (priority order: High > Normal > Low)
+- ✗ **Test**: try_pop_bulk fills array with multiple jobs
+- ✗ **Test**: try_pop returns nullopt when local_set empty
 
-### 4.2 Wait/Notify ✗
-- ✗ **Test**: has_work.wait() blocks until job available
-- ✗ **Test**: Worker thread wakes on has_work.notify_one()
-- ✗ **Test**: has_work flag set before notify
-- ✗ **Test**: has_work flag cleared after processing
-- ✗ **Test**: Destructor sets has_work to wake threads for shutdown
+### 4.2 Local vs Stealable Queues ✗
+- ✗ **Test**: Jobs initially added to local_set
+- ✗ **Test**: migrate_jobs_to_stealable moves jobs from local to stealable
+- ✗ **Test**: attempt_steal only accesses stealable_set
+- ✗ **Test**: Other workers cannot access local_set directly
+- ✗ **Test**: Migration happens periodically (STEAL_CHECK_INTERVAL)
 
-### 4.3 Per-Worker Queue Isolation ✗
-- ✗ **Test**: Each worker only dequeues from own queue
-- ✗ **Test**: Jobs distributed round-robin to available workers
-- ✗ **Test**: Worker can steal from own queue in nested wait_for_jobs
-- ✗ **Test**: BLOCK_SIZE=2 limits queue capacity correctly
+### 4.3 Priority Queues (QueueSet) ✗
+- ✗ **Test**: QueueSet maintains 3 separate queues (Low, Normal, High)
+- ✗ **Test**: enqueue places job in correct priority queue
+- ✗ **Test**: enqueue_bulk handles batch insertion
+- ✗ **Test**: try_dequeue respects priority ordering
+- ✗ **Test**: try_dequeue_bulk respects priority and max size
+- ✗ **Test**: Global QueueSet used for non-worker thread dispatches
+
+### 4.4 Work Stealing ✗
+- ✗ **Test**: Worker selects random victim for stealing
+- ✗ **Test**: attempt_steal reads from victim's stealable_set
+- ✗ **Test**: Worker doesn't steal from itself
+- ✗ **Test**: Stolen jobs executed on stealing worker thread
+- ✗ **Test**: Work stealing stats tracked correctly
 
 ---
 
@@ -173,13 +197,22 @@ Comprehensive test plan for the Portal Framework job system covering all feature
 
 ---
 
-## 7. **Eager Workers**
+## 7. **Eager Workers & Job Priorities**
 
-### 7.1 Work Stealing (job.cpp:41-47) ✗
-- ✗ **Test**: Suspended job immediately fetches next job
-- ✗ **Test**: Worker thread executes job eagerly
-- ✗ **Test**: Multiple threads stealing work
-- ✗ **Test**: No work available for eager worker
+### 7.1 Eager Execution on Suspend (job.cpp:57-62) ✗
+- ✗ **Test**: SuspendJob dispatches suspended job to scheduler
+- ✗ **Test**: SuspendJob calls worker_thread_iteration to eagerly fetch next job
+- ✗ **Test**: Drains cache fully (FilledCache loop) before returning
+- ✗ **Test**: No work available for eager worker (handles gracefully)
+- ✗ **Test**: Suspended job NOT passed counter (counter=nullptr)
+- ✗ **Test**: Eager execution maintains cache locality
+
+### 7.2 Job Priority Handling ✗
+- ✗ **Test**: High priority jobs dequeued before Normal
+- ✗ **Test**: Normal priority jobs dequeued before Low
+- ✗ **Test**: Priority respected across global and local queues
+- ✗ **Test**: Suspended job loses priority (re-queued as Normal)
+- ✗ **Test**: Priority ordering maintained during work stealing
 
 ---
 
@@ -310,13 +343,34 @@ EXPECT_TRUE(tracker.executed_before("job_1", "job_2"));
 
 ### Architecture Summary
 The job system has undergone significant changes:
+
+**Core Architecture:**
 - **JobList removed**: Direct use of `std::span<Job>`, `std::tuple`, or variadic jobs
 - **Counter struct**: Replaces JobList for tracking completion (`atomic<size_t>` + `atomic_flag`)
 - **JobBase + Job<Result>**: Type-erased base class with templated derived for return values
 - **std::expected returns**: `Job<T>::result()` returns `std::expected<T, JobResultStatus>`
-- **WorkerQueue**: Per-worker `ConcurrentQueue` replaces Channel for better scalability
-- **Nested wait_for_jobs**: Thread-local tracking (`tl_current_worker_queue`) enables workers to process own queue during nested waits
 - **dispatched flag**: Prevents premature coroutine handle destruction
+
+**Queue Architecture:**
+- **WorkerQueue**: Per-worker dual-queue system (local_set + stealable_set)
+  - `local_set`: Private queue for local worker, not accessible by other workers
+  - `stealable_set`: Public queue that other workers can steal from
+  - Jobs migrate from local to stealable periodically (STEAL_CHECK_INTERVAL)
+- **QueueSet**: Priority-aware queue set with 3 priority levels (Low, Normal, High)
+- **Global QueueSet**: Shared queue for jobs dispatched from non-worker threads
+- **Work stealing**: Workers randomly select victims and steal from stealable_set
+
+**Execution Model:**
+- **worker_thread_iteration**: Unified iteration function used by both worker threads and wait_for_jobs
+  - Returns state: Executed, FilledCache, EmptyQueue
+  - Thread-local job cache (64 jobs) reduces dequeue overhead
+  - Execution order: local cache → local queue → global queue → work stealing
+- **Eager workers on suspend**: SuspendJob calls worker_thread_iteration in loop to drain cache
+  - Maintains cache locality and keeps threads busy
+  - Does NOT notify counter (counter notification only in FinalizeJob)
+- **Nested wait_for_jobs**: Thread-local `tls_worker_id` enables workers to identify themselves
+  - Workers process jobs via worker_thread_iteration during nested waits
+  - Blocking wait only when all queues empty (EmptyQueue state)
 
 ### Testing Guidelines
 - All tests should follow project style: use references instead of pointers where possible

@@ -30,13 +30,8 @@ struct QueueSet
 
     explicit QueueSet(size_t capacity = 4096)
     {
-        std::ranges::for_each(
-            queues,
-            [capacity](auto& q)
-            {
-                q = QueueType(capacity);
-            }
-            );
+        for (auto& q : queues)
+            q = QueueType(capacity);
     }
 
     //TODO: support token operations?

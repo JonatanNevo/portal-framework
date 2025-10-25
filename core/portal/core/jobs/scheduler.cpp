@@ -31,7 +31,6 @@ thread_local size_t jobs::Scheduler::tls_worker_id = std::numeric_limits<size_t>
 jobs::Scheduler::Scheduler(const int32_t num_worker_threads)
     : global_jobs(std::make_shared<QueueSet<>>()), stats(num_worker_threads)
 {
-    PORTAL_ASSERT(num_worker_threads >= 0, "Number of worker threads cannot be negative");
 
     if (num_worker_threads < 0)
     {
@@ -42,7 +41,6 @@ jobs::Scheduler::Scheduler(const int32_t num_worker_threads)
     {
         num_workers = num_worker_threads;
     }
-
     LOGGER_INFO("Initializing scheduler with {} worker threads", num_worker_threads);
 
     contexts = std::vector<WorkerContext>(num_workers);
@@ -63,25 +61,15 @@ jobs::Scheduler::Scheduler(const int32_t num_worker_threads)
     }
 }
 
-Job<> empty_job()
-{
-    co_return;
-}
-
 
 jobs::Scheduler::~Scheduler()
 {
     if (!threads.empty())
     {
-        llvm::SmallVector<Job<>> empty_jobs;
         for (auto& thread : threads)
         {
             thread.request_stop();
-            empty_jobs.push_back(empty_job());
         }
-
-        // Dispatch an empty job to awaken worker threads
-        dispatch_jobs(std::span{empty_jobs.data(), empty_jobs.size()});
 
         for (auto& thread : threads)
         {
@@ -136,11 +124,10 @@ void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, const JobPrio
 
     for (auto& job : jobs)
     {
-        job.dispatched = true;
-        auto& [scheduler, promise_counter, _, __] = job.handle.promise();
-        scheduler = this;
+        job.set_dispatched();
+        job.set_scheduler(this);
         if (counter)
-            promise_counter = counter;
+            job.set_counter(counter);
         job_pointers.push_back(job.handle);
     }
 
@@ -212,18 +199,18 @@ jobs::Scheduler::WorkerIterationState jobs::Scheduler::worker_thread_iteration()
     {
         auto& context = contexts.at(tls_worker_id);
 
+        if (++iterations_since_steal_check >= STEAL_CHECK_INTERVAL)
+        {
+            context.queue.migrate_jobs_to_stealable();
+            iterations_since_steal_check = 0;
+        }
+
         const size_t dequeued = context.queue.try_pop_bulk(job_cache, CACHE_SIZE);
         if (dequeued > 0)
         {
             cached_count = dequeued;
             stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Local);
             return WorkerIterationState::FilledCache;
-        }
-
-        if (++iterations_since_steal_check >= STEAL_CHECK_INTERVAL)
-        {
-            context.queue.migrate_jobs_to_stealable();
-            iterations_since_steal_check = 0;
         }
 
 #if ENABLE_JOB_STATS
