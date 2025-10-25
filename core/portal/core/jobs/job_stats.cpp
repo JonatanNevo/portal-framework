@@ -19,32 +19,59 @@ JobStats::JobStats(const size_t num_threads) : thread_stats(num_threads), start_
 void JobStats::record_job_submitted(const size_t worker_id, JobPriority priority, size_t count)
 {
 #if ENABLE_JOB_STATS
-    auto& stats = thread_stats.at(worker_id);
-    stats.job_submitted += count;
-    stats.jobs_by_priority[static_cast<uint8_t>(priority)]++;
+    ThreadStats* stats = nullptr;
+    if (worker_id < thread_stats.size())
+    {
+        stats = &thread_stats.at(worker_id);
+    }
+    else
+    {
+        stats = &main_stats;
+    }
+
+    stats->job_submitted += count;
+    stats->jobs_by_priority[static_cast<uint8_t>(priority)]++;
 #endif
 }
 
 void JobStats::record_job_executed(const size_t worker_id, const size_t duration_ns)
 {
 #if ENABLE_JOB_STATS
-    auto& stats = thread_stats.at(worker_id);
-    stats.job_executed++;
-    stats.total_job_time_ns += duration_ns;
-    stats.min_job_time_ns = std::min(stats.min_job_time_ns, duration_ns);
-    stats.max_job_time_ns = std::max(stats.max_job_time_ns, duration_ns);
+    ThreadStats* stats = nullptr;
+    if (worker_id < thread_stats.size())
+    {
+        stats = &thread_stats.at(worker_id);
+    }
+    else
+    {
+        stats = &main_stats;
+    }
+
+    stats->job_executed++;
+    stats->total_job_time_ns += duration_ns;
+    stats->min_job_time_ns = std::min(stats->min_job_time_ns, duration_ns);
+    stats->max_job_time_ns = std::max(stats->max_job_time_ns, duration_ns);
 #endif
 }
 
 void JobStats::record_steal_attempt(const size_t worker_id, const bool success, const size_t jobs_stolen)
 {
 #if ENABLE_JOB_STATS
-    auto& stats = thread_stats.at(worker_id);
-    stats.steal_attempts++;
+    ThreadStats* stats = nullptr;
+    if (worker_id < thread_stats.size())
+    {
+        stats = &thread_stats.at(worker_id);
+    }
+    else
+    {
+        stats = &main_stats;
+    }
+
+    stats->steal_attempts++;
     if (success)
     {
-        stats.steal_successes++;
-        stats.jobs_stolen += jobs_stolen;
+        stats->steal_successes++;
+        stats->jobs_stolen += jobs_stolen;
     }
 #endif
 }
@@ -60,45 +87,81 @@ void JobStats::record_job_stolen_from_me(const size_t worker_id, const size_t co
 void JobStats::record_queue_depth(const size_t worker_id, const size_t local_depth, const size_t stealable_depth)
 {
 #if ENABLE_JOB_STATS
-    auto& stats = thread_stats.at(worker_id);
-    stats.total_queue_depth_samples++;
-    stats.sum_local_queue_depth += local_depth;
-    stats.sum_stealable_queue_depth += stealable_depth;
-    stats.max_local_queue_depth = std::max(stats.max_local_queue_depth, local_depth);
-    stats.max_stealable_queue_depth = std::max(stats.max_stealable_queue_depth, stealable_depth);
+    ThreadStats* stats = nullptr;
+    if (worker_id < thread_stats.size())
+    {
+        stats = &thread_stats.at(worker_id);
+    }
+    else
+    {
+        stats = &main_stats;
+    }
+
+    stats->total_queue_depth_samples++;
+    stats->sum_local_queue_depth += local_depth;
+    stats->sum_stealable_queue_depth += stealable_depth;
+    stats->max_local_queue_depth = std::max(stats->max_local_queue_depth, local_depth);
+    stats->max_stealable_queue_depth = std::max(stats->max_stealable_queue_depth, stealable_depth);
 #endif
 }
 
 void JobStats::record_idle_spin(const size_t worker_id)
 {
 #if ENABLE_JOB_STATS
-    auto& stats = thread_stats.at(worker_id);
-    stats.idle_spins++;
+    ThreadStats* stats = nullptr;
+    if (worker_id < thread_stats.size())
+    {
+        stats = &thread_stats.at(worker_id);
+    }
+    else
+    {
+        stats = &main_stats;
+    }
+
+    stats->idle_spins++;
 #endif
 }
 
 void JobStats::record_idle_time(const size_t worker_id, const size_t duration_ns)
 {
 #if ENABLE_JOB_STATS
-    auto& stats = thread_stats.at(worker_id);
-    stats.total_idle_time_ns += duration_ns;
+    ThreadStats* stats = nullptr;
+    if (worker_id < thread_stats.size())
+    {
+        stats = &thread_stats.at(worker_id);
+    }
+    else
+    {
+        stats = &main_stats;
+    }
+
+    stats->total_idle_time_ns += duration_ns;
 #endif
 }
 
 void JobStats::record_queue_hit(size_t worker_id, QueueType type)
 {
 #if ENABLE_JOB_STATS
-    auto& stats = thread_stats.at(worker_id);
+    ThreadStats* stats = nullptr;
+    if (worker_id < thread_stats.size())
+    {
+        stats = &thread_stats.at(worker_id);
+    }
+    else
+    {
+        stats = &main_stats;
+    }
+
     switch (type)
     {
     case QueueType::Local:
-        stats.local_queue_hits++;
+        stats->local_queue_hits++;
         break;
     case QueueType::Stealable:
-        stats.steal_queue_hits++;
+        stats->steal_queue_hits++;
         break;
     case QueueType::Global:
-        stats.global_queue_hits++;
+        stats->global_queue_hits++;
         break;
     }
 #endif
@@ -152,6 +215,22 @@ JobStats::GlobalStats JobStats::aggregate()
         jobs_per_thread.push_back(thread.job_executed);
     }
 
+    stats.total_jobs_executed += main_stats.job_executed;
+    stats.total_jobs_submitted += main_stats.job_submitted;
+    stats.total_job_time_ns += main_stats.total_job_time_ns;
+    stats.min_job_time_ns = std::min(stats.min_job_time_ns, main_stats.min_job_time_ns);
+    stats.max_job_time_ns = std::max(stats.max_job_time_ns, main_stats.max_job_time_ns);
+
+    for (size_t i = 0; i < 3; ++i)
+    {
+        stats.jobs_by_priority[i] += main_stats.jobs_by_priority[i];
+    }
+
+    stats.total_idle_spins += main_stats.idle_spins;
+    stats.total_idle_time_ns += main_stats.total_idle_time_ns;
+
+    jobs_per_thread.push_back(main_stats.job_executed);
+
     if (stats.total_jobs_executed > 0)
         stats.average_job_time_us = static_cast<double>(stats.total_job_time_ns) / stats.total_jobs_executed / 1000.0;
 
@@ -163,7 +242,7 @@ JobStats::GlobalStats JobStats::aggregate()
 
     const double total_idle_time_ms = static_cast<double>(stats.total_idle_time_ns) / 1'000'000.0;
 
-    const double total_possible_time_ms = stats.elapsed_seconds * 1000.0 * thread_stats.size();
+    const double total_possible_time_ms = stats.elapsed_seconds * 1000.0 * (thread_stats.size() + 1);
     if (total_possible_time_ms > 0)
     {
         stats.idle_time_percentage = (total_idle_time_ms / total_possible_time_ms) * 100.0;
@@ -198,6 +277,8 @@ void JobStats::reset()
 
     for (auto& stats : thread_stats)
         stats = ThreadStats{};
+
+    main_stats = ThreadStats{};
 
     start_time = std::chrono::steady_clock::now();
     global_stats.last_reset = start_time;
@@ -241,7 +322,7 @@ void JobStats::log() const
     for (size_t i = 0; i < thread_stats.size(); ++i)
     {
         auto& stats = thread_stats[i];
-        LOGGER_DEBUG("\t Thread: {}", i);
+        LOGGER_DEBUG("\tThread: {}", i);
         LOGGER_DEBUG("\t\tJobs Executed: {}", stats.job_executed);
         LOGGER_DEBUG("\t\tJobs Stolen: {}", stats.jobs_stolen);
         LOGGER_DEBUG("\t\tJobs Lost: {}", stats.jobs_lost_to_thieves);
@@ -256,6 +337,9 @@ void JobStats::log() const
         }
         LOGGER_DEBUG("\t\tSteal Success: {}", steal_success);
     }
+
+    LOGGER_DEBUG("\tMain");
+    LOGGER_DEBUG("\t\tJobs Executed: {}", main_stats.job_executed);
 #else
     LOG_ERROR("Attempted to print job statics but `ENABLE_JOB_STATS` is false");
 #endif

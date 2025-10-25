@@ -285,9 +285,7 @@ TEST_F(JobTest, FinalSuspendDecrementsCounterCount)
     // Wait for jobs to complete
     while (counter.count.load(std::memory_order_acquire) > 0)
     {
-        auto handle = scheduler.try_dequeue_job();
-        if (handle)
-            handle();
+        scheduler.worker_thread_iteration();
     }
 
     // Counter should be back to 0
