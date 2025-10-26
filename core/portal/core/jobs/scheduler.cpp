@@ -21,6 +21,7 @@ struct fmt::formatter<std::thread::id> : fmt::formatter<std::string>
     }
 };
 
+
 namespace portal
 {
 
@@ -31,7 +32,7 @@ thread_local size_t jobs::Scheduler::tls_worker_id = std::numeric_limits<size_t>
 jobs::Scheduler::Scheduler(const int32_t num_worker_threads)
     : global_jobs(std::make_shared<QueueSet<>>()), stats(num_worker_threads)
 {
-
+    PORTAL_PROF_ZONE();
     if (num_worker_threads < 0)
     {
         // If negative, then this means that we must count backwards from the number of available hardware threads
@@ -64,6 +65,7 @@ jobs::Scheduler::Scheduler(const int32_t num_worker_threads)
 
 jobs::Scheduler::~Scheduler()
 {
+    PORTAL_PROF_ZONE();
     if (!threads.empty())
     {
         for (auto& thread : threads)
@@ -81,6 +83,7 @@ jobs::Scheduler::~Scheduler()
 
 void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs, const JobPriority priority)
 {
+    PORTAL_PROF_ZONE();
     Counter counter{};
 
     dispatch_jobs(jobs, priority, &counter);
@@ -89,11 +92,12 @@ void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs, const JobPrio
     {
         const auto state = worker_thread_iteration();
 
-#if ENABLE_JOB_STATS
-        const auto idle_start = std::chrono::high_resolution_clock::now();
-#endif
         if (state == WorkerIterationState::EmptyQueue)
         {
+            PORTAL_PROF_ZONE("WaitCounterChange");
+#if ENABLE_JOB_STATS
+            const auto idle_start = std::chrono::high_resolution_clock::now();
+#endif
             counter.blocking.test_and_set(std::memory_order_acquire);
 
             // Failed to fetch a job, meaning that there are no pending jobs, only in progress, therefore, we still need to wait
@@ -108,17 +112,18 @@ void jobs::Scheduler::wait_for_jobs(const std::span<JobBase> jobs, const JobPrio
             {
                 counter.blocking.clear(std::memory_order_release);
             }
-        }
 #if ENABLE_JOB_STATS
-        const auto idle_end = std::chrono::high_resolution_clock::now();
-        const auto idle_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(idle_end - idle_start);
-        stats.record_idle_time(tls_worker_id, idle_duration.count());
+            const auto idle_end = std::chrono::high_resolution_clock::now();
+            const auto idle_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(idle_end - idle_start);
+            stats.record_idle_time(tls_worker_id, idle_duration.count());
 #endif
+        }
     }
 }
 
 void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, const JobPriority priority, Counter* counter)
 {
+    PORTAL_PROF_ZONE();
     llvm::SmallVector<JobBase::handle_type> job_pointers;
     job_pointers.reserve(jobs.size());
 
@@ -133,30 +138,35 @@ void jobs::Scheduler::dispatch_jobs(const std::span<JobBase> jobs, const JobPrio
 
     if (tls_worker_id < num_workers)
     {
+        PORTAL_PROF_ZONE("Enqueue Local");
         auto& context = contexts.at(tls_worker_id);
         context.queue.submit_job_batch(job_pointers, priority);
-        stats.record_job_submitted(tls_worker_id, priority, jobs.size());
     }
     else
     {
+        PORTAL_PROF_ZONE("Enqueue Global");
         global_jobs->enqueue_bulk(priority, job_pointers.begin(), job_pointers.size());
     }
 
+    stats.record_work_submitted(tls_worker_id, priority, jobs.size());
     if (counter)
         counter->count.fetch_add(jobs.size(), std::memory_order_release);
 }
 
 void jobs::Scheduler::dispatch_job(JobBase job, const JobPriority priority, Counter* counter)
 {
+    PORTAL_PROF_ZONE();
     dispatch_jobs(std::span{&job, 1}, priority, counter);
 }
 
 void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, size_t worker_id)
 {
+    PORTAL_PROF_ZONE();
     tls_worker_id = worker_id;
 
     while (!token.stop_requested())
     {
+        PORTAL_PROF_ZONE();
         const auto state = worker_thread_iteration();
 
 #if ENABLE_JOB_STATS
@@ -177,8 +187,9 @@ void jobs::Scheduler::worker_thread_loop(const std::stop_token& token, size_t wo
     LOGGER_TRACE("[worker_thread] Thread {} stopped", std::this_thread::get_id());
 }
 
-jobs::Scheduler::WorkerIterationState jobs::Scheduler::worker_thread_iteration()
+jobs::WorkerIterationState jobs::Scheduler::worker_thread_iteration()
 {
+    PORTAL_PROF_ZONE();
     constexpr size_t CACHE_SIZE = 64;
     thread_local JobBase::handle_type job_cache[CACHE_SIZE];
     thread_local size_t cached_count = 0;
@@ -189,10 +200,14 @@ jobs::Scheduler::WorkerIterationState jobs::Scheduler::worker_thread_iteration()
     constexpr uint32_t SAMPLE_INTERVAL = 1000;
     thread_local uint32_t iterations_since_sample = 0;
 
-    if (cached_count > 0)
     {
-        execute_job(job_cache[--cached_count]);
-        return WorkerIterationState::Executed;
+        PORTAL_PROF_ZONE("Execute From Cache");
+
+        if (cached_count > 0)
+        {
+            execute_job(job_cache[--cached_count]);
+            return WorkerIterationState::Executed;
+        }
     }
 
     if (tls_worker_id < num_workers)
@@ -201,21 +216,30 @@ jobs::Scheduler::WorkerIterationState jobs::Scheduler::worker_thread_iteration()
 
         if (++iterations_since_steal_check >= STEAL_CHECK_INTERVAL)
         {
+            PORTAL_PROF_ZONE("Steal Migration");
+
             context.queue.migrate_jobs_to_stealable();
             iterations_since_steal_check = 0;
         }
 
-        const size_t dequeued = context.queue.try_pop_bulk(job_cache, CACHE_SIZE);
-        if (dequeued > 0)
         {
-            cached_count = dequeued;
-            stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Local);
-            return WorkerIterationState::FilledCache;
+            PORTAL_PROF_ZONE("Local Dequeue");
+
+            const size_t dequeued = context.queue.try_pop_bulk(job_cache, CACHE_SIZE);
+            if (dequeued > 0)
+            {
+                cached_count = dequeued;
+                stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Local);
+                return WorkerIterationState::FilledCache;
+            }
         }
+
 
 #if ENABLE_JOB_STATS
         if (++iterations_since_sample >= SAMPLE_INTERVAL)
         {
+            PORTAL_PROF_ZONE("Depth Sampling");
+
             const size_t local_depth =
                 context.queue.get_local_count()[0].load(std::memory_order_relaxed) +
                 context.queue.get_local_count()[1].load(std::memory_order_relaxed) +
@@ -231,21 +255,28 @@ jobs::Scheduler::WorkerIterationState jobs::Scheduler::worker_thread_iteration()
         }
 #endif
 
-        const size_t stolen = try_steal(job_cache, CACHE_SIZE);
-        if (stolen > 0)
         {
-            cached_count = stolen;
-            stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Stealable);
-            return WorkerIterationState::FilledCache;
+            PORTAL_PROF_ZONE("Steal Attempt");
+            const size_t stolen = try_steal(job_cache, CACHE_SIZE);
+            if (stolen > 0)
+            {
+                cached_count = stolen;
+                stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Stealable);
+                return WorkerIterationState::FilledCache;
+            }
         }
     }
 
-    const size_t dequeued_global = try_dequeue_global(job_cache, CACHE_SIZE);
-    if (dequeued_global > 0)
     {
-        cached_count = dequeued_global;
-        stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Global);
-        return WorkerIterationState::FilledCache;
+        PORTAL_PROF_ZONE("Global Dequeue");
+
+        const size_t dequeued_global = try_dequeue_global(job_cache, CACHE_SIZE);
+        if (dequeued_global > 0)
+        {
+            cached_count = dequeued_global;
+            stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Global);
+            return WorkerIterationState::FilledCache;
+        }
     }
 
     // If we reach this place, it means that there is no work to do
@@ -254,6 +285,7 @@ jobs::Scheduler::WorkerIterationState jobs::Scheduler::worker_thread_iteration()
 
 size_t jobs::Scheduler::try_steal(JobBase::handle_type* jobs, size_t max_size)
 {
+    PORTAL_PROF_ZONE();
     auto& context = contexts[tls_worker_id];
 
     // Allows self stealing, if we reach this part it means that we are out of local work
@@ -266,7 +298,7 @@ size_t jobs::Scheduler::try_steal(JobBase::handle_type* jobs, size_t max_size)
     if (stolen > 0)
     {
         stats.record_steal_attempt(tls_worker_id, true, stolen);
-        stats.record_job_stolen_from_me(victim_id, stolen);
+        stats.record_work_stolen_from_me(victim_id, stolen);
     }
     else
     {
@@ -277,8 +309,9 @@ size_t jobs::Scheduler::try_steal(JobBase::handle_type* jobs, size_t max_size)
     return stolen;
 }
 
-void jobs::Scheduler::execute_job(const JobBase::handle_type& job)
+BasicCoroutine jobs::Scheduler::execute_job(const JobBase::handle_type& job)
 {
+    PORTAL_PROF_ZONE();
 #if ENABLE_JOB_STATS
     const auto start = std::chrono::high_resolution_clock::now();
 #endif
@@ -286,18 +319,19 @@ void jobs::Scheduler::execute_job(const JobBase::handle_type& job)
     if (job)
     {
         job.promise().add_switch_information(SwitchType::Resume);
-        job.resume();
+        co_await job.promise();
     }
 
 #if ENABLE_JOB_STATS
     const auto end = std::chrono::high_resolution_clock::now();
     const auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-    stats.record_job_executed(tls_worker_id, duration.count());
+    stats.record_work_executed(tls_worker_id, duration.count());
 #endif
 }
 
 size_t jobs::Scheduler::try_dequeue_global(JobBase::handle_type* jobs, const size_t max_count) const
 {
+    PORTAL_PROF_ZONE();
     size_t total = 0;
     const size_t high_count = global_jobs->try_dequeue_bulk(JobPriority::High, jobs, max_count);
     total += high_count;

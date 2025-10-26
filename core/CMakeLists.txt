@@ -15,7 +15,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 option(PORTAL_DEBUG_ALLOCATIONS "Enable debug allocations (for debug only)" OFF)
-option(PORTAL_PROFILE "Enable profiling with Tracy" OFF)
+option(PORTAL_PROFILE "Enable profiling with Tracy" ON)
 option(PORTAL_BUILD_DIST "Build the distribution package" OFF)
 
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
@@ -33,11 +33,12 @@ file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/core/linux/*.h
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 if (PORTAL_PROFILE)
-    option(TRACY_ENABLE "Enable Tracy profiling" ON)
+    set(CACHE TRACY_ENABLE TYPE BOOL FORCE ON)
 else ()
-    option(TRACY_ENABLE "Enable Tracy profiling" OFF)
+    set(CACHE TRACY_ENABLE TYPE BOOL FORCE OFF)
 endif ()
 find_package(Tracy CONFIG REQUIRED)
+
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
     find_package(llvm-adt CONFIG REQUIRED)
@@ -62,8 +63,9 @@ target_link_libraries(portal-core
 )
 
 if (WIN32)
-    set(PORTAL_PLATFORM_WINDOWS ON CACHE BOOL "Windows platform" FORCE)
-    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_WINDOWS)
+    set(PORTAL_PLATFORM_WINDOWS ON)
+    set(PORTAL_PLATFORM WINDOWS)
+
     target_sources(portal-core
             PRIVATE ${WINDOWS_SOURCES}
             PUBLIC
@@ -71,11 +73,11 @@ if (WIN32)
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
             FILES ${WINDOWS_HEADER}
     )
-    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=windows)
 
 elseif (APPLE)
-    set(PORTAL_PLATFORM_MACOS ON CACHE BOOL "MacOS platform" FORCE)
-    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_MACOS)
+    set(PORTAL_PLATFORM_MACOS ON)
+    set(PORTAL_PLATFORM MACOS)
+
     target_sources(portal-core
             PRIVATE ${MACOS_SOURCES}
             PUBLIC
@@ -83,12 +85,12 @@ elseif (APPLE)
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
             FILES ${MACOS_HEADER}
     )
-    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=macos)
     target_compile_options(portal-core PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fexperimental-library> $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 
 elseif (UNIX)
-    set(PORTAL_PLATFORM_LINUX ON CACHE BOOL "Linux platform" FORCE)
-    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM_LINUX)
+    set(PORTAL_PLATFORM_LINUX ON)
+    set(PORTAL_PLATFORM LINUX)
+
     target_sources(portal-core
             PRIVATE ${LINUX_SOURCES}
             PUBLIC
@@ -96,8 +98,6 @@ elseif (UNIX)
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
             FILES ${LINUX_HEADER}
     )
-    target_compile_definitions(portal-core PUBLIC PORTAL_PLATFORM=unix)
-
 else ()
     message(FATAL_ERROR "Unsupported platform")
 endif ()
@@ -122,16 +122,16 @@ target_compile_definitions(portal-core PUBLIC
 )
 
 if (PORTAL_PROFILE AND NOT PORTAL_BUILD_DIST)
-    target_compile_definitions(portal-core PUBLIC PORTAL_PROFILE $<$<CONFIG:Release>:TRACY_ENABLE>)
+    target_compile_definitions(portal-core PUBLIC $<$<CONFIG:Release>:TRACY_ENABLE>)
     target_link_libraries(portal-core PUBLIC Tracy::TracyClient)
-endif ()
-if (PORTAL_DEBUG_ALLOCATIONS AND NOT PORTAL_BUILD_DIST)
-    target_compile_definitions(portal-core PUBLIC $<$<CONFIG:Debug>:PORTAL_DEBUG_ALLOCATIONS>)
 endif ()
 
 if (MSVC)
     target_compile_options(portal-core PUBLIC
             "/Zc:__cplusplus"
+            "/Zc:preprocessor"
+            "/permissive-"
+            "/volatile:iso"
             "$<$<CONFIG:Release>:/Zi>"
     )
     target_compile_options(portal-core PRIVATE /W4 /WX)
@@ -147,6 +147,8 @@ else ()
 
 endif ()
 
+configure_file("portal/core/config.h.cmake" "portal/core/config.h")
+target_precompile_headers(portal-core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/portal/core/config.h)
 
 if (PORTAL_BUILD_TESTS)
     target_compile_definitions(portal-core PUBLIC PORTAL_TEST)

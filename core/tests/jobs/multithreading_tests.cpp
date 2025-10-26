@@ -22,7 +22,7 @@ namespace portal
 Job<std::thread::id> get_thread_id()
 {
     auto thread_id = std::this_thread::get_id();
-    std::this_thread::sleep_for(std::chrono::nanoseconds(10));
+    simulate_work(std::chrono::nanoseconds(10));
     co_await SuspendJob();
     co_return thread_id;
 }

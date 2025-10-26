@@ -26,6 +26,19 @@ protected:
     }
 };
 
+template <class Rep, class Period>
+void simulate_work(const std::chrono::duration<Rep, Period>& duration)
+{
+    [[maybe_unused]] volatile double sink = 0.0;
+
+    const auto start = std::chrono::high_resolution_clock::now();
+    int i = 1;
+    while (std::chrono::high_resolution_clock::now() - start < duration)
+    {
+        // Simulate some work
+        sink = std::sqrt(++i);
+    }
+}
 
 // Thread-safe execution tracker for testing
 struct ExecutionTracker
