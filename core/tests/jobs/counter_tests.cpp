@@ -23,7 +23,6 @@ namespace portal
 
 Job<> simple_counter_job()
 {
-    co_await SuspendJob();
     co_return;
 }
 
@@ -71,7 +70,8 @@ TEST_F(JobTest, CounterDecrementOnJobCompletion)
 
     // Execute one job to completion
     auto state = scheduler.worker_thread_iteration();
-    while (state == jobs::Scheduler::WorkerIterationState::FilledCache)
+
+    while (state == jobs::WorkerIterationState::FilledCache)
     {
         state = scheduler.worker_thread_iteration();
     }

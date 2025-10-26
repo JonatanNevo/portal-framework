@@ -17,15 +17,16 @@ namespace portal
 
 constexpr static size_t JOB_POOL_SIZE = 1024;
 #if defined(PORTAL_TEST)
-static BucketPoolAllocator<512, JOB_POOL_SIZE, SpinLock, true> g_job_promise_allocator{};
+static BucketPoolAllocator<544, JOB_POOL_SIZE, SpinLock, true> g_job_promise_allocator{};
 #else
-static BucketPoolAllocator<512, JOB_POOL_SIZE> g_job_promise_allocator{};
+static BucketPoolAllocator<544, JOB_POOL_SIZE> g_job_promise_allocator{};
 #endif
 
 static std::pmr::synchronized_pool_resource g_job_result_allocator{};
 
-void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
+std::coroutine_handle<> SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 {
+    PORTAL_PROF_ZONE();
     // At this point the coroutine pointed to by handle has been fully suspended. This is guaranteed by the c++ standard.
 
     auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
@@ -48,31 +49,13 @@ void SuspendJob::await_suspend(const std::coroutine_handle<> handle) noexcept
         counter->blocking.notify_all();
     }
 
-    {
-        // --- Eager Workers ---
-        //
-        // Eagerly try to fetch & execute the next task from the front of the
-        // scheduler queue -
-        // We do this so that multiple threads can share the
-        // scheduling workload.
-        //
-        // But we can also disable that so that there is only one thread
-        // that does the scheduling and removing elements from the
-        // queue.
-
-        jobs::Scheduler::WorkerIterationState state;
-        do
-        {
-            state = scheduler->worker_thread_iteration();
-        }
-        while (state == jobs::Scheduler::WorkerIterationState::FilledCache);
-    }
-
-    // Note: Once we drop off here, control will return to where the resume()  command that brought us here was issued.
+    // Return the context back to the caller (usually the thread event loop)
+    return promise.get_continuation();
 }
 
-void FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
+std::coroutine_handle<> FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
 {
+    PORTAL_PROF_ZONE();
     const auto job_promise_handler = std::coroutine_handle<JobPromise>::from_address(handle.address());
     job_promise_handler.promise().add_switch_information(SwitchType::Finish);
 
@@ -86,6 +69,8 @@ void FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
             counter->blocking.notify_all();
         }
     }
+
+    return job_promise_handler.promise().get_continuation();
 }
 
 JobPromise::JobPromise()
@@ -96,6 +81,7 @@ JobPromise::JobPromise()
 
 void JobPromise::unhandled_exception() noexcept
 {
+    PORTAL_PROF_ZONE();
     add_switch_information(SwitchType::Error);
 
     LOG_ERROR_TAG("Task", "Unhandled exception in task");
@@ -103,6 +89,7 @@ void JobPromise::unhandled_exception() noexcept
 
 void JobPromise::add_switch_information(SwitchType type)
 {
+    PORTAL_PROF_ZONE();
     switch_information.push_back(
         {
             std::this_thread::get_id(),
@@ -114,7 +101,8 @@ void JobPromise::add_switch_information(SwitchType type)
 
 void* JobPromise::operator new([[maybe_unused]] size_t n) noexcept
 {
-    PORTAL_ASSERT(n <= g_job_promise_allocator.bucket_size, "Attempting to allocate more than bucket size");
+    PORTAL_PROF_ZONE();
+    PORTAL_ASSERT(n <= g_job_promise_allocator.bucket_size, "Attempting to allocate ({}) more than bucket size ({})", n, g_job_promise_allocator.bucket_size);
     try
     {
         return g_job_promise_allocator.alloc();
@@ -127,6 +115,7 @@ void* JobPromise::operator new([[maybe_unused]] size_t n) noexcept
 
 void JobPromise::operator delete(void* ptr) noexcept
 {
+    PORTAL_PROF_ZONE();
     g_job_promise_allocator.free(ptr);
 }
 
@@ -138,6 +127,11 @@ void JobPromise::set_scheduler(jobs::Scheduler* scheduler_ptr) noexcept
 void JobPromise::set_counter(jobs::Counter* counter_ptr) noexcept
 {
     counter = counter_ptr;
+}
+
+void JobPromise::set_continuation(const std::coroutine_handle<> caller) noexcept
+{
+    continuation = caller;
 }
 
 size_t JobPromise::get_allocated_size() noexcept
@@ -159,6 +153,19 @@ void JobPromise::deallocate_result(void* ptr, const size_t size) noexcept
 {
     return g_job_result_allocator.deallocate(ptr, size);
 }
+
+bool JobPromise::JobAwaiter::await_ready() noexcept
+{
+    PORTAL_PROF_ZONE();
+    return !handle || handle.done();
+}
+
+std::coroutine_handle<JobPromise> JobPromise::JobAwaiter::await_suspend(std::coroutine_handle<> caller) noexcept {
+    PORTAL_PROF_ZONE();
+    handle.promise().set_continuation(caller);
+    return handle;
+}
+
 
 void JobBase::set_dispatched()
 {

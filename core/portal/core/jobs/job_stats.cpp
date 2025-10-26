@@ -16,7 +16,7 @@ JobStats::JobStats(const size_t num_threads) : thread_stats(num_threads), start_
     global_stats.last_reset = start_time;
 }
 
-void JobStats::record_job_submitted(const size_t worker_id, JobPriority priority, size_t count)
+void JobStats::record_work_submitted(const size_t worker_id, JobPriority priority, size_t count)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -29,12 +29,12 @@ void JobStats::record_job_submitted(const size_t worker_id, JobPriority priority
         stats = &main_stats;
     }
 
-    stats->job_submitted += count;
-    stats->jobs_by_priority[static_cast<uint8_t>(priority)]++;
+    stats->work_submitted += count;
+    stats->work_by_priority[static_cast<uint8_t>(priority)]++;
 #endif
 }
 
-void JobStats::record_job_executed(const size_t worker_id, const size_t duration_ns)
+void JobStats::record_work_executed(const size_t worker_id, const size_t duration_ns)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -47,10 +47,10 @@ void JobStats::record_job_executed(const size_t worker_id, const size_t duration
         stats = &main_stats;
     }
 
-    stats->job_executed++;
-    stats->total_job_time_ns += duration_ns;
-    stats->min_job_time_ns = std::min(stats->min_job_time_ns, duration_ns);
-    stats->max_job_time_ns = std::max(stats->max_job_time_ns, duration_ns);
+    stats->work_executed++;
+    stats->total_work_time_ns += duration_ns;
+    stats->min_work_time_ns = std::min(stats->min_work_time_ns, duration_ns);
+    stats->max_work_time_ns = std::max(stats->max_work_time_ns, duration_ns);
 #endif
 }
 
@@ -71,16 +71,16 @@ void JobStats::record_steal_attempt(const size_t worker_id, const bool success, 
     if (success)
     {
         stats->steal_successes++;
-        stats->jobs_stolen += jobs_stolen;
+        stats->work_stolen += jobs_stolen;
     }
 #endif
 }
 
-void JobStats::record_job_stolen_from_me(const size_t worker_id, const size_t count)
+void JobStats::record_work_stolen_from_me(const size_t worker_id, const size_t count)
 {
 #if ENABLE_JOB_STATS
     auto& stats = thread_stats.at(worker_id);
-    stats.jobs_lost_to_thieves += count;
+    stats.work_lost_to_thieves += count;
 #endif
 }
 
@@ -179,20 +179,20 @@ JobStats::GlobalStats JobStats::aggregate()
     const auto now = std::chrono::steady_clock::now();
     stats.elapsed_seconds = std::chrono::duration<double>(now - start_time).count();
 
-    llvm::SmallVector<size_t, 8> jobs_per_thread;
-    jobs_per_thread.reserve(thread_stats.size());
+    llvm::SmallVector<size_t, 8> work_per_thread;
+    work_per_thread.reserve(thread_stats.size());
 
     for (const auto& thread : thread_stats)
     {
-        stats.total_jobs_executed += thread.job_executed;
-        stats.total_jobs_submitted += thread.job_submitted;
-        stats.total_job_time_ns += thread.total_job_time_ns;
-        stats.min_job_time_ns = std::min(stats.min_job_time_ns, thread.min_job_time_ns);
-        stats.max_job_time_ns = std::max(stats.max_job_time_ns, thread.max_job_time_ns);
+        stats.total_work_executed += thread.work_executed;
+        stats.total_work_submitted += thread.work_submitted;
+        stats.total_work_time_ns += thread.total_work_time_ns;
+        stats.min_work_time_ns = std::min(stats.min_work_time_ns, thread.min_work_time_ns);
+        stats.max_work_time_ns = std::max(stats.max_work_time_ns, thread.max_work_time_ns);
 
         for (size_t i = 0; i < 3; ++i)
         {
-            stats.jobs_by_priority[i] += thread.jobs_by_priority[i];
+            stats.work_by_priority[i] += thread.work_by_priority[i];
         }
 
         stats.total_steal_attempts += thread.steal_attempts;
@@ -212,27 +212,27 @@ JobStats::GlobalStats JobStats::aggregate()
         stats.total_idle_spins += thread.idle_spins;
         stats.total_idle_time_ns += thread.total_idle_time_ns;
 
-        jobs_per_thread.push_back(thread.job_executed);
+        work_per_thread.push_back(thread.work_executed);
     }
 
-    stats.total_jobs_executed += main_stats.job_executed;
-    stats.total_jobs_submitted += main_stats.job_submitted;
-    stats.total_job_time_ns += main_stats.total_job_time_ns;
-    stats.min_job_time_ns = std::min(stats.min_job_time_ns, main_stats.min_job_time_ns);
-    stats.max_job_time_ns = std::max(stats.max_job_time_ns, main_stats.max_job_time_ns);
+    stats.total_work_executed += main_stats.work_executed;
+    stats.total_work_submitted += main_stats.work_submitted;
+    stats.total_work_time_ns += main_stats.total_work_time_ns;
+    stats.min_work_time_ns = std::min(stats.min_work_time_ns, main_stats.min_work_time_ns);
+    stats.max_work_time_ns = std::max(stats.max_work_time_ns, main_stats.max_work_time_ns);
 
     for (size_t i = 0; i < 3; ++i)
     {
-        stats.jobs_by_priority[i] += main_stats.jobs_by_priority[i];
+        stats.work_by_priority[i] += main_stats.work_by_priority[i];
     }
 
     stats.total_idle_spins += main_stats.idle_spins;
     stats.total_idle_time_ns += main_stats.total_idle_time_ns;
 
-    jobs_per_thread.push_back(main_stats.job_executed);
+    work_per_thread.push_back(main_stats.work_executed);
 
-    if (stats.total_jobs_executed > 0)
-        stats.average_job_time_us = static_cast<double>(stats.total_job_time_ns) / stats.total_jobs_executed / 1000.0;
+    if (stats.total_work_executed > 0)
+        stats.average_work_time_us = static_cast<double>(stats.total_work_time_ns) / stats.total_work_executed / 1000.0;
 
     if (stats.total_steal_attempts > 0)
         stats.steal_success_rate = static_cast<double>(stats.total_steal_successes) / stats.total_steal_attempts * 100.0;
@@ -249,17 +249,17 @@ JobStats::GlobalStats JobStats::aggregate()
     }
 
     // Calculate load imbalance (coefficient of variation)
-    if (!jobs_per_thread.empty())
+    if (!work_per_thread.empty())
     {
-        const double mean = static_cast<double>(stats.total_jobs_executed) / jobs_per_thread.size();
+        const double mean = static_cast<double>(stats.total_work_executed) / work_per_thread.size();
         double variance = 0.0;
 
-        for (const size_t count : jobs_per_thread)
+        for (const size_t count : work_per_thread)
         {
             const double diff = static_cast<double>(count) - mean;
             variance += diff * diff;
         }
-        variance /= jobs_per_thread.size();
+        variance /= work_per_thread.size();
 
         const double std_dev = std::sqrt(variance);
         stats.load_imbalance = (mean > 0) ? (std_dev / mean) : 0.0;
@@ -290,19 +290,19 @@ void JobStats::log() const
     LOGGER_DEBUG("==== Job System Statistics ====");
     LOGGER_DEBUG("Elapsed Time: {:.2f} seconds", global_stats.elapsed_seconds);
 
-    LOGGER_DEBUG("Jobs:");
-    LOGGER_DEBUG("\tSubmitted: {}", global_stats.total_jobs_executed);
-    LOGGER_DEBUG("\tExecuted: {}", global_stats.total_jobs_executed);
-    LOGGER_DEBUG("\tRate: {:.2f} jobs/sec", global_stats.total_jobs_executed / global_stats.elapsed_seconds);
+    LOGGER_DEBUG("Work:");
+    LOGGER_DEBUG("\tSubmitted: {}", global_stats.total_work_executed);
+    LOGGER_DEBUG("\tExecuted: {}", global_stats.total_work_executed);
+    LOGGER_DEBUG("\tRate: {:.2f} work/sec", global_stats.total_work_executed / global_stats.elapsed_seconds);
     LOGGER_DEBUG("\tBy Priority:");
-    LOGGER_DEBUG("\t\tHigh {}", global_stats.jobs_by_priority[2]);
-    LOGGER_DEBUG("\t\tNormal {}", global_stats.jobs_by_priority[1]);
-    LOGGER_DEBUG("\t\tLow {}", global_stats.jobs_by_priority[0]);
+    LOGGER_DEBUG("\t\tHigh {}", global_stats.work_by_priority[2]);
+    LOGGER_DEBUG("\t\tNormal {}", global_stats.work_by_priority[1]);
+    LOGGER_DEBUG("\t\tLow {}", global_stats.work_by_priority[0]);
 
-    LOGGER_DEBUG("Job Execution Time:");
-    LOGGER_DEBUG("\tAverage: {:.2f} μs", global_stats.average_job_time_us);
-    LOGGER_DEBUG("\tMin: {:.2f} μs", global_stats.min_job_time_ns / 1000.f);
-    LOGGER_DEBUG("\tMax: {:.2f} μs", global_stats.max_job_time_ns / 1000.f);
+    LOGGER_DEBUG("Work Execution Time:");
+    LOGGER_DEBUG("\tAverage: {:.2f} μs", global_stats.average_work_time_us);
+    LOGGER_DEBUG("\tMin: {:.2f} μs", global_stats.min_work_time_ns / 1000.f);
+    LOGGER_DEBUG("\tMax: {:.2f} μs", global_stats.max_work_time_ns / 1000.f);
 
     LOGGER_DEBUG("Work Stealing:");
     LOGGER_DEBUG("\tAttempts: {}", global_stats.total_steal_attempts);
@@ -323,9 +323,9 @@ void JobStats::log() const
     {
         auto& stats = thread_stats[i];
         LOGGER_DEBUG("\tThread: {}", i);
-        LOGGER_DEBUG("\t\tJobs Executed: {}", stats.job_executed);
-        LOGGER_DEBUG("\t\tJobs Stolen: {}", stats.jobs_stolen);
-        LOGGER_DEBUG("\t\tJobs Lost: {}", stats.jobs_lost_to_thieves);
+        LOGGER_DEBUG("\t\tWork Executed: {}", stats.work_executed);
+        LOGGER_DEBUG("\t\tWork Stolen: {}", stats.work_stolen);
+        LOGGER_DEBUG("\t\tWork Lost: {}", stats.work_lost_to_thieves);
         std::string steal_success;
         if (stats.steal_attempts > 0)
         {
@@ -339,7 +339,7 @@ void JobStats::log() const
     }
 
     LOGGER_DEBUG("\tMain");
-    LOGGER_DEBUG("\t\tJobs Executed: {}", main_stats.job_executed);
+    LOGGER_DEBUG("\t\tWork Executed: {}", main_stats.work_executed);
 #else
     LOG_ERROR("Attempted to print job statics but `ENABLE_JOB_STATS` is false");
 #endif

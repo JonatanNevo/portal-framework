@@ -360,7 +360,7 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
 
         auto draw_object = [&](const scene::RenderObject& object)
         {
-            TracyVkZone(tracy_context, *current_frame.command_buffer, "Draw object");
+            // TracyVkZone(tracy_context, *current_frame.command_buffer, "Draw object");
             auto material = object.material.lock().as<renderer::vulkan::VulkanMaterial>();
             auto pipeline = material->get_pipeline();
             if (material != last_material)

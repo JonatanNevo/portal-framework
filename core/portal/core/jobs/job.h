@@ -13,6 +13,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
 #include "portal/core/log.h"
+#include "portal/core/debug/profile.h"
 #include "portal/core/jobs/job.h"
 #include "portal/core/memory/stack_allocator.h"
 
@@ -39,7 +40,7 @@ class SuspendJob
 public:
     constexpr bool await_ready() noexcept { return false; }
 
-    void await_suspend(std::coroutine_handle<> handle) noexcept;
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> handle) noexcept;
     void await_resume() noexcept {};
 };
 
@@ -48,7 +49,7 @@ class FinalizeJob
 public:
     constexpr bool await_ready() noexcept { return false; }
 
-    void await_suspend(std::coroutine_handle<> handle) noexcept;
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> handle) noexcept;
     void await_resume() noexcept {};
 };
 
@@ -71,6 +72,29 @@ struct SwitchInformation
 class JobPromise
 {
 public:
+    class JobAwaiter
+    {
+    public:
+        explicit JobAwaiter(const std::coroutine_handle<JobPromise> handle) : handle(handle) {}
+
+        bool await_ready() noexcept;
+        std::coroutine_handle<JobPromise> await_suspend(std::coroutine_handle<> caller) noexcept;
+
+        template <typename T = void> requires (std::is_same_v<T, void>)
+        void await_resume() noexcept {}
+
+        template <typename T> requires (!std::is_same_v<T, void>)
+        std::expected<T, JobResultStatus> await_resume() noexcept
+        {
+            PORTAL_PROF_ZONE("");
+            return std::move(handle.promise().template get_result<T>());
+        }
+
+    private:
+        std::coroutine_handle<JobPromise> handle;
+    };
+
+public:
     JobPromise();
 
     std::suspend_always initial_suspend() noexcept { return {}; }
@@ -81,6 +105,7 @@ public:
     template <typename Result>
     std::expected<Result, JobResultStatus> get_result()
     {
+        PORTAL_PROF_ZONE();
         return std::move(*static_cast<Result*>(result));
     }
 
@@ -89,6 +114,7 @@ public:
     template <typename Result> requires (!std::is_void_v<Result>)
     void initialize_result()
     {
+        PORTAL_PROF_ZONE();
         result = allocate_result(sizeof(Result));
         new(result) Result();
     }
@@ -96,6 +122,7 @@ public:
     template <typename Result> requires (!std::is_void_v<Result>)
     void destroy_result()
     {
+        PORTAL_PROF_ZONE();
         if (result)
         {
             static_cast<Result*>(result)->~Result(); // Explicitly call destructor
@@ -108,16 +135,25 @@ public:
 
     void set_scheduler(jobs::Scheduler* scheduler_ptr) noexcept;
     void set_counter(jobs::Counter* counter_ptr) noexcept;
+    void set_continuation(std::coroutine_handle<> caller) noexcept;
 
+    [[nodiscard]] std::coroutine_handle<> get_continuation() const noexcept { return continuation; }
     [[nodiscard]] static size_t get_allocated_size() noexcept;
     [[nodiscard]] jobs::Counter* get_counter() const noexcept { return counter; }
     [[nodiscard]] jobs::Scheduler* get_scheduler() const noexcept { return scheduler; }
+
+
+    auto operator co_await() noexcept
+    {
+        return JobAwaiter{std::coroutine_handle<JobPromise>::from_promise(*this)};
+    }
 
 protected:
     static void* allocate_result(size_t size) noexcept;
     static void deallocate_result(void* ptr, size_t size) noexcept;
 
 protected:
+    std::coroutine_handle<> continuation;
     void* result = nullptr;
 
     jobs::Counter* counter = nullptr;
@@ -163,6 +199,11 @@ public:
         {
             handle.destroy();
         }
+    }
+
+    auto operator co_await() noexcept
+    {
+        return handle.promise().operator co_await();
     }
 
     void set_dispatched();

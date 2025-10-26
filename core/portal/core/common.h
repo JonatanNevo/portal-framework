@@ -12,13 +12,13 @@
 #include <cassert>
 #include <bit>
 
-#define BIT(x) (1u << (x))
 
+/* Compiler Specification */
 #if defined(__GNUC__)
 #if defined(__clang__)
-        #define PORTAL_COMPILER_CLANG
+#define PORTAL_COMPILER_CLANG
 #else
-        #define PORTAL_COMPILER_GCC
+#define PORTAL_COMPILER_GCC
 #endif
 #elif defined(_MSC_VER)
 #define PORTAL_COMPILER_MSVC
@@ -28,11 +28,11 @@
 #define PORTAL_FORCE_INLINE __forceinline
 #define PORTAL_EXPLICIT_STATIC static
 #elif defined(__GNUC__)
-    #define PORTAL_FORCE_INLINE __attribute__((always_inline)) inline
-    #define PORTAL_EXPLICIT_STATIC static
+#define PORTAL_FORCE_INLINE __attribute__((always_inline)) inline
+#define PORTAL_EXPLICIT_STATIC static
 #else
-    #define PORTAL_FORCE_INLINE inline
-    #define PORTAL_EXPLICIT_STATIC
+#define PORTAL_FORCE_INLINE inline
+#define PORTAL_EXPLICIT_STATIC
 #endif
 
 #if defined(PORTAL_COMPILER_GCC) || defined(PORTAL_COMPILER_CLANG)

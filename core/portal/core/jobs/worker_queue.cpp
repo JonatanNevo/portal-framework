@@ -4,6 +4,8 @@
 //
 #include "worker_queue.h"
 
+#include "portal/core/debug/profile.h"
+
 namespace portal
 {
 
@@ -80,6 +82,7 @@ size_t WorkerQueue::try_pop_bulk(JobBase::handle_type* jobs, size_t max_count)
 
 void WorkerQueue::migrate_jobs_to_stealable()
 {
+    PORTAL_PROF_ZONE();
     constexpr size_t THRESHOLD = 64;  // Keep some work local
     constexpr size_t MOVE_COUNT = 32; // Move this many at a time
 
@@ -139,6 +142,7 @@ void WorkerQueue::migrate_jobs_to_stealable()
 
 size_t WorkerQueue::attempt_steal(JobBase::handle_type* jobs, const size_t max_count)
 {
+    PORTAL_PROF_ZONE();
     size_t total_stolen = 0;
 
     if (stealable_count[static_cast<uint8_t>(JobPriority::High)].load(std::memory_order_acquire) > 0)

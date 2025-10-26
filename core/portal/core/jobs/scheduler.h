@@ -11,8 +11,11 @@
 #include <concurrentqueue/blockingconcurrentqueue.h>
 
 #include "llvm/ADT/SmallVector.h"
+#include "portal/core/debug/profile.h"
+#include "portal/core/jobs/basic_coroutine.h"
 #include "portal/core/jobs/job.h"
 #include "portal/core/jobs/job_stats.h"
+#include "portal/core/jobs/task.h"
 #include "portal/core/jobs/worker_queue.h"
 #include "portal/platform/core/hal/thread.h"
 
@@ -26,6 +29,13 @@ struct Counter
     std::atomic_flag blocking;
 };
 
+enum class WorkerIterationState
+{
+    Executed,
+    FilledCache,
+    EmptyQueue
+};
+
 class Scheduler
 {
 public:
@@ -34,13 +44,6 @@ public:
         WorkerQueue queue;
         std::mt19937 rng{std::random_device{}()};
         size_t worker_id;
-    };
-
-    enum class WorkerIterationState
-    {
-        Executed,
-        FilledCache,
-        EmptyQueue
     };
 
 public:
@@ -66,6 +69,7 @@ public:
     template <typename... Results>
     std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(std::tuple<Job<Results>...> jobs, const JobPriority priority = JobPriority::Normal)
     {
+        PORTAL_PROF_ZONE();
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(std::tuple_size_v<std::tuple<Job<Results>...>>);
 
@@ -92,12 +96,14 @@ public:
     template <typename... Results>
     std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(Job<Results>... jobs, const JobPriority priority = JobPriority::Normal)
     {
+        PORTAL_PROF_ZONE();
         return wait_for_jobs(std::tuple<Job<Results>...>{std::move(jobs)...}, priority);
     }
 
     template <typename Result> requires (!std::is_void_v<Result>)
     auto wait_for_jobs(const std::span<Job<Result>> jobs, const JobPriority priority = JobPriority::Normal)
     {
+        PORTAL_PROF_ZONE();
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(jobs.size());
         for (const auto& job : jobs)
@@ -119,6 +125,7 @@ public:
     template <typename Result> requires std::is_void_v<Result>
     void wait_for_jobs(const std::span<Job<Result>> jobs, const JobPriority priority = JobPriority::Normal)
     {
+        PORTAL_PROF_ZONE();
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(jobs.size());
         for (const auto& job : jobs)
@@ -130,12 +137,14 @@ public:
     template <typename Result> requires std::is_void_v<Result>
     void wait_for_job(Job<Result> job, const JobPriority priority = JobPriority::Normal)
     {
+        PORTAL_PROF_ZONE();
         wait_for_jobs(std::tuple<Job<Result>>{std::move(job)}, priority);
     }
 
     template<typename Result> requires (!std::is_void_v<Result>)
     Result wait_for_job(Job<Result> job, const JobPriority priority = JobPriority::Normal)
     {
+        PORTAL_PROF_ZONE();
         return std::get<0>(wait_for_jobs(std::tuple<Job<Result>>{std::move(job)}, priority)).value();
     }
 
@@ -146,6 +155,7 @@ public:
     template <typename... Results>
     void dispatch_jobs(std::tuple<Job<Results...>> jobs, const JobPriority priority = JobPriority::Normal, Counter* counter = nullptr)
     {
+        PORTAL_PROF_ZONE();
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(std::tuple_size_v<std::tuple<Job<Results...>>>);
         std::apply(
@@ -162,6 +172,7 @@ public:
     template <typename Result>
     void dispatch_jobs(std::span<Job<Result>> jobs, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr)
     {
+        PORTAL_PROF_ZONE();
         llvm::SmallVector<JobBase> job_list;
         job_list.reserve(jobs.size());
         for (const auto& job : jobs)
@@ -173,6 +184,7 @@ public:
     template <typename Result>
     void dispatch_job(Job<Result> job, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr)
     {
+        PORTAL_PROF_ZONE();
         dispatch_job(JobBase::handle_type::from_address(job.handle.address()), priority, counter);
     }
 
@@ -184,7 +196,7 @@ private:
     void worker_thread_loop(const std::stop_token& token, size_t worker_id);
 
     size_t try_steal(JobBase::handle_type* jobs, size_t max_size);
-    void execute_job(const JobBase::handle_type& job);
+    BasicCoroutine execute_job(const JobBase::handle_type& job);
 
     size_t try_dequeue_global(JobBase::handle_type* jobs, size_t max_count) const;
 
