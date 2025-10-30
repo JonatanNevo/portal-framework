@@ -9,6 +9,7 @@
 #include <coroutine>
 #include <expected>
 #include <optional>
+#include <source_location>
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
@@ -30,10 +31,9 @@ namespace jobs
 enum class JobResultStatus
 {
     Unknown,
-    Missing,
+    Missing, // The job has not completed yet
     VoidType
 };
-
 
 class SuspendJob
 {
@@ -106,7 +106,9 @@ public:
     std::expected<Result, JobResultStatus> get_result()
     {
         PORTAL_PROF_ZONE();
-        return std::move(*static_cast<Result*>(result));
+        if (completed)
+            return std::move(*static_cast<Result*>(result));
+        return std::unexpected{JobResultStatus::Missing};
     }
 
     void add_switch_information(SwitchType type);
@@ -142,6 +144,8 @@ public:
     [[nodiscard]] jobs::Counter* get_counter() const noexcept { return counter; }
     [[nodiscard]] jobs::Scheduler* get_scheduler() const noexcept { return scheduler; }
 
+    [[nodiscard]] bool is_completed() const noexcept { return completed; }
+
 
     auto operator co_await() noexcept
     {
@@ -155,11 +159,12 @@ protected:
 protected:
     std::coroutine_handle<> continuation;
     void* result = nullptr;
+    bool completed = false;
 
     jobs::Counter* counter = nullptr;
     jobs::Scheduler* scheduler = nullptr;
 
-    std::vector<SwitchInformation> switch_information;
+    llvm::SmallVector<SwitchInformation> switch_information;
 };
 
 
@@ -183,6 +188,7 @@ public:
 
         if (handle && !dispatched)
         {
+            // LOG_INFO("Destroying handle: 0x{:x}", std::bit_cast<uintptr_t>(handle.address()));
             handle.destroy();
         }
 
@@ -197,6 +203,7 @@ public:
     {
         if (handle && !dispatched)
         {
+            // LOG_INFO("Destroying handle: 0x{:x}", std::bit_cast<uintptr_t>(handle.address()));
             handle.destroy();
         }
     }
@@ -209,6 +216,9 @@ public:
     void set_dispatched();
     void set_scheduler(jobs::Scheduler* scheduler_ptr) const noexcept;
     void set_counter(jobs::Counter* counter_ptr) const noexcept;
+
+    [[nodiscard]] bool is_dispatched() const noexcept { return dispatched; }
+    [[nodiscard]] bool is_completed() const noexcept { return handle.promise().is_completed(); }
 
 protected:
     bool dispatched = false;
@@ -293,6 +303,7 @@ public:
 
     void return_value(Result value)
     {
+        completed = true;
         *static_cast<Result*>(result) = std::move(value);
     }
 };
@@ -307,7 +318,10 @@ public:
         return Job{handle};
     }
 
-    void return_void() noexcept {}
+    void return_void() noexcept
+    {
+        completed = true;
+    }
 };
 
 }

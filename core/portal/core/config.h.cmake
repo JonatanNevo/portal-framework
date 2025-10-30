@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "portal/core/common.h"
+
 /* Platform Specification */
 #cmakedefine PORTAL_PLATFORM_WINDOWS
 #cmakedefine PORTAL_PLATFORM_MACOS

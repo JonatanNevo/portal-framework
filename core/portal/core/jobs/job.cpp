@@ -6,7 +6,10 @@
 #include "job.h"
 
 #include <future>
+#include <iostream>
 #include <memory_resource>
+#include <stacktrace>
+
 
 #include "portal/core/debug/assert.h"
 #include "portal/core/jobs/scheduler.h"
@@ -15,11 +18,12 @@
 namespace portal
 {
 
+constexpr static size_t BUCKET_SIZE = 1024;
 constexpr static size_t JOB_POOL_SIZE = 1024;
 #if defined(PORTAL_TEST)
-static BucketPoolAllocator<544, JOB_POOL_SIZE, SpinLock, true> g_job_promise_allocator{};
+static BucketPoolAllocator<BUCKET_SIZE, JOB_POOL_SIZE, SpinLock, true> g_job_promise_allocator{};
 #else
-static BucketPoolAllocator<544, JOB_POOL_SIZE> g_job_promise_allocator{};
+static BucketPoolAllocator<BUCKET_SIZE, JOB_POOL_SIZE> g_job_promise_allocator{};
 #endif
 
 static std::pmr::synchronized_pool_resource g_job_result_allocator{};
@@ -90,22 +94,29 @@ void JobPromise::unhandled_exception() noexcept
 void JobPromise::add_switch_information(SwitchType type)
 {
     PORTAL_PROF_ZONE();
-    switch_information.push_back(
-        {
-            std::this_thread::get_id(),
-            std::chrono::system_clock::now(),
-            type,
-        }
+    switch_information.emplace_back(
+        std::this_thread::get_id(),
+        std::chrono::system_clock::now(),
+        type
         );
 }
 
 void* JobPromise::operator new([[maybe_unused]] size_t n) noexcept
 {
     PORTAL_PROF_ZONE();
-    PORTAL_ASSERT(n <= g_job_promise_allocator.bucket_size, "Attempting to allocate ({}) more than bucket size ({})", n, g_job_promise_allocator.bucket_size);
+    // PORTAL_ASSERT(
+    //     n <= g_job_promise_allocator.bucket_size,
+    //     "Attempting to allocate ({}) more than bucket size ({})",
+    //     n,
+    //     g_job_promise_allocator.bucket_size
+    //     );
+
     try
     {
-        return g_job_promise_allocator.alloc();
+        auto* ptr = std::malloc(n);
+        return ptr;
+
+        // return g_job_promise_allocator.alloc();
     }
     catch (std::bad_alloc&)
     {
@@ -115,8 +126,8 @@ void* JobPromise::operator new([[maybe_unused]] size_t n) noexcept
 
 void JobPromise::operator delete(void* ptr) noexcept
 {
-    PORTAL_PROF_ZONE();
-    g_job_promise_allocator.free(ptr);
+    std::free(ptr);
+    // g_job_promise_allocator.free(ptr);
 }
 
 void JobPromise::set_scheduler(jobs::Scheduler* scheduler_ptr) noexcept
@@ -160,7 +171,8 @@ bool JobPromise::JobAwaiter::await_ready() noexcept
     return !handle || handle.done();
 }
 
-std::coroutine_handle<JobPromise> JobPromise::JobAwaiter::await_suspend(std::coroutine_handle<> caller) noexcept {
+std::coroutine_handle<JobPromise> JobPromise::JobAwaiter::await_suspend(std::coroutine_handle<> caller) noexcept
+{
     PORTAL_PROF_ZONE();
     handle.promise().set_continuation(caller);
     return handle;
