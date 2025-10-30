@@ -1,103 +1,94 @@
+// //
+// // Copyright © 2025 Jonatan Nevo.
+// // Distributed under the MIT license (see LICENSE file).
+// //
 //
-// Copyright © 2025 Jonatan Nevo.
-// Distributed under the MIT license (see LICENSE file).
+// #pragma once
+// #include <atomic>
+// #include "profile.h"
 //
-
-#pragma once
-#include <atomic>
-#include "profile.h"
-
-namespace portal
-{
-
-template <typename T, typename A>
-constexpr T align(T x, A alignment)
-{
-    return (T)((size_t(x) + (size_t)alignment - 1) & ~((size_t)alignment - 1));
-}
-
-struct AllocationParams
-{
-    std::atomic<uint64_t> allocation_num = 0;
-    std::atomic<size_t> allocated_size = 0;
-};
-
-class DebugAllocator
-{
-public:
-    DebugAllocator() = default;
-    virtual ~DebugAllocator() = default;
-
-    [[nodiscard]] void* allocate(size_t size, size_t alignment);
-    [[nodiscard]] void* reallocate(void* p, size_t size, size_t alignment);
-    void deallocate(void* p) noexcept;
-
-    AllocationParams params{};
-};
-
-/**
- * STD container wrapper for the debug allocator.
- */
-template <typename T>
-class StdDebugAllocator final : DebugAllocator
-{
-public:
-    typedef T value_type;
-    using is_always_equal = std::true_type;
-
-    StdDebugAllocator() = default;
-
-    template <class U>
-    explicit constexpr StdDebugAllocator(const StdDebugAllocator<U>&) noexcept {}
-
-    [[nodiscard]] T* allocate(const size_t n)
-    {
-        return static_cast<T*>(DebugAllocator::allocate(n * sizeof(T), 1));
-    }
-
-    void deallocate(T* p, size_t) noexcept
-    {
-        DebugAllocator::deallocate(p);
-    }
-
-    bool operator==(const DebugAllocator& other) const noexcept
-    {
-        return &other == this;
-    }
-};
-
-
-} // portal
-
-// #if defined(PORTAL_DEBUG_ALLOCATIONS) || defined(PORTAL_PROFILE)
-// inline portal::DebugAllocator& get_allocator() noexcept
+// namespace portal
 // {
-//     static portal::DebugAllocator allocator;
-//     return allocator;
-// }
+// #define PORTAL_DEBUG_ALLOCATIONS
 //
-// void* operator new(const size_t size)
+// struct AllocationParams
 // {
-//     auto& allocator = get_allocator();
-//     return allocator.allocate(size, 1);
+//     std::atomic<uint64_t> allocation_num = 0;
+//     std::atomic<size_t> allocated_size = 0;
 // };
 //
-// void* operator new[](const size_t size)
+// class DebugAllocator
+// {
+// public:
+//     DebugAllocator() = default;
+//     virtual ~DebugAllocator() = default;
+//
+//     [[nodiscard]] void* alloc(size_t size);
+//     void free(void* p) noexcept;
+//
+//     AllocationParams params{};
+// };
+//
+// /**
+//  * STD container wrapper for the debug allocator.
+//  */
+// template <typename T>
+// class StdDebugAllocator final : DebugAllocator
+// {
+// public:
+//     typedef T value_type;
+//     using is_always_equal = std::true_type;
+//
+//     StdDebugAllocator() = default;
+//
+//     template <class U>
+//     explicit constexpr StdDebugAllocator(const StdDebugAllocator<U>&) noexcept {}
+//
+//     [[nodiscard]] T* allocate(const size_t n)
+//     {
+//         return static_cast<T*>(alloc(n * sizeof(T)));
+//     }
+//
+//     void deallocate(T* p, size_t) noexcept
+//     {
+//         DebugAllocator::free(p);
+//     }
+//
+//     bool operator==(const DebugAllocator& other) const noexcept
+//     {
+//         return &other == this;
+//     }
+// };
+//
+//
+// } // portal
+//
+// #if defined(PORTAL_DEBUG_ALLOCATIONS) || defined(PORTAL_PROFILE)
+// portal::DebugAllocator& get_allocator() noexcept;
+//
+// inline void* operator new(const size_t size)
 // {
 //     auto& allocator = get_allocator();
-//     return allocator.allocate(size, 1);
+//     return allocator.alloc(size);
+// };
+//
+// inline void* operator new[](const size_t size)
+// {
+//     auto& allocator = get_allocator();
+//     return allocator.alloc(size);
 // }
 //
-// void operator delete(void* block) noexcept
+// inline void operator delete(void* block) noexcept
 // {
 //     auto& allocator = get_allocator();
-//     allocator.deallocate(block);
+//     allocator.free(block);
 // }
 //
-// void operator delete[](void* block) noexcept
+// inline void operator delete[](void* block) noexcept
 // {
 //     auto& allocator = get_allocator();
-//     allocator.deallocate(block);
+//     allocator.free(block);
 // }
 // #endif
-
+//
+//

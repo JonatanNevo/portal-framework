@@ -137,11 +137,12 @@ TEST_F(JobTest, ResultReturnsErrorWhenJobNotDispatched)
     // Call result() without dispatching the job
     auto result = job.result();
 
-    // The job was never dispatched, so it never ran and never set a result value.
-    // The result storage was initialized with default value (0 for int).
-    // This test verifies we can safely call result() even if the job didn't run.
-    ASSERT_TRUE(result.has_value()) << "Result should be available (default initialized)";
-    EXPECT_EQ(result.value(), 0) << "Result should be default initialized to 0";
+    // The job was never dispatched/executed, so result() should return an error
+    EXPECT_FALSE(result.has_value()) << "Result should not be available if job never ran";
+    if (!result.has_value())
+    {
+        EXPECT_EQ(result.error(), JobResultStatus::Missing) << "Error should indicate job wasn't dispatched";
+    }
 }
 
 TEST_F(JobTest, ResultOnVoidJobReturnsVoidTypeError)
@@ -301,7 +302,7 @@ TEST_F(JobTest, FinalSuspendDecrementsCounterCount)
     // Wait for jobs to complete
     while (counter.count.load(std::memory_order_acquire) > 0)
     {
-        scheduler.worker_thread_iteration();
+        scheduler.main_thread_do_work();
     }
 
     // Counter should be back to 0

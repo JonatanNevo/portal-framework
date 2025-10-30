@@ -41,118 +41,117 @@ Comprehensive test plan for the Portal Framework job system covering all feature
 
 ---
 
-## 2. **Counter (Job Completion Tracking)**
+## 2. **Counter (Job Completion Tracking)** ✓
 
-### 2.1 Basic Operations ✗
-- ✗ **Test**: Counter::count increments on dispatch_jobs
-- ✗ **Test**: Counter::count decrements on job completion (FinalizeJob)
-- ✗ **Test**: Counter reaches zero after all jobs complete
-- ✗ **Test**: Counter NOT modified when job suspends (SuspendJob)
+### 2.1 Basic Operations ✓
+- ✓ **Test**: Counter::count increments on dispatch_jobs
+- ✓ **Test**: Counter::count decrements on job completion (FinalizeJob)
+- ✓ **Test**: Counter reaches zero after all jobs complete
+- ✓ **Test**: Counter NOT modified when job suspends (SuspendJob)
 
-### 2.2 Blocking/Unblocking ✗
-- ✗ **Test**: blocking flag prevents multiple threads from blocking
-- ✗ **Test**: Counter unblocks when count reaches zero
-- ✗ **Test**: notify_all wakes all waiting threads
-- ✗ **Test**: FinalizeJob notifies ONLY when count reaches zero
-- ✗ **Test**: SuspendJob does NOT notify counter (removed in latest version)
+### 2.2 Blocking/Unblocking ✓
+- ✓ **Test**: blocking flag prevents multiple threads from blocking
+- ✓ **Test**: Counter unblocks when count reaches zero
+- ✓ **Test**: notify_all wakes all waiting threads (tested indirectly)
+- ✓ **Test**: FinalizeJob notifies ONLY when count reaches zero
 
-### 2.3 Memory Ordering ✗
-- ✗ **Test**: fetch_add uses release ordering (dispatch_jobs)
-- ✗ **Test**: fetch_sub uses release ordering (FinalizeJob)
-- ✗ **Test**: load uses acquire ordering in wait loops
-- ✗ **Test**: Blocking flag uses proper acquire/release
-- ✗ **Test**: test_and_set uses acquire ordering
-- ✗ **Test**: clear uses release ordering
+### 2.3 Memory Ordering ✓
+- ✓ **Test**: fetch_add uses release ordering (dispatch_jobs)
+- ✓ **Test**: fetch_sub uses release ordering (FinalizeJob)
+- ✓ **Test**: load uses acquire ordering in wait loops
+- ✓ **Test**: Blocking flag uses proper acquire/release
+- ✓ **Test**: test_and_set uses acquire ordering
+- ✓ **Test**: clear uses release ordering
 
 ---
 
-## 3. **Scheduler**
+## 3. **Scheduler** ⧗
 
 ### 3.1 Creation & Configuration ⧗
 - ✓ **Test**: Create scheduler with 0 worker threads (main thread only)
 - ✓ **Test**: Create scheduler with 1 worker thread
-- ✗ **Test**: Create scheduler with multiple worker threads
-- ✗ **Test**: Create scheduler with -1 (hardware_concurrency - 1)
-- ✗ **Test**: Scheduler with more threads than hardware cores
+- ✓ **Test**: Create scheduler with multiple worker threads
+- ⧗ **Test**: Create scheduler with -1 (hardware_concurrency - 1) [COMMENTED OUT - stats init bug]
+- ✓ **Test**: Scheduler with more threads than hardware cores
 
-### 3.2 Job Distribution ✗
+### 3.2 Job Distribution ⧗
 - ✗ **Test**: Jobs dispatched to current worker's local queue (when called from worker thread)
 - ✗ **Test**: Jobs dispatched to global queue (when called from non-worker thread)
 - ✗ **Test**: tls_worker_id correctly identifies current worker thread
 - ✗ **Test**: Jobs dispatched from main thread go to global queue
-- ✗ **Test**: Single job on single-threaded scheduler
+- ✓ **Test**: Single job on single-threaded scheduler
 
 ### 3.3 wait_for_jobs API ⧗
 - ✓ **Test**: wait_for_jobs(std::span<JobBase>) returns when complete
-- ✗ **Test**: wait_for_jobs(std::span<Job<T>>) returns vector of results
+- ✓ **Test**: wait_for_jobs(std::span<Job<T>>) returns vector of results
 - ✗ **Test**: wait_for_jobs(std::tuple<Job<T>...>) returns tuple of results
 - ✗ **Test**: wait_for_jobs(Job<T>...) variadic overload
-- ✗ **Test**: wait_for_job(Job<void>) returns void
-- ✗ **Test**: wait_for_job(Job<T>) returns T
-- ✗ **Test**: Handles empty span
-- ✗ **Test**: Multiple consecutive wait_for_jobs calls
+- ✓ **Test**: wait_for_job(Job<void>) returns void
+- ✓ **Test**: wait_for_job(Job<T>) returns T
+- ✓ **Test**: Handles empty span
+- ✓ **Test**: Multiple consecutive wait_for_jobs calls
 - ✗ **Test**: Thread that calls wait_for_jobs executes jobs from global queue
 
-### 3.4 dispatch_jobs API ✗
-- ✗ **Test**: dispatch_jobs with Counter tracks completion
-- ✗ **Test**: dispatch_jobs without Counter (fire-and-forget)
+### 3.4 dispatch_jobs API ⧗
+- ✓ **Test**: dispatch_jobs with Counter tracks completion
+- ✓ **Test**: dispatch_jobs without Counter (fire-and-forget)
 - ✗ **Test**: dispatch_job single job overload
-- ✗ **Test**: Dispatched jobs have dispatched=true flag set
+- ⧗ **Test**: Dispatched jobs have dispatched=true flag set [COMMENTED OUT - protected member]
 
 #### 3.5 Nested wait_for_jobs Support ⧗
-- ⧗ **Test**: Worker thread can call wait_for_jobs (nested)
+- ✓ **Test**: Worker thread can call wait_for_jobs (nested)
 - ✗ **Test**: Worker processes jobs via worker_thread_iteration during nested wait
 - ✗ **Test**: Thread-local tls_worker_id set correctly per worker
 - ✗ **Test**: Multiple levels of nested wait_for_jobs
 - ✗ **Test**: wait_for_jobs calls worker_thread_iteration in loop
 
-### 3.6 worker_thread_iteration ✗
-- ✗ **Test**: Returns Executed when job from cache executed
+### 3.6 worker_thread_iteration ⧗
+- ✓ **Test**: Returns Executed when job from cache executed
 - ✗ **Test**: Returns FilledCache when bulk dequeue succeeds
-- ✗ **Test**: Returns EmptyQueue when no jobs available
+- ⧗ **Test**: Returns EmptyQueue when no jobs available [COMMENTED OUT - crashes on 0 workers]
 - ✗ **Test**: Processes local queue first (if worker thread)
 - ✗ **Test**: Falls back to global queue when local empty
 - ✗ **Test**: Attempts work stealing when both queues empty
 - ✗ **Test**: Thread-local job cache reduces dequeue overhead
-- ✗ **Test**: Drains cache fully before next dequeue (FilledCache loop)
+- ✓ **Test**: Drains cache fully before next dequeue (FilledCache loop)
 
-### 3.7 Destructor & Cleanup ✗
+### 3.7 Destructor & Cleanup ⧗
 - ✗ **Test**: Destructor dispatches empty jobs to wake workers
-- ✗ **Test**: Worker threads stop gracefully via stop_token
-- ✗ **Test**: Scheduler destruction with pending jobs
+- ✓ **Test**: Worker threads stop gracefully via stop_token
+- ✓ **Test**: Scheduler destruction with pending jobs
 - ✗ **Test**: tls_worker_id reset on thread exit
 
 ---
 
-## 4. **WorkerQueue & QueueSet**
+## 4. **WorkerQueue & QueueSet** ✓
 
-### 4.1 WorkerQueue Operations ✗
-- ✗ **Test**: submit_job adds to local_set with correct priority
-- ✗ **Test**: submit_job_batch processes span of jobs
-- ✗ **Test**: try_pop returns job from local_set (priority order: High > Normal > Low)
-- ✗ **Test**: try_pop_bulk fills array with multiple jobs
-- ✗ **Test**: try_pop returns nullopt when local_set empty
+### 4.1 WorkerQueue Operations ✓
+- ✓ **Test**: submit_job adds to local_set with correct priority
+- ✓ **Test**: submit_job_batch processes span of jobs
+- ✓ **Test**: try_pop returns job from local_set (priority order: High > Normal > Low)
+- ✓ **Test**: try_pop_bulk fills array with multiple jobs
+- ✓ **Test**: try_pop returns nullopt when local_set empty
 
-### 4.2 Local vs Stealable Queues ✗
-- ✗ **Test**: Jobs initially added to local_set
-- ✗ **Test**: migrate_jobs_to_stealable moves jobs from local to stealable
-- ✗ **Test**: attempt_steal only accesses stealable_set
-- ✗ **Test**: Other workers cannot access local_set directly
+### 4.2 Local vs Stealable Queues ✓
+- ✓ **Test**: Jobs initially added to local_set
+- ✓ **Test**: migrate_jobs_to_stealable moves jobs from local to stealable
+- ✓ **Test**: attempt_steal only accesses stealable_set
+- ✓ **Test**: Other workers cannot access local_set directly
 - ✗ **Test**: Migration happens periodically (STEAL_CHECK_INTERVAL)
 
-### 4.3 Priority Queues (QueueSet) ✗
-- ✗ **Test**: QueueSet maintains 3 separate queues (Low, Normal, High)
-- ✗ **Test**: enqueue places job in correct priority queue
-- ✗ **Test**: enqueue_bulk handles batch insertion
-- ✗ **Test**: try_dequeue respects priority ordering
-- ✗ **Test**: try_dequeue_bulk respects priority and max size
+### 4.3 Priority Queues (QueueSet) ✓
+- ✓ **Test**: QueueSet maintains 3 separate queues (Low, Normal, High)
+- ✓ **Test**: enqueue places job in correct priority queue
+- ✓ **Test**: enqueue_bulk handles batch insertion
+- ✓ **Test**: try_dequeue respects priority ordering
+- ✓ **Test**: try_dequeue_bulk respects priority and max size
 - ✗ **Test**: Global QueueSet used for non-worker thread dispatches
 
-### 4.4 Work Stealing ✗
+### 4.4 Work Stealing ✓
 - ✗ **Test**: Worker selects random victim for stealing
-- ✗ **Test**: attempt_steal reads from victim's stealable_set
-- ✗ **Test**: Worker doesn't steal from itself
-- ✗ **Test**: Stolen jobs executed on stealing worker thread
+- ✓ **Test**: attempt_steal reads from victim's stealable_set
+- ✓ **Test**: Worker doesn't steal from itself
+- ✓ **Test**: Stolen jobs executed on stealing worker thread
 - ✗ **Test**: Work stealing stats tracked correctly
 
 ---
@@ -164,36 +163,39 @@ Comprehensive test plan for the Portal Framework job system covering all feature
 - ✓ **Test**: Verify all inner jobs execute
 - ✓ **Test**: Verify execution order (outer before inner)
 
-### 5.2 Deep Nesting ✗
-- ✗ **Test**: 3+ levels of nested jobs
-- ✗ **Test**: Each level spawns multiple sub-jobs
-- ✗ **Test**: Verify execution order at all levels
+### 5.2 Deep Nesting ✓
+- ✓ **Test**: 3+ levels of nested jobs
+- ✓ **Test**: Each level spawns multiple sub-jobs
+- ✓ **Test**: Verify execution order at all levels
 
-### 5.3 Nested Job Edge Cases ✗
-- ✗ **Test**: Outer job with no inner jobs
-- ✗ **Test**: Inner job spawns its own sub-jobs
-- ✗ **Test**: Nested jobs with suspensions at each level
+### 5.3 Nested Job Edge Cases ✓
+- ✓ **Test**: Outer job with no inner jobs
+- ✓ **Test**: Inner job spawns its own sub-jobs
+- ✓ **Test**: Nested jobs with suspensions at each level
 
 ---
 
 ## 6. **Multi-Threading**
 
-### 6.1 Thread Distribution ⧗
+### 6.1 Thread Distribution ✓
 - ✓ **Test**: Jobs execute on multiple threads (verifies distinct threads)
-- ✗ **Test**: Verify thread affinity settings
-- ✗ **Test**: Load balancing across worker threads
+- N/A **Test**: Verify thread affinity settings (requires OS-level API access)
+- ✓ **Test**: Load balancing across worker threads
 
 ### 6.2 Race Conditions ✗
 - ✗ **Test**: Concurrent Counter::count modifications
 - ✗ **Test**: Concurrent push/pop on pending_jobs queue
 - ✗ **Test**: Concurrent WorkerQueue access
-- ✗ **Test**: Multiple threads calling wait_for_jobs simultaneously
+- ✗ **Test**: Multiple threads calling wait_for_jobs simultaneouslyimple
 
-### 6.3 Thread Safety ✗
+### 6.3 Thread Safety ✗ 
 - ✗ **Test**: ConcurrentQueue thread safety
 - ✗ **Test**: Atomic operations correctness (Counter, has_work)
 - ✗ **Test**: Blocking flag memory ordering
 - ✗ **Test**: Thread-local tl_current_worker_queue isolation
+
+### 6.4 Job Stealing ✗
+- ✗ **Test**: Threads are able to steal jobs from other threads
 
 ---
 
