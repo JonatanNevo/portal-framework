@@ -35,7 +35,7 @@ public:
     virtual ~ArchiveObject() = default;
 
     template <typename T> requires (std::integral<T> || std::floating_point<T>) && (!std::is_same_v<T, bool>)
-    void add_property(const PropertyName name, const T& t)
+    void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
             name,
@@ -48,8 +48,55 @@ public:
             );
     }
 
+    template <reflection::SmallVector T>
+    void add_property(const PropertyName& name, const T& t)
+    {
+        if constexpr (Archiveable<typename T::ValueParamT>)
+        {
+            Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
+            for (int i = 0; i < t.size(); ++i)
+            {
+                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                t[i].archive(*object);
+            }
+
+            add_property_to_map(
+                name,
+                {
+                    std::move(buffer),
+                    reflection::PropertyType::object,
+                    reflection::PropertyContainerType::array,
+                    t.size()
+                }
+                );
+        }
+        else
+        {
+            Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
+            for (size_t i = 0; i < t.size(); ++i)
+            {
+                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                object->add_property("v", t[i]);
+            }
+
+            constexpr auto property_type = (reflection::String<typename T::ValueParamT>)
+                ? reflection::PropertyType::null_term_string
+                : reflection::get_property_type<typename T::ValueParamT>();
+
+            add_property_to_map(
+                name,
+                {
+                    std::move(buffer),
+                    property_type,
+                    reflection::PropertyContainerType::array,
+                    t.size()
+                }
+                );
+        }
+    }
+
     template <reflection::Vector T>
-    void add_property(const PropertyName name, const T& t)
+    void add_property(const PropertyName& name, const T& t)
     {
         if constexpr (Archiveable<typename T::value_type>)
         {
@@ -96,7 +143,7 @@ public:
     }
 
     template <reflection::String T>
-    void add_property(const PropertyName name, const T& t)
+    void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
             name,
@@ -110,7 +157,7 @@ public:
     }
 
     template <reflection::GlmVec1 T>
-    void add_property(const PropertyName name, const T& t)
+    void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
             name,
@@ -124,7 +171,7 @@ public:
     }
 
     template <reflection::GlmVec2 T>
-    void add_property(const PropertyName name, const T& t)
+    void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
             name,
@@ -138,7 +185,7 @@ public:
     }
 
     template <reflection::GlmVec3 T>
-    void add_property(const PropertyName name, const T& t)
+    void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
             name,
@@ -152,7 +199,7 @@ public:
     }
 
     template <reflection::GlmVec4 T>
-    void add_property(const PropertyName name, const T& t)
+    void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
             name,
@@ -166,7 +213,7 @@ public:
     }
 
     template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
-    void add_property(const PropertyName name, const T& t)
+    void add_property(const PropertyName& name, const T& t)
     {
         auto* child = create_child(name);
         for (auto& [key, value] : t)
@@ -176,13 +223,10 @@ public:
     }
 
     template <typename T>
-    void add_property(const PropertyName, const T&)
-    {
-        static_assert(false, "Not implemented");
-    }
+    void add_property(const PropertyName&, const T&) = delete;
 
     template <>
-    void add_property<bool>(const PropertyName name, const bool& b)
+    void add_property<bool>(const PropertyName& name, const bool& b)
     {
         add_property_to_map(
             name,
@@ -197,7 +241,7 @@ public:
 
 
     template <>
-    void add_property<uint128_t>(const PropertyName name, const uint128_t& t)
+    void add_property<uint128_t>(const PropertyName& name, const uint128_t& t)
     {
         add_property_to_map(
             name,
@@ -210,12 +254,12 @@ public:
             );
     }
 
-    void add_binary_block(const PropertyName name, const std::vector<std::byte>& data)
+    void add_binary_block(const PropertyName& name, const std::vector<std::byte>& data)
     {
         add_binary_block(name, {data.data(), data.size()});
     }
 
-    void add_binary_block(const PropertyName name, const Buffer& buffer)
+    void add_binary_block(const PropertyName& name, const Buffer& buffer)
     {
         add_property_to_map(
             name,
@@ -229,17 +273,17 @@ public:
     }
 
     template <Archiveable T>
-    void add_property(const PropertyName name, const T& t)
+    void add_property(const PropertyName& name, const T& t)
     {
         auto* child = create_child(name);
         t.archive(*child);
     }
 
     template <typename T>
-    bool get_property(const PropertyName name, T& t);
+    bool get_property(const PropertyName& name, T& t) = delete;
 
     template <>
-    bool get_property<bool>(const PropertyName name, bool& out)
+    bool get_property<bool>(const PropertyName& name, bool& out)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
@@ -250,7 +294,7 @@ public:
     }
 
     template <typename T> requires (std::integral<T>) && (!std::is_same_v<T, bool>)
-    bool get_property(const PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
@@ -261,7 +305,7 @@ public:
     }
 
     template <typename T> requires std::floating_point<T>
-    bool get_property(const PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
@@ -291,7 +335,7 @@ public:
     }
 
     template <>
-    bool get_property<uint128_t>(const PropertyName name, uint128_t& out)
+    bool get_property<uint128_t>(const PropertyName& name, uint128_t& out)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
@@ -302,7 +346,7 @@ public:
     }
 
     template <reflection::Vector T>
-    bool get_property(PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         using ValueType = typename T::value_type;
         out.clear();
@@ -337,8 +381,44 @@ public:
         return true;
     }
 
+    template <reflection::SmallVector T>
+    bool get_property(const PropertyName& name, T& out)
+    {
+        using ValueType = typename T::ValueParamT;
+        out.clear();
+        const auto& [value, type, container_type, elements_number] = property_map[std::string(name)];
+        if (container_type == reflection::PropertyContainerType::invalid)
+            return false;
+
+        PORTAL_ASSERT(container_type == reflection::PropertyContainerType::array, "Property {} container type mismatch", name);
+
+        if constexpr (Archiveable<ValueType>)
+        {
+            auto* objects = value.as<ArchiveObject*>();
+            for (size_t i = 0; i < elements_number; ++i)
+            {
+                out.push_back(ValueType::dearchive(objects[i]));
+            }
+        }
+        else
+        {
+            auto* objects = value.as<ArchiveObject*>();
+            for (size_t i = 0; i < elements_number; ++i)
+            {
+                ValueType v;
+                if (!objects[i].get_property("v", v))
+                {
+                    LOG_ERROR_TAG("Serialization", "Failed to get property from ArchiveObject {}", name);
+                    return false;
+                }
+                out.push_back(static_cast<ValueType>(v));
+            }
+        }
+        return true;
+    }
+
     template <reflection::String T>
-    bool get_property(PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         const auto& [value, type, container_type, elements_number] = property_map[std::string(name)];
         if (type == reflection::PropertyType::invalid)
@@ -362,7 +442,7 @@ public:
     }
 
     template <reflection::GlmVec1 T>
-    bool get_property(PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
@@ -376,7 +456,7 @@ public:
     }
 
     template <reflection::GlmVec2 T>
-    bool get_property(PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
@@ -389,7 +469,7 @@ public:
     }
 
     template <reflection::GlmVec3 T>
-    bool get_property(PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
@@ -402,7 +482,7 @@ public:
     }
 
     template <reflection::GlmVec4 T>
-    bool get_property(PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
@@ -415,7 +495,7 @@ public:
     }
 
     template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
-    bool get_property(const PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         using ValueType = typename T::mapped_type;
         out.clear();
@@ -442,7 +522,7 @@ public:
     }
 
     template <Archiveable T>
-    bool get_property(const PropertyName name, T& out)
+    bool get_property(const PropertyName& name, T& out)
     {
         auto* child = get_object(name);
         if (!child)
@@ -452,7 +532,7 @@ public:
         return true;
     }
 
-    bool get_binary_block(const PropertyName name, Buffer& buffer)
+    bool get_binary_block(const PropertyName& name, Buffer& buffer)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)
@@ -464,7 +544,7 @@ public:
         return true;
     }
 
-    bool get_binary_block(const PropertyName name, std::vector<std::byte>& data)
+    bool get_binary_block(const PropertyName& name, std::vector<std::byte>& data)
     {
         const auto& property = property_map[std::string(name)];
         if (property.type == reflection::PropertyType::invalid)

@@ -8,6 +8,8 @@
 #include <concepts>
 #include <vector>
 #include <string>
+
+#include <llvm/ADT/SmallVector.h>
 #include <portal/core/glm.h>
 
 #include "portal/core/reflection/property.h"
@@ -22,11 +24,20 @@ concept Vector = requires(T t) {
 };
 
 template <typename T>
+concept SmallVector = requires(T t) {
+    typename T::ValueParamT;
+
+    requires std::same_as<T, llvm::SmallVector<typename T::ValueParamT, T::StorageSize>>;
+};
+
+template <typename T>
 concept String = requires(T t) {
     typename T::value_type;
     typename T::traits_type;
-    requires (std::same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>> || std::same_as<
-        T, std::basic_string_view<typename T::value_type, typename T::traits_type>>);
+    requires (
+        std::same_as<T, std::basic_string<typename T::value_type, typename T::traits_type, typename T::allocator_type>>
+        || std::same_as<T, std::basic_string_view<typename T::value_type, typename T::traits_type>>
+    );
 };
 
 template <typename T>
@@ -49,7 +60,7 @@ concept GlmVec4 = requires(T t) {
     requires std::same_as<T, glm::vec4> || std::same_as<T, glm::dvec4> || std::same_as<T, glm::ivec4>;
 };
 
-template<typename T>
+template <typename T>
 concept IsVec = GlmVec1<T> || GlmVec2<T> || GlmVec3<T> || GlmVec4<T>;
 
 template <typename T>

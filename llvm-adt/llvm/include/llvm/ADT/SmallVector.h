@@ -580,9 +580,10 @@ public:
   using reference = typename SuperClass::reference;
   using size_type = typename SuperClass::size_type;
 
-protected:
   using SmallVectorTemplateBase<T>::TakesParamByValue;
   using ValueParamT = typename SuperClass::ValueParamT;
+protected:
+
 
   // Default ctor - Initialize to empty.
   explicit SmallVectorImpl(unsigned N)
@@ -1196,6 +1197,8 @@ template <typename T,
 class LLVM_GSL_OWNER SmallVector : public SmallVectorImpl<T>,
                                    SmallVectorStorage<T, N> {
 public:
+  constexpr static auto StorageSize = N;
+
   SmallVector() : SmallVectorImpl<T>(N) {}
 
   ~SmallVector() {

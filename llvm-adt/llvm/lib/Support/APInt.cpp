@@ -20,7 +20,7 @@
 #include "llvm/ADT/bit.h"
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/Alignment.h"
-#include "llvm/Support/Debug.h"
+
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -2299,8 +2299,6 @@ LLVM_DUMP_METHOD void APInt::dump() const {
   SmallString<40> S, U;
   this->toStringUnsigned(U);
   this->toStringSigned(S);
-  dbgs() << "APInt(" << BitWidth << "b, "
-         << U << "u " << S << "s)\n";
 }
 #endif
 
@@ -2817,12 +2815,9 @@ llvm::APIntOps::SolveQuadraticEquationWrap(APInt A, APInt B, APInt C,
          "Value range width should be less than coefficient width");
   assert(RangeWidth > 1 && "Value range bit width should be > 1");
 
-  LLVM_DEBUG(dbgs() << __func__ << ": solving " << A << "x^2 + " << B
-                    << "x + " << C << ", rw:" << RangeWidth << '\n');
-
   // Identify 0 as a (non)solution immediately.
   if (C.sextOrTrunc(RangeWidth).isZero()) {
-    LLVM_DEBUG(dbgs() << __func__ << ": zero solution\n");
+
     return APInt(CoeffWidth, 0);
   }
 
@@ -2934,9 +2929,6 @@ llvm::APIntOps::SolveQuadraticEquationWrap(APInt A, APInt B, APInt C,
     }
   }
 
-  LLVM_DEBUG(dbgs() << __func__ << ": updated coefficients " << A << "x^2 + "
-                    << B << "x + " << C << ", rw:" << RangeWidth << '\n');
-
   APInt D = SqrB - 4*A*C;
   assert(D.isNonNegative() && "Negative discriminant");
   APInt SQ = D.sqrt();
@@ -2968,7 +2960,7 @@ llvm::APIntOps::SolveQuadraticEquationWrap(APInt A, APInt B, APInt C,
   assert(X.isNonNegative() && "Solution should be non-negative");
 
   if (!InexactSQ && Rem.isZero()) {
-    LLVM_DEBUG(dbgs() << __func__ << ": solution (root): " << X << '\n');
+
     return X;
   }
 
@@ -2989,12 +2981,12 @@ llvm::APIntOps::SolveQuadraticEquationWrap(APInt A, APInt B, APInt C,
   // This could happen when the actual (exact) roots don't have an integer
   // between them, so they would both be contained between X and X+1.
   if (!SignChange) {
-    LLVM_DEBUG(dbgs() << __func__ << ": no valid solution\n");
+
     return std::nullopt;
   }
 
   X += 1;
-  LLVM_DEBUG(dbgs() << __func__ << ": solution (wrap): " << X << '\n');
+
   return X;
 }
 

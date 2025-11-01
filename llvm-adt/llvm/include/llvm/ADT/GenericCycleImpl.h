@@ -330,8 +330,6 @@ void GenericCycleInfo<ContextT>::addBlockToCycle(BlockT *Block, CycleT *Cycle) {
 /// \brief Main function of the cycle info computations.
 template <typename ContextT>
 void GenericCycleInfoCompute<ContextT>::run(BlockT *EntryBlock) {
-  LLVM_DEBUG(errs() << "Entry block: " << Info.Context.print(EntryBlock)
-                    << "\n");
   dfs(EntryBlock);
 
   SmallVector<BlockT *, 8> Worklist;
@@ -351,8 +349,6 @@ void GenericCycleInfoCompute<ContextT>::run(BlockT *EntryBlock) {
     }
 
     // Found a cycle with the candidate as its header.
-    LLVM_DEBUG(errs() << "Found cycle for header: "
-                      << Info.Context.print(HeaderCandidate) << "\n");
     std::unique_ptr<CycleT> NewCycle = std::make_unique<CycleT>();
     NewCycle->appendEntry(HeaderCandidate);
     NewCycle->appendBlock(HeaderCandidate);
@@ -362,7 +358,7 @@ void GenericCycleInfoCompute<ContextT>::run(BlockT *EntryBlock) {
     // block and either add them to the worklist or recognize that the given
     // block is an additional cycle entry.
     auto ProcessPredecessors = [&](BlockT *Block) {
-      LLVM_DEBUG(errs() << "  block " << Info.Context.print(Block) << ": ");
+
 
       bool IsEntry = false;
       for (BlockT *Pred : predecessors(Block)) {
@@ -372,17 +368,17 @@ void GenericCycleInfoCompute<ContextT>::run(BlockT *EntryBlock) {
         } else if (!PredDFSInfo) {
           // Ignore an unreachable predecessor. It will will incorrectly cause
           // Block to be treated as a cycle entry.
-          LLVM_DEBUG(errs() << " skipped unreachable predecessor.\n");
+
         } else {
           IsEntry = true;
         }
       }
       if (IsEntry) {
         assert(!NewCycle->isEntry(Block));
-        LLVM_DEBUG(errs() << "append as entry\n");
+
         NewCycle->appendEntry(Block);
       } else {
-        LLVM_DEBUG(errs() << "append as child\n");
+
       }
     };
 
@@ -395,21 +391,15 @@ void GenericCycleInfoCompute<ContextT>::run(BlockT *EntryBlock) {
       // (possibly by ourself), then the outermost cycle containing it
       // should become our child.
       if (auto *BlockParent = Info.getTopLevelParentCycle(Block)) {
-        LLVM_DEBUG(errs() << "  block " << Info.Context.print(Block) << ": ");
+
 
         if (BlockParent != NewCycle.get()) {
-          LLVM_DEBUG(errs()
-                     << "discovered child cycle "
-                     << Info.Context.print(BlockParent->getHeader()) << "\n");
           // Make BlockParent the child of NewCycle.
           Info.moveTopLevelCycleToNewParent(NewCycle.get(), BlockParent);
 
           for (auto *ChildEntry : BlockParent->entries())
             ProcessPredecessors(ChildEntry);
         } else {
-          LLVM_DEBUG(errs()
-                     << "known child cycle "
-                     << Info.Context.print(BlockParent->getHeader()) << "\n");
         }
       } else {
         Info.BlockMap.try_emplace(Block, NewCycle.get());
@@ -425,8 +415,6 @@ void GenericCycleInfoCompute<ContextT>::run(BlockT *EntryBlock) {
 
   // Fix top-level cycle links and compute cycle depths.
   for (auto *TLC : Info.toplevel_cycles()) {
-    LLVM_DEBUG(errs() << "top-level cycle: "
-                      << Info.Context.print(TLC->getHeader()) << "\n");
 
     TLC->ParentCycle = nullptr;
     updateDepth(TLC);
@@ -452,8 +440,6 @@ void GenericCycleInfoCompute<ContextT>::dfs(BlockT *EntryBlock) {
 
   do {
     BlockT *Block = TraverseStack.back();
-    LLVM_DEBUG(errs() << "DFS visiting block: " << Info.Context.print(Block)
-                      << "\n");
     if (BlockDFSInfo.try_emplace(Block, Counter + 1).second) {
       ++Counter;
 
@@ -461,34 +447,25 @@ void GenericCycleInfoCompute<ContextT>::dfs(BlockT *EntryBlock) {
       // successors to the traversal stack, and remember the traversal stack
       // depth at which the block was opened, so that we can correctly record
       // its end time.
-      LLVM_DEBUG(errs() << "  first encountered at depth "
-                        << TraverseStack.size() << "\n");
 
       DFSTreeStack.emplace_back(TraverseStack.size());
       llvm::append_range(TraverseStack, successors(Block));
 
       BlockPreorder.push_back(Block);
-      LLVM_DEBUG(errs() << "  preorder number: " << Counter << "\n");
+
     } else {
       assert(!DFSTreeStack.empty());
       if (DFSTreeStack.back() == TraverseStack.size()) {
-        LLVM_DEBUG(errs() << "  ended at " << Counter << "\n");
+
         BlockDFSInfo.find(Block)->second.End = Counter;
         DFSTreeStack.pop_back();
       } else {
-        LLVM_DEBUG(errs() << "  already done\n");
+
       }
       TraverseStack.pop_back();
     }
   } while (!TraverseStack.empty());
   assert(DFSTreeStack.empty());
-
-  LLVM_DEBUG(
-    errs() << "Preorder:\n";
-    for (int i = 0, e = BlockPreorder.size(); i != e; ++i) {
-      errs() << "  " << Info.Context.print(BlockPreorder[i]) << ": " << i << "\n";
-    }
-  );
 }
 
 /// \brief Reset the object to its initial state.
@@ -504,8 +481,6 @@ void GenericCycleInfo<ContextT>::compute(FunctionT &F) {
   GenericCycleInfoCompute<ContextT> Compute(*this);
   Context = ContextT(&F);
 
-  LLVM_DEBUG(errs() << "Computing cycles for function: " << F.getName()
-                    << "\n");
   Compute.run(&F.front());
 }
 

@@ -17,7 +17,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Config/config.h"
 #include "llvm/Config/llvm-config.h" // for LLVM_ENABLE_THREADS
-#include "llvm/Support/Debug.h"
+
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/Process.h"
@@ -221,21 +221,7 @@ void llvm::install_out_of_memory_new_handler() {
 
 void llvm::llvm_unreachable_internal(const char *msg, const char *file,
                                      unsigned line) {
-  // This code intentionally doesn't call the ErrorHandler callback, because
-  // llvm_unreachable is intended to be used to indicate "impossible"
-  // situations, and not legitimate runtime errors.
-  if (msg)
-    dbgs() << msg << "\n";
-  dbgs() << "UNREACHABLE executed";
-  if (file)
-    dbgs() << " at " << file << ":" << line;
-  dbgs() << "!\n";
-  abort();
-#ifdef LLVM_BUILTIN_UNREACHABLE
-  // Windows systems and possibly others don't declare abort() to be noreturn,
-  // so use the unreachable builtin to avoid a Clang self-host warning.
-  LLVM_BUILTIN_UNREACHABLE;
-#endif
+
 }
 
 static void bindingsErrorHandler(void *user_data, const char *reason,

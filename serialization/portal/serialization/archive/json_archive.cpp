@@ -32,7 +32,7 @@ void JsonArchive::dump(const std::filesystem::path& output_path)
 
 void JsonArchive::dump(std::ostream& output)
 {
-    output << prepare_json();
+    output << std::setw(4) << prepare_json();
 }
 
 void JsonArchive::read(const std::filesystem::path& input_path)

@@ -66,6 +66,8 @@ public:
     Scheduler& operator=(const Scheduler&) = delete;
     Scheduler& operator=(Scheduler&&) = delete;
 
+    void wait_for_counter(Counter& counter);
+
     // Execute all jobs in the job list, then free the job list object
     // this takes possession of the job list object, and acts as if it was
     // a blocking call.
