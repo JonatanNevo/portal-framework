@@ -5,10 +5,12 @@
 
 #include "descriptor_allocator.h"
 
+#include "portal/core/debug/assert.h"
+
 namespace portal::vulkan
 {
 
-DescriptorAllocator::DescriptorAllocator(vk::raii::Device* device, const uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios)
+DescriptorAllocator::DescriptorAllocator(const vk::raii::Device& device, const uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios)
     : sets_per_pool(static_cast<uint32_t>(max_sets * 1.5)),
       device(device)
 {
@@ -23,7 +25,7 @@ DescriptorAllocator::DescriptorAllocator(DescriptorAllocator&& other) noexcept
       full_pools(std::exchange(other.full_pools, {})),
       ready_pools(std::exchange(other.ready_pools, {})),
       sets_per_pool(std::exchange(other.sets_per_pool, 0)),
-      device(std::exchange(other.device, nullptr))
+      device(other.device)
 {}
 
 DescriptorAllocator& DescriptorAllocator::operator=(DescriptorAllocator&& other) noexcept
@@ -31,12 +33,13 @@ DescriptorAllocator& DescriptorAllocator::operator=(DescriptorAllocator&& other)
     if (&other == this)
         return *this;
 
+    PORTAL_ASSERT(&device == &other.device, "Cannot move from one device to another");
+
     clear_pools();
     ratios = std::exchange(other.ratios, {});
     full_pools = std::exchange(other.full_pools, {});
     ready_pools = std::exchange(other.ready_pools, {});
     sets_per_pool = std::exchange(other.sets_per_pool, 0);
-    device = std::exchange(other.device, nullptr);
 
     return *this;
 }
@@ -70,7 +73,7 @@ std::vector<vk::raii::DescriptorSet> DescriptorAllocator::handle_pool_resize(
     full_pools.push_back(std::move(descriptor_pool));
     descriptor_pool = get_pool();
     info.descriptorPool = descriptor_pool;
-    return device->allocateDescriptorSets(info);
+    return device.allocateDescriptorSets(info);
 }
 
 vk::raii::DescriptorSet DescriptorAllocator::allocate(const vk::DescriptorSetLayout& layout)
@@ -85,7 +88,7 @@ vk::raii::DescriptorSet DescriptorAllocator::allocate(const vk::DescriptorSetLay
     std::vector<vk::raii::DescriptorSet> sets;
     try
     {
-        sets = device->allocateDescriptorSets(info);
+        sets = device.allocateDescriptorSets(info);
     }
     catch (vk::OutOfPoolMemoryError&)
     {
@@ -139,6 +142,6 @@ vk::raii::DescriptorPool DescriptorAllocator::create_pool(const uint32_t set_cou
         .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
         .pPoolSizes = pool_sizes.data()
     };
-    return device->createDescriptorPool(pool_info);
+    return device.createDescriptorPool(pool_info);
 }
 } // portal

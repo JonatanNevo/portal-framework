@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#include "portal/engine/reference.h"
 #include "portal/engine/renderer/descriptors/uniform_buffer.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 
@@ -13,8 +14,7 @@ namespace portal::renderer::vulkan
 class VulkanUniformBuffer final : public UniformBuffer
 {
 public:
-    VulkanUniformBuffer() = default;
-    VulkanUniformBuffer(size_t size, const Ref<VulkanDevice>& device);
+    VulkanUniformBuffer(size_t size, const VulkanDevice& device);
     ~VulkanUniformBuffer() override;
 
     void set_data(Buffer data, size_t offset) override;
@@ -33,24 +33,24 @@ private:
     Buffer local_storage = nullptr;
     vk::DescriptorBufferInfo descriptor_buffer_info;
 
-    Ref<VulkanDevice> device;
+    const VulkanDevice& device;
 };
 
 class VulkanUniformBufferSet final : public UniformBufferSet
 {
 public:
-    VulkanUniformBufferSet(size_t buffer_size, size_t size, const Ref<VulkanDevice>& device);
+    VulkanUniformBufferSet(size_t buffer_size, size_t size, const VulkanDevice& device);
 
-    Ref<UniformBuffer> get(size_t index) override;
-    void set(Ref<UniformBuffer> buffer, size_t index) override;
+    Reference<UniformBuffer> get(size_t index) override;
+    void set(const Reference<UniformBuffer>& buffer, size_t index) override;
 
     void set_data(Buffer data, size_t offset) override;
     const Buffer& get_data() const override;
 
 private:
-    std::unordered_map<size_t, Ref<VulkanUniformBuffer>> buffers;
+    std::unordered_map<size_t, Reference<VulkanUniformBuffer>> buffers;
 
-    Ref<VulkanDevice> device;
+    const VulkanDevice& device;
 };
 
 } // portal

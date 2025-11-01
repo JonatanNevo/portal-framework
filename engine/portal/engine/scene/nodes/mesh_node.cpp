@@ -20,7 +20,7 @@ void MeshNode::draw(const glm::mat4& top_matrix, DrawContext& context)
             .index_count = count,
             .first_index = start_index,
             .index_buffer = mesh->mesh_data.index_buffer,
-            .material = material,
+            .material = material.underlying(),
             .bounds = bounds,
             .transform = node_matrix,
             .vertex_buffer_address = mesh->mesh_data.vertex_buffer_address,

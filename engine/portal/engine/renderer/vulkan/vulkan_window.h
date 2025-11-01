@@ -6,7 +6,7 @@
 #pragma once
 #include <GLFW/glfw3.h>
 
-#include "portal/core/reference.h"
+#include "portal/engine/reference.h"
 #include "portal/engine/application/window.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 
@@ -25,7 +25,7 @@ namespace portal::renderer::vulkan
 class VulkanWindow final : public Window
 {
 public:
-    VulkanWindow(const Ref<VulkanContext>& context, const WindowSpecification& spec);
+    VulkanWindow(const VulkanContext& context, const WindowSpecification& spec);
     ~VulkanWindow() override;
 
     void process_events() override;
@@ -48,7 +48,7 @@ public:
     void set_title(StringId title) override;
     [[nodiscard]] StringId get_title() const override;
 
-    [[nodiscard]] VulkanSwapchain& get_swapchain();
+    [[nodiscard]] VulkanSwapchain& get_swapchain() const;
     void set_event_callback(std::function<void(Event&)> callback) override;
 
     // TODO: temp!!!
@@ -62,14 +62,14 @@ private:
         std::function<void(Event&)> event_callback;
     };
 
-    VulkanSwapchain swapchain;
+    Reference<VulkanSwapchain> swapchain;
 
     GLFWcursor* cursors[9] = {};
     WindowSpecification spec;
 
     WindowData data{};
 
-    Ref<VulkanContext> context;
+    const VulkanContext& context;
 };
 
 }

@@ -7,29 +7,24 @@
 
 #include "portal/core/buffer_stream.h"
 
-namespace portal
+namespace portal::resources
 {
 
-resources::MemorySource::MemorySource(Buffer&& data, const SourceMetadata& metadata) : metadata(metadata), data(std::move(data))
-{}
+MemorySource::MemorySource(Buffer&& data) : data(data) {}
 
-resources::SourceMetadata resources::MemorySource::get_meta() const
-{
-    return metadata;
-}
-
-Buffer resources::MemorySource::load()
+Buffer MemorySource::load() const
 {
     return data;
 }
 
-Buffer resources::MemorySource::load(const size_t offset, const size_t size)
+Buffer MemorySource::load(const size_t offset, const size_t size) const
 {
-    return Buffer(data, offset, size);
+    return {data, offset, size};
 }
 
-std::unique_ptr<std::istream> resources::MemorySource::stream()
+std::unique_ptr<std::istream> MemorySource::stream() const
 {
     return std::make_unique<BufferStreamReader>(data);
 }
+
 } // portal

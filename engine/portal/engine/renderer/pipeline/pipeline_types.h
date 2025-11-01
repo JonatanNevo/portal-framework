@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <portal/core/reference.h>
+
 #include "portal/engine/strings/string_id.h"
 
 namespace portal::renderer {

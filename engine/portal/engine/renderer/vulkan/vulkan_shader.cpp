@@ -18,15 +18,10 @@ namespace portal::renderer::vulkan
 
 static auto logger = Log::get_logger("Vulkan");
 
-VulkanShader::VulkanShader(StringId id) : Shader(id)
+VulkanShader::VulkanShader(const StringId& id, const VulkanContext& context) : Shader(id), context(context)
 {}
 
-void VulkanShader::initialize(const Ref<VulkanContext>& new_context)
-{
-    context = new_context;
-}
-
-WeakRef<ShaderVariant> VulkanShader::get_shader(uint64_t shader_hash)
+WeakReference<ShaderVariant> VulkanShader::get_shader(uint64_t shader_hash)
 {
     if (!shaders.contains(shader_hash))
     {
@@ -36,7 +31,7 @@ WeakRef<ShaderVariant> VulkanShader::get_shader(uint64_t shader_hash)
 
     if (!variant_map.contains(shader_hash))
     {
-        auto [shader_iter, success] = variant_map.emplace(shader_hash, Ref<VulkanShaderVariant>::create(id, context));
+        auto [shader_iter, success] = variant_map.emplace(shader_hash, make_reference<VulkanShaderVariant>(id, context));
         if (!success)
         {
             LOGGER_ERROR("Failed to create shader variant: {}", id);
@@ -48,12 +43,12 @@ WeakRef<ShaderVariant> VulkanShader::get_shader(uint64_t shader_hash)
         shader->load(std::move(shader_data));
     }
 
-    return variant_map[shader_hash].as<ShaderVariant>();
+    return reference_cast<ShaderVariant>(variant_map[shader_hash]);
 }
 
-VulkanShaderVariant::VulkanShaderVariant(const StringId& name, const Ref<VulkanContext>& context) :
+VulkanShaderVariant::VulkanShaderVariant(const StringId& name, const VulkanContext& context) :
     name(name),
-    device(context->get_device())
+    device(context.get_device())
 {}
 
 VulkanShaderVariant::~VulkanShaderVariant()
@@ -118,7 +113,7 @@ void VulkanShaderVariant::load(CompiledShader&& compiled_shader)
     std::string module_name;
     for (auto& [stage, entry_point] : code.reflection.stages)
     {
-        auto& shader_module = shader_modules.emplace_back(device->create_shader_module(code.code));
+        auto& shader_module = shader_modules.emplace_back(device.create_shader_module(code.code));
         shader_stage_create_infos.emplace_back(
             vk::PipelineShaderStageCreateInfo{
                 .stage = to_shader_stage(stage),
@@ -328,7 +323,7 @@ void VulkanShaderVariant::create_descriptors()
             );
 
         builder.set_name(STRING_ID(fmt::format("{}_layout_{}", name.string, set)));
-        descriptor_layouts.emplace_back(device->create_descriptor_set_layout(builder));
+        descriptor_layouts.emplace_back(device.create_descriptor_set_layout(builder));
     }
 }
 

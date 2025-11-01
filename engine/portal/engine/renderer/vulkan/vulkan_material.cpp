@@ -11,33 +11,25 @@
 #include "portal/engine/renderer/image/image.h"
 
 #include "portal/engine/renderer/descriptors/descriptor_set_manager.h"
+#include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_shader.h"
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"
-#include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "portal/engine/renderer/vulkan/descriptors/vulkan_storage_buffer.h"
 
 namespace portal::renderer::vulkan
 {
 
-VulkanMaterial::~VulkanMaterial()
+VulkanMaterial::VulkanMaterial(const MaterialSpecification& spec, const VulkanContext& context): Material(spec.id), spec(spec), device(context.get_device())
 {
-    buffers.clear();
-}
-
-void VulkanMaterial::initialize(const MaterialSpecification& new_spec, const Ref<VulkanContext>& context)
-{
-    spec = new_spec;
-    id = new_spec.id;
-    device = context->get_device();
-    shader_variant = spec.shader.as<VulkanShaderVariant>();
+    shader_variant = reference_cast<VulkanShaderVariant, ShaderVariant>(spec.shader);
 
     // TODO: register dependency on shader
 
     const DescriptorSetManagerSpecification descriptor_spec{
         .shader = shader_variant,
         .debug_name = id,
-        .start_set = new_spec.set_start_index,
-        .end_set = new_spec.set_end_index,
+        .start_set = spec.set_start_index,
+        .end_set = spec.set_end_index,
         .default_texture = spec.default_texture,
         .frame_in_flights = 3 // TODO: get it from somewhere?
     };
@@ -49,7 +41,7 @@ void VulkanMaterial::initialize(const MaterialSpecification& new_spec, const Ref
         {
         case DescriptorType::CombinedImageSampler:
         {
-            descriptor_manager->set_input(name, new_spec.default_texture);
+            descriptor_manager->set_input(name, spec.default_texture);
             break;
         }
         default:
@@ -63,47 +55,57 @@ void VulkanMaterial::initialize(const MaterialSpecification& new_spec, const Ref
     descriptor_manager->bake();
 }
 
-void VulkanMaterial::set_pipeline(const Ref<VulkanPipeline>& new_pipeline)
+VulkanMaterial::~VulkanMaterial()
+{
+    buffers.clear();
+}
+
+void VulkanMaterial::set_pipeline(const Reference<VulkanPipeline>& new_pipeline)
 {
     pipeline = new_pipeline;
 }
 
-Ref<VulkanPipeline> VulkanMaterial::get_pipeline() const
+Reference<VulkanPipeline> VulkanMaterial::get_pipeline() const
 {
     return pipeline;
 }
 
-void VulkanMaterial::set(const StringId bind_point, const Ref<Texture> texture)
+void VulkanMaterial::set(const StringId bind_point, const ResourceReference<Texture>& texture)
+{
+    set(bind_point, texture.underlying());
+}
+
+void VulkanMaterial::set(const StringId bind_point, const Reference<Texture>& texture)
 {
     descriptor_manager->set_input(bind_point, texture);
 }
 
-void VulkanMaterial::set(const StringId bind_point, const Ref<Image> image)
+void VulkanMaterial::set(const StringId bind_point, const Reference<Image>& image)
 {
     descriptor_manager->set_input(bind_point, image);
 }
 
-void VulkanMaterial::set(const StringId bind_point, const Ref<ImageView> image)
+void VulkanMaterial::set(const StringId bind_point, const Reference<ImageView>& image)
 {
     descriptor_manager->set_input(bind_point, image);
 }
 
-Ref<Texture> VulkanMaterial::get_texture(const StringId bind_point)
+Reference<Texture> VulkanMaterial::get_texture(const StringId bind_point)
 {
-    return descriptor_manager->get_input(bind_point).as<Texture>();
+    return descriptor_manager->get_input<portal::renderer::Texture>(bind_point);
 }
 
-Ref<Image> VulkanMaterial::get_image(const StringId bind_point)
+Reference<Image> VulkanMaterial::get_image(const StringId bind_point)
 {
-    return descriptor_manager->get_input(bind_point).as<Image>();
+    return descriptor_manager->get_input<portal::renderer::Image>(bind_point);
 }
 
-Ref<ImageView> VulkanMaterial::get_image_view(const StringId bind_point)
+Reference<ImageView> VulkanMaterial::get_image_view(const StringId bind_point)
 {
-    return descriptor_manager->get_input(bind_point).as<ImageView>();
+    return descriptor_manager->get_input<portal::renderer::ImageView>(bind_point);
 }
 
-Ref<ShaderVariant> VulkanMaterial::get_shader()
+Reference<ShaderVariant> VulkanMaterial::get_shader()
 {
     return shader_variant;
 }
@@ -113,13 +115,18 @@ StringId VulkanMaterial::get_id()
     return id;
 }
 
-vk::DescriptorSet VulkanMaterial::get_descriptor_set(const size_t index)
+vk::DescriptorSet VulkanMaterial::get_descriptor_set(const size_t index) const
 {
     if (descriptor_manager->get_first_set_index() == std::numeric_limits<size_t>::max())
         return nullptr;
 
     descriptor_manager->invalidate_and_update(index);
     return descriptor_manager->get_descriptor_sets(index)[0];
+}
+
+bool VulkanMaterial::operator==(const VulkanMaterial& other) const
+{
+    return id == other.id;
 }
 
 
@@ -200,9 +207,9 @@ void VulkanMaterial::allocate_storage()
             auto& data = shader_variant->get_reflection().descriptor_sets[resource.set].uniform_buffers.at(resource.binding_index);
             buffer_uniforms = get_uniform_pointer(data);
 
-            auto buffer = Ref<VulkanUniformBuffer>::create(data.size, device);
-            buffers[resource.name] = buffer.as<BufferDescriptor>();
-            descriptor_manager->set_input(data.name, buffer.as<UniformBuffer>());
+            auto buffer = make_reference<VulkanUniformBuffer>(data.size, device);
+            buffers[resource.name] = reference_cast<BufferDescriptor>(buffer);
+            descriptor_manager->set_input(data.name, reference_cast<UniformBuffer>(buffer));
         }
 
         if (resource.type == DescriptorType::StorageBuffer)
@@ -215,9 +222,10 @@ void VulkanMaterial::allocate_storage()
                 .gpu_only = false,
                 .debug_name = STRING_ID("storage buffer")
             };
-            auto buffer = Ref<VulkanStorageBuffer>::create(buf_spec, device);
-            buffers[resource.name] = buffer.as<BufferDescriptor>();
-            descriptor_manager->set_input(data.name, buffer.as<StorageBuffer>());
+
+            auto buffer = make_reference<VulkanStorageBuffer>(buf_spec, device);
+            buffers[resource.name] = reference_cast<BufferDescriptor>(buffer);
+            descriptor_manager->set_input(data.name, reference_cast<StorageBuffer>(buffer));
         }
 
         if (!buffer_uniforms.empty())

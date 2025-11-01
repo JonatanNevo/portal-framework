@@ -7,7 +7,6 @@
 #include <unordered_set>
 #include <vulkan/vulkan_raii.hpp>
 
-#include "portal/core/reference.h"
 
 namespace portal::renderer::vulkan
 {
@@ -22,7 +21,7 @@ constexpr std::array DEVICE_EXTENSIONS = {
 
 class VulkanDevice;
 
-class VulkanPhysicalDevice final : public RefCounted
+class VulkanPhysicalDevice final
 {
 public:
     struct QueueFamilyIndices

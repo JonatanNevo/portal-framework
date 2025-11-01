@@ -7,10 +7,9 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
-#include "../base/builder_base.h"
+#include "portal/engine/reference.h"
 #include "portal/engine/renderer/image/image.h"
 #include "portal/engine/renderer/vulkan/allocated_image.h"
-#include "portal/engine/renderer/vulkan/gpu_context.h"
 #include "portal/engine/renderer/vulkan/base/allocated.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_sampler.h"
 
@@ -22,19 +21,18 @@ struct VulkanImageInfo
 {
     AllocatedImage image = nullptr;
     vk::raii::ImageView view = nullptr;
-    Ref<VulkanSampler> sampler = nullptr;
+    Reference<VulkanSampler> sampler = nullptr;
 };
 
 class VulkanImage final : public Image
 {
 public:
-    VulkanImage(const image::Specification& spec, const Ref<VulkanContext>& context);
+    VulkanImage(const image::Specification& spec, const VulkanContext& context);
+    ~VulkanImage() override;
 
     void resize(size_t width, size_t height) override;
 
-    void initialize() override;
-    void release() override;
-    bool is_image_valid() const;
+    [[nodiscard]] bool is_image_valid() const;
 
     [[nodiscard]] size_t get_width() const override;
     [[nodiscard]] size_t get_height() const override;
@@ -67,7 +65,11 @@ public:
     void update_descriptor();
 
 private:
-    Ref<VulkanDevice> device;
+    void initialize();
+    void release();
+
+private:
+    const VulkanDevice& device;
     image::Specification spec;
 
     Buffer image_data;

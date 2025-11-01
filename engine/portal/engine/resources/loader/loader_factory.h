@@ -4,35 +4,47 @@
 //
 
 #pragma once
+#include <memory>
 
-#include <complex.h>
-
+#include "llvm/ADT/DenseMap.h"
+#include "portal/engine/resources/resource_types.h"
+#include "../database/resource_database.h"
 #include "loader.h"
-#include "portal/engine/resources/loader/texture_loader.h"
-#include "portal/engine/resources/source/resource_source.h"
 
 namespace portal
 {
-namespace renderer::vulkan {
-    class GpuContext;
+class RendererContext;
+class ResourceRegistry;
 }
 
-class ResourceRegistry;
+namespace portal::renderer::vulkan
+{
+class VulkanContext;
 }
 
 namespace portal::resources
 {
 
+class StubLoader final : public ResourceLoader
+{
+public:
+    explicit StubLoader(ResourceRegistry& registry) : ResourceLoader(registry) {}
+
+    Reference<Resource> load(const SourceMetadata&, const ResourceSource&) override { return nullptr; };
+};
+
+
 class LoaderFactory
 {
 public:
-    void initialize(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context);
-    void shutdown();
-    std::shared_ptr<ResourceLoader> get(ResourceType type);
+    LoaderFactory(ResourceRegistry& registry, RendererContext& context);
 
-private:
-    std::shared_ptr<renderer::vulkan::GpuContext> gpu_context;
-    std::shared_ptr<StubLoader> stub_loader;
+    ResourceLoader& get(const SourceMetadata& meta);
+
+protected:
+    StubLoader stub_loader;
+    llvm::DenseMap<ResourceType, std::unique_ptr<ResourceLoader>> loaders;
+    RendererContext& context;
 };
 
-}
+} // portal

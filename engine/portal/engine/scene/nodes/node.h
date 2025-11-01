@@ -9,7 +9,7 @@
 
 #include <portal/core/glm.h>
 
-#include "portal/core/reference.h"
+#include "portal/engine/reference.h"
 #include "portal/engine/strings/string_id.h"
 
 namespace portal::scene {
@@ -19,13 +19,14 @@ struct DrawContext;
 namespace portal::scene
 {
 
-struct Node: RefCounted
+struct Node
 {
+    virtual ~Node() = default;
     explicit Node(const StringId& id);
 
     StringId id;
-    WeakRef<Node> parent;
-    std::vector<Ref<Node>> children;
+    WeakReference<Node> parent;
+    std::vector<Reference<Node>> children;
 
     glm::mat4 local_transform;
     glm::mat4 world_transform;

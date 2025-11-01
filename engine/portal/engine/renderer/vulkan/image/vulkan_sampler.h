@@ -16,7 +16,7 @@ class VulkanDevice;
 class VulkanSampler final : public Sampler
 {
 public:
-    VulkanSampler(const StringId& id, const SamplerSpecification& spec, Ref<VulkanDevice> device);
+    VulkanSampler(const StringId& id, const SamplerSpecification& spec, const VulkanDevice& device);
 
     vk::Sampler get_vk_sampler() const;
     [[nodiscard]] const SamplerSpecification& get_spec() const override;

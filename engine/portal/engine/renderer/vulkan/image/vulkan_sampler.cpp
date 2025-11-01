@@ -12,7 +12,7 @@
 namespace portal::renderer::vulkan
 {
 
-VulkanSampler::VulkanSampler(const StringId& id, const SamplerSpecification& spec, Ref<VulkanDevice> device) : id(id), spec(spec)
+VulkanSampler::VulkanSampler(const StringId& id, const SamplerSpecification& spec, const VulkanDevice& device) : id(id), spec(spec)
 {
     const vk::SamplerCreateInfo sampler_info{
         .magFilter = to_filter(spec.filter),
@@ -28,8 +28,8 @@ VulkanSampler::VulkanSampler(const StringId& id, const SamplerSpecification& spe
         .borderColor = vk::BorderColor::eFloatOpaqueWhite,
     };
 
-    sampler = device->create_sampler(sampler_info);
-    device->set_debug_name(sampler, id);
+    sampler = device.create_sampler(sampler_info);
+    device.set_debug_name(sampler, id);
 }
 
 vk::Sampler VulkanSampler::get_vk_sampler() const

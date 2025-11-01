@@ -6,7 +6,6 @@
 #pragma once
 
 #include "node.h"
-#include "portal/core/reference.h"
 #include "portal/engine/resources/resources/mesh.h"
 
 namespace portal::scene
@@ -15,12 +14,12 @@ namespace portal::scene
 class MeshNode final : public Node
 {
 public:
-    explicit MeshNode(const StringId& id)
+    explicit MeshNode(const StringId& id, const ResourceReference<Mesh>& mesh)
         : Node(id),
-          mesh(nullptr) {}
+          mesh(mesh) {}
 
     void draw(const glm::mat4& top_matrix, DrawContext& context) override;
 
-    Ref<Mesh> mesh;
+    ResourceReference<Mesh> mesh;
 };
 }

@@ -10,7 +10,7 @@
 
 namespace portal::renderer::vulkan
 {
-VulkanUniformBuffer::VulkanUniformBuffer(const size_t size, const Ref<VulkanDevice>& device) : size(size), device(device)
+VulkanUniformBuffer::VulkanUniformBuffer(const size_t size, const VulkanDevice& device) : UniformBuffer(INVALID_STRING_ID), size(size), device(device)
 {
     init();
 }
@@ -56,7 +56,7 @@ void VulkanUniformBuffer::init()
            .with_usage(vk::BufferUsageFlagBits::eUniformBuffer)
            .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
            .with_debug_name("uniform_buffer");
-    buffer = device->create_buffer(builder);
+    buffer = device.create_buffer(builder);
     [[maybe_unused]] const auto written = buffer.update(local_storage, 0);
     PORTAL_ASSERT(written == size, "Failed to update buffer");
 
@@ -67,23 +67,23 @@ void VulkanUniformBuffer::init()
     };
 }
 
-VulkanUniformBufferSet::VulkanUniformBufferSet(size_t buffer_size, const size_t size, const Ref<VulkanDevice>& device)
+VulkanUniformBufferSet::VulkanUniformBufferSet(size_t buffer_size, const size_t size, const VulkanDevice& device) : UniformBufferSet(INVALID_STRING_ID), device(device)
 {
     for (size_t i = 0; i < size; i++)
     {
-        buffers[i] = Ref<VulkanUniformBuffer>::create(buffer_size, device);
+        buffers[i] = make_reference<VulkanUniformBuffer>(buffer_size, device);
     }
 }
 
-Ref<UniformBuffer> VulkanUniformBufferSet::get(const size_t index)
+Reference<UniformBuffer> VulkanUniformBufferSet::get(const size_t index)
 {
     PORTAL_ASSERT(buffers.contains(index), "Invalid buffer index");
     return buffers[index];
 }
 
-void VulkanUniformBufferSet::set(const Ref<UniformBuffer> buffer, const size_t index)
+void VulkanUniformBufferSet::set(const Reference<UniformBuffer>& buffer, const size_t index)
 {
-    buffers[index] = buffer.as<VulkanUniformBuffer>();
+    buffers[index] = reference_cast<VulkanUniformBuffer>(buffer);
 }
 
 void VulkanUniformBufferSet::set_data([[maybe_unused]] Buffer data, [[maybe_unused]] size_t offset)

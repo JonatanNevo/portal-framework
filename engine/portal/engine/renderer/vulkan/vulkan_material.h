@@ -22,26 +22,28 @@ class VulkanContext;
 class VulkanMaterial final : public Material
 {
 public:
+    VulkanMaterial(const MaterialSpecification& spec, const VulkanContext& context);
     ~VulkanMaterial() override;
 
-    void initialize(const MaterialSpecification& new_spec, const Ref<VulkanContext>& context);
-
-    void set_pipeline(const Ref<VulkanPipeline>& new_pipeline);
-    Ref<VulkanPipeline> get_pipeline() const;
+    void set_pipeline(const Reference<VulkanPipeline>& new_pipeline);
+    Reference<VulkanPipeline> get_pipeline() const;
 
     using Material::set;
-    void set(StringId bind_point, Ref<Texture> texture) override;
-    void set(StringId bind_point, Ref<Image> image) override;
-    void set(StringId bind_point, Ref<ImageView> image) override;
+    void set(StringId bind_point, const ResourceReference<Texture>& texture) override;
+    void set(StringId bind_point, const Reference<Texture>& texture) override;
+    void set(StringId bind_point, const Reference<Image>& image) override;
+    void set(StringId bind_point, const Reference<ImageView>& image) override;
 
     using Material::get;
-    Ref<Texture> get_texture(StringId bind_point) override;
-    Ref<Image> get_image(StringId bind_point) override;
-    Ref<ImageView> get_image_view(StringId bind_point) override;
-    Ref<ShaderVariant> get_shader() override;
+    Reference<Texture> get_texture(StringId bind_point) override;
+    Reference<Image> get_image(StringId bind_point) override;
+    Reference<ImageView> get_image_view(StringId bind_point) override;
+    Reference<ShaderVariant> get_shader() override;
     StringId get_id() override;
 
-    vk::DescriptorSet get_descriptor_set(size_t index);
+    [[nodiscard]] vk::DescriptorSet get_descriptor_set(size_t index) const;
+
+    bool operator==(const VulkanMaterial& other) const;
 
 protected:
     void set_property(StringId bind_point, const reflection::Property& property) override;
@@ -61,13 +63,12 @@ public:
 private:
     MaterialSpecification spec;
 
-    StringId id;
-    Ref<VulkanDevice> device;
-    Ref<VulkanShaderVariant> shader_variant;
-    Ref<VulkanPipeline> pipeline;
+    const VulkanDevice& device;
+    Reference<VulkanShaderVariant> shader_variant;
+    Reference<VulkanPipeline> pipeline;
 
     std::unordered_map<StringId, UniformPointer> uniforms;
-    std::unordered_map<StringId, Ref<BufferDescriptor>> buffers;
+    std::unordered_map<StringId, Reference<BufferDescriptor>> buffers;
     std::unique_ptr<VulkanDescriptorSetManager> descriptor_manager;
 };
 

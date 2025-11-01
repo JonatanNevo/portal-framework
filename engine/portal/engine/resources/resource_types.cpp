@@ -85,6 +85,8 @@ const char* utils::to_string(const ResourceState resource_state)
         return "Pending";
     case ResourceState::Error:
         return "Error";
+    case ResourceState::Null:
+        return "Null";
     }
     return "Unknown";
 }

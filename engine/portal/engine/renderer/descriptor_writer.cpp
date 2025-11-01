@@ -70,11 +70,11 @@ void DescriptorWriter::clear() {
     writes.clear();
 }
 
-void DescriptorWriter::update_set(const Ref<renderer::vulkan::VulkanDevice>& device, const vk::raii::DescriptorSet& set) {
+void DescriptorWriter::update_set(const renderer::vulkan::VulkanDevice& device, const vk::raii::DescriptorSet& set) {
     for (auto& write : writes) {
         write.dstSet = set;
     }
 
-    device->get_handle().updateDescriptorSets(writes, {});
+    device.get_handle().updateDescriptorSets(writes, {});
 }
 }

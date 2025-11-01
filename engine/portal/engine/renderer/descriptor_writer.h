@@ -7,7 +7,6 @@
 #include <deque>
 #include <vulkan/vulkan_raii.hpp>
 
-#include "portal/core/reference.h"
 
 namespace portal::renderer::vulkan
 {
@@ -25,7 +24,7 @@ public:
     void write_buffer(uint32_t binding, renderer::vulkan::AllocatedBuffer& buffer, size_t size, size_t offset, vk::DescriptorType type);
 
     void clear();
-    void update_set(const Ref<renderer::vulkan::VulkanDevice>& device, const vk::raii::DescriptorSet& set);
+    void update_set(const renderer::vulkan::VulkanDevice& device, const vk::raii::DescriptorSet& set);
 
     std::deque<vk::DescriptorImageInfo> image_infos;
     std::deque<vk::DescriptorBufferInfo> buffer_infos;

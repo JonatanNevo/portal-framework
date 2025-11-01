@@ -4,10 +4,12 @@
 //
 
 #pragma once
-#include "portal/engine/resources/resources/resource.h"
+#include "portal/engine/reference.h"
 
 namespace portal
 {
+class Resource;
+struct SourceMetadata;
 class ResourceRegistry;
 }
 
@@ -18,35 +20,24 @@ class ResourceSource;
 class ResourceLoader
 {
 public:
-    explicit ResourceLoader(ResourceRegistry* registry): registry(registry) { PORTAL_ASSERT(registry, "Resource registry is null"); };
+    explicit ResourceLoader(ResourceRegistry& registry) : registry(registry) {}
     virtual ~ResourceLoader() = default;
-
-
-    virtual void initialize() {};
 
     /**
      * Loads the resource from a source
      * This function will block until the resource is loaded.
-     * @param id The id of the resource to load
+     * If the resource requires additional resources, the loader might trigger additional resource requests from the registry
+     *
+     * @note The returned resource pointer should be heap-allocated and will be managed by the registry
+     *
+     * @param meta The source metadata
      * @param source The source of the resource
+     * @return A heap-allocated pointer to the loaded resource, nullptr if any error occurred
      */
-    virtual bool load(StringId id, std::shared_ptr<ResourceSource> source) const = 0;
-
-    /**
-     * Loads instantly the default resource for the given resource type.
-     * @param resource The reference to load the default resource into.
-     */
-    virtual void load_default(Ref<Resource>& resource) const = 0;
+    virtual Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) = 0;
 
 protected:
-    ResourceRegistry* registry;
+    ResourceRegistry& registry;
 };
 
-class StubLoader final : public ResourceLoader
-{
-public:
-    explicit StubLoader(ResourceRegistry* registry) : ResourceLoader(registry) {}
-    bool load(StringId, std::shared_ptr<ResourceSource>) const override { return false; };
-    void load_default(Ref<Resource>&) const override {};
-};
 }

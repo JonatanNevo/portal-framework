@@ -6,13 +6,14 @@
 #pragma once
 
 #include <portal/engine/renderer/vulkan/allocated_buffer.h>
+
+#include "portal/engine/reference.h"
+#include "portal/engine/renderer/material/material.h"
+#include "portal/engine/resources/resource_reference.h"
 #include "portal/engine/resources/resources/resource.h"
 
 namespace portal
 {
-namespace renderer {
-    class Material;
-}
 
 namespace scene {
     class MeshNode;
@@ -56,7 +57,7 @@ namespace resources
         uint32_t start_index{};
         uint32_t count{};
         Bounds bounds{};
-        WeakRef<renderer::Material> material{};
+        ResourceReference<renderer::Material> material{};
     };
 }
 
@@ -64,7 +65,6 @@ class Mesh final: public Resource
 {
 public:
     explicit Mesh(const StringId& id): Resource(id) {}
-    void copy_from(Ref<Resource> other) override;
 
 public:
     friend class resources::GltfLoader;

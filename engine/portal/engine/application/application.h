@@ -54,7 +54,7 @@ private:
 private:
     ApplicationSpecification spec;
 
-    Ref<renderer::vulkan::VulkanContext> vulkan_context;
+    renderer::vulkan::VulkanContext vulkan_context;
 
     std::shared_ptr<Window> window = nullptr;
     std::shared_ptr<Renderer> renderer = nullptr;

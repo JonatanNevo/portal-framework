@@ -5,7 +5,6 @@
 
 #include "allocated_image.h"
 
-#include "portal/core/reference.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 
 namespace portal::renderer::vulkan
@@ -91,7 +90,7 @@ ImageBuilder& ImageBuilder::with_flags(const vk::ImageCreateFlags flags)
     return *this;
 }
 
-AllocatedImage ImageBuilder::build(Ref<VulkanDevice> device) const
+AllocatedImage ImageBuilder::build(const VulkanDevice& device) const
 {
     return {device, *this};
 }
@@ -125,10 +124,10 @@ AllocatedImage::~AllocatedImage()
     destroy_image(get_handle());
 }
 
-AllocatedImage::AllocatedImage(Ref<VulkanDevice> device, const ImageBuilder& builder) :
-    Allocated(builder.get_allocation_create_info(), nullptr, device.get())
+AllocatedImage::AllocatedImage(const VulkanDevice& device, const ImageBuilder& builder) :
+    Allocated(builder.get_allocation_create_info(), nullptr, &device)
 {
     set_handle(create_image(builder.get_create_info()));
-    device->set_debug_name(get_handle(), builder.get_debug_name().c_str());
+    device.set_debug_name(get_handle(), builder.get_debug_name().c_str());
 }
 } // portal

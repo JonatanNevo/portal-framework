@@ -10,6 +10,7 @@
 #include "portal/core/buffer.h"
 #include "portal/core/reflection/concepts.h"
 #include "../vulkan/image/vulkan_image.h"
+#include "portal/engine/reference.h"
 #include "portal/engine/renderer/shaders/shader_types.h"
 #include "portal/engine/renderer/descriptor_writer.h"
 
@@ -27,13 +28,14 @@ namespace vulkan
 {
     class VulkanImage;
     class VulkanShaderVariant;
-    class GpuContext;
 }
 
 
-class ShaderVariant : public RefCounted
+class ShaderVariant
 {
 public:
+    virtual ~ShaderVariant() = default;
+
     [[nodiscard]] virtual StringId get_name() const = 0;
 
     virtual const std::unordered_map<StringId, shader_reflection::ShaderResourceDeclaration>& get_shader_resources() const = 0;
@@ -46,6 +48,8 @@ public:
 class Shader : public Resource
 {
 public:
+    DECLARE_RESOURCE(ResourceType::Shader);
+
     explicit Shader(const StringId& id);
 
     void load_source(Buffer&& new_source, const std::filesystem::path& shader_path);
@@ -58,7 +62,7 @@ public:
      */
     uint64_t compile_with_permutations(const std::vector<ShaderDefine>& permutations);
 
-    virtual WeakRef<ShaderVariant> get_shader(uint64_t shader_hash) = 0;
+    virtual WeakReference<ShaderVariant> get_shader(uint64_t shader_hash) = 0;
 
 protected:
     uint64_t calculate_permutations_hash(const std::vector<ShaderDefine>& permutations) const;

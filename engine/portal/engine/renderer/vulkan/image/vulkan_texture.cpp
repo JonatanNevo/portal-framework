@@ -80,16 +80,15 @@ namespace utils
     }
 }
 
-VulkanTexture::VulkanTexture(const StringId& id): Texture(id)
-{
-}
 
-void VulkanTexture::initialize(const TextureSpecification& new_spec, const Buffer& data, Ref<VulkanContext> new_context)
+VulkanTexture::VulkanTexture(
+    const StringId& id,
+    const TextureSpecification& spec,
+    const Buffer& data,
+    const VulkanContext& context
+    ) : Texture(id), spec(spec), context(context), device(context.get_device())
 {
-    spec = new_spec;
-    device = new_context->get_device();
-    context = new_context;
-    utils::validate_spec(new_spec);
+    utils::validate_spec(spec);
 
     if (data)
     {
@@ -97,7 +96,7 @@ void VulkanTexture::initialize(const TextureSpecification& new_spec, const Buffe
     }
     else
     {
-        const auto size = renderer::utils::get_image_memory_size(new_spec.format, new_spec.width, new_spec.height, new_spec.depth);
+        const auto size = renderer::utils::get_image_memory_size(spec.format, spec.width, spec.height, spec.depth);
         image_data = Buffer::allocate(size);
         image_data.zero_initialize();
     }
@@ -105,25 +104,12 @@ void VulkanTexture::initialize(const TextureSpecification& new_spec, const Buffe
     recreate();
 }
 
-void VulkanTexture::copy_from(const Ref<Resource> resource)
-{
-    auto other_resource = resource.as<VulkanTexture>();
-    PORTAL_ASSERT(other_resource, "Invalid resource type");
-
-    spec = other_resource->spec;
-    image_data = Buffer::copy(other_resource->image_data);
-
-    image = other_resource->image;
-    context = other_resource->context;
-    device = other_resource->device;
-}
-
 void VulkanTexture::resize(const glm::uvec3& size)
 {
     return resize(size.x, size.y, size.z);
 }
 
-void VulkanTexture::resize(size_t width, size_t height, size_t depth)
+void VulkanTexture::resize(const size_t width, const size_t height, const size_t depth)
 {
     spec.width = width;
     spec.height = height;
@@ -137,9 +123,9 @@ void VulkanTexture::update_image()
     set_data(image_data);
 }
 
-void VulkanTexture::set_sampler(const Ref<Sampler>& sampler)
+void VulkanTexture::set_sampler(const Reference<Sampler>& sampler)
 {
-    auto vulkan_sampler = sampler.as<VulkanSampler>();
+    const auto vulkan_sampler = reference_cast<VulkanSampler>(sampler);
     PORTAL_ASSERT(vulkan_sampler, "Invalid sampler type");
 
     spec.sampler_spec = vulkan_sampler->get_spec();
@@ -184,7 +170,7 @@ glm::uvec3 VulkanTexture::get_mip_size(const uint32_t mip) const
     return {spec.width >> mip, spec.height >> mip, spec.depth >> mip};
 }
 
-Ref<Image> VulkanTexture::get_image() const
+Reference<Image> VulkanTexture::get_image() const
 {
     return image;
 }
@@ -206,13 +192,13 @@ const vk::DescriptorImageInfo& VulkanTexture::get_descriptor_image_info() const
 
 bool VulkanTexture::loaded() const
 {
-    return image && image->is_valid();
+    return image != nullptr;
 }
 
 void VulkanTexture::recreate()
 {
     if (image != nullptr)
-        image->release();
+        image.reset();
 
     const auto mip_count = spec.generate_mipmaps ? get_mip_level_count() : 1;
     const auto layer_count = get_array_layer_count();
@@ -230,8 +216,7 @@ void VulkanTexture::recreate()
 
     if (spec.storage)
         image_spec.usage = ImageUsage::Storage;
-    image = Ref<VulkanImage>::create(image_spec, context);
-    image->initialize();
+    image = make_reference<VulkanImage>(image_spec, context);
     image->update_descriptor();
 
     auto& info = image->get_image_info();
@@ -241,7 +226,7 @@ void VulkanTexture::recreate()
     }
     else
     {
-        device->immediate_submit(
+        device.immediate_submit(
             [&](const vk::raii::CommandBuffer& command_buffer)
             {
                 vk::ImageSubresourceRange range{
@@ -274,7 +259,7 @@ void VulkanTexture::recreate()
     if (spec.sampler_spec.has_value())
     {
         auto& sampler_spec = spec.sampler_spec.value();
-        info.sampler = Ref<VulkanSampler>::create(STRING_ID(fmt::format("{}-sampler", id)), sampler_spec, device);
+        info.sampler = make_reference<VulkanSampler>(STRING_ID(fmt::format("{}-sampler", id)), sampler_spec, device);
         image->update_descriptor();
     }
 
@@ -295,8 +280,8 @@ void VulkanTexture::recreate()
                 .layerCount = layer_count
             },
         };
-        info.view = device->create_image_view(view_info);
-        device->set_debug_name(info.view, fmt::format("texture_view_{}", id.string).c_str());
+        info.view = device.create_image_view(view_info);
+        device.set_debug_name(info.view, fmt::format("texture_view_{}", id.string).c_str());
         image->update_descriptor();
     }
 }
@@ -309,7 +294,7 @@ void VulkanTexture::set_data(const Buffer& data)
 
     const uint32_t layer_count = get_array_layer_count();
 
-    device->immediate_submit(
+    device.immediate_submit(
         [&](const vk::raii::CommandBuffer& command_buffer)
         {
             // The sub resource range describes the regions of the image that will be transitioned using the memory barriers below
@@ -398,11 +383,11 @@ void VulkanTexture::set_data(const Buffer& data)
         generate_mipmaps();
 }
 
-void VulkanTexture::generate_mipmaps()
+void VulkanTexture::generate_mipmaps() const
 {
     auto& info = image->get_image_info();
 
-    device->immediate_submit(
+    device.immediate_submit(
         [&](const vk::raii::CommandBuffer& command_buffer)
         {
             const auto mip_levels = get_mip_level_count();

@@ -12,6 +12,7 @@
       <file path="$PROJECT_DIR$/vcpkg/buildtrees" />
     </libraryRoots>
     <excludeRoots>
+      <file path="$PROJECT_DIR$/vcpkg" />
       <file path="$PROJECT_DIR$/vcpkg/.github" />
       <file path="$PROJECT_DIR$/vcpkg/docs" />
       <file path="$PROJECT_DIR$/vcpkg/downloads" />
@@ -21,6 +22,7 @@
       <file path="$PROJECT_DIR$/vcpkg/toolsrc" />
       <file path="$PROJECT_DIR$/vcpkg/triplets" />
       <file path="$PROJECT_DIR$/vcpkg/versions" />
+      <file path="$PROJECT_DIR$/vcpkg_installed" />
     </excludeRoots>
   </component>
   <component name="WestSettings">{}</component>

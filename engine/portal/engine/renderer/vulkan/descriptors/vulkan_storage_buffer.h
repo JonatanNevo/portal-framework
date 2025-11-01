@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#include "portal/engine/reference.h"
 #include "portal/engine/renderer/descriptors/storage_buffer.h"
 #include "portal/engine/renderer/vulkan/allocated_buffer.h"
 
@@ -14,7 +15,7 @@ class VulkanDevice;
 class VulkanStorageBuffer final : public StorageBuffer
 {
 public:
-    VulkanStorageBuffer(const StorageBufferSpecification& spec, const Ref<VulkanDevice>& device);
+    VulkanStorageBuffer(const StorageBufferSpecification& spec, const VulkanDevice& device);
     ~VulkanStorageBuffer() override;
 
     void set_data(Buffer data, size_t offset) override;
@@ -29,7 +30,7 @@ private:
 
 
 private:
-    Ref<VulkanDevice> device;
+    const VulkanDevice& device;
     StorageBufferSpecification spec;
 
     AllocatedBuffer buffer;
@@ -41,16 +42,16 @@ private:
 class VulkanStorageBufferSet final : public StorageBufferSet
 {
 public:
-    VulkanStorageBufferSet(size_t buffer_size, size_t size, const Ref<VulkanDevice>& device);
+    VulkanStorageBufferSet(size_t buffer_size, size_t size, const VulkanDevice& device);
 
-    Ref<StorageBuffer> get(size_t index) override;
-    void set(Ref<StorageBuffer> buffer, size_t index) override;
+    Reference<StorageBuffer> get(size_t index) override;
+    void set(const Reference<StorageBuffer>& buffer, size_t index) override;
 
     void set_data(Buffer data, size_t offset) override;
     const Buffer& get_data() const override;
 
 private:
-    std::unordered_map<size_t, Ref<VulkanStorageBuffer>> buffers;
+    std::unordered_map<size_t, Reference<VulkanStorageBuffer>> buffers;
 };
 
 } // portal

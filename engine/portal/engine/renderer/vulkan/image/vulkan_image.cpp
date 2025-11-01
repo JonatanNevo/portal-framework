@@ -6,6 +6,7 @@
 #include "vulkan_image.h"
 #include <vulkan/vulkan_format_traits.hpp>
 
+#include "portal/core/delegates/inline_allocator.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
@@ -17,9 +18,14 @@ namespace portal::renderer::vulkan
 
 static auto logger = Log::get_logger("Vulkan");
 
-VulkanImage::VulkanImage(const image::Specification& spec, const Ref<VulkanContext>& context) : Image(spec.name), device(context->get_device()), spec(spec)
+VulkanImage::VulkanImage(const image::Specification& spec, const VulkanContext& context) : Image(spec.name), device(context.get_device()), spec(spec)
 {
     PORTAL_ASSERT(spec.width > 0 && spec.height > 0, "Invalid image size");
+}
+
+VulkanImage::~VulkanImage()
+{
+    release();
 }
 
 void VulkanImage::resize(const size_t width, const size_t height)
@@ -74,7 +80,7 @@ void VulkanImage::initialize()
     if (spec.flags == image::Flags::CubeCompatible)
         builder.with_flags(vk::ImageCreateFlagBits::eCubeCompatible);
 
-    image_info.image = device->create_image(builder);
+    image_info.image = device.create_image(builder);
 
     const vk::ImageViewCreateInfo view_info{
         .image = image_info.image.get_handle(),
@@ -88,8 +94,8 @@ void VulkanImage::initialize()
             .layerCount = static_cast<uint32_t>(spec.layers)
         }
     };
-    image_info.view = device->create_image_view(view_info);
-    device->set_debug_name(image_info.view, fmt::format("default_image_view_{}", spec.name.string).c_str());
+    image_info.view = device.create_image_view(view_info);
+    device.set_debug_name(image_info.view, fmt::format("default_image_view_{}", spec.name.string).c_str());
 
     if (spec.create_sampler)
     {
@@ -108,12 +114,12 @@ void VulkanImage::initialize()
             sampler_spec.mipmap_mode = SamplerMipmapMode::Linear;
         }
 
-        image_info.sampler = Ref<VulkanSampler>::create(STRING_ID(fmt::format("default_sampler_{}", spec.name.string)), sampler_spec, device);
+        image_info.sampler = make_reference<VulkanSampler>(STRING_ID(fmt::format("default_sampler_{}", spec.name.string)), sampler_spec, device);
     }
 
     if (spec.usage == ImageUsage::Storage)
     {
-        device->immediate_submit(
+        device.immediate_submit(
             [&](const auto& command_buffer)
             {
                 vk::ImageSubresourceRange range{
@@ -141,7 +147,7 @@ void VulkanImage::initialize()
 
     if (spec.usage == ImageUsage::HostRead)
     {
-        device->immediate_submit(
+        device.immediate_submit(
             [&](const auto& command_buffer)
             {
                 vk::ImageSubresourceRange range{
@@ -267,8 +273,8 @@ void VulkanImage::create_per_layer_image_view()
                 .layerCount = 1
             }
         };
-        per_layer_image_views.emplace_back(device->create_image_view(view_info));
-        device->set_debug_name(per_layer_image_views[i], fmt::format("{}_layer_view_{}", spec.name.string, i).c_str());
+        per_layer_image_views.emplace_back(device.create_image_view(view_info));
+        device.set_debug_name(per_layer_image_views[i], fmt::format("{}_layer_view_{}", spec.name.string, i).c_str());
     }
 }
 
@@ -294,8 +300,8 @@ vk::ImageView VulkanImage::get_mip_image_view(size_t mip_level)
                 .layerCount = 1
             }
         };
-        per_mip_image_views.emplace(mip_level, device->create_image_view(view_info));
-        device->set_debug_name(per_mip_image_views.at(mip_level), fmt::format("{}_mip_view_{}", spec.name.string, mip_level).c_str());
+        per_mip_image_views.emplace(mip_level, device.create_image_view(view_info));
+        device.set_debug_name(per_mip_image_views.at(mip_level), fmt::format("{}_mip_view_{}", spec.name.string, mip_level).c_str());
     }
     return per_mip_image_views.at(mip_level);
 }
@@ -338,7 +344,7 @@ void VulkanImage::set_data(const Buffer buffer)
 
     auto staging_buffer = AllocatedBuffer::create_staging_buffer(device, buffer.size, buffer.data);
 
-    device->immediate_submit(
+    device.immediate_submit(
         [&](const auto& command_buffer)
         {
             vk::ImageSubresourceRange range{
@@ -411,14 +417,14 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
            .with_vma_usage(VMA_MEMORY_USAGE_GPU_TO_CPU)
            .with_debug_name("staging");
 
-    AllocatedBuffer staging_buffer = device->create_buffer(builder);
+    AllocatedBuffer staging_buffer = device.create_buffer(builder);
 
     // TODO: support copy of mips?
     constexpr uint32_t mip_count = 1;
     auto mip_width = static_cast<uint32_t>(spec.width);
     auto mip_height = static_cast<uint32_t>(spec.height);
 
-    device->immediate_submit(
+    device.immediate_submit(
         [&](const vk::raii::CommandBuffer& command_buffer)
         {
             constexpr vk::ImageSubresourceRange range{

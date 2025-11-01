@@ -4,14 +4,15 @@
 //
 
 #pragma once
-#include "portal/core/reference.h"
 
 namespace portal::renderer
 {
 
-class Sampler: public RefCounted
+class Sampler
 {
 public:
+    virtual ~Sampler() = default;
+
     [[nodiscard]] virtual const SamplerSpecification& get_spec() const = 0;
 };
 

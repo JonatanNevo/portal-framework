@@ -10,7 +10,7 @@
 
 namespace portal::renderer::vulkan
 {
-AllocatedBuffer AllocatedBuffer::create_staging_buffer(Ref<VulkanDevice> device, const vk::DeviceSize size, const void* data)
+AllocatedBuffer AllocatedBuffer::create_staging_buffer(const VulkanDevice& device, const vk::DeviceSize size, const void* data)
 {
     BufferBuilder builder(size);
     builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
@@ -28,12 +28,12 @@ AllocatedBuffer AllocatedBuffer::create_staging_buffer(Ref<VulkanDevice> device,
 
 BufferBuilder::BufferBuilder(const vk::DeviceSize size) : ParentType(vk::BufferCreateInfo{.size = size}) {}
 
-AllocatedBuffer BufferBuilder::build(const Ref<VulkanDevice>& device) const
+AllocatedBuffer BufferBuilder::build(const VulkanDevice& device) const
 {
     return {device, *this};
 }
 
-std::shared_ptr<AllocatedBuffer> BufferBuilder::build_shared(const Ref<VulkanDevice>& device) const
+std::shared_ptr<AllocatedBuffer> BufferBuilder::build_shared(const VulkanDevice& device) const
 {
     return std::shared_ptr<AllocatedBuffer>(new AllocatedBuffer{device, *this});
 }
@@ -91,10 +91,10 @@ vk::DeviceSize AllocatedBuffer::get_size() const
     return size;
 }
 
-AllocatedBuffer::AllocatedBuffer(Ref<VulkanDevice> device, const BufferBuilder& builder) : Allocated(
+AllocatedBuffer::AllocatedBuffer(const VulkanDevice& device, const BufferBuilder& builder) : Allocated(
                                                                                                builder.get_allocation_create_info(),
                                                                                                nullptr,
-                                                                                               device.get()
+                                                                                               &device
                                                                                                ),
                                                                                            size(builder.get_create_info().size)
 {

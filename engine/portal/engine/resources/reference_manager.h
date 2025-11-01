@@ -8,9 +8,9 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
 
-#include "portal/engine/resources/new/resource.h"
+#include "resources/resource.h"
 
-namespace portal::ng
+namespace portal
 {
 
 class ReferenceManager

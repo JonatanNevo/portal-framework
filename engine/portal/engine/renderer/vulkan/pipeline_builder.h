@@ -18,7 +18,7 @@ class VulkanShaderVariant;
 class PipelineBuilder
 {
 public:
-    PipelineBuilder& add_shader(Ref<VulkanShaderVariant> shader);
+    PipelineBuilder& add_shader(const VulkanShaderVariant& shader);
 
     PipelineBuilder& set_vertex_bindings(const std::vector<vk::VertexInputBindingDescription>& descriptions);
     PipelineBuilder& set_vertex_attributes(const std::vector<vk::VertexInputAttributeDescription>& attribute_descriptions);

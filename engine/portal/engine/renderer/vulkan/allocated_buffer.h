@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "portal/core/reference.h"
 #include "portal/engine/renderer/vulkan/base/allocated.h"
 #include "portal/engine/renderer/vulkan/base/builder_base.h"
 
@@ -19,8 +18,8 @@ struct BufferBuilder final : public BuilderBase<BufferBuilder, vk::BufferCreateI
 public:
     explicit BufferBuilder(vk::DeviceSize size);
 
-    AllocatedBuffer build(const Ref<VulkanDevice>& device) const;
-    std::shared_ptr<AllocatedBuffer> build_shared(const Ref<VulkanDevice>& device) const;
+    AllocatedBuffer build(const VulkanDevice& device) const;
+    std::shared_ptr<AllocatedBuffer> build_shared(const VulkanDevice& device) const;
     BufferBuilder& with_flags(vk::BufferCreateFlags flags);
     BufferBuilder& with_usage(vk::BufferUsageFlags usage);
 
@@ -31,13 +30,13 @@ private:
 class AllocatedBuffer final : public allocation::Allocated<vk::Buffer>
 {
 public:
-    static AllocatedBuffer create_staging_buffer(Ref<VulkanDevice> device, vk::DeviceSize size, const void* data);
+    static AllocatedBuffer create_staging_buffer(const VulkanDevice& device, vk::DeviceSize size, const void* data);
 
     template <typename T>
-    static AllocatedBuffer create_staging_buffer(Ref<VulkanDevice> device, const std::span<T>& data);
+    static AllocatedBuffer create_staging_buffer(const VulkanDevice& device, const std::span<T>& data);
 
     template <typename T>
-    static AllocatedBuffer create_staging_buffer(Ref<VulkanDevice> device, const T& data);
+    static AllocatedBuffer create_staging_buffer(const VulkanDevice& device, const T& data);
 
     AllocatedBuffer();
     AllocatedBuffer(nullptr_t) : AllocatedBuffer() {}
@@ -64,7 +63,7 @@ public:
     [[nodiscard]] vk::DeviceSize get_size() const;
 
 protected:
-    AllocatedBuffer(Ref<VulkanDevice> device, const BufferBuilder& builder);
+    AllocatedBuffer(const VulkanDevice& device, const BufferBuilder& builder);
     friend struct BufferBuilder;
 
 private:
@@ -72,13 +71,13 @@ private:
 };
 
 template <typename T>
-AllocatedBuffer AllocatedBuffer::create_staging_buffer(Ref<VulkanDevice> device, const std::span<T>& data)
+AllocatedBuffer AllocatedBuffer::create_staging_buffer(const VulkanDevice& device, const std::span<T>& data)
 {
     return create_staging_buffer(device, data.size() * sizeof(T), data.data());
 }
 
 template <typename T>
-AllocatedBuffer AllocatedBuffer::create_staging_buffer(Ref<VulkanDevice> device, const T& data)
+AllocatedBuffer AllocatedBuffer::create_staging_buffer(const VulkanDevice& device, const T& data)
 {
     return create_staging_buffer(device, sizeof(T), &data);
 }

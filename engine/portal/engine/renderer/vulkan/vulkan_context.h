@@ -6,37 +6,31 @@
 #pragma once
 #include <vulkan/vulkan_raii.hpp>
 
-#include "portal/core/reference.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_instance.h"
 #include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
-#include "portal/engine/renderer/vulkan/debug/debug_messenger.h"
 
 namespace portal::renderer::vulkan
 {
 
-class VulkanContext final : public RefCounted
+class VulkanContext final
 {
 public:
     VulkanContext();
-    ~VulkanContext() override;
+    ~VulkanContext();
 
-    vk::raii::Instance& get_instance();
-    Ref<VulkanDevice> get_device() const;
-    Ref<VulkanPhysicalDevice> get_physical_device() const;
-
-private:
-    std::vector<const char*> get_required_instance_extensions(bool enable_validation_layers);
+    const vk::raii::Instance& get_instance() const;
+    const VulkanDevice& get_device() const;
+    const VulkanPhysicalDevice& get_physical_device() const;
 
 private:
     // Vulkan types
     vk::raii::Context context{};
-    vk::raii::Instance instance = nullptr;
-    vk::raii::DebugUtilsMessengerEXT debug_messenger = nullptr;
-    std::shared_ptr<DebugMessenger> messenger;
+    VulkanInstance instance;
 
     // Overloaded renderer types
-    Ref<VulkanPhysicalDevice> physical_device;
-    Ref<VulkanDevice> device;
+    VulkanPhysicalDevice physical_device;
+    VulkanDevice device;
 };
 
 } // portal
