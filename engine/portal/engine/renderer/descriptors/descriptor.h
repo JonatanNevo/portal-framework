@@ -4,17 +4,19 @@
 //
 
 #pragma once
-#include "portal/core/reference.h"
+
 #include "portal/core/buffer.h"
 #include "portal/engine/renderer/descriptors/descriptor_types.h"
+#include "portal/engine/renderer/renderer_resource.h"
 
 namespace portal::renderer
 {
 
-class BufferDescriptor : public RefCounted
+class BufferDescriptor : public RendererResource
 {
 public:
-    explicit BufferDescriptor(const DescriptorResourceType type) : type(type) {};
+    ~BufferDescriptor() override = default;
+    explicit BufferDescriptor(const StringId& id, const DescriptorResourceType type) : RendererResource(id), type(type) {};
 
     virtual void set_data(Buffer data, size_t offset = 0) = 0;
     virtual const Buffer& get_data() const = 0;

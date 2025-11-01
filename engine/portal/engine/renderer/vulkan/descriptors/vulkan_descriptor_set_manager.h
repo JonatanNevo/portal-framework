@@ -19,21 +19,27 @@ class VulkanDescriptorSetManager final : public DescriptorSetManager
 public:
     ~VulkanDescriptorSetManager() override;
 
-    static VulkanDescriptorSetManager create(const DescriptorSetManagerSpecification& spec, Ref<VulkanDevice> device);
-    static std::unique_ptr<VulkanDescriptorSetManager> create_unique(const DescriptorSetManagerSpecification& spec, Ref<VulkanDevice> device);
+    static VulkanDescriptorSetManager create(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device);
+    static std::unique_ptr<VulkanDescriptorSetManager> create_unique(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device);
 
     VulkanDescriptorSetManager(const VulkanDescriptorSetManager&) = delete;
     VulkanDescriptorSetManager& operator=(const VulkanDescriptorSetManager&) = delete;
 
-    void set_input(StringId name, Ref<UniformBufferSet> buffer) override;
-    void set_input(StringId name, Ref<UniformBuffer> buffer) override;
-    void set_input(StringId name, Ref<StorageBufferSet> buffer) override;
-    void set_input(StringId name, Ref<StorageBuffer> buffer) override;
-    void set_input(StringId name, Ref<Texture> texture) override;
-    void set_input(StringId name, Ref<Image> image) override;
-    void set_input(StringId name, Ref<ImageView> image) override;
+    void set_input(StringId name, const Reference<UniformBufferSet>& buffer) override;
+    void set_input(StringId name, const Reference<UniformBuffer>& buffer) override;
+    void set_input(StringId name, const Reference<StorageBufferSet>& buffer) override;
+    void set_input(StringId name, const Reference<StorageBuffer>& buffer) override;
+    void set_input(StringId name, const Reference<Texture>& texture) override;
+    void set_input(StringId name, const Reference<Image>& image) override;
+    void set_input(StringId name, const Reference<ImageView>& image) override;
 
-    Ref<RefCounted> get_input(StringId name) override;
+    template<typename T>
+    Reference<T> get_input(const StringId name)
+    {
+        return DescriptorSetManager::get_input<T>(name);
+    }
+
+    Reference<RendererResource> get_input(StringId name) override;
 
     bool is_invalidated(size_t set, size_t binding_index) const override;
 
@@ -48,7 +54,7 @@ public:
     const std::vector<vk::raii::DescriptorSet>& get_descriptor_sets(size_t frame_index) const;
 
 private:
-    VulkanDescriptorSetManager(const DescriptorSetManagerSpecification& spec, const Ref<VulkanDevice>& device, portal::vulkan::DescriptorAllocator&& descriptor_allocator);
+    VulkanDescriptorSetManager(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device, portal::vulkan::DescriptorAllocator&& descriptor_allocator);
 
     VulkanDescriptorSetManager& init();
     std::set<size_t> get_buffer_sets();
@@ -70,7 +76,7 @@ public:
 
 private:
     DescriptorSetManagerSpecification spec;
-    Ref<VulkanDevice> device;
+    const VulkanDevice& device;
 
     portal::vulkan::DescriptorAllocator descriptor_allocator;
 };

@@ -7,6 +7,7 @@
 #include <memory>
 #include <vulkan/vulkan_raii.hpp>
 
+#include "portal/engine/reference.h"
 #include "portal/engine/renderer/render_target/render_target.h"
 
 namespace portal::renderer::vulkan
@@ -17,7 +18,7 @@ class VulkanImage;
 class VulkanRenderTarget final: public RenderTarget
 {
 public:
-    VulkanRenderTarget(const render_target::Specification& specs, const Ref<VulkanContext>& context);
+    VulkanRenderTarget(const render_target::Specification& specs, const VulkanContext& context);
 
     void resize(size_t new_width, size_t new_height, bool force_recreate) override;
     void initialize();
@@ -27,10 +28,10 @@ public:
     [[nodiscard]] size_t get_height() const override;
 
     [[nodiscard]] size_t get_color_attachment_count() const override;
-    [[nodiscard]] Ref<Image> get_image(size_t index) const override;
+    [[nodiscard]] Reference<Image> get_image(size_t index) const override;
 
     [[nodiscard]] bool has_depth_attachment() const override;
-    [[nodiscard]] Ref<Image> get_depth_image() const override;
+    [[nodiscard]] Reference<Image> get_depth_image() const override;
 
     [[nodiscard]] const render_target::Specification& get_spec() const override;
 
@@ -38,12 +39,12 @@ public:
 
 
 private:
-    Ref<VulkanContext> context;
+    const VulkanContext& context;
     render_target::Specification spec;
     size_t width = 0, height = 0;
 
-    std::vector<Ref<VulkanImage>> color_attachments;
-    Ref<VulkanImage> depth_attachment;
+    std::vector<Reference<VulkanImage>> color_attachments;
+    Reference<VulkanImage> depth_attachment;
 
     std::vector<vk::RenderingAttachmentInfo> rendering_attachments;
     vk::RenderingAttachmentInfo depth_rendering;

@@ -10,7 +10,11 @@
 
 namespace portal::renderer::vulkan
 {
-VulkanStorageBuffer::VulkanStorageBuffer(const StorageBufferSpecification& spec, const Ref<VulkanDevice>& device) : device(device), spec(spec)
+
+VulkanStorageBuffer::VulkanStorageBuffer(const StorageBufferSpecification& spec, const VulkanDevice& device)
+    : StorageBuffer(spec.debug_name),
+      device(device),
+      spec(spec)
 {
     init();
 }
@@ -70,7 +74,7 @@ void VulkanStorageBuffer::init()
                .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT);
     }
 
-    buffer = device->create_buffer(builder);
+    buffer = device.create_buffer(builder);
 
     local_storage = Buffer::allocate(spec.size);
     descriptor_buffer_info = {
@@ -81,11 +85,13 @@ void VulkanStorageBuffer::init()
 }
 
 
-VulkanStorageBufferSet::VulkanStorageBufferSet(const size_t buffer_size, const size_t size, const Ref<VulkanDevice>& device)
+VulkanStorageBufferSet::VulkanStorageBufferSet(const size_t buffer_size, const size_t size, const VulkanDevice& device) : StorageBufferSet(
+    INVALID_STRING_ID
+    )
 {
     for (size_t i = 0; i < size; i++)
     {
-        buffers[i] = Ref<VulkanStorageBuffer>::create(
+        buffers[i] = make_reference<VulkanStorageBuffer>(
             StorageBufferSpecification{buffer_size, true, STRING_ID(fmt::format("sub_storage_{}", i))},
             device
             );
@@ -93,15 +99,15 @@ VulkanStorageBufferSet::VulkanStorageBufferSet(const size_t buffer_size, const s
 }
 
 
-Ref<StorageBuffer> VulkanStorageBufferSet::get(const size_t index)
+Reference<StorageBuffer> VulkanStorageBufferSet::get(const size_t index)
 {
     PORTAL_ASSERT(buffers.contains(index), "Invalid buffer index");
     return buffers[index];
 }
 
-void VulkanStorageBufferSet::set(const Ref<StorageBuffer> buffer, const size_t index)
+void VulkanStorageBufferSet::set(const Reference<StorageBuffer>& buffer, const size_t index)
 {
-    buffers[index] = buffer.as<VulkanStorageBuffer>();
+    buffers[index] = reference_cast<VulkanStorageBuffer>(buffer);
 }
 
 void VulkanStorageBufferSet::set_data([[maybe_unused]] Buffer data, [[maybe_unused]] size_t offset) {

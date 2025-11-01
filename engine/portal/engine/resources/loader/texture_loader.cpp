@@ -5,28 +5,25 @@
 
 #include "texture_loader.h"
 
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#include <portal/core/debug/profile.h>
 
-#include <portal/engine/renderer/vulkan/allocated_buffer.h>
-#include <portal/engine/renderer/vulkan/gpu_context.h>
-#include <portal/engine/renderer/vulkan/image/vulkan_image.h>
+#include "portal/core/log.h"
+#include "portal/engine/renderer/renderer_context.h"
 
-#include "portal/engine/renderer/image/texture.h"
-#include "portal/engine/renderer/image/image_types.h"
+#include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_texture.h"
-
 #include "portal/engine/resources/resource_registry.h"
+#include "portal/engine/resources/database/resource_database.h"
 #include "portal/engine/resources/source/resource_source.h"
+#include "portal/engine/renderer/image/image.h"
 
 namespace portal::resources
 {
+
 static auto logger = Log::get_logger("Resources");
 
-TextureLoader::TextureLoader(ResourceRegistry* registry, const std::shared_ptr<renderer::vulkan::GpuContext>& context) : ResourceLoader(registry),
-    gpu_context(context) {}
-
-void TextureLoader::initialize()
+TextureLoader::TextureLoader(ResourceRegistry& registry, RendererContext& context) : ResourceLoader(registry), context(context)
 {
     const uint32_t white = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
     const uint32_t black = glm::packUnorm4x8(glm::vec4(0, 0, 0, 0));
@@ -39,10 +36,10 @@ void TextureLoader::initialize()
     };
 
     std::array white_data{white};
-    create_default_texture(renderer::Texture::WHITE_TEXTURE_ID, white_data, default_extent);
+    create_standalone_texture(renderer::Texture::WHITE_TEXTURE_ID, white_data, default_extent);
 
     std::array black_data{black};
-    create_default_texture(renderer::Texture::BLACK_TEXTURE_ID, black_data, default_extent);
+    create_standalone_texture(renderer::Texture::BLACK_TEXTURE_ID, black_data, default_extent);
 
     std::array<uint32_t, 16 * 16> pixels{}; //for 16x16 checkerboard texture
     for (int x = 0; x < 16; x++)
@@ -59,21 +56,12 @@ void TextureLoader::initialize()
         .depth = 1
     };
 
-    missing_texture = create_default_texture(renderer::Texture::MISSING_TEXTURE_ID, pixels, missing_extent);
+    create_standalone_texture(renderer::Texture::MISSING_TEXTURE_ID, pixels, missing_extent);
 }
 
-bool TextureLoader::load(StringId id, const std::shared_ptr<ResourceSource> source) const
+Reference<Resource> TextureLoader::load(const SourceMetadata& meta, const ResourceSource& source)
 {
-    PORTAL_PROF_ZONE();
-    auto texture = registry->get<renderer::vulkan::VulkanTexture>(id);
-    if (!texture)
-    {
-        LOGGER_ERROR("Failed to load texture: resource is not a Texture: {}", texture->id);
-        return false;
-    }
-
-    auto data = source->load();
-
+    auto data = source.load();
     int width, height, n_channels;
     void* image_data = nullptr;
     renderer::ImageFormat format;
@@ -93,8 +81,9 @@ bool TextureLoader::load(StringId id, const std::shared_ptr<ResourceSource> sour
 
     if (!image_data)
     {
-        LOGGER_ERROR("Failed to load texture: {}", texture->id);
-        return false;
+        LOGGER_ERROR("Failed to load texture: {}", meta.resource_id);
+        stbi_image_free(image_data);
+        return nullptr;
     }
 
     renderer::TextureSpecification spec = {
@@ -104,43 +93,22 @@ bool TextureLoader::load(StringId id, const std::shared_ptr<ResourceSource> sour
         .depth = 1
     };
 
-    if (source->get_meta().format != SourceFormat::Memory)
+    if (meta.format != SourceFormat::Memory)
     {
         spec.sampler_spec = {
             .filter = renderer::TextureFilter::Linear
         };
     }
-    // TODO: pass sampler info properly
+    // TODO: get sampler info from metadata
 
-    texture->initialize(spec, Buffer{image_data, size}, gpu_context->get_context());
+    auto texture = make_reference<renderer::vulkan::VulkanTexture>(meta.resource_id, spec, Buffer{image_data, size}, context.get_gpu_context());
 
     stbi_image_free(image_data);
-    return true;
+    return texture;
 }
 
-void TextureLoader::load_default(Ref<Resource>& resource) const
+void TextureLoader::create_standalone_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const
 {
-    if (missing_texture.is_valid())
-    {
-        resource.as<renderer::Texture>()->copy_from(missing_texture.lock());
-    }
-}
-
-// std::shared_ptr<renderer::vulkan::VulkanImage> TextureLoader::build_image_from_memory(const StringId& id, void* data, const vk::Extent3D extent) const
-// {
-//     vulkan::ImageBuilder image_builder(extent);
-//     image_builder
-//         .with_format(vk::Format::eR8G8B8A8Unorm)
-//         .with_usage(vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eTransferSrc)
-//         .with_debug_name(std::string(id.string))
-//         .with_mips_levels(static_cast<uint32_t>(std::floor(std::log2(std::max(extent.width, extent.height)))) + 1);
-//     return gpu_context->create_image_shared(data, image_builder);
-// }
-
-Ref<renderer::Texture> TextureLoader::create_default_texture(const StringId& id, const std::span<uint32_t> data, const vk::Extent3D extent) const
-{
-    auto texture = registry->get<renderer::vulkan::VulkanTexture>(id);
-
     const renderer::TextureSpecification spec = {
         .format = renderer::ImageFormat::RGBA8_UNorm,
         .width = static_cast<size_t>(extent.width),
@@ -151,9 +119,7 @@ Ref<renderer::Texture> TextureLoader::create_default_texture(const StringId& id,
         }
     };
 
-    texture->initialize(spec, {data.data(), data.size() * sizeof(uint32_t)}, gpu_context->get_context());
-    texture->set_state(ResourceState::Loaded);
-
-    return texture;
+    registry.allocate<renderer::vulkan::VulkanTexture>(id, id, spec, Buffer{data.data(), data.size() * sizeof(uint32_t)}, context.get_gpu_context());
 }
+
 } // portal

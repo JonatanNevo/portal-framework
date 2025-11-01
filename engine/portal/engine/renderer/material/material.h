@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include "portal/core/reference.h"
-
 #include "portal/engine/resources/resources/resource.h"
+#include "portal/engine/resources/resource_reference.h"
 #include "portal/core/reflection/property.h"
 #include "portal/core/reflection/concepts.h"
 #include "portal/engine/strings/string_id.h"
@@ -22,17 +21,21 @@ class Image;
 struct MaterialSpecification
 {
     StringId id;
-    Ref<ShaderVariant> shader;
+    Reference<ShaderVariant> shader;
 
     size_t set_start_index = 0;
     size_t set_end_index = std::numeric_limits<size_t>::max();
 
-    Ref<Texture> default_texture;
+    Reference<Texture> default_texture;
 };
 
 class Material : public Resource
 {
 public:
+    DECLARE_RESOURCE(ResourceType::Material);
+
+    explicit Material(const StringId& id): Resource(id) {}
+
     template <typename T> requires std::integral<std::remove_const_t<T>> || std::floating_point<std::remove_const_t<T>>
     void set(const StringId bind_point, const T& t)
     {
@@ -75,9 +78,10 @@ public:
             );
     }
 
-    virtual void set(StringId bind_point, Ref<Texture> texture) = 0;
-    virtual void set(StringId bind_point, Ref<renderer::Image> image) = 0;
-    virtual void set(StringId bind_point, Ref<renderer::ImageView> image) = 0;
+    virtual void set(StringId bind_point, const ResourceReference<Texture>& texture) = 0;
+    virtual void set(StringId bind_point, const Reference<Texture>& texture) = 0;
+    virtual void set(StringId bind_point, const Reference<Image>& image) = 0;
+    virtual void set(StringId bind_point, const Reference<ImageView>& image) = 0;
 
     template <typename T> requires std::integral<std::remove_const_t<T>> || std::floating_point<std::remove_const_t<T>>
     T& get(const StringId bind_point)
@@ -115,11 +119,11 @@ public:
         return *prop.value.as<T*>();
     }
 
-    virtual Ref<Texture> get_texture(const StringId bind_point) = 0;
-    virtual Ref<renderer::Image> get_image(const StringId bind_point) = 0;
-    virtual Ref<renderer::ImageView> get_image_view(const StringId bind_point) = 0;
+    virtual Reference<Texture> get_texture(const StringId bind_point) = 0;
+    virtual Reference<Image> get_image(const StringId bind_point) = 0;
+    virtual Reference<ImageView> get_image_view(const StringId bind_point) = 0;
 
-    virtual Ref<ShaderVariant> get_shader() = 0;
+    virtual Reference<ShaderVariant> get_shader() = 0;
     virtual StringId get_id() = 0;
 
 protected:

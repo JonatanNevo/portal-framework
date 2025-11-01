@@ -7,7 +7,6 @@
 
 #include <ranges>
 
-#include "gpu_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_common.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_shader.h"
@@ -16,9 +15,9 @@ namespace portal::renderer::vulkan
 {
 
 
-PipelineBuilder& PipelineBuilder::add_shader(Ref<VulkanShaderVariant> shader)
+PipelineBuilder& PipelineBuilder::add_shader(const VulkanShaderVariant& shader)
 {
-    const std::vector<vk::PipelineShaderStageCreateInfo>& shader_create_infos = shader->get_shader_stage_create_infos();
+    const std::vector<vk::PipelineShaderStageCreateInfo>& shader_create_infos = shader.get_shader_stage_create_infos();
     shader_stages.append_range(shader_create_infos);
     return *this;
 }

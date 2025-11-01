@@ -4,7 +4,7 @@
 //
 
 #pragma once
-#include "portal/core/buffer.h"
+
 #include "portal/engine/renderer/descriptors/descriptor.h"
 #include "portal/engine/strings/string_id.h"
 
@@ -21,7 +21,7 @@ struct StorageBufferSpecification
 class StorageBuffer: public BufferDescriptor
 {
 public:
-    StorageBuffer(): BufferDescriptor(DescriptorResourceType::StorageBuffer) {};
+    explicit StorageBuffer(const StringId& id): BufferDescriptor(id, DescriptorResourceType::StorageBuffer) {};
 
     virtual void resize(size_t new_size) = 0;
 };
@@ -29,11 +29,11 @@ public:
 class StorageBufferSet: public BufferDescriptor
 {
 public:
-    StorageBufferSet(): BufferDescriptor(DescriptorResourceType::StorageBufferSet) {};
+    explicit StorageBufferSet(const StringId& id): BufferDescriptor(id, DescriptorResourceType::StorageBufferSet) {};
 
-    virtual Ref<StorageBuffer> get(size_t index) = 0;
+    virtual Reference<StorageBuffer> get(size_t index) = 0;
 
-    virtual void set(Ref<StorageBuffer> buffer, size_t index) = 0;
+    virtual void set(const Reference<StorageBuffer>& buffer, size_t index) = 0;
 };
 
 }

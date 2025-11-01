@@ -17,9 +17,9 @@ namespace portal::renderer::vulkan
 {
 static auto logger = Log::get_logger("Vulkan");
 
-VulkanWindow::VulkanWindow(const Ref<VulkanContext>& context, const WindowSpecification& spec) : spec(spec), context(context)
+VulkanWindow::VulkanWindow(const VulkanContext& context, const WindowSpecification& spec) : spec(spec), context(context)
 {
-     data.title = spec.title;
+    data.title = spec.title;
     data.width = spec.width;
     data.height = spec.height;
 
@@ -56,8 +56,8 @@ VulkanWindow::VulkanWindow(const Ref<VulkanContext>& context, const WindowSpecif
     icon.pixels = stbi_load(R"(C:\Code\portal-framework\engine\resources\portal_icon_64x64.png)", &icon.width, &icon.height, 0, 4);
     glfwSetWindowIcon(window, 1, &icon);
 
-    swapchain.init(context, window);
-    swapchain.create(reinterpret_cast<uint32_t*>(&data.width), reinterpret_cast<uint32_t*>(&data.height), spec.vsync);
+    swapchain = make_reference<VulkanSwapchain>(context, window);
+    swapchain->create(reinterpret_cast<uint32_t*>(&data.width), reinterpret_cast<uint32_t*>(&data.height), spec.vsync);
 
     // TODO: combine with `input` module
     glfwSetWindowUserPointer(window, &data);
@@ -69,25 +69,30 @@ VulkanWindow::VulkanWindow(const Ref<VulkanContext>& context, const WindowSpecif
         LOGGER_WARN("Raw mouse motion not supported");
 
     // Set GLFW callbacks
-    glfwSetWindowSizeCallback(window, [](GLFWwindow* handle, const int width, const int height)
-    {
-        [[maybe_unused]] auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(handle));
+    glfwSetWindowSizeCallback(
+        window,
+        [](GLFWwindow* handle, const int width, const int height)
+        {
+            [[maybe_unused]] auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(handle));
 
-        WindowResizeEvent event(static_cast<size_t>(width), static_cast<size_t>(height));
+            WindowResizeEvent event(static_cast<size_t>(width), static_cast<size_t>(height));
 
-        data.event_callback(event);
-        data.width = event.get_width();
-        data.height = event.get_height();
-    }
-    );
+            data.event_callback(event);
+            data.width = event.get_width();
+            data.height = event.get_height();
+        }
+        );
 
-    glfwSetWindowCloseCallback(window, [](GLFWwindow* handle)
-    {
-        [[maybe_unused]] const auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(handle));
+    glfwSetWindowCloseCallback(
+        window,
+        [](GLFWwindow* handle)
+        {
+            [[maybe_unused]] const auto& data = *static_cast<WindowData*>(glfwGetWindowUserPointer(handle));
 
-        WindowCloseEvent event;
-        data.event_callback(event);
-    });
+            WindowCloseEvent event;
+            data.event_callback(event);
+        }
+        );
     //      glfwSetInputMode(m_Window, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
     // glfwSetKeyCallback
     // glfwSetCharCallback
@@ -117,7 +122,7 @@ VulkanWindow::VulkanWindow(const Ref<VulkanContext>& context, const WindowSpecif
 
 VulkanWindow::~VulkanWindow()
 {
-    swapchain.destroy();
+    swapchain->destroy();
 }
 
 void VulkanWindow::process_events()
@@ -128,7 +133,7 @@ void VulkanWindow::process_events()
 
 void VulkanWindow::swap_buffers()
 {
-    swapchain.present();
+    swapchain->present();
 }
 
 void VulkanWindow::maximize()
@@ -170,8 +175,8 @@ void VulkanWindow::set_vsync(const bool enable)
 {
     spec.vsync = enable;
 
-    swapchain.set_vsync(enable);
-    swapchain.on_resize(data.width, data.height);
+    swapchain->set_vsync(enable);
+    swapchain->on_resize(data.width, data.height);
 }
 
 bool VulkanWindow::is_vsynced() const
@@ -195,9 +200,9 @@ StringId VulkanWindow::get_title() const
     return data.title;
 }
 
-VulkanSwapchain& VulkanWindow::get_swapchain()
+VulkanSwapchain& VulkanWindow::get_swapchain() const
 {
-    return swapchain;
+    return *swapchain;
 }
 
 void VulkanWindow::set_event_callback(const std::function<void(Event&)> callback)

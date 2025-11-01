@@ -15,11 +15,11 @@ namespace portal::resources
 class FileSource final : public ResourceSource
 {
 public:
-    explicit FileSource(const std::filesystem::path& path);
-    [[nodiscard]] SourceMetadata get_meta() const override;
-    Buffer load() override;
-    Buffer load(size_t offset, size_t size) override;
-    std::unique_ptr<std::istream> stream() override;
+    explicit FileSource(std::filesystem::path path);
+
+    [[nodiscard]] Buffer load() const override;
+    [[nodiscard]] Buffer load(size_t offset, size_t size) const override;
+    [[nodiscard]] std::unique_ptr<std::istream> stream() const override;
 
 protected:
     std::filesystem::path file_path;

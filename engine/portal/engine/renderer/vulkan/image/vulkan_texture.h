@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#include "portal/engine/reference.h"
 #include "portal/engine/renderer/image/texture.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 
@@ -20,34 +21,31 @@ class VulkanImage;
 class VulkanTexture final : public Texture
 {
 public:
-    explicit VulkanTexture(const StringId& id);
-
-    void initialize(const TextureSpecification& new_spec, const Buffer& data, Ref<VulkanContext> new_context);
-    void copy_from(Ref<Resource>) override;
+    explicit VulkanTexture(const StringId& id, const TextureSpecification& spec, const Buffer& data, const VulkanContext& context);
 
     void resize(const glm::uvec3& size) override;
     void resize(size_t width, size_t height, size_t depth) override;
 
     void update_image();
 
-    void set_sampler(const Ref<Sampler>& sampler);
+    void set_sampler(const Reference<Sampler>& sampler);
 
-    ImageFormat get_format() const override;
+    [[nodiscard]] ImageFormat get_format() const override;
 
-    size_t get_width() const override;
-    size_t get_height() const override;
-    size_t get_depth() const override;
+    [[nodiscard]] size_t get_width() const override;
+    [[nodiscard]] size_t get_height() const override;
+    [[nodiscard]] size_t get_depth() const override;
 
-    glm::uvec3 get_size() const override;
+    [[nodiscard]] glm::uvec3 get_size() const override;
 
-    uint32_t get_mip_level_count() const override;
-    glm::uvec3 get_mip_size(uint32_t mip) const override;
+    [[nodiscard]] uint32_t get_mip_level_count() const override;
+    [[nodiscard]] glm::uvec3 get_mip_size(uint32_t mip) const override;
 
-    Ref<Image> get_image() const override;
+    [[nodiscard]] Reference<Image> get_image() const override;
 
     Buffer get_writeable_buffer() override;
 
-    TextureType get_type() const override;
+    [[nodiscard]] TextureType get_type() const override;
     [[nodiscard]] const vk::DescriptorImageInfo& get_descriptor_image_info() const;
 
     bool loaded() const override;
@@ -56,7 +54,7 @@ private:
     void recreate();
 
     void set_data(const Buffer& data);
-    void generate_mipmaps();
+    void generate_mipmaps() const;
 
     uint32_t get_array_layer_count() const;
 
@@ -64,9 +62,10 @@ private:
     TextureSpecification spec;
     Buffer image_data;
 
-    Ref<VulkanImage> image;
-    Ref<VulkanContext> context;
-    Ref<VulkanDevice> device;
+    const VulkanContext& context;
+    const VulkanDevice& device;
+
+    Reference<VulkanImage> image;
 };
 
 } // portal

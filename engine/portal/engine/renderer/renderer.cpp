@@ -41,7 +41,6 @@
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 #include "portal/engine/renderer/vulkan/vulkan_window.h"
-#include "portal/engine/scene/nodes/mesh_node.h"
 
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
 
@@ -50,20 +49,49 @@ namespace portal
 
 [[maybe_unused]] static auto logger = Log::get_logger("Renderer");
 
-void Renderer::init(const Ref<renderer::vulkan::VulkanContext>& new_context, renderer::vulkan::VulkanWindow* new_window)
+Renderer::Renderer(renderer::vulkan::VulkanContext& context, renderer::vulkan::VulkanWindow* window)
+    :
+    context(context),
+    window(window),
+    renderer_context(context, render_target, scene_descriptor_set_layouts)
 {
     PORTAL_PROF_ZONE();
-    PORTAL_ASSERT(new_window != nullptr, "window is null");
-
-    context = new_context;
-    window = new_window;
+    PORTAL_ASSERT(window != nullptr, "window is null");
 
     init_swap_chain();
-    camera.on_resize(static_cast<uint32_t>(new_window->get_width()), static_cast<uint32_t>(new_window->get_height()));
+    camera.on_resize(static_cast<uint32_t>(window->get_width()), static_cast<uint32_t>(window->get_height()));
     init_descriptors();
 
-    init_gpu_context();
     is_initialized = true;
+}
+
+Renderer::~Renderer()
+{
+    cleanup();
+}
+
+void Renderer::cleanup()
+{
+    ZoneScoped;
+    if (is_initialized)
+    {
+        context.get_device().wait_idle();
+
+        for (auto& f : frame_data)
+        {
+            f.deletion_queue.flush();
+        }
+
+        deletion_queue.flush();
+
+        frame_data.clear();
+    }
+    is_initialized = false;
+}
+
+const RendererContext& Renderer::get_renderer_context() const
+{
+    return renderer_context;
 }
 
 void Renderer::update_imgui([[maybe_unused]] float delta_time)
@@ -89,92 +117,65 @@ void Renderer::update_imgui([[maybe_unused]] float delta_time)
     ImGui::End();
 
     ImGui::Begin("Scene");
-    if (this->scene && this->scene->is_valid())
-    {
-        auto draw_node = [](auto& self, const Ref<scene::Node>& node, int& node_id) -> void
-        {
-            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
-            if (node->children.empty())
-            {
-                flags |= ImGuiTreeNodeFlags_Leaf;
-            }
-
-            ImGui::PushID(node_id++);
-
-            const bool is_mesh = dynamic_cast<const scene::MeshNode*>(node.get()) != nullptr;
-            if (is_mesh)
-            {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
-            }
-
-            const bool open = ImGui::TreeNodeEx(node->id.string.data(), flags);
-
-            if (is_mesh)
-            {
-                ImGui::PopStyleColor();
-            }
-
-            if (ImGui::IsItemHovered())
-            {
-                ImGui::BeginTooltip();
-                const auto& translate = glm::vec3(node->local_transform[3]);
-                ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
-                ImGui::EndTooltip();
-            }
-
-            if (open)
-            {
-                for (const auto& child : node->children)
-                {
-                    self(self, child, node_id);
-                }
-                ImGui::TreePop();
-            }
-
-            ImGui::PopID();
-        };
-
-        ImGui::Text("Scene Graph");
-        ImGui::Separator();
-        int node_id = 0;
-
-        for (const auto& scene_root : this->scene->get_root_nodes())
-        {
-            draw_node(draw_node, scene_root, node_id);
-        }
-    }
-    else
-    {
-        ImGui::Text("No scene loaded");
-    }
+    // if (this->scene && this->scene->is_valid())
+    // {
+    //     auto draw_node = [](auto& self, const Ref<scene::Node>& node, int& node_id) -> void
+    //     {
+    //         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
+    //         if (node->children.empty())
+    //         {
+    //             flags |= ImGuiTreeNodeFlags_Leaf;
+    //         }
+    //
+    //         ImGui::PushID(node_id++);
+    //
+    //         const bool is_mesh = dynamic_cast<const scene::MeshNode*>(node.get()) != nullptr;
+    //         if (is_mesh)
+    //         {
+    //             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
+    //         }
+    //
+    //         const bool open = ImGui::TreeNodeEx(node->id.string.data(), flags);
+    //
+    //         if (is_mesh)
+    //         {
+    //             ImGui::PopStyleColor();
+    //         }
+    //
+    //         if (ImGui::IsItemHovered())
+    //         {
+    //             ImGui::BeginTooltip();
+    //             const auto& translate = glm::vec3(node->local_transform[3]);
+    //             ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
+    //             ImGui::EndTooltip();
+    //         }
+    //
+    //         if (open)
+    //         {
+    //             for (const auto& child : node->children)
+    //             {
+    //                 self(self, child, node_id);
+    //             }
+    //             ImGui::TreePop();
+    //         }
+    //
+    //         ImGui::PopID();
+    //     };
+    //
+    //     ImGui::Text("Scene Graph");
+    //     ImGui::Separator();
+    //     int node_id = 0;
+    //
+    //     for (const auto& scene_root : this->scene->get_root_nodes())
+    //     {
+    //         draw_node(draw_node, scene_root, node_id);
+    //     }
+    // }
+    // else
+    // {
+    //     ImGui::Text("No scene loaded");
+    // }
     ImGui::End();
-}
-
-void Renderer::cleanup()
-{
-    ZoneScoped;
-    if (is_initialized)
-    {
-        context->get_device()->wait_idle();
-
-        gpu_context.reset();
-
-        for (auto& f : frame_data)
-        {
-            f.deletion_queue.flush();
-        }
-
-        deletion_queue.flush();
-
-        frame_data.clear();
-    }
-    is_initialized = false;
-}
-
-void Renderer::set_scene(const Ref<Scene>& new_scene)
-{
-    // PORTAL_ASSERT(new_scene->is_valid(), "Scene is not loaded");
-    scene = new_scene;
 }
 
 FrameData& Renderer::get_current_frame_data()
@@ -199,8 +200,7 @@ void Renderer::update_scene([[maybe_unused]] float delta_time)
     scene_data.proj = projection;
     scene_data.view_proj = projection * view;
 
-    scene->draw(glm::mat4{1.f}, draw_context);
-
+    // scene->draw(glm::mat4{1.f}, draw_context);
 
     //some default lighting parameters
     scene_data.ambient_color = glm::vec4(.1f);
@@ -241,8 +241,8 @@ void Renderer::draw_geometry()
 {
     auto& current_command_buffer = window->get_swapchain().get_current_draw_command_buffer();
 
-    auto draw_image = render_target->get_image(0).as<renderer::vulkan::VulkanImage>();
-    auto depth_image = render_target->get_depth_image().as<renderer::vulkan::VulkanImage>();
+    auto draw_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_image(0));
+    auto depth_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_depth_image());
 
     {
         vulkan::transition_image_layout(
@@ -331,10 +331,10 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
     {
         const auto& object = draw_context.render_objects[i];
         if (object.is_visible(scene_data.view_proj))
-            render_by_material[object.material->id].push_back(i);
+            render_by_material[object.material->get_id()].push_back(i);
     }
 
-    auto vulkan_target = render_target.as<renderer::vulkan::VulkanRenderTarget>();
+    auto vulkan_target = reference_cast<renderer::vulkan::VulkanRenderTarget>(render_target);
 
     {
         command_buffer.beginRendering(vulkan_target->get_rendering_info());
@@ -343,25 +343,26 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
                                           .with_usage(vk::BufferUsageFlagBits::eUniformBuffer)
                                           .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
                                           .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
-                                          .build(context->get_device());
+                                          .build(context.get_device());
         current_frame.scene_data_buffer.update_typed<vulkan::GPUSceneData>(scene_data);
 
-        current_frame.global_descriptor_set = current_frame.frame_descriptors.allocate(scene_descriptor_set_layout);
+        // TODO: support multiple global sets
+        current_frame.global_descriptor_set = current_frame.frame_descriptors.allocate(scene_descriptor_set_layouts.front());
 
         // TODO: create "global shader library" which will reflect the global changing data to write this
         vulkan::DescriptorWriter writer;
         writer.write_buffer(0, current_frame.scene_data_buffer, sizeof(vulkan::GPUSceneData), 0, vk::DescriptorType::eUniformBuffer);
-        writer.update_set(context->get_device(), current_frame.global_descriptor_set);
+        writer.update_set(context.get_device(), current_frame.global_descriptor_set);
 
-        Ref<renderer::vulkan::VulkanPipeline> last_pipeline = nullptr;
-        Ref<renderer::vulkan::VulkanMaterial> last_material = nullptr;
+        Reference<renderer::vulkan::VulkanPipeline> last_pipeline = nullptr;
+        Reference<renderer::vulkan::VulkanMaterial> last_material = nullptr;
         // MaterialPipeline* real_p = nullptr;
         std::shared_ptr<renderer::vulkan::AllocatedBuffer> last_index_buffer = nullptr;
 
         auto draw_object = [&](const scene::RenderObject& object)
         {
             // TracyVkZone(tracy_context, *current_frame.command_buffer, "Draw object");
-            auto material = object.material.lock().as<renderer::vulkan::VulkanMaterial>();
+            auto material = reference_cast<renderer::vulkan::VulkanMaterial>(object.material);
             auto pipeline = material->get_pipeline();
             if (material != last_material)
             {
@@ -473,10 +474,6 @@ void Renderer::on_resize(size_t new_width, size_t new_height)
     camera.on_resize(static_cast<uint32_t>(new_width), static_cast<uint32_t>(new_height));
 }
 
-std::shared_ptr<renderer::vulkan::GpuContext> Renderer::get_gpu_context()
-{
-    return gpu_context;
-}
 
 void Renderer::init_swap_chain()
 {
@@ -500,7 +497,7 @@ void Renderer::init_swap_chain()
         .transfer = true,
         .name = STRING_ID("root_render_target")
     };
-    render_target = Ref<renderer::vulkan::VulkanRenderTarget>::create(spec, context);
+    render_target = std::make_shared<renderer::vulkan::VulkanRenderTarget>(spec, context);
 }
 
 void Renderer::init_descriptors()
@@ -526,7 +523,7 @@ void Renderer::init_descriptors()
 
         frame_data.emplace_back(
             FrameData{
-                .frame_descriptors = vulkan::DescriptorAllocator(&context->get_device()->get_handle(), 1000, frame_sizes)
+                .frame_descriptors = vulkan::DescriptorAllocator(context.get_device().get_handle(), 1000, frame_sizes)
             }
             );
 
@@ -541,19 +538,14 @@ void Renderer::init_descriptors()
     {
         vulkan::DescriptorLayoutBuilder builder;
         builder.add_binding(0, vk::DescriptorType::eUniformBuffer, vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment);
-        scene_descriptor_set_layout = builder.build(context->get_device()->get_handle());
+        scene_descriptor_set_layouts.push_back(builder.build(context.get_device().get_handle()));
     }
-}
-
-void Renderer::init_gpu_context()
-{
-    gpu_context = std::make_shared<renderer::vulkan::GpuContext>(context, render_target, std::vector{*scene_descriptor_set_layout});
 }
 
 void Renderer::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function)
 {
     ZoneScoped;
-    context->get_device()->get_handle().resetFences({immediate_fence});
+    context.get_device().get_handle().resetFences({immediate_fence});
     immediate_command_buffer.reset();
 
     immediate_command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
@@ -574,8 +566,8 @@ void Renderer::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& 
         .pCommandBufferInfos = &cmd_submit_info
     };
 
-    context->get_device()->get_graphics_queue().submit2({submit_info}, immediate_fence);
-    context->get_device()->wait_for_fences({immediate_fence}, true, std::numeric_limits<uint64_t>::max());
+    context.get_device().get_graphics_queue().submit2({submit_info}, immediate_fence);
+    context.get_device().wait_for_fences({immediate_fence}, true, std::numeric_limits<uint64_t>::max());
 }
 
 } // portal

@@ -10,19 +10,22 @@
 #include <tracy/TracyVulkan.hpp>
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
-#include "portal/core/reference.h"
 
 #include "portal/engine/renderer/camera.h"
 #include "portal/engine/renderer/deletion_queue.h"
 #include "portal/engine/renderer/descriptor_allocator.h"
+#include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/rendering_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
-#include "vulkan/gpu_context.h"
 #include "portal/engine/scene/draw_context.h"
 #include "portal/engine/scene/scene.h"
 
 namespace portal
 {
+namespace renderer {
+    class RenderTarget;
+}
+
 namespace renderer::vulkan {
     class VulkanPipeline;
     class VulkanWindow;
@@ -51,11 +54,10 @@ struct FrameData
 class Renderer
 {
 public:
-    void init(const Ref<renderer::vulkan::VulkanContext>& new_context, renderer::vulkan::VulkanWindow* new_window);
-    void cleanup();
+    Renderer(renderer::vulkan::VulkanContext& context, renderer::vulkan::VulkanWindow* window);
+    ~Renderer();
 
-    void set_scene(const Ref<Scene>& new_scene);
-    std::shared_ptr<renderer::vulkan::GpuContext> get_gpu_context();
+    void cleanup();
 
     void begin_frame();
     void end_frame();
@@ -71,19 +73,19 @@ public:
 
     FrameData& get_current_frame_data();
 
+    [[nodiscard]] const RendererContext& get_renderer_context() const;
 private:
     void init_swap_chain();
     void init_descriptors();
 
-    void init_gpu_context();
-
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
 
 private:
-    Ref<renderer::vulkan::VulkanContext> context;
-    renderer::vulkan::VulkanWindow* window = nullptr;
+    renderer::vulkan::VulkanContext& context;
 
-    Ref<renderer::RenderTarget> render_target;
+    // TODO: should this be pointer?
+    renderer::vulkan::VulkanWindow* window = nullptr;
+    Reference<renderer::RenderTarget> render_target = nullptr;
 
     EngineStats stats = {};
 
@@ -97,12 +99,11 @@ private:
     TracyVkCtx tracy_context = nullptr;
 
     vulkan::GPUSceneData scene_data{};
-    vk::raii::DescriptorSetLayout scene_descriptor_set_layout = nullptr;
+    std::vector<vk::raii::DescriptorSetLayout> scene_descriptor_set_layouts;
     std::vector<FrameData> frame_data;
 
-    std::shared_ptr<renderer::vulkan::GpuContext> gpu_context = nullptr;
+    RendererContext renderer_context;
     scene::DrawContext draw_context{};
-    WeakRef<Scene> scene;
     bool is_initialized = false;
 
 public:

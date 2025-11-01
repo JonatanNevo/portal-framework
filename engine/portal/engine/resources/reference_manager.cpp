@@ -5,9 +5,9 @@
 
 #include "reference_manager.h"
 
-#include "portal/engine/resources/new/resource_reference.h"
+#include "resource_reference.h"
 
-namespace portal::ng
+namespace portal
 {
 
 static auto logger = Log::get_logger("Resources");

@@ -10,7 +10,6 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include "portal/core/reference.h"
 #include "portal/engine/renderer/deletion_queue.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 
@@ -43,9 +42,8 @@ struct FrameInFlightData
 class VulkanSwapchain
 {
 public:
-    VulkanSwapchain() = default;
+    VulkanSwapchain(const VulkanContext& context, GLFWwindow* window);
 
-    void init(const Ref<VulkanContext>& vulkan_context, GLFWwindow* window);
     void create(uint32_t* request_width, uint32_t* request_height, bool new_vsync);
     void destroy();
 
@@ -75,7 +73,7 @@ private:
     void find_image_format_and_color_space();
 
 private:
-    Ref<VulkanContext> context;
+    const VulkanContext& context;
     bool vsync = false;
 
     vk::raii::SwapchainKHR swapchain = nullptr;

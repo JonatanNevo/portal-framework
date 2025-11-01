@@ -18,12 +18,5 @@ namespace resources
     }
 
 }
-
-void Mesh::copy_from(const Ref<Resource> other)
-{
-    auto other_mesh = other.as<Mesh>();
-    surfaces = other_mesh->surfaces;
-    mesh_data = other_mesh->mesh_data;
-}
 } // portal
 

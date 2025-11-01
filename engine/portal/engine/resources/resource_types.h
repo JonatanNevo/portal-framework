@@ -22,6 +22,7 @@ enum class ResourceState: uint8_t
     Missing = 2,
     Pending = 3,
     Error   = 4,
+    Null
 };
 
 enum class ResourceType: uint16_t

@@ -24,18 +24,17 @@ template <typename Handle>
 class VulkanResource
 {
 public:
-    explicit VulkanResource(Handle handle = nullptr, VulkanDevice* device = nullptr) : device(device), handle(handle) {}
+    explicit VulkanResource(Handle handle, const VulkanDevice* device) : device(device), handle(handle) {}
     VulkanResource(const VulkanResource&) = delete;
     VulkanResource& operator=(const VulkanResource&) = delete;
 
     VulkanResource(VulkanResource&& other) noexcept: debug_name(std::exchange(other.debug_name, {})),
-                                                     device(std::exchange(other.device, {})),
+                                                     device(other.device),
                                                      handle(std::exchange(other.handle, {})) {}
 
     VulkanResource& operator=(VulkanResource&& other) noexcept
     {
         debug_name = std::exchange(other.debug_name, {});
-        device = std::exchange(other.device, {});
         handle = std::exchange(other.handle, {});
         return *this;
     }
@@ -44,7 +43,7 @@ public:
 
     [[nodiscard]] const std::string& get_debug_name() const { return debug_name; }
 
-    [[nodiscard]] VulkanDevice& get_device() const
+    [[nodiscard]] const VulkanDevice& get_device() const
     {
         PORTAL_ASSERT(device != nullptr, "Device is nullptr");
         return *device;
@@ -72,13 +71,13 @@ public:
     void set_debug_name(const std::string& name)
     {
         debug_name = name;
-        if (device && !debug_name.empty())
+        if (!debug_name.empty())
             get_device().set_debug_name(get_object_type(), get_handle_u64(), debug_name.c_str());
     }
 
 private:
     std::string debug_name;
-    VulkanDevice* device;
+    const VulkanDevice* device;
     Handle handle;
 };
 

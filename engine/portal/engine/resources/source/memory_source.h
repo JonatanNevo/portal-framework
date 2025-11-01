@@ -4,8 +4,7 @@
 //
 
 #pragma once
-
-#include "resource_source.h"
+#include "portal/engine/resources/source/resource_source.h"
 
 namespace portal::resources
 {
@@ -13,14 +12,13 @@ namespace portal::resources
 class MemorySource final : public ResourceSource
 {
 public:
-    MemorySource(Buffer&& data, const SourceMetadata& metadata);
-    [[nodiscard]] SourceMetadata get_meta() const override;
-    Buffer load() override;
-    Buffer load(size_t offset, size_t size) override;
-    std::unique_ptr<std::istream> stream() override;
+    explicit MemorySource(Buffer&& data);
+
+    [[nodiscard]] Buffer load() const override;
+    [[nodiscard]] Buffer load(size_t offset, size_t size) const override;
+    [[nodiscard]] std::unique_ptr<std::istream> stream() const override;
 
 protected:
-    SourceMetadata metadata;
     Buffer data;
 };
 

@@ -16,13 +16,11 @@
 namespace portal::renderer::vulkan
 {
 
-VulkanPipeline::VulkanPipeline(const pipeline::Specification& spec, const Ref<VulkanContext>& context) : context(context), spec(spec)
+VulkanPipeline::VulkanPipeline(const pipeline::Specification& spec, const VulkanContext& context) : context(context), spec(spec)
 {
     PORTAL_ASSERT(spec.shader, "Invalid pipeline shader");
-    PORTAL_ASSERT(context, "Invalid GPU context");
 
     initialize();
-    // Register dependency between shader and pipeline?
 }
 
 VulkanPipeline::~VulkanPipeline()
@@ -44,9 +42,9 @@ void VulkanPipeline::initialize()
 {
     PipelineBuilder builder;
 
-    auto device = context->get_device();
+    auto& device = context.get_device();
 
-    auto shader = spec.shader.as<VulkanShaderVariant>();
+    auto shader = reference_cast<VulkanShaderVariant>(spec.shader);
 
     // Create the pipeline layout used to generate the rendering pipelines that are based on this descriptor set layout
     // In a more complex scenario you would have different pipeline layouts for different descriptor set layouts that could be reused
@@ -60,7 +58,7 @@ void VulkanPipeline::initialize()
         .pPushConstantRanges = push_constants.data()
     };
 
-    pipeline_layout = device->create_pipeline_layout(pipeline_layout_info);
+    pipeline_layout = device.create_pipeline_layout(pipeline_layout_info);
 
     builder.set_layout(pipeline_layout)
            .set_input_topology(to_primitive_topology(spec.topology))
@@ -68,7 +66,7 @@ void VulkanPipeline::initialize()
            .set_cull_mode(spec.backface_culling ? vk::CullModeFlagBits::eBack : vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise)
            .set_line_width(spec.line_width); // this is dynamic;
 
-    auto render_target = spec.render_target.as<VulkanRenderTarget>();
+    auto render_target = reference_cast<VulkanRenderTarget>(spec.render_target);
     const size_t color_attachment_count = render_target->get_color_attachment_count();
 
     builder.set_color_attachment_number(color_attachment_count);
@@ -114,12 +112,12 @@ void VulkanPipeline::initialize()
 
     // TODO: vertex binding??
 
-    builder.add_shader(shader);
-    pipeline = device->create_pipeline(builder);
-    device->set_debug_name(pipeline, spec.debug_name);
+    builder.add_shader(*shader);
+    pipeline = device.create_pipeline(builder);
+    device.set_debug_name(pipeline, spec.debug_name);
 }
 
-Ref<ShaderVariant> VulkanPipeline::get_shader() const
+Reference<ShaderVariant> VulkanPipeline::get_shader() const
 {
     return spec.shader;
 }

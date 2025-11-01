@@ -8,7 +8,6 @@
 #include <GLFW/glfw3.h>
 
 #include "portal/core/log.h"
-#include "portal/core/reference.h"
 #include "portal/core/debug/assert.h"
 #include "portal/engine/application/window.h"
 #include "portal/engine/imgui/im_gui_module.h"
@@ -42,7 +41,6 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
         .height = spec.height,
     };
 
-    vulkan_context = Ref<renderer::vulkan::VulkanContext>::create();
     window = std::make_shared<renderer::vulkan::VulkanWindow>(vulkan_context, window_spec);
     window->set_event_callback(
         [this](auto& event)
@@ -51,8 +49,7 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
         }
         );
 
-    renderer = std::make_shared<Renderer>();
-    renderer->init(vulkan_context, std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window).get());
+    renderer = std::make_shared<Renderer>(vulkan_context, std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window).get());
 
     const auto resource_database = std::make_shared<portal::FolderResourceDatabase>(R"(C:\Code\portal-framework\engine\resources)");
     // resource_registry = std::make_shared<ResourceRegistry>();
@@ -74,7 +71,6 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
 
 Application::~Application()
 {
-    ref_utils::clean_all_references();
     glfwTerminate();
 
     Log::shutdown();
@@ -88,7 +84,7 @@ void Application::run()
         {
             engine_context->resource_registry->immediate_load<Scene>(STRING_ID("game/ABeautifulGame.gltf"));
             const auto scene = engine_context->resource_registry->get<Scene>(STRING_ID("Scene0-Scene"));
-            engine_context->renderer->set_scene(scene);
+            // engine_context->renderer->set_scene(scene);
         }
 
         auto vulkan_window = std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window);

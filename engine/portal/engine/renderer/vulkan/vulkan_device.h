@@ -4,7 +4,6 @@
 //
 
 #pragma once
-#include "portal/core/reference.h"
 
 #include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
 #include "portal/engine/renderer/vulkan/allocated_buffer.h"
@@ -21,7 +20,7 @@ namespace portal::renderer::vulkan
 struct BufferBuilder;
 class PipelineBuilder;
 
-class VulkanDevice final : public RefCounted
+class VulkanDevice final
 {
 public:
     using Features = vk::StructureChain<
@@ -33,14 +32,14 @@ public:
     >;
 
 public:
-    VulkanDevice(const Ref<VulkanPhysicalDevice>& physical_device, const Features& device_features);
+    VulkanDevice(const VulkanPhysicalDevice& physical_device, const Features& device_features);
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Object Creation
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    [[nodiscard]] AllocatedBuffer create_buffer(const BufferBuilder& builder);
-    [[nodiscard]] std::shared_ptr<AllocatedBuffer> create_buffer_shared(const BufferBuilder& builder);
-    [[nodiscard]] AllocatedImage create_image(const ImageBuilder& builder);
+    [[nodiscard]] AllocatedBuffer create_buffer(const BufferBuilder& builder) const;
+    [[nodiscard]] std::shared_ptr<AllocatedBuffer> create_buffer_shared(const BufferBuilder& builder) const;
+    [[nodiscard]] AllocatedImage create_image(const ImageBuilder& builder) const;
     [[nodiscard]] vk::raii::ImageView create_image_view(const vk::ImageViewCreateInfo& info) const;
     [[nodiscard]] vk::raii::Sampler create_sampler(const vk::SamplerCreateInfo& info) const;
 
@@ -53,7 +52,7 @@ public:
     // Command Submission
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
+    void immediate_submit(std::function<void(const vk::raii::CommandBuffer&)>&& function) const;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Synchronization
@@ -121,7 +120,7 @@ private:
 private:
     vk::raii::Device device = nullptr;
 
-    Ref<VulkanPhysicalDevice> physical_device;
+    const VulkanPhysicalDevice& physical_device;
 
     Features enabled_features;
 

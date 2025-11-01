@@ -27,7 +27,7 @@ vk::AttachmentLoadOp to_load_op(const render_target::Specification& spec, const 
 
 VulkanRenderTarget::VulkanRenderTarget(
     const render_target::Specification& specs,
-    const Ref<VulkanContext>& context
+    const VulkanContext& context
     ) : context(context), spec(specs)
 {
     width = specs.width;
@@ -48,12 +48,12 @@ VulkanRenderTarget::VulkanRenderTarget(
         if (utils::is_depth_format(attachment_spec.format))
         {
             image_spec.name = STRING_ID(fmt::format("{}_depth_attachment_{}", specs.name.string, index));
-            depth_attachment = Ref<VulkanImage>::create(image_spec, context);
+            depth_attachment = make_reference<VulkanImage>(image_spec, context);
         }
         else
         {
             image_spec.name = STRING_ID(fmt::format("{}_color_attachment_{}", specs.name.string, index));
-            color_attachments.emplace_back(Ref<VulkanImage>::create(image_spec, context));
+            color_attachments.emplace_back(make_reference<VulkanImage>(image_spec, context));
         }
 
         index++;
@@ -74,10 +74,7 @@ void VulkanRenderTarget::initialize()
     {
         if (utils::is_depth_format(attachment_spec.format))
         {
-            auto& image_spec = depth_attachment->get_specs();
-            image_spec.width = static_cast<size_t>(width * spec.scale);
-            image_spec.height = static_cast<size_t>(height * spec.scale);
-            depth_attachment->initialize();
+            depth_attachment->resize(static_cast<size_t>(width * spec.scale), static_cast<size_t>(height * spec.scale));
 
             depth_rendering = vk::RenderingAttachmentInfo{
                 .imageView = depth_attachment->get_image_info().view,
@@ -89,11 +86,8 @@ void VulkanRenderTarget::initialize()
         }
         else
         {
-            auto& image = color_attachments[index];
-            auto& image_spec = image->get_specs();
-            image_spec.width = static_cast<size_t>(width * spec.scale);
-            image_spec.height = static_cast<size_t>(height * spec.scale);
-            image->initialize();
+            const auto& image = color_attachments[index];
+            image->resize(static_cast<size_t>(width * spec.scale), static_cast<size_t>(height * spec.scale));
 
             auto& rendering_attachment = rendering_attachments.emplace_back();
             rendering_attachment = vk::RenderingAttachmentInfo{
@@ -119,14 +113,7 @@ void VulkanRenderTarget::initialize()
 
 void VulkanRenderTarget::release()
 {
-    for (auto& image : color_attachments)
-    {
-        image->release();
-    }
-
-    if (depth_attachment)
-        depth_attachment->release();
-
+    depth_attachment = nullptr;
     rendering_attachments.clear();
 }
 
@@ -156,7 +143,7 @@ size_t VulkanRenderTarget::get_color_attachment_count() const
     return color_attachments.size();
 }
 
-Ref<Image> VulkanRenderTarget::get_image(const size_t index) const
+Reference<Image> VulkanRenderTarget::get_image(const size_t index) const
 {
     PORTAL_ASSERT(index < color_attachments.size(), "Invalid color attachment index");
     return color_attachments[index];
@@ -167,7 +154,7 @@ bool VulkanRenderTarget::has_depth_attachment() const
     return depth_attachment != nullptr;
 }
 
-Ref<Image> VulkanRenderTarget::get_depth_image() const
+Reference<Image> VulkanRenderTarget::get_depth_image() const
 {
     return depth_attachment;
 }

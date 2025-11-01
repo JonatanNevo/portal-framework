@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "portal/engine/resources/resources/resource.h"
 #include "image_types.h"
 #include "portal/core/buffer.h"
+#include "portal/engine/reference.h"
 #include "portal/engine/renderer/renderer_resource.h"
 
 namespace portal::renderer
@@ -19,8 +19,6 @@ public:
     explicit Image(const StringId& id): RendererResource(id) {}
 
     virtual void resize(size_t width, size_t height) = 0;
-    virtual void initialize() = 0; // TODO: ??
-    virtual void release() = 0; // TODO: ??
 
     [[nodiscard]] virtual size_t get_width() const = 0;
     [[nodiscard]] virtual size_t get_height() const = 0;
@@ -41,14 +39,17 @@ public:
 
 struct ImageViewSpecification
 {
-    Ref<Image> image;
+    Reference<Image> image;
     size_t mip = 0;
 
     StringId name;
 };
 
 class ImageView: public RendererResource
-{};
+{
+public:
+    explicit ImageView(const StringId& id): RendererResource(id) {}
+};
 
 namespace utils
 {

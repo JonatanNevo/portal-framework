@@ -12,17 +12,17 @@ namespace portal::renderer
 class UniformBuffer: public BufferDescriptor
 {
 public:
-    UniformBuffer(): BufferDescriptor(DescriptorResourceType::UniformBuffer) {};
+    UniformBuffer(const StringId& id): BufferDescriptor(id, DescriptorResourceType::UniformBuffer) {};
 };
 
 class UniformBufferSet: public BufferDescriptor
 {
 public:
-    UniformBufferSet(): BufferDescriptor(DescriptorResourceType::UniformBufferSet) {};
+    UniformBufferSet(const StringId& id): BufferDescriptor(id, DescriptorResourceType::UniformBufferSet) {};
 
-    virtual Ref<UniformBuffer> get(size_t index) = 0;
+    virtual Reference<UniformBuffer> get(size_t index) = 0;
 
-    virtual void set(Ref<UniformBuffer> buffer, size_t index) = 0;
+    virtual void set(const Reference<UniformBuffer>& buffer, size_t index) = 0;
 };
 
 }

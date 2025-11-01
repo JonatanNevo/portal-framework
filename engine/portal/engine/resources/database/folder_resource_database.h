@@ -4,47 +4,61 @@
 //
 
 #pragma once
-
 #include <filesystem>
+#include <llvm/ADT/DenseMap.h>
 
-#include "portal/engine/resources/resource_types.h"
-#include "portal/engine/resources/database/resource_database.h"
-#include "portal/engine/strings/string_registry.h"
-#include "portal/serialization/archive.h"
+#include "resource_database.h"
 
 namespace portal
 {
 
-/**
- * A metadata for a single resource.
- * Each resource will have a metadata file associated with it, located in the same folder as the resource.
- * All metadata files are registered to a root archive file that contains the links to the metadata files.
- */
-struct ResourceMetadata
-{
-    StringId id = INVALID_STRING_ID;
-    ResourceType type = ResourceType::Unknown;
-};
+constexpr auto CURRENT_DATABASE_VERSION = 1;
 
-struct ResourceArchive
+struct DatabaseMetadata
 {
-    StringId id = STRING_ID("root");
-    std::unordered_map<StringId, std::filesystem::path> resources{};
+    size_t version = CURRENT_DATABASE_VERSION;
+    StringId name = STRING_ID("root");
+    size_t resource_count = 0;
+    ResourceDirtyFlags dirty = ResourceDirtyBits::DataChange;
 
     void archive(ArchiveObject& archive) const;
-    static ResourceArchive dearchive(ArchiveObject& archive);
+    static DatabaseMetadata dearchive(ArchiveObject& archive);
 };
 
-
-class FolderResourceDatabase final : public resources::ResourceDatabase
+class FolderResourceDatabase final : public ResourceDatabase
 {
 public:
     explicit FolderResourceDatabase(const std::filesystem::path& path);
+    ~FolderResourceDatabase() override;
 
-    [[nodiscard]] std::shared_ptr<resources::ResourceSource> get_source(StringId id) const override;
+    std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) override;
+    std::expected<SourceMetadata, DatabaseError> find(ResourceHandle handle) override;
+
+    DatabaseError add(SourceMetadata meta) override;
+
+    DatabaseError remove(StringId resource_id) override;
+    DatabaseError remove(ResourceHandle handle) override;
+
+    std::unique_ptr<resources::ResourceSource> create_source(SourceMetadata meta) override;
+
+protected:
+    void populate();
+
+    DatabaseError validate();
+    DatabaseError validate_metadata(const SourceMetadata& meta) const;
+
+    void mend(DatabaseError error);
+    void clean_metadata();
+
+    void save_meta() const;
+    DatabaseMetadata load_meta() const;
 
 private:
     std::filesystem::path root_path;
+    std::filesystem::path meta_path;
+    DatabaseMetadata metadata;
+
+    llvm::DenseMap<ResourceHandle, SourceMetadata> resources;
 };
 
 } // portal

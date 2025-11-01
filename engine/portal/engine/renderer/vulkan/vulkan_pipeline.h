@@ -15,15 +15,13 @@ class VulkanContext;
 class VulkanPipeline final : public Pipeline
 {
 public:
-    explicit VulkanPipeline(const pipeline::Specification& spec, const Ref<VulkanContext>& context);
+    explicit VulkanPipeline(const pipeline::Specification& spec, const VulkanContext& context);
     ~VulkanPipeline() override;
 
     [[nodiscard]] pipeline::Specification& get_spec() override;
     [[nodiscard]] const pipeline::Specification& get_spec() const override;
 
-    void initialize() override;
-
-    [[nodiscard]] Ref<ShaderVariant> get_shader() const override;
+    [[nodiscard]] Reference<ShaderVariant> get_shader() const override;
 
     bool is_dynamic_line_width() const;
 
@@ -31,7 +29,10 @@ public:
     vk::PipelineLayout get_vulkan_pipeline_layout();
 
 private:
-    Ref<VulkanContext> context;
+    void initialize();
+
+private:
+    const VulkanContext& context;
     pipeline::Specification spec;
 
     vk::raii::Pipeline pipeline = nullptr;

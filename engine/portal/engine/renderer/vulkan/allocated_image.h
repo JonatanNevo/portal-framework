@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <portal/core/reference.h>
+
 
 #include "portal/engine/renderer/vulkan/base/allocated.h"
 #include "portal/engine/renderer/vulkan/base/builder_base.h"
@@ -31,7 +31,7 @@ public:
     ImageBuilder& with_usage(vk::ImageUsageFlags usage);
     ImageBuilder& with_flags(vk::ImageCreateFlags flags);
 
-    AllocatedImage build(Ref<VulkanDevice> device) const;
+    AllocatedImage build(const VulkanDevice& device) const;
 };
 
 class AllocatedImage final : public allocation::Allocated<vk::Image>
@@ -50,6 +50,6 @@ public:
     ~AllocatedImage() override;
 protected:
     friend struct ImageBuilder;
-    AllocatedImage(Ref<VulkanDevice> device, const ImageBuilder& builder);
+    AllocatedImage(const VulkanDevice& device, const ImageBuilder& builder);
 };
 } // portal

@@ -21,7 +21,7 @@ public:
         float ratio;
     };
 
-    DescriptorAllocator(vk::raii::Device* device, uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios);
+    DescriptorAllocator(const vk::raii::Device& device, uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios);
 
     ~DescriptorAllocator() = default;
     DescriptorAllocator(const DescriptorAllocator&) = delete;
@@ -45,7 +45,7 @@ private:
     std::vector<vk::raii::DescriptorPool> full_pools;
     std::vector<vk::raii::DescriptorPool> ready_pools;
     uint32_t sets_per_pool = 0;
-    vk::raii::Device* device = nullptr;
+    const vk::raii::Device& device;
 };
 
 } // portal

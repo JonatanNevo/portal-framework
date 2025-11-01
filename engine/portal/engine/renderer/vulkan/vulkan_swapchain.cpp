@@ -47,25 +47,22 @@ vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& av
     return present_mode;
 }
 
-
-void VulkanSwapchain::init(const Ref<VulkanContext>& vulkan_context, GLFWwindow* window)
+VulkanSwapchain::VulkanSwapchain(const VulkanContext& context, GLFWwindow* window) : context(context)
 {
-    context = vulkan_context;
-
-    auto physical_device = context->get_physical_device();
-    auto device = context->get_device();
+    auto& physical_device = context.get_physical_device();
+    auto& device = context.get_device();
 
     VkSurfaceKHR surface_handle;
-    if (glfwCreateWindowSurface(*context->get_instance(), window, nullptr, &surface_handle) != VK_SUCCESS)
+    if (glfwCreateWindowSurface(*context.get_instance(), window, nullptr, &surface_handle) != VK_SUCCESS)
     {
         LOGGER_ERROR("Failed to create window surface!");
         //TODO: exit?
         return;
     }
-    surface = vk::raii::SurfaceKHR(context->get_instance(), surface_handle);
+    surface = vk::raii::SurfaceKHR(context.get_instance(), surface_handle);
 
     // TODO: move queue creation to device somehow?
-    const auto queue_family_properties = physical_device->get_handle().getQueueFamilyProperties();
+    const auto queue_family_properties = physical_device.get_handle().getQueueFamilyProperties();
 
     // Iterate over each queue to learn whether it supports presenting:
     // Find a queue with present support
@@ -73,7 +70,7 @@ void VulkanSwapchain::init(const Ref<VulkanContext>& vulkan_context, GLFWwindow*
     std::vector supports_present(queue_family_properties.size(), false);
     for (uint32_t i = 0; i < queue_family_properties.size(); i++)
     {
-        supports_present[i] = physical_device->get_handle().getSurfaceSupportKHR(i, *surface);
+        supports_present[i] = physical_device.get_handle().getSurfaceSupportKHR(i, *surface);
     }
 
 
@@ -118,10 +115,10 @@ void VulkanSwapchain::init(const Ref<VulkanContext>& vulkan_context, GLFWwindow*
     PORTAL_ASSERT(present_queue_index != std::numeric_limits<size_t>::max(), "Failed to find a suitable present queue!");
 
     present_queue_family_index = present_queue_index;
-    present_queue = device->get_queue(present_queue_index);
+    present_queue = device.get_queue(present_queue_index);
     find_image_format_and_color_space();
-}
 
+}
 
 void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, const bool new_vsync)
 {
@@ -131,8 +128,8 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
     // Swapchain
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    auto device = context->get_device();
-    auto physical_device = context->get_physical_device()->get_handle();
+    auto& device = context.get_device();
+    auto physical_device = context.get_physical_device().get_handle();
 
     auto old_swapchain = std::move(swapchain);
 
@@ -218,9 +215,9 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
     if (surface_capabilities.supportedUsageFlags & vk::ImageUsageFlagBits::eTransferSrc)
         swap_chain_create_info.imageUsage |= vk::ImageUsageFlagBits::eTransferSrc;
 
-    auto&& new_swapchain = device->get_handle().createSwapchainKHR(swap_chain_create_info);
+    auto&& new_swapchain = device.get_handle().createSwapchainKHR(swap_chain_create_info);
     swapchain = std::move(new_swapchain);
-    device->set_debug_name(swapchain, "main swapchain"); // TODO: include window specifier to the name?
+    device.set_debug_name(swapchain, "main swapchain"); // TODO: include window specifier to the name?
 
     images_data.clear();
 
@@ -249,8 +246,8 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
 
         auto& [image, image_view, command_pool, command_buffer, last_used_frame] = images_data[i];
         image = swap_chain_images[i];
-        image_view = device->get_handle().createImageView(view_info);
-        device->set_debug_name(image_view, fmt::format("swapchain_image_view_{}", i).c_str());
+        image_view = device.get_handle().createImageView(view_info);
+        device.set_debug_name(image_view, fmt::format("swapchain_image_view_{}", i).c_str());
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Command buffer
@@ -260,16 +257,16 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             .flags = vk::CommandPoolCreateFlagBits::eTransient,
             .queueFamilyIndex = static_cast<uint32_t>(present_queue_family_index),
         };
-        command_pool = device->get_handle().createCommandPool(pool_info);
-        device->set_debug_name(command_pool, fmt::format("swapchain_command_pool_{}", i).c_str());
+        command_pool = device.get_handle().createCommandPool(pool_info);
+        device.set_debug_name(command_pool, fmt::format("swapchain_command_pool_{}", i).c_str());
 
         const vk::CommandBufferAllocateInfo alloc_info{
             .commandPool = command_pool,
             .level = vk::CommandBufferLevel::ePrimary,
             .commandBufferCount = 1,
         };
-        command_buffer = std::move(device->get_handle().allocateCommandBuffers(alloc_info).front());
-        device->set_debug_name(command_buffer, fmt::format("swapchain_command_buffer_{}", i).c_str());
+        command_buffer = std::move(device.get_handle().allocateCommandBuffers(alloc_info).front());
+        device.set_debug_name(command_buffer, fmt::format("swapchain_command_buffer_{}", i).c_str());
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -288,39 +285,39 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
     size_t frame_index = 0;
     for (auto& data : frame_data)
     {
-        data.image_available_semaphore = device->get_handle().createSemaphore({});
-        device->set_debug_name(data.image_available_semaphore, fmt::format("swapchain_image_available_semaphore_{}", frame_index).c_str());
+        data.image_available_semaphore = device.get_handle().createSemaphore({});
+        device.set_debug_name(data.image_available_semaphore, fmt::format("swapchain_image_available_semaphore_{}", frame_index).c_str());
 
-        data.render_finished_semaphore = device->get_handle().createSemaphore({});
-        device->set_debug_name(data.render_finished_semaphore, fmt::format("swapchain_render_finished_semaphore_{}", frame_index).c_str());
+        data.render_finished_semaphore = device.get_handle().createSemaphore({});
+        device.set_debug_name(data.render_finished_semaphore, fmt::format("swapchain_render_finished_semaphore_{}", frame_index).c_str());
 
-        data.wait_fence = device->get_handle().createFence(
+        data.wait_fence = device.get_handle().createFence(
             {
                 .flags = vk::FenceCreateFlagBits::eSignaled
             }
             );
-        device->set_debug_name(data.wait_fence, fmt::format("swapchain_wait_fence_{}", frame_index).c_str());
+        device.set_debug_name(data.wait_fence, fmt::format("swapchain_wait_fence_{}", frame_index).c_str());
     }
 }
 
 void VulkanSwapchain::destroy()
 {
-    context->get_device()->wait_idle();
+    context.get_device().wait_idle();
 
     images_data.clear();
     frame_data.clear();
 
     swapchain = nullptr;
 
-    context->get_device()->wait_idle();
+    context.get_device().wait_idle();
 }
 
 void VulkanSwapchain::on_resize(size_t new_width, size_t new_height)
 {
     LOGGER_INFO("Resizing swapchain to {}x{}", new_width, new_height);
-    context->get_device()->wait_idle();
+    context.get_device().wait_idle();
     create(reinterpret_cast<uint32_t*>(&new_width), reinterpret_cast<uint32_t*>(&new_height), vsync);
-    context->get_device()->wait_idle();
+    context.get_device().wait_idle();
 }
 
 void VulkanSwapchain::begin_frame()
@@ -337,7 +334,7 @@ void VulkanSwapchain::begin_frame()
     {
         PORTAL_PROF_ZONE("VulkanSwapchain::begin_frame - wait for image fence");
         const auto& last_frame = frame_data[image_data.last_used_frame];
-        context->get_device()->wait_for_fences(std::span{&*last_frame.wait_fence, 1}, true);
+        context.get_device().wait_for_fences(std::span{&*last_frame.wait_fence, 1}, true);
     }
 
     image_data.command_pool.reset();
@@ -363,10 +360,10 @@ void VulkanSwapchain::present()
         .pSignalSemaphores = &*frame.render_finished_semaphore,
     };
 
-    context->get_device()->get_handle().resetFences({frame.wait_fence});
+    context.get_device().get_handle().resetFences({frame.wait_fence});
 
     // TODO: sync device queues?
-    context->get_device()->get_graphics_queue().submit(submit_info, frame.wait_fence);
+    context.get_device().get_graphics_queue().submit(submit_info, frame.wait_fence);
 
     // Present the current buffer to the swap chain
     // Pass the semaphore signaled by the command buffer submission from the submit info as the wait semaphore for swap chain presentation
@@ -412,7 +409,7 @@ size_t VulkanSwapchain::acquire_next_image()
     // Make sure the frame we're requesting has finished rendering (from previous iterations)
     {
         PORTAL_PROF_ZONE("VulkanSwapchain::acquire_next_image - wait for fences");
-        context->get_device()->wait_for_fences(std::span{&*frame.wait_fence, 1}, true);
+        context.get_device().wait_for_fences(std::span{&*frame.wait_fence, 1}, true);
     }
 
     auto [result, index] = swapchain.acquireNextImage(
@@ -446,7 +443,7 @@ size_t VulkanSwapchain::acquire_next_image()
 
 void VulkanSwapchain::find_image_format_and_color_space()
 {
-    const auto physical_device = context->get_physical_device()->get_handle();
+    const auto physical_device = context.get_physical_device().get_handle();
 
     auto surface_formats = physical_device.getSurfaceFormatsKHR(*surface);
 

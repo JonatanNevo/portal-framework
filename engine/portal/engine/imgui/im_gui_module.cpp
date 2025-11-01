@@ -11,6 +11,7 @@
 
 #include "portal/core/debug/profile.h"
 #include "portal/engine/engine_context.h"
+#include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_utils.h"
 #include "portal/engine/renderer/vulkan/vulkan_window.h"
 
@@ -65,8 +66,8 @@ ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context): context
         .pPoolSizes = pool_sizes
     };
 
-    auto vulkan_context = renderer->get_gpu_context()->get_context();
-    imgui_pool = (vulkan_context->get_device()->get_handle()).createDescriptorPool(pool_info);
+    auto& vulkan_context = renderer->get_renderer_context().get_gpu_context();
+    imgui_pool = (vulkan_context.get_device().get_handle()).createDescriptorPool(pool_info);
 
     const auto vulkan_window = dynamic_cast<renderer::vulkan::VulkanWindow*>(context->window);
     ImGui_ImplGlfw_InitForVulkan(vulkan_window->window, true);
@@ -74,10 +75,10 @@ ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context): context
     const auto swapchain_format = vulkan_window->get_swapchain().get_color_format();
 
     ImGui_ImplVulkan_InitInfo init_info = {
-        .Instance = *vulkan_context->get_instance(),
-        .PhysicalDevice = *vulkan_context->get_physical_device()->get_handle(),
-        .Device = *vulkan_context->get_device()->get_handle(),
-        .Queue = vulkan_context->get_device()->get_graphics_queue(),
+        .Instance = *vulkan_context.get_instance(),
+        .PhysicalDevice = *vulkan_context.get_physical_device().get_handle(),
+        .Device = *vulkan_context.get_device().get_handle(),
+        .Queue = vulkan_context.get_device().get_graphics_queue(),
         .DescriptorPool = *imgui_pool,
         .MinImageCount = 3,
         .ImageCount = 3,

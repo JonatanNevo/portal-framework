@@ -4,9 +4,9 @@
 //
 
 
-#include "portal/engine/resources/new/database/resource_database.h"
+#include "resource_database.h"
 
-namespace portal::ng
+namespace portal
 {
 
 void SourceMetadata::archive(ArchiveObject& archive) const

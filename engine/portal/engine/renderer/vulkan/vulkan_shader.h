@@ -18,21 +18,20 @@ class VulkanShaderVariant;
 class VulkanShader final : public Shader
 {
 public:
-    explicit VulkanShader(StringId id);
-    void initialize(const Ref<VulkanContext>& new_context);
+    explicit VulkanShader(const StringId& id, const VulkanContext& context);
 
-    WeakRef<ShaderVariant> get_shader(uint64_t shader_hash) override;
+    WeakReference<ShaderVariant> get_shader(uint64_t shader_hash) override;
 
 private:
-    Ref<VulkanContext> context;
-    std::unordered_map<uint64_t, Ref<VulkanShaderVariant>> variant_map;
+    const VulkanContext& context;
+    std::unordered_map<uint64_t, Reference<VulkanShaderVariant>> variant_map;
 };
 
 
 class VulkanShaderVariant final : public ShaderVariant
 {
 public:
-    VulkanShaderVariant(const StringId& name, const Ref<VulkanContext>& context);
+    VulkanShaderVariant(const StringId& name, const VulkanContext& context);
     ~VulkanShaderVariant() override;
 
     void release();
@@ -61,7 +60,7 @@ private:
     CompiledShader code;
 
     StringId name;
-    Ref<VulkanDevice> device;
+    const VulkanDevice& device;
 
     std::vector<vk::raii::ShaderModule> shader_modules = {};
     std::vector<vk::PipelineShaderStageCreateInfo> shader_stage_create_infos = {};

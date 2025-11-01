@@ -15,19 +15,20 @@ namespace portal::renderer::vulkan
 
 static auto logger = Log::get_logger("Vulkan");
 
-VulkanDevice::VulkanDevice(const Ref<VulkanPhysicalDevice>& physical_device, const Features& device_features) : physical_device(physical_device),
-    enabled_features(device_features)
+VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& physical_device, const Features& device_features)
+    : physical_device(physical_device),
+      enabled_features(device_features)
 {
     std::vector<const char*> device_extensions;
     device_extensions.append_range(DEVICE_EXTENSIONS);
 
-    if (physical_device->is_extension_supported(vk::NVDeviceDiagnosticCheckpointsExtensionName))
+    if (physical_device.is_extension_supported(vk::NVDeviceDiagnosticCheckpointsExtensionName))
         device_extensions.push_back(vk::NVDeviceDiagnosticCheckpointsExtensionName);
 
-    if (physical_device->is_extension_supported(vk::NVDeviceDiagnosticsConfigExtensionName))
+    if (physical_device.is_extension_supported(vk::NVDeviceDiagnosticsConfigExtensionName))
         device_extensions.push_back(vk::NVDeviceDiagnosticsConfigExtensionName);
 
-    if (physical_device->is_extension_supported(vk::EXTDebugMarkerExtensionName))
+    if (physical_device.is_extension_supported(vk::EXTDebugMarkerExtensionName))
     {
         device_extensions.push_back(vk::EXTDebugMarkerExtensionName);
         debug_marker_enabled = true;
@@ -35,15 +36,15 @@ VulkanDevice::VulkanDevice(const Ref<VulkanPhysicalDevice>& physical_device, con
 
     const vk::DeviceCreateInfo create_info = {
         .pNext = &device_features.get<vk::PhysicalDeviceFeatures2>(),
-        .queueCreateInfoCount = static_cast<uint32_t>(physical_device->queue_create_infos.size()),
-        .pQueueCreateInfos = physical_device->queue_create_infos.data(),
+        .queueCreateInfoCount = static_cast<uint32_t>(physical_device.queue_create_infos.size()),
+        .pQueueCreateInfos = physical_device.queue_create_infos.data(),
         .enabledExtensionCount = static_cast<uint32_t>(device_extensions.size()),
         .ppEnabledExtensionNames = device_extensions.data(),
     };
 
-    device = physical_device->physical_device.createDevice(create_info);
+    device = physical_device.physical_device.createDevice(create_info);
 
-    const auto [graphics, compute, transfer] = physical_device->get_queue_family_indices();
+    const auto [graphics, compute, transfer] = physical_device.get_queue_family_indices();
 
     graphics_queue = get_handle().getQueue(graphics, 0);
     set_debug_name(graphics_queue, "graphics queue");
@@ -64,24 +65,24 @@ VulkanDevice::VulkanDevice(const Ref<VulkanPhysicalDevice>& physical_device, con
     pipeline_cache = device.createPipelineCache({});
 }
 
-AllocatedBuffer VulkanDevice::create_buffer(const BufferBuilder& builder)
+AllocatedBuffer VulkanDevice::create_buffer(const BufferBuilder& builder) const
 {
-    return builder.build({this});
+    return builder.build(*this);
 }
 
-std::shared_ptr<AllocatedBuffer> VulkanDevice::create_buffer_shared(const BufferBuilder& builder)
+std::shared_ptr<AllocatedBuffer> VulkanDevice::create_buffer_shared(const BufferBuilder& builder) const
 {
-    return builder.build_shared({this});
+    return builder.build_shared(*this);
 }
 
-AllocatedImage VulkanDevice::create_image(const ImageBuilder& builder)
+AllocatedImage VulkanDevice::create_image(const ImageBuilder& builder) const
 {
-    return builder.build({this});
+    return builder.build(*this);
 }
 
 vk::raii::ImageView VulkanDevice::create_image_view(const vk::ImageViewCreateInfo& info) const
 {
-    auto image_view =  device.createImageView(info);
+    auto image_view = device.createImageView(info);
     return image_view;
 }
 
@@ -102,10 +103,12 @@ vk::raii::PipelineLayout VulkanDevice::create_pipeline_layout(const vk::Pipeline
 
 vk::raii::ShaderModule VulkanDevice::create_shader_module(const Buffer& code) const
 {
-    return device.createShaderModule({
-        .codeSize = code.size * sizeof(char),
-        .pCode = code.as<uint32_t*>()
-    });
+    return device.createShaderModule(
+        {
+            .codeSize = code.size * sizeof(char),
+            .pCode = code.as<uint32_t*>()
+        }
+        );
 }
 
 vk::raii::Pipeline VulkanDevice::create_pipeline(PipelineBuilder& builder) const
@@ -113,7 +116,7 @@ vk::raii::Pipeline VulkanDevice::create_pipeline(PipelineBuilder& builder) const
     return builder.build(device, pipeline_cache);
 }
 
-void VulkanDevice::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function)
+void VulkanDevice::immediate_submit(std::function<void(const vk::raii::CommandBuffer&)>&& function) const
 {
     device.resetFences({immediate_command_buffer.fence});
 
@@ -172,10 +175,11 @@ void VulkanDevice::set_debug_name(const vk::ObjectType type, const uint64_t hand
 
 void VulkanDevice::initialize_immediate_commands()
 {
-    const auto indices = physical_device->get_queue_family_indices();
+    const auto indices = physical_device.get_queue_family_indices();
     const vk::CommandPoolCreateInfo pool_info{
         .flags = vk::CommandPoolCreateFlagBits::eTransient,
-        .queueFamilyIndex = static_cast<uint32_t>(indices.transfer), // TODO: should this be transfer or graphics?
+        .queueFamilyIndex = static_cast<uint32_t>(indices.transfer),
+        // TODO: should this be transfer or graphics?
     };
 
     auto& [pool, buffer, fence] = immediate_command_buffer;

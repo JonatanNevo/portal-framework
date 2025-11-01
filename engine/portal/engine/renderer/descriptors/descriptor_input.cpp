@@ -13,67 +13,66 @@
 namespace portal::renderer
 {
 
-DescriptorInput::DescriptorInput(Ref<UniformBuffer> buffer): type(DescriptorResourceType::UniformBuffer), input({1, buffer})
+DescriptorInput::DescriptorInput(const Reference<UniformBuffer>& buffer) : type(DescriptorResourceType::UniformBuffer), input({1, buffer})
+{}
+
+DescriptorInput::DescriptorInput(const Reference<UniformBufferSet>& buffer) : type(DescriptorResourceType::UniformBufferSet), input({1, buffer})
 {
 }
 
-DescriptorInput::DescriptorInput(Ref<UniformBufferSet> buffer): type(DescriptorResourceType::UniformBufferSet), input({1, buffer})
+DescriptorInput::DescriptorInput(const Reference<StorageBuffer>& buffer) : type(DescriptorResourceType::StorageBuffer), input({1, buffer})
 {
 }
 
-DescriptorInput::DescriptorInput(Ref<StorageBuffer> buffer): type(DescriptorResourceType::StorageBuffer), input({1, buffer})
+DescriptorInput::DescriptorInput(const Reference<StorageBufferSet>& buffer) : type(DescriptorResourceType::StorageBufferSet), input({1, buffer})
 {
 }
 
-DescriptorInput::DescriptorInput(Ref<StorageBufferSet> buffer): type(DescriptorResourceType::StorageBufferSet), input({1, buffer})
+DescriptorInput::DescriptorInput(const Reference<Texture>& texture) : type(DescriptorResourceType::Texture), input({1, texture})
 {
 }
 
-DescriptorInput::DescriptorInput(Ref<Texture> texture): type(DescriptorResourceType::Texture), input({1, texture})
+DescriptorInput::DescriptorInput(const Reference<Image>& texture) : type(DescriptorResourceType::Image), input({1, texture})
 {
 }
 
-DescriptorInput::DescriptorInput(Ref<Image> texture): type(DescriptorResourceType::Image), input({1, texture})
-{
-}
-
-void DescriptorInput::set(const Ref<UniformBuffer>& buffer, const size_t index)
+void DescriptorInput::set(const Reference<UniformBuffer>& buffer, const size_t index)
 {
     type = DescriptorResourceType::UniformBuffer;
     input[index] = buffer;
 }
 
-void DescriptorInput::set(const Ref<UniformBufferSet>& buffer, const size_t index)
+void DescriptorInput::set(const Reference<UniformBufferSet>& buffer, const size_t index)
 {
     type = DescriptorResourceType::UniformBufferSet;
     input[index] = buffer;
 }
 
-void DescriptorInput::set(const Ref<StorageBuffer>& buffer, const size_t index)
+void DescriptorInput::set(const Reference<StorageBuffer>& buffer, const size_t index)
 {
     type = DescriptorResourceType::StorageBuffer;
     input[index] = buffer;
 }
 
-void DescriptorInput::set(const Ref<StorageBufferSet>& buffer, const size_t index)
+void DescriptorInput::set(const Reference<StorageBufferSet>& buffer, const size_t index)
 {
     type = DescriptorResourceType::StorageBufferSet;
     input[index] = buffer;
 }
 
-void DescriptorInput::set(const Ref<Texture>& texture, const size_t index)
+void DescriptorInput::set(const Reference<Texture>& texture, const size_t index)
 {
     type = DescriptorResourceType::Texture;
     input[index] = texture;
 }
 
-void DescriptorInput::set(const Ref<Image>& image, const size_t index)
+void DescriptorInput::set(const Reference<Image>& image, const size_t index)
 {
     type = DescriptorResourceType::Image;
     input[index] = image;
 }
 
-void DescriptorInput::set(const Ref<ImageView>& image, const size_t index)
+void DescriptorInput::set(const Reference<ImageView>& image, const size_t index)
 {
     type = DescriptorResourceType::Image;
     input[index] = image;

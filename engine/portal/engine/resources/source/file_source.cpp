@@ -5,60 +5,19 @@
 
 #include "file_source.h"
 
-#include <unordered_set>
-#include <ranges>
-#include <vector>
 #include <fstream>
-#include <sstream>
+#include <utility>
 
-#include "portal/core/buffer_stream.h"
 #include "portal/core/files/file_system.h"
 
 namespace portal::resources
 {
 
-static std::vector<std::pair<std::unordered_set<std::string_view>, std::pair<ResourceType, SourceFormat>>> g_asset_extensions
-{
-    {{".png", ".jpg", ".jpeg", ".hdr"}, {ResourceType::Texture, SourceFormat::Image}},
-    {{".obj"}, {ResourceType::Mesh, SourceFormat::Obj}},
-    {{".mtl"}, {ResourceType::Material, SourceFormat::Material}},
-    {{".slang"}, {ResourceType::Shader, SourceFormat::Shader}},
-    {{".spv"}, {ResourceType::Shader, SourceFormat::PrecompiledShader}},
-    {{".glb", ".gltf"}, {ResourceType::Composite, SourceFormat::Glft}}
-};
-
-
 static auto logger = Log::get_logger("Resources");
 
-FileSource::FileSource(const std::filesystem::path& path): file_path(path) {}
+FileSource::FileSource(std::filesystem::path path) : file_path(std::move(path)) {}
 
-SourceMetadata FileSource::get_meta() const
-{
-    if (!std::filesystem::exists(file_path))
-    {
-        LOGGER_ERROR("Path for resource does not exist: {}", file_path.string());
-        return {INVALID_STRING_ID, ResourceType::Unknown, SourceFormat::Unknown, 0, ""};
-    }
-
-    const auto file_extension = file_path.extension().string();
-    for (auto& [extension_set, resource_type] : g_asset_extensions)
-    {
-        if (extension_set.contains(file_extension))
-        {
-            return {
-                STRING_ID(file_path.filename().string()),
-                resource_type.first,
-                resource_type.second,
-                FileSystem::stat_file(file_path).size,
-                file_path
-            };
-        }
-    }
-
-    return {INVALID_STRING_ID, ResourceType::Unknown, SourceFormat::Unknown, 0, ""};
-}
-
-Buffer FileSource::load()
+Buffer FileSource::load() const
 {
     if (!std::filesystem::exists(file_path))
     {
@@ -69,7 +28,7 @@ Buffer FileSource::load()
     return FileSystem::read_file_binary(file_path);
 }
 
-Buffer FileSource::load(const size_t offset, const size_t size)
+Buffer FileSource::load(const size_t offset, const size_t size) const
 {
     if (!std::filesystem::exists(file_path))
     {
@@ -80,7 +39,7 @@ Buffer FileSource::load(const size_t offset, const size_t size)
     return FileSystem::read_chunk(file_path, offset, size);
 }
 
-std::unique_ptr<std::istream> FileSource::stream()
+std::unique_ptr<std::istream> FileSource::stream() const
 {
     if (!std::filesystem::exists(file_path))
     {
@@ -91,4 +50,5 @@ std::unique_ptr<std::istream> FileSource::stream()
     auto&& file = std::make_unique<std::ifstream>(file_path, std::ios::binary);
     return file;
 }
+
 } // portal

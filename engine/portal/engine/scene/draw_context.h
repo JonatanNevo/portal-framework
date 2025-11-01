@@ -21,7 +21,7 @@ struct RenderObject
     uint32_t first_index = 0;
     std::shared_ptr<renderer::vulkan::AllocatedBuffer> index_buffer = nullptr;
 
-    WeakRef<renderer::Material> material = nullptr;
+    Reference<renderer::Material> material = nullptr;
     resources::Bounds bounds{};
 
     glm::mat4 transform = glm::mat4(1.0f);
