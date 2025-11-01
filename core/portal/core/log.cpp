@@ -120,6 +120,7 @@ void Log::init(const Settings& settings)
 
 void Log::shutdown()
 {
+    LOG_INFO("Shutting down logger");
     auto& loggers = get_loggers();
     for (auto& logger : loggers | std::views::values)
     {

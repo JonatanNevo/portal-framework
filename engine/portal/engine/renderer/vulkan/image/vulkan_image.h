@@ -30,7 +30,9 @@ public:
     VulkanImage(const image::Specification& spec, const VulkanContext& context);
     ~VulkanImage() override;
 
+    void reallocate() override;
     void resize(size_t width, size_t height) override;
+    void release() override;
 
     [[nodiscard]] bool is_image_valid() const;
 
@@ -64,9 +66,7 @@ public:
 
     void update_descriptor();
 
-private:
-    void initialize();
-    void release();
+
 
 private:
     const VulkanDevice& device;

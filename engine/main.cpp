@@ -4,12 +4,7 @@
 //
 
 
-#include "portal/core/log.h"
-#include "portal/engine/resources/database/folder_resource_database.h"
-#include "portal/engine/resources/resource_registry.h"
-#include "portal/engine/resources/database/folder_resource_database.h"
-
-
+#include "portal/engine/application/application.h"
 using namespace portal;
 
 void add_resource(const std::filesystem::path& path, ResourceDatabase& database)
@@ -34,19 +29,15 @@ void add_resource(const std::filesystem::path& path, ResourceDatabase& database)
 
 int main()
 {
-    Log::init();
+    // Log::init();
 
-    FolderResourceDatabase database(R"(C:\Users\thejo\OneDrive\Documents\PortalEngine\test)");
-    database.remove(STRING_ID("fish_texture"));
-    add_resource("fish_texture.png", database);
+    // FolderResourceDatabase database();
+    // database.remove(STRING_ID("fish_texture"));
     // StringId resource = STRING_ID("fish_texture");
 
-
-    // jobs::Scheduler scheduler(4);
-    // ng::ReferenceManager reference_manager;
-    // ng::ResourceRegistry registry(reference_manager, scheduler);
-
-    // ApplicationSpecification spec;
-    // Application app{spec};
-    // app.run();
+    ApplicationSpecification spec{
+        .resources_path = R"(C:\Users\thejo\OneDrive\Documents\PortalEngine\test)"
+    };
+    Application app{spec};
+    app.run();
 }

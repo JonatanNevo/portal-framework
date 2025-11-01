@@ -41,7 +41,8 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
         .height = spec.height,
     };
 
-    window = std::make_shared<renderer::vulkan::VulkanWindow>(vulkan_context, window_spec);
+    vulkan_context = std::make_unique<renderer::vulkan::VulkanContext>();
+    window = make_reference<renderer::vulkan::VulkanWindow>(*vulkan_context, window_spec);
     window->set_event_callback(
         [this](auto& event)
         {
@@ -49,21 +50,19 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
         }
         );
 
-    renderer = std::make_shared<Renderer>(vulkan_context, std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window).get());
+    renderer = make_reference<Renderer>(*vulkan_context, std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window).get());
 
-    const auto resource_database = std::make_shared<portal::FolderResourceDatabase>(R"(C:\Code\portal-framework\engine\resources)");
-    // resource_registry = std::make_shared<ResourceRegistry>();
-    // resource_registry->initialize(renderer->get_gpu_context(), resource_database);
 
-    engine_context = std::make_shared<EngineContext>(
-        renderer.get(),
-        resource_registry.get(),
-        window.get()
+    scheduler = std::make_unique<jobs::Scheduler>(spec.scheduler_worker_num);
+    reference_manager = std::make_unique<ReferenceManager>();
+    resource_database = std::make_unique<FolderResourceDatabase>(spec.resources_path);
+    resource_registry = std::make_unique<ResourceRegistry>(*reference_manager, *resource_database, *scheduler, renderer->get_renderer_context());
+
+    engine_context = make_reference<EngineContext>(
+        *renderer,
+        *resource_registry,
+        *window
         );
-
-    PORTAL_ASSERT(engine_context->renderer != nullptr, "Null renderer");
-    PORTAL_ASSERT(engine_context->window != nullptr, "Null window");
-    PORTAL_ASSERT(engine_context->resource_registry != nullptr, "Null resource registry");
 
     // TODO: remove this
     imgui_module = std::make_unique<ImGuiModule>(engine_context);
@@ -71,8 +70,20 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
 
 Application::~Application()
 {
-    glfwTerminate();
+    LOGGER_INFO("Shutting down application");
+    vulkan_context->get_device().wait_idle();
 
+    imgui_module.reset();
+    engine_context.reset();
+    resource_registry.reset();
+    resource_database.reset();
+    reference_manager.reset();
+    scheduler.reset();
+    renderer.reset();
+    window.reset();
+    vulkan_context.reset();
+
+    glfwTerminate();
     Log::shutdown();
 }
 
@@ -82,8 +93,8 @@ void Application::run()
     {
         // TODO: Remove from here
         {
-            engine_context->resource_registry->immediate_load<Scene>(STRING_ID("game/ABeautifulGame.gltf"));
-            const auto scene = engine_context->resource_registry->get<Scene>(STRING_ID("Scene0-Scene"));
+            engine_context->get_resource_registry().immediate_load<Scene>(STRING_ID("game/ABeautifulGame.gltf"));
+            const auto scene = engine_context->get_resource_registry().get<Scene>(STRING_ID("Scene0-Scene"));
             // engine_context->renderer->set_scene(scene);
         }
 

@@ -19,6 +19,8 @@ public:
     explicit Image(const StringId& id): RendererResource(id) {}
 
     virtual void resize(size_t width, size_t height) = 0;
+    virtual void reallocate() = 0;
+    virtual void release() = 0;
 
     [[nodiscard]] virtual size_t get_width() const = 0;
     [[nodiscard]] virtual size_t get_height() const = 0;

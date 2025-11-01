@@ -33,7 +33,7 @@ enum class ResourceType: uint16_t
     Shader    = 3,
     Mesh      = 4,
     Scene     = 6,
-    Composite = std::numeric_limits<uint16_t>::max(),
+    Composite = 7,
 };
 
 enum class SourceFormat: uint8_t

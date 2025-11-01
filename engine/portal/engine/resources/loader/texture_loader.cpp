@@ -23,7 +23,7 @@ namespace portal::resources
 
 static auto logger = Log::get_logger("Resources");
 
-TextureLoader::TextureLoader(ResourceRegistry& registry, RendererContext& context) : ResourceLoader(registry), context(context)
+TextureLoader::TextureLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
 {
     const uint32_t white = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
     const uint32_t black = glm::packUnorm4x8(glm::vec4(0, 0, 0, 0));

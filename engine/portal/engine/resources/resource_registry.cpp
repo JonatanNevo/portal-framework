@@ -18,12 +18,11 @@ ResourceRegistry::ResourceRegistry(
     ReferenceManager& ref_manager,
     ResourceDatabase& database,
     jobs::Scheduler& scheduler,
-    RendererContext& context
+    const RendererContext& context
     )
     : database(database),
       reference_manager(ref_manager),
       scheduler(scheduler),
-      context(context),
       loader_factory(*this, context) // TODO: this might not work :(
 {
 
