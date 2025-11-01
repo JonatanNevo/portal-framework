@@ -12,7 +12,7 @@ file(GLOB_RECURSE ASSETS_HEADERS CONFIGURE_DEPENDS "portal/assets/*.h")
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 
-find_package(unofficial-concurrentqueue CONFIG REQUIRED)
+find_package(concurrentqueue CONFIG REQUIRED)
 
 if(PORTAL_FIND_PACAKGE)
     find_package(portal-core CONFIG REQUIRED)
@@ -36,7 +36,7 @@ target_link_libraries(portal-assets
         PUBLIC
         portal::core
         portal::serialization
-        unofficial::concurrentqueue::concurrentqueue
+        concurrentqueue::concurrentqueue
 )
 
 install(TARGETS portal-assets

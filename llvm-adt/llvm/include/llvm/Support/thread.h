@@ -34,7 +34,7 @@ typedef PVOID HANDLE;
 
 namespace llvm {
 
-#if LLVM_ON_UNIX || _WIN32
+#if defined(LLVM_ON_UNIX) || defined(_WIN32)
 
 /// LLVM thread following std::thread interface with added constructor to
 /// specify stack size.

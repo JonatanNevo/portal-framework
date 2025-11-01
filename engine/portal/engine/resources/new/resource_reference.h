@@ -54,10 +54,10 @@ public:
         if (other == this)
             return *this;
 
-        reference_manager.unregister_reference(this);
-
         PORTAL_ASSERT(&reference_manager == &other.reference_manager, "Reference managers are not the same");
         PORTAL_ASSERT(&registry == &other.registry, "Resource registries are not the same");
+
+        reference_manager.unregister_reference(this);
 
         resource_id = other.resource_id;
         handle = other.handle;
@@ -74,10 +74,12 @@ public:
         if (other == this)
             return *this;
 
+        PORTAL_ASSERT(&reference_manager == &other.reference_manager, "Reference managers are not the same");
+        PORTAL_ASSERT(&registry == &other.registry, "Resource registries are not the same");
+
         reference_manager.unregister_reference(this);
 
         resource_id = std::exchange(other.resource_id, INVALID_STRING_ID);
-        reference_manager = std::exchange(other.reference_manager, nullptr);
         handle = std::exchange(other.handle, INVALID_RESOURCE_HANDLE);
         state = std::exchange(other.state, ResourceState::Unknown);
         resource = std::exchange(other.resource, nullptr);
@@ -159,6 +161,8 @@ private:
         handle(handle)
     {
         PORTAL_ASSERT(handle != INVALID_RESOURCE_HANDLE, "Resource handle is invalid");
+        reference_manager.register_reference(this);
+        get_state();
     }
 
 private:

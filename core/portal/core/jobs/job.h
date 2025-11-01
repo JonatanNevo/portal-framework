@@ -12,7 +12,6 @@
 #include <source_location>
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Allocator.h"
 #include "portal/core/log.h"
 #include "portal/core/debug/profile.h"
 #include "portal/core/jobs/job.h"

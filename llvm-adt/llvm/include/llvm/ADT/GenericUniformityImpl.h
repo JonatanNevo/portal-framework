@@ -110,8 +110,6 @@ public:
   void appendBlock(const BlockT &BB, bool isReducibleCycleHeader = false) {
     POIndex[&BB] = m_order.size();
     m_order.push_back(&BB);
-    LLVM_DEBUG(dbgs() << "ModifiedPO(" << POIndex[&BB]
-                      << "): " << Context.print(&BB) << "\n");
     if (isReducibleCycleHeader)
       ReducibleCycleHeaders.insert(&BB);
   }
@@ -547,11 +545,6 @@ public:
   bool computeJoin(const BlockT &SuccBlock, const BlockT &PushedLabel) {
     const auto *OldLabel = BlockLabels[&SuccBlock];
 
-    LLVM_DEBUG(dbgs() << "labeling " << Context.print(&SuccBlock) << ":\n"
-                      << "\tpushed label: " << Context.print(&PushedLabel)
-                      << "\n"
-                      << "\told label: " << Context.print(OldLabel) << "\n");
-
     // Early exit if there is no change in the label.
     if (OldLabel == &PushedLabel)
       return false;
@@ -559,21 +552,19 @@ public:
     if (OldLabel != &SuccBlock) {
       auto SuccIdx = CyclePOT.getIndex(&SuccBlock);
       // Assigning a new label, mark this in FreshLabels.
-      LLVM_DEBUG(dbgs() << "\tfresh label: " << SuccIdx << "\n");
+
       FreshLabels.set(SuccIdx);
     }
 
     // This is not a join if the succ was previously unlabeled.
     if (!OldLabel) {
-      LLVM_DEBUG(dbgs() << "\tnew label: " << Context.print(&PushedLabel)
-                        << "\n");
       BlockLabels[&SuccBlock] = &PushedLabel;
       return false;
     }
 
     // This is a new join. Label the join block as itself, and not as
     // the pushed label.
-    LLVM_DEBUG(dbgs() << "\tnew label: " << Context.print(&SuccBlock) << "\n");
+
     BlockLabels[&SuccBlock] = &SuccBlock;
 
     return true;
@@ -587,8 +578,6 @@ public:
 
     // Identified a divergent cycle exit
     DivDesc->CycleDivBlocks.insert(&ExitBlock);
-    LLVM_DEBUG(dbgs() << "\tDivergent cycle exit: " << Context.print(&ExitBlock)
-                      << "\n");
     return true;
   }
 
@@ -599,16 +588,11 @@ public:
 
     // Divergent, disjoint paths join.
     DivDesc->JoinDivBlocks.insert(&SuccBlock);
-    LLVM_DEBUG(dbgs() << "\tDivergent join: " << Context.print(&SuccBlock)
-                      << "\n");
     return true;
   }
 
   std::unique_ptr<DivergenceDescriptorT> computeJoinPoints() {
     assert(DivDesc);
-
-    LLVM_DEBUG(dbgs() << "SDA:computeJoinPoints: "
-                      << Context.print(&DivTermBlock) << "\n");
 
     int DivTermIdx = CyclePOT.getIndex(&DivTermBlock);
 
@@ -639,8 +623,6 @@ public:
         // not reach SuccBlock with a different label. We need to
         // check for this exit now.
         DivDesc->CycleDivBlocks.insert(SuccBlock);
-        LLVM_DEBUG(dbgs() << "\tImmediate divergent cycle exit: "
-                          << Context.print(SuccBlock) << "\n");
       }
       visitEdge(*SuccBlock, *SuccBlock);
     }
@@ -662,16 +644,13 @@ public:
           (!IrreducibleAncestor || !IrreducibleAncestor->contains(Block)))
         break;
 
-      LLVM_DEBUG(dbgs() << "Current labels:\n"; printDefs(dbgs()));
+
 
       FreshLabels.reset(BlockIdx);
       if (BlockIdx == DivTermIdx) {
-        LLVM_DEBUG(dbgs() << "Skipping DivTermBlock\n");
+
         continue;
       }
-
-      LLVM_DEBUG(dbgs() << "visiting " << Context.print(Block) << " at index "
-                        << BlockIdx << "\n");
 
       const auto *Label = BlockLabels[Block];
       assert(Label);
@@ -711,7 +690,7 @@ public:
       }
     }
 
-    LLVM_DEBUG(dbgs() << "Final labeling:\n"; printDefs(dbgs()));
+
 
     // Check every cycle containing DivTermBlock for exit divergence.
     // A cycle has exit divergence if the label of an exit block does
@@ -731,8 +710,6 @@ public:
         if (BlockLabels[Exit] != HeaderLabel) {
           // Identified a divergent cycle exit
           DivDesc->CycleDivBlocks.insert(Exit);
-          LLVM_DEBUG(dbgs() << "\tDivergent cycle exit: " << Context.print(Exit)
-                            << "\n");
         }
       }
     }
@@ -780,11 +757,6 @@ auto llvm::GenericSyncDependenceAnalysis<ContextT>::getJoinBlocks(
     });
   };
 
-  LLVM_DEBUG(
-      dbgs() << "\nResult (" << CI.getSSAContext().print(DivTermBlock)
-             << "):\n  JoinDivBlocks: " << printBlockSet(DivDesc->JoinDivBlocks)
-             << "  CycleDivBlocks: " << printBlockSet(DivDesc->CycleDivBlocks)
-             << "\n");
   (void)printBlockSet;
 
   auto ItInserted =
@@ -801,10 +773,6 @@ void GenericUniformityAnalysisImpl<ContextT>::markDivergent(
   bool Marked = false;
   if (I.isTerminator()) {
     Marked = DivergentTermBlocks.insert(I.getParent()).second;
-    if (Marked) {
-      LLVM_DEBUG(dbgs() << "marked divergent term block: "
-                        << Context.print(I.getParent()) << "\n");
-    }
   } else {
     Marked = markDefsDivergent(I);
   }
@@ -817,7 +785,7 @@ template <typename ContextT>
 bool GenericUniformityAnalysisImpl<ContextT>::markDivergent(
     ConstValueRefT Val) {
   if (DivergentValues.insert(Val).second) {
-    LLVM_DEBUG(dbgs() << "marked divergent: " << Context.print(Val) << "\n");
+
     return true;
   }
   return false;
@@ -868,8 +836,6 @@ void GenericUniformityAnalysisImpl<ContextT>::analyzeCycleExitDivergence(
 template <typename ContextT>
 void GenericUniformityAnalysisImpl<ContextT>::propagateCycleExitDivergence(
     const BlockT &DivExit, const CycleT &InnerDivCycle) {
-  LLVM_DEBUG(dbgs() << "\tpropCycleExitDiv " << Context.print(&DivExit)
-                    << "\n");
   auto *DivCycle = &InnerDivCycle;
   auto *OuterDivCycle = DivCycle;
   auto *ExitLevelCycle = CI.getCycle(&DivExit);
@@ -878,13 +844,9 @@ void GenericUniformityAnalysisImpl<ContextT>::propagateCycleExitDivergence(
 
   // Find outer-most cycle that does not contain \p DivExit
   while (DivCycle && DivCycle->getDepth() > CycleExitDepth) {
-    LLVM_DEBUG(dbgs() << "  Found exiting cycle: "
-                      << Context.print(DivCycle->getHeader()) << "\n");
     OuterDivCycle = DivCycle;
     DivCycle = DivCycle->getParentCycle();
   }
-  LLVM_DEBUG(dbgs() << "\tOuter-most exiting cycle: "
-                    << Context.print(OuterDivCycle->getHeader()) << "\n");
 
   if (!DivergentExitCycles.insert(OuterDivCycle).second)
     return;
@@ -902,7 +864,7 @@ void GenericUniformityAnalysisImpl<ContextT>::propagateCycleExitDivergence(
 template <typename ContextT>
 void GenericUniformityAnalysisImpl<ContextT>::taintAndPushAllDefs(
     const BlockT &BB) {
-  LLVM_DEBUG(dbgs() << "taintAndPushAllDefs " << Context.print(&BB) << "\n");
+
   for (const auto &I : instrs(BB)) {
     // Terminators do not produce values; they are divergent only if
     // the condition is divergent. That is handled when the divergent
@@ -918,8 +880,6 @@ void GenericUniformityAnalysisImpl<ContextT>::taintAndPushAllDefs(
 template <typename ContextT>
 void GenericUniformityAnalysisImpl<ContextT>::taintAndPushPhiNodes(
     const BlockT &JoinBlock) {
-  LLVM_DEBUG(dbgs() << "taintAndPushPhiNodes in " << Context.print(&JoinBlock)
-                    << "\n");
   for (const auto &Phi : JoinBlock.phis()) {
     // FIXME: The non-undef value is not constant per se; it just happens to be
     // uniform and may not dominate this PHI. So assuming that the same value
@@ -980,7 +940,7 @@ static const CycleT *getExtDivCycle(const CycleT *Cycle,
     return nullptr;
   }
 
-  LLVM_DEBUG(dbgs() << "cycle made divergent by external branch\n");
+
   return Cycle;
 }
 
@@ -994,9 +954,6 @@ static const CycleT *
 getIntDivCycle(const CycleT *Cycle, const BlockT *DivTermBlock,
                const BlockT *JoinBlock, const DominatorTreeT &DT,
                ContextT &Context) {
-  LLVM_DEBUG(dbgs() << "examine join " << Context.print(JoinBlock)
-                    << " for internal branch " << Context.print(DivTermBlock)
-                    << "\n");
   if (DT.properlyDominates(DivTermBlock, JoinBlock))
     return nullptr;
 
@@ -1011,18 +968,13 @@ getIntDivCycle(const CycleT *Cycle, const BlockT *DivTermBlock,
   if (DT.properlyDominates(Cycle->getHeader(), JoinBlock))
     return nullptr;
 
-  LLVM_DEBUG(dbgs() << "  header " << Context.print(Cycle->getHeader())
-                    << " does not dominate join\n");
-
   const auto *Parent = Cycle->getParentCycle();
   while (Parent && !DT.properlyDominates(Parent->getHeader(), JoinBlock)) {
-    LLVM_DEBUG(dbgs() << "  header " << Context.print(Parent->getHeader())
-                      << " does not dominate join\n");
     Cycle = Parent;
     Parent = Parent->getParentCycle();
   }
 
-  LLVM_DEBUG(dbgs() << "  cycle made divergent by internal branch\n");
+
   return Cycle;
 }
 
@@ -1066,8 +1018,6 @@ void GenericUniformityAnalysisImpl<ContextT>::analyzeControlDivergence(
     const InstructionT &Term) {
   const auto *DivTermBlock = Term.getParent();
   DivergentTermBlocks.insert(DivTermBlock);
-  LLVM_DEBUG(dbgs() << "analyzeControlDiv " << Context.print(DivTermBlock)
-                    << "\n");
 
   // Don't propagate divergence from unreachable blocks.
   if (!DT.isReachableFromEntry(DivTermBlock))
@@ -1079,11 +1029,9 @@ void GenericUniformityAnalysisImpl<ContextT>::analyzeControlDivergence(
   // Iterate over all blocks now reachable by a disjoint path join
   for (const auto *JoinBlock : DivDesc.JoinDivBlocks) {
     const auto *Cycle = CI.getCycle(JoinBlock);
-    LLVM_DEBUG(dbgs() << "visiting join block " << Context.print(JoinBlock)
-                      << "\n");
     if (const auto *Outermost = getOutermostDivergentCycle(
             Cycle, DivTermBlock, JoinBlock, DT, Context)) {
-      LLVM_DEBUG(dbgs() << "found divergent cycle\n");
+
       DivCycles.push_back(Outermost);
       continue;
     }
@@ -1104,7 +1052,7 @@ void GenericUniformityAnalysisImpl<ContextT>::analyzeControlDivergence(
   for (auto *C : DivCycles) {
     if (!insertIfNotContained(AssumedDivergent, C))
       continue;
-    LLVM_DEBUG(dbgs() << "process divergent cycle\n");
+
     for (const BlockT *BB : C->blocks()) {
       taintAndPushAllDefs(*BB);
     }
@@ -1132,7 +1080,7 @@ void GenericUniformityAnalysisImpl<ContextT>::compute() {
     const InstructionT *I = Worklist.back();
     Worklist.pop_back();
 
-    LLVM_DEBUG(dbgs() << "worklist pop: " << Context.print(I) << "\n");
+
 
     if (I->isTerminator()) {
       analyzeControlDivergence(*I);
@@ -1299,18 +1247,16 @@ template <typename ContextT>
 void llvm::ModifiedPostOrder<ContextT>::computeStackPO(
     SmallVectorImpl<const BlockT *> &Stack, const CycleInfoT &CI,
     const CycleT *Cycle, SmallPtrSetImpl<const BlockT *> &Finalized) {
-  LLVM_DEBUG(dbgs() << "inside computeStackPO\n");
+
   while (!Stack.empty()) {
     auto *NextBB = Stack.back();
     if (Finalized.count(NextBB)) {
       Stack.pop_back();
       continue;
     }
-    LLVM_DEBUG(dbgs() << "  visiting " << CI.getSSAContext().print(NextBB)
-                      << "\n");
     auto *NestedCycle = CI.getCycle(NextBB);
     if (Cycle != NestedCycle && (!Cycle || Cycle->contains(NestedCycle))) {
-      LLVM_DEBUG(dbgs() << "  found a cycle\n");
+
       while (NestedCycle->getParentCycle() != Cycle)
         NestedCycle = NestedCycle->getParentCycle();
 
@@ -1318,16 +1264,12 @@ void llvm::ModifiedPostOrder<ContextT>::computeStackPO(
       NestedCycle->getExitBlocks(NestedExits);
       bool PushedNodes = false;
       for (auto *NestedExitBB : NestedExits) {
-        LLVM_DEBUG(dbgs() << "  examine exit: "
-                          << CI.getSSAContext().print(NestedExitBB) << "\n");
         if (Cycle && !Cycle->contains(NestedExitBB))
           continue;
         if (Finalized.count(NestedExitBB))
           continue;
         PushedNodes = true;
         Stack.push_back(NestedExitBB);
-        LLVM_DEBUG(dbgs() << "  pushed exit: "
-                          << CI.getSSAContext().print(NestedExitBB) << "\n");
       }
       if (!PushedNodes) {
         // All loop exits finalized -> finish this node
@@ -1337,62 +1279,48 @@ void llvm::ModifiedPostOrder<ContextT>::computeStackPO(
       continue;
     }
 
-    LLVM_DEBUG(dbgs() << "  no nested cycle, going into DAG\n");
+
     // DAG-style
     bool PushedNodes = false;
     for (auto *SuccBB : successors(NextBB)) {
-      LLVM_DEBUG(dbgs() << "  examine succ: "
-                        << CI.getSSAContext().print(SuccBB) << "\n");
       if (Cycle && !Cycle->contains(SuccBB))
         continue;
       if (Finalized.count(SuccBB))
         continue;
       PushedNodes = true;
       Stack.push_back(SuccBB);
-      LLVM_DEBUG(dbgs() << "  pushed succ: " << CI.getSSAContext().print(SuccBB)
-                        << "\n");
     }
     if (!PushedNodes) {
       // Never push nodes twice
-      LLVM_DEBUG(dbgs() << "  finishing node: "
-                        << CI.getSSAContext().print(NextBB) << "\n");
       Stack.pop_back();
       Finalized.insert(NextBB);
       appendBlock(*NextBB);
     }
   }
-  LLVM_DEBUG(dbgs() << "exited computeStackPO\n");
+
 }
 
 template <typename ContextT>
 void ModifiedPostOrder<ContextT>::computeCyclePO(
     const CycleInfoT &CI, const CycleT *Cycle,
     SmallPtrSetImpl<const BlockT *> &Finalized) {
-  LLVM_DEBUG(dbgs() << "inside computeCyclePO\n");
+
   SmallVector<const BlockT *> Stack;
   auto *CycleHeader = Cycle->getHeader();
 
-  LLVM_DEBUG(dbgs() << "  noted header: "
-                    << CI.getSSAContext().print(CycleHeader) << "\n");
   assert(!Finalized.count(CycleHeader));
   Finalized.insert(CycleHeader);
 
   // Visit the header last
-  LLVM_DEBUG(dbgs() << "  finishing header: "
-                    << CI.getSSAContext().print(CycleHeader) << "\n");
   appendBlock(*CycleHeader, Cycle->isReducible());
 
   // Initialize with immediate successors
   for (auto *BB : successors(CycleHeader)) {
-    LLVM_DEBUG(dbgs() << "  examine succ: " << CI.getSSAContext().print(BB)
-                      << "\n");
     if (!Cycle->contains(BB))
       continue;
     if (BB == CycleHeader)
       continue;
     if (!Finalized.count(BB)) {
-      LLVM_DEBUG(dbgs() << "  pushed succ: " << CI.getSSAContext().print(BB)
-                        << "\n");
       Stack.push_back(BB);
     }
   }
@@ -1400,7 +1328,7 @@ void ModifiedPostOrder<ContextT>::computeCyclePO(
   // Compute PO inside region
   computeStackPO(Stack, CI, Cycle, Finalized);
 
-  LLVM_DEBUG(dbgs() << "exited computeCyclePO\n");
+
 }
 
 /// \brief Generically compute the modified post order.

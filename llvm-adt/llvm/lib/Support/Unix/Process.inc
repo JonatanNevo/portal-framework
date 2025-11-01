@@ -22,6 +22,7 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <signal.h>
+
 #if defined(HAVE_MALLINFO) || defined(HAVE_MALLINFO2)
 #include <malloc.h>
 #endif

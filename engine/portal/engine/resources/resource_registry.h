@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <concurrentqueue/concurrentqueue.h>
+#include <concurrentqueue/moodycamel/concurrentqueue.h>
 
 #include "portal/engine/renderer/vulkan/gpu_context.h"
 #include "portal/engine/resources/loader/loader_factory.h"

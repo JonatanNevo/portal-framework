@@ -70,15 +70,10 @@ Scheduler::~Scheduler()
 }
 
 
-void Scheduler::wait_for_jobs(const std::span<JobBase> jobs, const JobPriority priority)
+void Scheduler::wait_for_counter(Counter& counter)
 {
     PORTAL_PROF_ZONE();
-    Counter counter{};
-
-    dispatch_jobs(jobs, priority, &counter);
-
     auto& context = get_context();
-
     while (counter.count.load(std::memory_order_acquire) > 0)
     {
         const auto state = worker_thread_iteration(context);
@@ -110,6 +105,15 @@ void Scheduler::wait_for_jobs(const std::span<JobBase> jobs, const JobPriority p
 #endif
         }
     }
+}
+
+void Scheduler::wait_for_jobs(const std::span<JobBase> jobs, const JobPriority priority)
+{
+    PORTAL_PROF_ZONE();
+    Counter counter{};
+
+    dispatch_jobs(jobs, priority, &counter);
+    wait_for_counter(counter);
 }
 
 void Scheduler::dispatch_jobs(const std::span<JobBase> jobs, const JobPriority priority, Counter* counter)

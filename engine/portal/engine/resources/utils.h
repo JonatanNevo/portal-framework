@@ -15,7 +15,7 @@
 #include "portal/engine/scene/scene.h"
 
 
-namespace portal::resources::utils
+namespace portal::utils
 {
 template<class T>
 ResourceType to_resource_type()

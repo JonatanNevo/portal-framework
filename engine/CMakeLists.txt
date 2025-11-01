@@ -18,6 +18,7 @@ file(GLOB_RECURSE ENGINE_HEADER CONFIGURE_DEPENDS "portal/engine/*.h")
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 
 find_package(Vulkan REQUIRED)
+find_package(concurrentqueue CONFIG REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(tinyobjloader CONFIG REQUIRED)
 find_package(Ktx CONFIG REQUIRED)
@@ -55,6 +56,7 @@ target_link_libraries(portal-engine
         Vulkan::Vulkan
         GPUOpen::VulkanMemoryAllocator
         tinyobjloader::tinyobjloader
+        concurrentqueue::concurrentqueue
         KTX::ktx
         imgui::imgui
         fastgltf::fastgltf

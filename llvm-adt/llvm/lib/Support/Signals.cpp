@@ -13,11 +13,9 @@
 
 #include "llvm/Support/Signals.h"
 
-#include "DebugOptions.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/llvm-config.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FileUtilities.h"
@@ -39,36 +37,6 @@
 //===----------------------------------------------------------------------===//
 
 using namespace llvm;
-
-// Use explicit storage to avoid accessing cl::opt in a signal handler.
-static bool DisableSymbolicationFlag = false;
-static ManagedStatic<std::string> CrashDiagnosticsDirectory;
-namespace {
-struct CreateDisableSymbolication {
-  static void *call() {
-    return new cl::opt<bool, true>(
-        "disable-symbolication",
-        cl::desc("Disable symbolizing crash backtraces."),
-        cl::location(DisableSymbolicationFlag), cl::Hidden);
-  }
-};
-struct CreateCrashDiagnosticsDir {
-  static void *call() {
-    return new cl::opt<std::string, true>(
-        "crash-diagnostics-dir", cl::value_desc("directory"),
-        cl::desc("Directory for crash diagnostic files."),
-        cl::location(*CrashDiagnosticsDirectory), cl::Hidden);
-  }
-};
-} // namespace
-void llvm::initSignalsOptions() {
-  static ManagedStatic<cl::opt<bool, true>, CreateDisableSymbolication>
-      DisableSymbolication;
-  static ManagedStatic<cl::opt<std::string, true>, CreateCrashDiagnosticsDir>
-      CrashDiagnosticsDir;
-  *DisableSymbolication;
-  *CrashDiagnosticsDir;
-}
 
 constexpr char DisableSymbolizationEnv[] = "LLVM_DISABLE_SYMBOLIZATION";
 constexpr char LLVMSymbolizerPathEnv[] = "LLVM_SYMBOLIZER_PATH";
@@ -141,7 +109,7 @@ static FormattedNumber format_ptr(void *PC) {
 LLVM_ATTRIBUTE_USED
 static bool printSymbolizedStackTrace(StringRef Argv0, void **StackTrace,
                                       int Depth, llvm::raw_ostream &OS) {
-  if (DisableSymbolicationFlag || getenv(DisableSymbolizationEnv))
+  if (getenv(DisableSymbolizationEnv))
     return false;
 
   // Don't recursively invoke the llvm-symbolizer binary.

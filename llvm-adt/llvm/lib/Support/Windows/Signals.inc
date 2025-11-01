@@ -739,24 +739,11 @@ WriteWindowsDumpFile(PMINIDUMP_EXCEPTION_INFORMATION ExceptionInfo) {
   // (GetDumpFolder will return false either if the key is NULL or if there is
   // no valid DumpFolder value at its location).
   bool ExplicitDumpDirectorySet = true;
-  SmallString<MAX_PATH> DumpDirectory(*CrashDiagnosticsDirectory);
-  if (DumpDirectory.empty())
-    if (!GetDumpFolder(AppSpecificKey, DumpDirectory))
-      if (!GetDumpFolder(DefaultLocalDumpsKey, DumpDirectory))
-        ExplicitDumpDirectorySet = false;
 
   int FD;
   SmallString<MAX_PATH> DumpPath;
 
-  if (ExplicitDumpDirectorySet) {
-    if (std::error_code EC = fs::create_directories(DumpDirectory))
-      return EC;
-    if (std::error_code EC = fs::createUniqueFile(
-            Twine(DumpDirectory) + "\\" + ProgramName + ".%%%%%%.dmp", FD,
-            DumpPath))
-      return EC;
-  } else if (std::error_code EC =
-                 fs::createTemporaryFile(ProgramName, "dmp", FD, DumpPath))
+  if (std::error_code EC = fs::createTemporaryFile(ProgramName, "dmp", FD, DumpPath))
     return EC;
 
   // Our support functions return a file descriptor but Windows wants a handle.

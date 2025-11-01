@@ -7,6 +7,7 @@
 
 #include <filesystem>
 
+#include "portal/engine/resources/resource_types.h"
 #include "portal/engine/resources/database/resource_database.h"
 #include "portal/engine/strings/string_registry.h"
 #include "portal/serialization/archive.h"

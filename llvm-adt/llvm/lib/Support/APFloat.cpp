@@ -21,7 +21,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/llvm-config.h"
-#include "llvm/Support/Debug.h"
+
 #include "llvm/Support/Error.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
@@ -5532,13 +5532,6 @@ void APFloat::print(raw_ostream &OS) const {
   toString(Buffer);
   OS << Buffer;
 }
-
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-LLVM_DUMP_METHOD void APFloat::dump() const {
-  print(dbgs());
-  dbgs() << '\n';
-}
-#endif
 
 void APFloat::Profile(FoldingSetNodeID &NID) const {
   NID.Add(bitcastToAPInt());

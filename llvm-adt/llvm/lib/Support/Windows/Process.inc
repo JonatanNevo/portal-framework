@@ -11,7 +11,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Allocator.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/StringSaver.h"
@@ -226,42 +225,6 @@ static std::error_code GetExecutableName(SmallVectorImpl<char> &Filename) {
   // Make a copy of the filename since assign makes the StringRef invalid.
   std::string Base = sys::path::filename(Filename.data()).str();
   Filename.assign(Base.begin(), Base.end());
-  return std::error_code();
-}
-
-std::error_code
-windows::GetCommandLineArguments(SmallVectorImpl<const char *> &Args,
-                                 BumpPtrAllocator &Alloc) {
-  const wchar_t *CmdW = GetCommandLineW();
-  assert(CmdW);
-  std::error_code EC;
-  SmallString<MAX_PATH> Cmd;
-  EC = windows::UTF16ToUTF8(CmdW, wcslen(CmdW), Cmd);
-  if (EC)
-    return EC;
-
-  SmallVector<const char *, 20> TmpArgs;
-  StringSaver Saver(Alloc);
-  cl::TokenizeWindowsCommandLineFull(Cmd, Saver, TmpArgs, /*MarkEOLs=*/false);
-
-  for (const char *Arg : TmpArgs) {
-    EC = WildcardExpand(Arg, Args, Saver);
-    if (EC)
-      return EC;
-  }
-
-  if (Args.size() == 0)
-    return std::make_error_code(std::errc::invalid_argument);
-
-  SmallVector<char, MAX_PATH> Arg0(Args[0], Args[0] + strlen(Args[0]));
-  SmallVector<char, MAX_PATH> Filename;
-  sys::path::remove_filename(Arg0);
-  EC = GetExecutableName(Filename);
-  if (EC)
-    return EC;
-  sys::path::make_preferred(Arg0);
-  sys::path::append(Arg0, Filename);
-  Args[0] = Saver.save(Arg0).data();
   return std::error_code();
 }
 

@@ -35,65 +35,29 @@ enum class ResourceType: uint16_t
     Composite = std::numeric_limits<uint16_t>::max(),
 };
 
+enum class SourceFormat: uint8_t
+{
+    Unknown,
+    Memory,            // Source exists in memory
+    Image,             // Image formats, e.g. PNG, JPEG
+    Texture,           // Ktx or other texture formats
+    Material,          // Material files, e.g. MTL
+    Obj,               // Wavefront .obj files
+    Shader,            // Shader files, e.g. slang
+    PrecompiledShader, // Precompiled shader files, e.g. spv
+    Glft               // GLTF files
+};
+
 namespace utils
 {
-    inline ResourceType resource_type_from_string(const std::string_view resource_type)
-    {
-        if (resource_type == "Texture")
-            return ResourceType::Texture;
-        if (resource_type == "Material")
-            return ResourceType::Material;
-        if (resource_type == "Shader")
-            return ResourceType::Shader;
-        if (resource_type == "Mesh")
-            return ResourceType::Mesh;
-        if (resource_type == "Composite")
-            return ResourceType::Composite;
-        if (resource_type == "Scene")
-            return ResourceType::Scene;
-        return ResourceType::Unknown;
-    }
+    std::optional<std::pair<ResourceType, SourceFormat>> find_extension_type(std::string_view extension);
 
-    inline const char* to_string(const ResourceState resource_state)
-    {
-        switch (resource_state)
-        {
-        case ResourceState::Unknown:
-            return "Unknown";
-        case ResourceState::Loaded:
-            return "Loaded";
-        case ResourceState::Missing:
-            return "Missing";
-        case ResourceState::Pending:
-            return "Pending";
-        case ResourceState::Error:
-            return "Error";
-        }
-        return "Unknown";
-    }
+    ResourceType to_resource_type(std::string_view resource_type);
+    SourceFormat to_source_format(std::string_view source_format);
 
-    inline const char* to_string(const ResourceType resource_type)
-    {
-        switch (resource_type)
-        {
-        case ResourceType::Unknown:
-            return "Unknown";
-        case ResourceType::Material:
-            return "Material";
-        case ResourceType::Texture:
-            return "Texture";
-        case ResourceType::Shader:
-            return "Shader";
-        case ResourceType::Mesh:
-            return "Mesh";
-        case ResourceType::Composite:
-            return "Composite";
-        case ResourceType::Scene:
-            return "Scene";
-        }
-        PORTAL_ASSERT(false, "Unknown resource Type");
-        return "Unknown";
-    }
+    const char* to_string(ResourceState resource_state);
+    std::string to_string(ResourceType resource_type);
+    std::string to_string(SourceFormat source_format);
 }
 }
 
@@ -109,6 +73,30 @@ struct fmt::formatter<portal::ResourceType>
     auto format(const portal::ResourceType& type, FormatContext& ctx) const
     {
         return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(type));
+    }
+};
+
+template <>
+struct fmt::formatter<portal::SourceFormat>
+{
+    static constexpr auto parse(const format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename FormatContext>
+    auto format(const portal::SourceFormat& format, FormatContext& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(format));
+    }
+};
+
+template <>
+struct fmt::formatter<portal::ResourceState>
+{
+    static constexpr auto parse(const format_parse_context& ctx) { return ctx.begin(); }
+
+    template <typename FormatContext>
+    auto format(const portal::ResourceState& format, FormatContext& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(format));
     }
 };
 

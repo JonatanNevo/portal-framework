@@ -39,7 +39,7 @@ void WindowsThread::set_affinity(const ThreadAffinity affinity, const uint16_t c
     if (affinity == ThreadAffinity::CoreLean)
     {
         const auto result = SetThreadIdealProcessor(GetCurrentThread(), core);
-        if (result == -1)
+        if (result == static_cast<DWORD>(-1))
         {
             const auto error = GetLastError();
             LOGGER_ERROR("Failed to set thread affinity with result: {}", std::system_category().message(error));

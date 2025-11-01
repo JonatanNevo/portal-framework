@@ -9,7 +9,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Config/llvm-config.h"
-#include "llvm/Support/Debug.h"
+
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -174,12 +174,3 @@ void Twine::printRepr(raw_ostream &OS) const {
   OS << ")";
 }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-LLVM_DUMP_METHOD void Twine::dump() const {
-  print(dbgs());
-}
-
-LLVM_DUMP_METHOD void Twine::dumpRepr() const {
-  printRepr(dbgs());
-}
-#endif
