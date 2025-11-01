@@ -23,9 +23,11 @@ struct ApplicationSpecification
     size_t width = 1600;
     size_t height = 900;
 
-    uint64_t sleep_duration = 0;
-
     bool resizeable = true;
+
+    //TODO: move to settings
+    std::filesystem::path resources_path;
+    int32_t scheduler_worker_num = 1;
 };
 
 class Application
@@ -49,20 +51,23 @@ public:
     void render_gui();
 
 private:
-    bool on_resize(portal::WindowResizeEvent& e);
+    bool on_resize(WindowResizeEvent& e);
 
 private:
     ApplicationSpecification spec;
 
-    renderer::vulkan::VulkanContext vulkan_context;
+    std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;
+    Reference<Window> window = nullptr;
+    Reference<Renderer> renderer = nullptr;
 
-    std::shared_ptr<Window> window = nullptr;
-    std::shared_ptr<Renderer> renderer = nullptr;
-    std::shared_ptr<ResourceRegistry> resource_registry = nullptr;
-
-    std::shared_ptr<EngineContext> engine_context;
+    std::unique_ptr<jobs::Scheduler> scheduler = nullptr;
+    std::unique_ptr<ReferenceManager> reference_manager = nullptr;
+    std::unique_ptr<ResourceDatabase> resource_database = nullptr;
+    std::unique_ptr<ResourceRegistry> resource_registry = nullptr;
 
     std::unique_ptr<ImGuiModule> imgui_module;
+
+    Reference<EngineContext> engine_context;
 
     size_t current_frame_count = 0;
     float last_frame_time = 0;

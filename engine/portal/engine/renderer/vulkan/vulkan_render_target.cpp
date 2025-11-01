@@ -113,7 +113,16 @@ void VulkanRenderTarget::initialize()
 
 void VulkanRenderTarget::release()
 {
-    depth_attachment = nullptr;
+    size_t index = 0;
+    for (const auto& image : color_attachments)
+    {
+        image->release();
+        index++;
+    }
+
+    if (depth_attachment)
+        depth_attachment->release();
+
     rendering_attachments.clear();
 }
 

@@ -21,6 +21,7 @@ static auto logger = Log::get_logger("Vulkan");
 VulkanImage::VulkanImage(const image::Specification& spec, const VulkanContext& context) : Image(spec.name), device(context.get_device()), spec(spec)
 {
     PORTAL_ASSERT(spec.width > 0 && spec.height > 0, "Invalid image size");
+    reallocate();
 }
 
 VulkanImage::~VulkanImage()
@@ -32,10 +33,10 @@ void VulkanImage::resize(const size_t width, const size_t height)
 {
     spec.width = width;
     spec.height = height;
-    initialize();
+    reallocate();
 }
 
-void VulkanImage::initialize()
+void VulkanImage::reallocate()
 {
     release();
 

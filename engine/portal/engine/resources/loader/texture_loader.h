@@ -22,7 +22,7 @@ namespace portal::resources
 class TextureLoader final : public ResourceLoader
 {
 public:
-    TextureLoader(ResourceRegistry& registry, RendererContext& context);
+    TextureLoader(ResourceRegistry& registry, const RendererContext& context);
 
     Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
 
@@ -38,7 +38,7 @@ protected:
     void create_standalone_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const;
 
 private:
-    RendererContext& context;
+    const RendererContext& context;
 };
 
 } // portal

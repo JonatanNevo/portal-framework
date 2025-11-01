@@ -7,30 +7,26 @@
 
 #include "portal/engine/resources/loader/loader.h"
 
-namespace portal::renderer
+namespace portal
 {
-namespace vulkan
-{
-    class VulkanContext;
+class RendererContext;
 }
 
-class Shader;
-}
 
 namespace portal::resources
 {
 class ShaderLoader final : public ResourceLoader
 {
 public:
-    ShaderLoader(ResourceRegistry& registry, renderer::vulkan::VulkanContext& context);
+    ShaderLoader(ResourceRegistry& registry, const RendererContext& context);
 
     Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
 
 protected:
-    Reference<Resource> load_shader(const SourceMetadata& meta, const ResourceSource& source) const;
-    Reference<Resource> load_precompiled_shader(const SourceMetadata& meta, const ResourceSource& source) const;
+    [[nodiscard]] Reference<Resource> load_shader(const SourceMetadata& meta, const ResourceSource& source) const;
+    [[nodiscard]] Reference<Resource> load_precompiled_shader(const SourceMetadata& meta, const ResourceSource& source) const;
 
 private:
-    renderer::vulkan::VulkanContext& context;
+   const RendererContext& context;
 };
 } // portal

@@ -30,7 +30,7 @@ class ResourceReference;
 class ResourceRegistry
 {
 public:
-    ResourceRegistry(ReferenceManager& ref_manager, ResourceDatabase& database, jobs::Scheduler& scheduler, RendererContext& context);
+    ResourceRegistry(ReferenceManager& ref_manager, ResourceDatabase& database, jobs::Scheduler& scheduler, const RendererContext& context);
 
     /**
      * Request an asynchronous load for a resource based on its unique id and returns a reference.
@@ -181,7 +181,6 @@ private:
     ResourceDatabase& database;
     ReferenceManager& reference_manager;
     jobs::Scheduler& scheduler;
-    RendererContext& context;
 
     resources::LoaderFactory loader_factory;
 };

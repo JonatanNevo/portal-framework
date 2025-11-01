@@ -37,14 +37,14 @@ public:
 class LoaderFactory
 {
 public:
-    LoaderFactory(ResourceRegistry& registry, RendererContext& context);
+    LoaderFactory(ResourceRegistry& registry, const RendererContext& context);
 
     ResourceLoader& get(const SourceMetadata& meta);
 
 protected:
     StubLoader stub_loader;
-    llvm::DenseMap<ResourceType, std::unique_ptr<ResourceLoader>> loaders;
-    RendererContext& context;
+    llvm::DenseMap<ResourceType, std::shared_ptr<ResourceLoader>> loaders;
+    const RendererContext& context;
 };
 
 } // portal
