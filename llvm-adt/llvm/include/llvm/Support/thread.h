@@ -49,7 +49,7 @@ class thread {
   }
 
 public:
-#if LLVM_ON_UNIX
+#ifdef LLVM_ON_UNIX
   using native_handle_type = pthread_t;
   using id = pthread_t;
   using start_routine_type = void *(*)(void *);
@@ -58,7 +58,7 @@ public:
     GenericThreadProxy<CalleeTuple>(Ptr);
     return nullptr;
   }
-#elif _WIN32
+#elifdef _WIN32
   using native_handle_type = HANDLE;
   using id = DWORD;
   using start_routine_type = unsigned(__stdcall *)(void *);

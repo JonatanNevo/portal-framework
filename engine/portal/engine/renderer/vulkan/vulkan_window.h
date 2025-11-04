@@ -69,7 +69,7 @@ private:
 
     WindowData data{};
 
-    const VulkanContext& context;
+    [[maybe_unused]] const VulkanContext& context;
 };
 
 }
