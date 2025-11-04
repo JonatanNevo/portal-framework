@@ -8,7 +8,7 @@
 #include <filesystem>
 
 #include "portal/core/buffer.h"
-#include "portal/core/reflection/concepts.h"
+#include "portal/core/reflection/property_concepts.h"
 #include "../vulkan/image/vulkan_image.h"
 #include "portal/engine/reference.h"
 #include "portal/engine/renderer/shaders/shader_types.h"

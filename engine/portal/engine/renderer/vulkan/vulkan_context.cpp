@@ -67,6 +67,7 @@ VulkanContext::VulkanContext() :
 
 VulkanContext::~VulkanContext()
 {
+
     allocation::shutdown();
 }
 

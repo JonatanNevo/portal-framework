@@ -21,11 +21,13 @@ VulkanPipeline::VulkanPipeline(const pipeline::Specification& spec, const Vulkan
     PORTAL_ASSERT(spec.shader, "Invalid pipeline shader");
 
     initialize();
+    LOG_TRACE("PIPELINE CREATED {}", spec.debug_name);
 }
 
 VulkanPipeline::~VulkanPipeline()
 {
     // TODO: submit resources for destruction?
+    LOG_TRACE("PIPELINE DEAD {}", spec.debug_name);
 }
 
 pipeline::Specification& VulkanPipeline::get_spec()

@@ -5,14 +5,17 @@
 
 #include "application.h"
 
+#include <imgui.h>
 #include <GLFW/glfw3.h>
 
 #include "portal/core/log.h"
 #include "portal/core/debug/assert.h"
+#include "portal/engine/settings.h"
 #include "portal/engine/application/window.h"
 #include "portal/engine/imgui/im_gui_module.h"
 #include "portal/engine/renderer/vulkan/vulkan_window.h"
 #include "portal/engine/resources/database/folder_resource_database.h"
+#include "portal/engine/scene/nodes/mesh_node.h"
 
 namespace portal
 {
@@ -28,8 +31,6 @@ static void glfw_error_callback(int error, const char* description)
 
 Application::Application(const ApplicationSpecification& spec) : spec(spec)
 {
-    Log::init({.default_log_level = Log::LogLevel::Trace});
-
     // TODO: make generic
     const auto result = glfwInit();
     PORTAL_ASSERT(result == GLFW_TRUE, "Failed to initialize GLFW");
@@ -75,16 +76,20 @@ Application::~Application()
 
     imgui_module.reset();
     engine_context.reset();
+
+    // Then clean up renderer
+    renderer.reset();
+
+    // Clean up all loaded resources first
     resource_registry.reset();
     resource_database.reset();
     reference_manager.reset();
     scheduler.reset();
-    renderer.reset();
+
     window.reset();
     vulkan_context.reset();
 
     glfwTerminate();
-    Log::shutdown();
 }
 
 void Application::run()
@@ -92,11 +97,8 @@ void Application::run()
     try
     {
         // TODO: Remove from here
-        {
-            engine_context->get_resource_registry().immediate_load<Scene>(STRING_ID("game/ABeautifulGame.gltf"));
-            const auto scene = engine_context->get_resource_registry().get<Scene>(STRING_ID("Scene0-Scene"));
-            // engine_context->renderer->set_scene(scene);
-        }
+        engine_context->get_resource_registry().immediate_load<Scene>(STRING_ID("game/ABeautifulGame"));
+        auto scene = engine_context->get_resource_registry().get<Scene>(STRING_ID("Scene0-Scene"));
 
         auto vulkan_window = std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window);
 
@@ -124,8 +126,70 @@ void Application::run()
                 {
                     // TODO: put in layer
                     imgui_module->on_gui_render();
+
+                    renderer->update_scene(time_step, scene);
+
                     renderer->update_imgui(time_step);
-                    renderer->update_scene(time_step);
+                    ImGui::Begin("Scene");
+                    if (scene.get_state() == ResourceState::Loaded)
+                    {
+                        auto draw_node = [](auto& self, const Reference<scene::Node>& node, int& node_id) -> void
+                        {
+                            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
+                            if (node->children.empty())
+                            {
+                                flags |= ImGuiTreeNodeFlags_Leaf;
+                            }
+
+                            ImGui::PushID(node_id++);
+
+                            const bool is_mesh = reference_cast<scene::MeshNode>(node) != nullptr;
+                            if (is_mesh)
+                            {
+                                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
+                            }
+
+                            const bool open = ImGui::TreeNodeEx(node->id.string.data(), flags);
+
+                            if (is_mesh)
+                            {
+                                ImGui::PopStyleColor();
+                            }
+
+                            if (ImGui::IsItemHovered())
+                            {
+                                ImGui::BeginTooltip();
+                                const auto& translate = glm::vec3(node->local_transform[3]);
+                                ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
+                                ImGui::EndTooltip();
+                            }
+
+                            if (open)
+                            {
+                                for (const auto& child : node->children)
+                                {
+                                    self(self, child, node_id);
+                                }
+                                ImGui::TreePop();
+                            }
+
+                            ImGui::PopID();
+                        };
+
+                        ImGui::Text("Scene Graph");
+                        ImGui::Separator();
+                        int node_id = 0;
+
+                        for (const auto& scene_root : scene->get_root_nodes())
+                        {
+                            draw_node(draw_node, scene_root, node_id);
+                        }
+                    }
+                    else
+                    {
+                        ImGui::Text("No scene loaded");
+                    }
+                    ImGui::End();
                 }
 
                 {

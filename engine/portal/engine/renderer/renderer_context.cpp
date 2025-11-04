@@ -14,7 +14,7 @@ namespace portal
 RendererContext::RendererContext(
     renderer::vulkan::VulkanContext& gpu_context,
     Reference<renderer::RenderTarget>& render_target,
-    std::span<vk::raii::DescriptorSetLayout> global_descriptor_set_layout
+    std::vector<vk::raii::DescriptorSetLayout>& global_descriptor_set_layout
     ) : gpu_context(gpu_context),
         render_target(render_target),
         global_descriptor_set_layout(global_descriptor_set_layout) {

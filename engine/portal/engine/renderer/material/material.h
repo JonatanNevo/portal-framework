@@ -8,7 +8,7 @@
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/engine/resources/resource_reference.h"
 #include "portal/core/reflection/property.h"
-#include "portal/core/reflection/concepts.h"
+#include "portal/core/reflection/property_concepts.h"
 #include "portal/engine/strings/string_id.h"
 #include "portal/engine/renderer/shaders/shader.h"
 #include "portal/engine/renderer/image/texture.h"

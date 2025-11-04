@@ -19,6 +19,7 @@ class VulkanRenderTarget final: public RenderTarget
 {
 public:
     VulkanRenderTarget(const render_target::Specification& specs, const VulkanContext& context);
+    ~VulkanRenderTarget() override;
 
     void resize(size_t new_width, size_t new_height, bool force_recreate) override;
     void initialize();

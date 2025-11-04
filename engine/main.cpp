@@ -4,40 +4,88 @@
 //
 
 
+#include "portal/core/files/file_system.h"
+#include "portal/engine/settings.h"
 #include "portal/engine/application/application.h"
+#include "glaze/core/reflect.hpp"
+
 using namespace portal;
 
-void add_resource(const std::filesystem::path& path, ResourceDatabase& database)
+constexpr auto LOG_LEVEL_ENTRY = "log-level";
+
+void initialize_settings()
 {
-    auto extension = path.extension();
-    auto value = utils::find_extension_type(extension.string());
-    if (!value.has_value())
-        return;
-    auto [resource_type, source_format] = value.value();
+    Log::init({.default_log_level = Log::LogLevel::Trace});
 
-    const auto id = STRING_ID(path.filename().replace_extension("").string());
-    SourceMetadata meta{
-        .resource_id = id,
-        .handle = id.id,
-        .type = resource_type,
-        .source = STRING_ID(path.string()),
-        .format = source_format,
-    };
+    // TODO: by default should just be next to the executable
+    std::filesystem::path settings_path = R"(C:\Users\thejo\OneDrive\Documents\PortalEngine\test\settings.json)";
 
-    database.add(meta);
+    // TODO: fetch this information from environment variables or CLI?
+    Settings::init(SettingsArchiveType::Json, settings_path);
 }
+
+void initialize_logger()
+{
+    // TODO: user env variables as well?
+    auto log_level_string = Settings::get().get_setting<std::string>(LOG_LEVEL_ENTRY);
+    if (log_level_string)
+    {
+        const auto log_level = Log::level_from_string(*log_level_string);
+        Log::set_default_log_level(log_level);
+    }
+    Settings::get().debug_print();
+}
+
+ApplicationSpecification make_application_spec()
+{
+    auto& settings = Settings::get();
+
+    const auto name= settings.get_setting<std::string>("application.name");
+    const auto width = settings.get_setting<size_t>("application.window.width");
+    const auto height = settings.get_setting<size_t>("application.window.height");
+    const auto resources_path = settings.get_setting<std::filesystem::path>("application.resources-path");
+    const auto scheduler_worker_num = settings.get_setting<int32_t>("application.scheduler-threads");
+
+    return ApplicationSpecification{
+        .name = STRING_ID(name.value()),
+        .width = width.value(),
+        .height = height.value(),
+        .resources_path = resources_path.value(),
+        .scheduler_worker_num = scheduler_worker_num.value(),
+    };
+}
+
+struct A
+{
+    int a;
+};
 
 int main()
 {
-    // Log::init();
+    try
+    {
+        auto a = glz::reflect<A>();
+        glz::for_each_field(a, [](auto& field) {
+            field += 1;
+        });
 
-    // FolderResourceDatabase database();
-    // database.remove(STRING_ID("fish_texture"));
-    // StringId resource = STRING_ID("fish_texture");
+        initialize_settings();
+        initialize_logger();
 
-    ApplicationSpecification spec{
-        .resources_path = R"(C:\Users\thejo\OneDrive\Documents\PortalEngine\test)"
-    };
-    Application app{spec};
-    app.run();
+        const auto spec = make_application_spec();
+
+        Application app{spec};
+        app.run();
+    }
+    catch (std::exception& e)
+    {
+        LOG_FATAL("Unhandled exception: {}", e.what());
+    }
+    catch (...)
+    {
+        LOG_FATAL("Unhandled unknown exception");
+    }
+
+    Settings::shutdown();
+    Log::shutdown();
 }

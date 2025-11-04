@@ -85,6 +85,8 @@ void Renderer::cleanup()
         deletion_queue.flush();
 
         frame_data.clear();
+        scene_descriptor_set_layouts.clear();
+        render_target = nullptr;
     }
     is_initialized = false;
 }
@@ -115,67 +117,6 @@ void Renderer::update_imgui([[maybe_unused]] float delta_time)
         camera.set_speed(camera_speed);
     }
     ImGui::End();
-
-    ImGui::Begin("Scene");
-    // if (this->scene && this->scene->is_valid())
-    // {
-    //     auto draw_node = [](auto& self, const Ref<scene::Node>& node, int& node_id) -> void
-    //     {
-    //         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
-    //         if (node->children.empty())
-    //         {
-    //             flags |= ImGuiTreeNodeFlags_Leaf;
-    //         }
-    //
-    //         ImGui::PushID(node_id++);
-    //
-    //         const bool is_mesh = dynamic_cast<const scene::MeshNode*>(node.get()) != nullptr;
-    //         if (is_mesh)
-    //         {
-    //             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
-    //         }
-    //
-    //         const bool open = ImGui::TreeNodeEx(node->id.string.data(), flags);
-    //
-    //         if (is_mesh)
-    //         {
-    //             ImGui::PopStyleColor();
-    //         }
-    //
-    //         if (ImGui::IsItemHovered())
-    //         {
-    //             ImGui::BeginTooltip();
-    //             const auto& translate = glm::vec3(node->local_transform[3]);
-    //             ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
-    //             ImGui::EndTooltip();
-    //         }
-    //
-    //         if (open)
-    //         {
-    //             for (const auto& child : node->children)
-    //             {
-    //                 self(self, child, node_id);
-    //             }
-    //             ImGui::TreePop();
-    //         }
-    //
-    //         ImGui::PopID();
-    //     };
-    //
-    //     ImGui::Text("Scene Graph");
-    //     ImGui::Separator();
-    //     int node_id = 0;
-    //
-    //     for (const auto& scene_root : this->scene->get_root_nodes())
-    //     {
-    //         draw_node(draw_node, scene_root, node_id);
-    //     }
-    // }
-    // else
-    // {
-    //     ImGui::Text("No scene loaded");
-    // }
-    ImGui::End();
 }
 
 FrameData& Renderer::get_current_frame_data()
@@ -184,7 +125,7 @@ FrameData& Renderer::get_current_frame_data()
     return frame_data[window->get_swapchain().get_current_frame()];
 }
 
-void Renderer::update_scene([[maybe_unused]] float delta_time)
+void Renderer::update_scene([[maybe_unused]] float delta_time, ResourceReference<Scene>& scene)
 {
     ZoneScoped;
     auto start = std::chrono::system_clock::now();
@@ -200,7 +141,7 @@ void Renderer::update_scene([[maybe_unused]] float delta_time)
     scene_data.proj = projection;
     scene_data.view_proj = projection * view;
 
-    // scene->draw(glm::mat4{1.f}, draw_context);
+    scene->draw(glm::mat4{1.f}, draw_context);
 
     //some default lighting parameters
     scene_data.ambient_color = glm::vec4(.1f);

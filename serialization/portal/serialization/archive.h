@@ -5,14 +5,17 @@
 
 #pragma once
 #include <concepts>
+#include <filesystem>
 #include <string>
 #include <variant>
 
+#include <llvm/ADT/StringMap.h>
 #include <portal/core/buffer.h>
 #include <portal/core/reflection/property.h>
+#include <portal/core/reflection/property_concepts.h>
 
 #include "portal/serialization/archive.h"
-#include "../../../core/portal/core/reflection/concepts.h"
+
 
 namespace portal
 {
@@ -33,6 +36,14 @@ class ArchiveObject
 public:
     using PropertyName = std::string_view;
     virtual ~ArchiveObject() = default;
+
+    ArchiveObject() = default;
+    ArchiveObject(const ArchiveObject& other) = default;
+    ArchiveObject(ArchiveObject&& other) noexcept = default;
+    ArchiveObject& operator=(const ArchiveObject& other) = default;
+    ArchiveObject& operator=(ArchiveObject&& other) = default;
+
+    void update(const ArchiveObject& other);
 
     template <typename T> requires (std::integral<T> || std::floating_point<T>) && (!std::is_same_v<T, bool>)
     void add_property(const PropertyName& name, const T& t)
@@ -225,34 +236,8 @@ public:
     template <typename T>
     void add_property(const PropertyName&, const T&) = delete;
 
-    template <>
-    void add_property<bool>(const PropertyName& name, const bool& b)
-    {
-        add_property_to_map(
-            name,
-            {
-                Buffer::create<bool>(b),
-                reflection::PropertyType::boolean,
-                reflection::PropertyContainerType::scalar,
-                1
-            }
-            );
-    }
-
-
-    template <>
-    void add_property<uint128_t>(const PropertyName& name, const uint128_t& t)
-    {
-        add_property_to_map(
-            name,
-            {
-                Buffer::create<uint128_t>(t),
-                reflection::PropertyType::integer128,
-                reflection::PropertyContainerType::scalar,
-                1
-            }
-            );
-    }
+    void add_property(const PropertyName& name, const char* t);
+    void add_property(const PropertyName& name, const std::filesystem::path& t);
 
     void add_binary_block(const PropertyName& name, const std::vector<std::byte>& data)
     {
@@ -282,21 +267,10 @@ public:
     template <typename T>
     bool get_property(const PropertyName& name, T& t) = delete;
 
-    template <>
-    bool get_property<bool>(const PropertyName& name, bool& out)
-    {
-        const auto& property = property_map[std::string(name)];
-        if (property.type == reflection::PropertyType::invalid)
-            return false;
-
-        out = *property.value.as<bool*>();
-        return true;
-    }
-
     template <typename T> requires (std::integral<T>) && (!std::is_same_v<T, bool>)
     bool get_property(const PropertyName& name, T& out)
     {
-        const auto& property = property_map[std::string(name)];
+        const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
 
@@ -307,7 +281,7 @@ public:
     template <typename T> requires std::floating_point<T>
     bool get_property(const PropertyName& name, T& out)
     {
-        const auto& property = property_map[std::string(name)];
+        const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
 
@@ -334,93 +308,36 @@ public:
         return true;
     }
 
-    template <>
-    bool get_property<uint128_t>(const PropertyName& name, uint128_t& out)
-    {
-        const auto& property = property_map[std::string(name)];
-        if (property.type == reflection::PropertyType::invalid)
-            return false;
-
-        out = *property.value.as<uint128_t*>();
-        return true;
-    }
-
     template <reflection::Vector T>
     bool get_property(const PropertyName& name, T& out)
     {
-        using ValueType = typename T::value_type;
         out.clear();
-        const auto& [value, type, container_type, elements_number] = property_map[std::string(name)];
-        if (container_type == reflection::PropertyContainerType::invalid)
+        const auto& prop = get_property_from_map(name);
+        if (prop.container_type == reflection::PropertyContainerType::invalid)
             return false;
 
-        PORTAL_ASSERT(container_type == reflection::PropertyContainerType::array, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(prop.container_type == reflection::PropertyContainerType::array, "Property {} container type mismatch", name);
 
-        if constexpr (Archiveable<ValueType>)
-        {
-            auto* objects = value.as<ArchiveObject*>();
-            for (size_t i = 0; i < elements_number; ++i)
-            {
-                out.push_back(ValueType::dearchive(objects[i]));
-            }
-        }
-        else
-        {
-            auto* objects = value.as<ArchiveObject*>();
-            for (size_t i = 0; i < elements_number; ++i)
-            {
-                ValueType v;
-                if (!objects[i].get_property("v", v))
-                {
-                    LOG_ERROR_TAG("Serialization", "Failed to get property from ArchiveObject {}", name);
-                    return false;
-                }
-                out.push_back(static_cast<ValueType>(v));
-            }
-        }
-        return true;
+        return format_array<T, typename T::value_type>(name, prop, out);
     }
 
     template <reflection::SmallVector T>
     bool get_property(const PropertyName& name, T& out)
     {
-        using ValueType = typename T::ValueParamT;
         out.clear();
-        const auto& [value, type, container_type, elements_number] = property_map[std::string(name)];
-        if (container_type == reflection::PropertyContainerType::invalid)
+        const auto& prop = get_property_from_map(name);
+        if (prop.container_type == reflection::PropertyContainerType::invalid)
             return false;
 
-        PORTAL_ASSERT(container_type == reflection::PropertyContainerType::array, "Property {} container type mismatch", name);
+        PORTAL_ASSERT(prop.container_type == reflection::PropertyContainerType::array, "Property {} container type mismatch", name);
 
-        if constexpr (Archiveable<ValueType>)
-        {
-            auto* objects = value.as<ArchiveObject*>();
-            for (size_t i = 0; i < elements_number; ++i)
-            {
-                out.push_back(ValueType::dearchive(objects[i]));
-            }
-        }
-        else
-        {
-            auto* objects = value.as<ArchiveObject*>();
-            for (size_t i = 0; i < elements_number; ++i)
-            {
-                ValueType v;
-                if (!objects[i].get_property("v", v))
-                {
-                    LOG_ERROR_TAG("Serialization", "Failed to get property from ArchiveObject {}", name);
-                    return false;
-                }
-                out.push_back(static_cast<ValueType>(v));
-            }
-        }
-        return true;
+        return format_array<T, typename T::ValueParamT>(name, prop, out);
     }
 
     template <reflection::String T>
     bool get_property(const PropertyName& name, T& out)
     {
-        const auto& [value, type, container_type, elements_number] = property_map[std::string(name)];
+        const auto& [value, type, container_type, elements_number] = get_property_from_map(name);
         if (type == reflection::PropertyType::invalid)
             return false;
 
@@ -444,7 +361,7 @@ public:
     template <reflection::GlmVec1 T>
     bool get_property(const PropertyName& name, T& out)
     {
-        const auto& property = property_map[std::string(name)];
+        const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
 
@@ -458,7 +375,7 @@ public:
     template <reflection::GlmVec2 T>
     bool get_property(const PropertyName& name, T& out)
     {
-        const auto& property = property_map[std::string(name)];
+        const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
@@ -471,7 +388,7 @@ public:
     template <reflection::GlmVec3 T>
     bool get_property(const PropertyName& name, T& out)
     {
-        const auto& property = property_map[std::string(name)];
+        const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
@@ -484,7 +401,7 @@ public:
     template <reflection::GlmVec4 T>
     bool get_property(const PropertyName& name, T& out)
     {
-        const auto& property = property_map[std::string(name)];
+        const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
@@ -497,7 +414,7 @@ public:
     template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
     bool get_property(const PropertyName& name, T& out)
     {
-        using ValueType = typename T::mapped_type;
+        using ValueType = T::mapped_type;
         out.clear();
         auto* child = get_object(name);
         if (!child)
@@ -532,9 +449,11 @@ public:
         return true;
     }
 
+    bool get_property(const PropertyName& name, std::filesystem::path& out);
+
     bool get_binary_block(const PropertyName& name, Buffer& buffer)
     {
-        const auto& property = property_map[std::string(name)];
+        const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
         PORTAL_ASSERT(property.type == reflection::PropertyType::binary, "Property {} type mismatch", name);
@@ -546,7 +465,7 @@ public:
 
     bool get_binary_block(const PropertyName& name, std::vector<std::byte>& data)
     {
-        const auto& property = property_map[std::string(name)];
+        const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
         PORTAL_ASSERT(property.type == reflection::PropertyType::binary, "Property {} type mismatch", name);
@@ -559,12 +478,104 @@ public:
     virtual ArchiveObject* create_child(PropertyName name);
     virtual ArchiveObject* get_object(PropertyName name);
 
+    // Iterator support for range-based for loops
+    auto begin() { return property_map.begin(); }
+    auto end() { return property_map.end(); }
+    auto begin() const { return property_map.begin(); }
+    auto end() const { return property_map.end(); }
+
 protected:
+    template <typename T, typename ValueType> requires (reflection::Vector<T> || reflection::SmallVector<T>)
+    bool format_array(const PropertyName& name, const reflection::Property& prop, T& out) const
+    {
+        const auto& [value, type, container_type, elements_number] = prop;
+
+        if constexpr (Archiveable<ValueType>)
+        {
+            auto* objects = value.as<ArchiveObject*>();
+            for (size_t i = 0; i < elements_number; ++i)
+            {
+                out.push_back(ValueType::dearchive(objects[i]));
+            }
+        }
+        else
+        {
+            auto* objects = value.as<ArchiveObject*>();
+            for (size_t i = 0; i < elements_number; ++i)
+            {
+                ValueType v;
+                if (!objects[i].get_property("v", v))
+                {
+                    LOG_ERROR_TAG("Serialization", "Failed to get property from ArchiveObject {}", name);
+                    return false;
+                }
+                out.push_back(static_cast<ValueType>(v));
+            }
+        }
+        return true;
+    }
+
+    virtual reflection::Property& get_property_from_map(PropertyName name);
     virtual reflection::Property& add_property_to_map(PropertyName name, reflection::Property&& property);
+
+#ifdef PORTAL_DEBUG
     std::unordered_map<std::string, reflection::Property> property_map;
+#else
+    llvm::StringMap<reflection::Property> property_map;
+#endif
 
     friend class JsonArchive;
 };
+
+template <>
+inline void ArchiveObject::add_property<bool>(const PropertyName& name, const bool& b)
+{
+    add_property_to_map(
+        name,
+        {
+            Buffer::create<bool>(b),
+            reflection::PropertyType::boolean,
+            reflection::PropertyContainerType::scalar,
+            1
+        }
+        );
+}
+
+template <>
+inline void ArchiveObject::add_property<uint128_t>(const PropertyName& name, const uint128_t& t)
+{
+    add_property_to_map(
+        name,
+        {
+            Buffer::create<uint128_t>(t),
+            reflection::PropertyType::integer128,
+            reflection::PropertyContainerType::scalar,
+            1
+        }
+        );
+}
+
+template <>
+inline bool ArchiveObject::get_property<bool>(const PropertyName& name, bool& out)
+{
+    const auto& property = get_property_from_map(name);
+    if (property.type == reflection::PropertyType::invalid)
+        return false;
+
+    out = *property.value.as<bool*>();
+    return true;
+}
+
+template <>
+inline bool ArchiveObject::get_property<uint128_t>(const PropertyName& name, uint128_t& out)
+{
+    const auto& property = get_property_from_map(name);
+    if (property.type == reflection::PropertyType::invalid)
+        return false;
+
+    out = *property.value.as<uint128_t*>();
+    return true;
+}
 
 
 } // namespace portal

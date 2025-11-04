@@ -39,7 +39,8 @@ class Scheduler
 public:
     struct WorkerContext
     {
-        constexpr static size_t CACHE_SIZE = 64;
+        constexpr static size_t CACHE_SIZE = 4;
+        // constexpr static size_t CACHE_SIZE = 64;
         constexpr static uint32_t STEAL_CHECK_INTERVAL = 128;
         constexpr static uint32_t SAMPLE_INTERVAL = 1000;
 

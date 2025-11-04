@@ -14,35 +14,47 @@ static auto logger = Log::get_logger("Resources");
 
 ReferenceManager::~ReferenceManager()
 {
-    if (!references.empty())
-        LOG_ERROR("Reference manager destroyed with {} references still registered", references.size());
-}
-
-void ReferenceManager::register_reference(const ResourceHandle handle, void* reference)
-{
-    references[handle].insert(reference);
-}
-
-void ReferenceManager::unregister_reference(const ResourceHandle handle, void* reference)
-{
-    if (!references.contains(handle))
+    bool ok = true;
+    for (auto& [ref, set] : references)
     {
-        LOG_WARN("Attempted to unregister reference for resource handle {} that does not exist", handle);
-        return;
-    }
-    if (!references.at(handle).contains(reference))
-    {
-        LOG_WARN("Attempted to unregister reference for resource handle {} that does not exist", handle);
-        return;
+        if (!set.empty())
+        {
+            LOG_ERROR("Reference manager destroyed with {} references still registered for reference: {}", set.size(), ref);
+            ok = false;
+        }
     }
 
-    references[handle].erase(reference);
+    PORTAL_ASSERT(ok, "Reference manager destroyed with references still registered");
 }
 
-void ReferenceManager::move_reference(const ResourceHandle handle, void* old_ref, void* new_ref)
+void ReferenceManager::register_reference(const StringId& id, void* reference)
 {
-    unregister_reference(handle, old_ref);
-    register_reference(handle, new_ref);
+    std::lock_guard guard(lock);
+    references[id].insert(reference);
+}
+
+void ReferenceManager::unregister_reference(const StringId& id, void* reference)
+{
+    std::lock_guard guard(lock);
+    if (!references.contains(id))
+    {
+        LOG_WARN("Attempted to unregister reference for resource handle {} that does not exist", id);
+        return;
+    }
+    if (!references.at(id).contains(reference))
+    {
+        LOG_WARN("Attempted to unregister reference for resource handle {} that does not exist", id);
+        return;
+    }
+
+    references[id].erase(reference);
+}
+
+void ReferenceManager::move_reference(const StringId& id, void* old_ref, void* new_ref)
+{
+    std::lock_guard guard(lock);
+    unregister_reference(id, old_ref);
+    register_reference(id, new_ref);
 }
 
 } // portal

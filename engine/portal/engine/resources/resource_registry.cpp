@@ -28,7 +28,26 @@ ResourceRegistry::ResourceRegistry(
 
 }
 
-Reference<Resource> ResourceRegistry::load_direct(const SourceMetadata& meta, const resources::ResourceSource& source)
+ResourceRegistry::~ResourceRegistry() noexcept
+{
+    std::unordered_map<StringId, WeakReference<Resource>> weak_resources;
+    weak_resources.reserve(resources.size());
+    for (auto& [name, ref] : resources)
+        weak_resources[name] = ref;
+
+    resources.clear();
+
+    for (auto& [name, ref] : weak_resources)
+    {
+        auto resource = ref.lock();
+        if (resource)
+        {
+            LOGGER_ERROR("Dangling resource: {} of type: {}", name, resource->static_type());
+        }
+    }
+}
+
+Job<Reference<Resource>> ResourceRegistry::load_direct(const SourceMetadata& meta, const resources::ResourceSource& source)
 {
     // TODO: add check that the resource does not exist already?
     LOGGER_TRACE("Creating resource: {} of type: {}", meta.resource_id, meta.type);
@@ -40,82 +59,91 @@ Reference<Resource> ResourceRegistry::load_direct(const SourceMetadata& meta, co
     if (!resource)
     {
         LOGGER_ERROR("Failed to load resource: {}", meta.resource_id);
-        return nullptr;
+        co_return nullptr;
     }
 
-    return resource;
+    std::lock_guard guard(lock);
+    resources[meta.resource_id] = resource;
+    co_return resource;
 }
 
-std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource(const ResourceHandle handle) const
+void ResourceRegistry::wait_all(const std::span<Job<>> jobs) const
 {
-    if (resources.contains(handle))
-        return resources.at(handle);
+    scheduler.wait_for_jobs(jobs);
+}
 
-    if (pending_resources.contains(handle))
+std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource(const StringId& id)
+{
+    std::lock_guard guard(lock);
+    if (resources.contains(id))
+        return resources.at(id);
+
+    if (pending_resources.contains(id))
         return std::unexpected{ResourceState::Pending};
 
-    if (errored_resources.contains(handle))
+    if (errored_resources.contains(id))
         return std::unexpected{ResourceState::Error};
 
-    LOG_ERROR("Attempted to get resource with handle {} that does not exist", handle);
+    LOG_ERROR("Attempted to get resource with handle {} that does not exist", id);
     return std::unexpected{ResourceState::Missing};
 }
 
-ResourceHandle ResourceRegistry::create_resource(const StringId& resource_id, [[maybe_unused]] ResourceType type)
+void ResourceRegistry::create_resource(const StringId& resource_id, [[maybe_unused]] ResourceType type)
 {
-    const auto handle = to_resource_handle(resource_id);
+    {
+        std::lock_guard guard(lock);
+        if (resources.contains(resource_id) || pending_resources.contains(resource_id))
+            return;
+    }
 
-    if (resources.contains(handle) || pending_resources.contains(handle))
-        return handle;
-
-    scheduler.dispatch_job(load_resource(handle));
-    return handle;
+    scheduler.dispatch_job(load_resource(resource_id));
 }
 
-ResourceHandle ResourceRegistry::create_resource_immediate(const StringId& resource_id, [[maybe_unused]] ResourceType type)
+void ResourceRegistry::create_resource_immediate(const StringId& resource_id, [[maybe_unused]] ResourceType type)
 {
-    const auto handle = to_resource_handle(resource_id);
+    {
+        std::lock_guard guard(lock);
+        if (resources.contains(resource_id) || pending_resources.contains(resource_id))
+            return;
+    }
 
-    if (resources.contains(handle) || pending_resources.contains(handle))
-        return handle;
-
-    scheduler.wait_for_job(load_resource(handle));
-    return handle;
+    scheduler.wait_for_job(load_resource(resource_id));
 }
 
-ResourceHandle ResourceRegistry::to_resource_handle(const StringId& resource_id)
-{
-    return resource_id.id;
-}
-
-Job<Reference<Resource>> ResourceRegistry::load_resource(const ResourceHandle handle)
+Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource_id)
 {
     // TODO: synchronization for maps and sets?
+    {
+        std::lock_guard guard(lock);
+        pending_resources.insert(resource_id);
+    }
 
-    pending_resources.insert(handle);
-
-    const auto meta = database.find(handle);
+    const auto meta = database.find(resource_id);
     if (!meta)
     {
-        LOGGER_ERROR("Failed to find metadata for resource with handle: {}", handle);
-        errored_resources.insert(handle);
-        pending_resources.erase(handle);
+        std::lock_guard guard(lock);
+        LOGGER_ERROR("Failed to find metadata for resource with id: {}", resource_id);
+        errored_resources.insert(resource_id);
+        pending_resources.erase(resource_id);
         co_return nullptr;
     }
 
     const auto source = database.create_source(*meta);
 
-    auto resource = load_direct(*meta, *source);
-    if (!resource)
+    auto job = load_direct(*meta, *source);
+    co_await job;
+    auto resource = job.result();
+    if (!resource || resource.value() == nullptr)
     {
-        errored_resources.insert(handle);
-        pending_resources.erase(handle);
+        std::lock_guard guard(lock);
+        errored_resources.insert(resource_id);
+        pending_resources.erase(resource_id);
         co_return nullptr;
     }
-    resources[handle] = resource;
-    pending_resources.erase(handle);
 
-    co_return resource;
+    std::lock_guard guard(lock);
+    pending_resources.erase(resource_id);
+    co_return resource.value();
 }
 
 } // portal

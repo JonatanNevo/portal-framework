@@ -19,7 +19,7 @@ public:
     RendererContext(
         renderer::vulkan::VulkanContext& gpu_context,
         Reference<renderer::RenderTarget>& render_target,
-        std::span<vk::raii::DescriptorSetLayout> global_descriptor_set_layout
+        std::vector<vk::raii::DescriptorSetLayout>& global_descriptor_set_layout
         );
 
 
@@ -38,7 +38,7 @@ protected:
     // TODO: use baseclasses here
     renderer::vulkan::VulkanContext& gpu_context;
     Reference<renderer::RenderTarget>& render_target;
-    std::span<vk::raii::DescriptorSetLayout> global_descriptor_set_layout;
+    std::vector<vk::raii::DescriptorSetLayout>& global_descriptor_set_layout;
 };
 
 } // portal

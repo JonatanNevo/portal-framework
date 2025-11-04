@@ -96,10 +96,14 @@ ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context): context
 
 ImGuiModule::~ImGuiModule()
 {
+    auto& vulkan_context = context->get_renderer().get_renderer_context().get_gpu_context();
+    vulkan_context.get_device().wait_idle();
 
     ImGui_ImplVulkan_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+
+    imgui_pool = nullptr;
 }
 
 void ImGuiModule::begin()

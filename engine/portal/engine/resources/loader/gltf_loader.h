@@ -6,6 +6,7 @@
 #pragma once
 #include <fastgltf/core.hpp>
 
+#include "portal/core/jobs/job.h"
 #include "portal/engine/resources/loader/loader.h"
 #include "portal/engine/scene/scene.h"
 
@@ -37,7 +38,7 @@ public:
 protected:
     static fastgltf::Asset load_asset(const SourceMetadata& meta, fastgltf::GltfDataGetter& data);
 
-    void load_texture(const fastgltf::Asset& asset, const fastgltf::Texture& texture) const;
+    Job<> load_texture(const fastgltf::Asset& asset, const fastgltf::Texture& texture) const;
     void load_material(size_t index, const fastgltf::Asset& asset, const fastgltf::Material& material) const;
     void load_mesh(size_t index, const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) const;
     std::vector<Reference<Scene>> load_scenes(const fastgltf::Asset& asset) const;

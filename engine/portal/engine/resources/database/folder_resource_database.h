@@ -32,12 +32,8 @@ public:
     ~FolderResourceDatabase() override;
 
     std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) override;
-    std::expected<SourceMetadata, DatabaseError> find(ResourceHandle handle) override;
-
     DatabaseError add(SourceMetadata meta) override;
-
     DatabaseError remove(StringId resource_id) override;
-    DatabaseError remove(ResourceHandle handle) override;
 
     std::unique_ptr<resources::ResourceSource> create_source(SourceMetadata meta) override;
 
@@ -58,7 +54,12 @@ private:
     std::filesystem::path meta_path;
     DatabaseMetadata metadata;
 
-    llvm::DenseMap<ResourceHandle, SourceMetadata> resources;
+#ifdef PORTAL_DEBUG
+    std::unordered_map<StringId, SourceMetadata> resources;
+#else
+    llvm::DenseMap<StringId, SourceMetadata> resources;
+#endif
+
 };
 
 } // portal

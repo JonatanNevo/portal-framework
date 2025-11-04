@@ -6,6 +6,7 @@
 #pragma once
 
 #include <spdlog/spdlog.h>
+#include <llvm/ADT/DenseMapInfo.h>
 #include "portal/core/common.h"
 
 #include "portal/engine/strings/hash.h"
@@ -18,13 +19,14 @@ class Serializer;
 
 struct StringId
 {
-    uint64_t id = 0;
+    using HashType = uint64_t;
+    HashType id = 0;
     std::string_view string = INVALID_STRING_VIEW;
 
     StringId() = default;
-    explicit StringId(uint64_t id);
-    StringId(uint64_t id, std::string_view string);
-    StringId(uint64_t id, const std::string& string);
+    explicit StringId(HashType id);
+    StringId(HashType id, std::string_view string);
+    StringId(HashType id, const std::string& string);
 
     bool operator==(const StringId&) const;
 
@@ -33,10 +35,36 @@ struct StringId
 };
 
 const auto INVALID_STRING_ID = StringId{uint64_t{0}, INVALID_STRING_VIEW};
+const auto MAX_STRING_ID = StringId{std::numeric_limits<StringId::HashType>::max(), INVALID_STRING_VIEW};
 
 } // portal
 
-template<>
+template <>
+struct llvm::DenseMapInfo<portal::StringId>
+{
+    static inline portal::StringId getEmptyKey()
+    {
+        return portal::INVALID_STRING_ID;
+    }
+
+    static inline portal::StringId getTombstoneKey()
+    {
+        return portal::MAX_STRING_ID;
+    }
+
+    static unsigned getHashValue(const portal::StringId& Val)
+    {
+        // Mix high and low bits for better distribution
+        return static_cast<unsigned>(Val.id ^ (Val.id >> 32));
+    }
+
+    static bool isEqual(const portal::StringId& LHS, const portal::StringId& RHS)
+    {
+        return LHS.id == RHS.id;
+    }
+}; // namespace llvm
+
+template <>
 struct std::hash<portal::StringId>
 {
     std::size_t operator()(const portal::StringId& id) const noexcept
@@ -50,7 +78,7 @@ struct fmt::formatter<portal::StringId>
 {
     static constexpr auto parse(const fmt::format_parse_context& ctx) -> decltype(ctx.begin())
     {
-       return ctx.begin();
+        return ctx.begin();
     }
 
     template <typename FormatContext>
