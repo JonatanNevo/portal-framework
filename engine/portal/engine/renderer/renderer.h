@@ -64,7 +64,7 @@ public:
     void clean_frame();
 
     void update_imgui(float delta_time);
-    void update_scene(float delta_time);
+    void update_scene(float delta_time, ResourceReference<Scene>& scene);
 
     void draw_geometry();
     void draw_geometry(const vk::raii::CommandBuffer& command_buffer);

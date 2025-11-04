@@ -6,6 +6,7 @@
 #include "json_archive.h"
 
 #include <fstream>
+#include <nlohmann/json.hpp>
 
 #include "portal/core/files/file_system.h"
 
@@ -54,7 +55,7 @@ void JsonArchive::read(const std::filesystem::path& input_path)
 
 void JsonArchive::read(std::istream& input)
 {
-    deserialize(nlohmann::json::parse(input, nullptr, false, true));
+    deserialize(nlohmann::json::parse(input, nullptr, true, true));
 }
 
 nlohmann::json JsonArchive::prepare_json()

@@ -28,9 +28,6 @@ struct FlagTraits<ResourceDirtyBits>
     static constexpr Flags<ResourceDirtyBits> all_flags = ResourceDirtyBits::StateChange | ResourceDirtyBits::DataChange | ResourceDirtyBits::ConfigChange;
 };
 
-using ResourceHandle = uint64_t;
-constexpr ResourceHandle INVALID_RESOURCE_HANDLE = 0;
-
 class Resource
 {
 public:

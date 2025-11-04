@@ -62,6 +62,13 @@ VulkanRenderTarget::VulkanRenderTarget(
     resize(width, height, true);
 }
 
+VulkanRenderTarget::~VulkanRenderTarget()
+{
+    release();
+    color_attachments.clear();
+    depth_attachment.reset();
+}
+
 void VulkanRenderTarget::initialize()
 {
     release();
@@ -113,11 +120,9 @@ void VulkanRenderTarget::initialize()
 
 void VulkanRenderTarget::release()
 {
-    size_t index = 0;
     for (const auto& image : color_attachments)
     {
         image->release();
-        index++;
     }
 
     if (depth_attachment)

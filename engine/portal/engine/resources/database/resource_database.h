@@ -19,9 +19,8 @@ struct SourceMetadata
 {
     // Resource Information
     StringId resource_id = INVALID_STRING_ID;
-    ResourceHandle handle = INVALID_RESOURCE_HANDLE;
     ResourceType type = ResourceType::Unknown;
-    llvm::SmallVector<ResourceHandle> dependencies{};
+    llvm::SmallVector<StringId> dependencies{};
 
     // Source Information
     StringId source = INVALID_STRING_ID;
@@ -51,12 +50,8 @@ public:
     virtual ~ResourceDatabase() = default;
 
     virtual std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) = 0;
-    virtual std::expected<SourceMetadata, DatabaseError> find(ResourceHandle handle) = 0;
-
     virtual DatabaseError add(SourceMetadata meta) = 0;
-
     virtual DatabaseError remove(StringId resource_id) = 0;
-    virtual DatabaseError remove(ResourceHandle resource_id) = 0;
 
     virtual std::unique_ptr<resources::ResourceSource> create_source(SourceMetadata meta) = 0;
 };

@@ -26,6 +26,7 @@ find_package(imgui CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
 find_package(SPIRV-Tools CONFIG REQUIRED)
 find_package(slang CONFIG REQUIRED)
+find_package(glaze CONFIG REQUIRED)
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
@@ -62,6 +63,7 @@ target_link_libraries(portal-engine
         fastgltf::fastgltf
         slang::slang
         SPIRV-Tools-static
+        glaze::glaze
 )
 if(MSVC)
     target_compile_options(portal-engine PRIVATE /W4 /WX)

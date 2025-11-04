@@ -22,38 +22,36 @@ public:
 
     ~ResourceReference()
     {
-        if (handle != INVALID_RESOURCE_HANDLE && reference_manager.has_value())
-            reference_manager.value().get().unregister_reference(handle,this);
+        if (resource_id != INVALID_STRING_ID && reference_manager.has_value())
+            reference_manager.value().get().unregister_reference(resource_id, this);
     }
 
     ResourceReference(const ResourceReference& other) :
         reference_manager(other.reference_manager),
         registry(other.registry),
         resource_id(other.resource_id),
-        handle(other.handle),
         state(other.state),
         resource(other.resource)
     {
-        PORTAL_ASSERT(handle != INVALID_RESOURCE_HANDLE, "Resource handle is invalid");
+        PORTAL_ASSERT(resource_id != INVALID_STRING_ID, "Resource handle is invalid");
         PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
         PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
 
-        reference_manager.value().get().register_reference(handle, this);
+        reference_manager.value().get().register_reference(resource_id, this);
     }
 
     ResourceReference(ResourceReference&& other) noexcept :
         reference_manager(other.reference_manager),
         registry(other.registry),
         resource_id(std::exchange(other.resource_id, INVALID_STRING_ID)),
-        handle(std::exchange(other.handle, INVALID_RESOURCE_HANDLE)),
         state(std::exchange(other.state, ResourceState::Unknown)),
         resource(std::exchange(resource, nullptr))
     {
-        PORTAL_ASSERT(handle != INVALID_RESOURCE_HANDLE, "Resource handle is invalid");
+        PORTAL_ASSERT(resource_id != INVALID_STRING_ID, "Resource handle is invalid");
         PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
         PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
 
-        reference_manager.value().get().move_reference(handle, &other, this);
+        reference_manager.value().get().move_reference(resource_id, &other, this);
     }
 
     ResourceReference& operator=(const ResourceReference& other)
@@ -63,18 +61,19 @@ public:
 
 
         if (reference_manager.has_value())
-            reference_manager.value().get().unregister_reference(handle,this);
+            reference_manager.value().get().unregister_reference(resource_id, this);
 
         resource_id = other.resource_id;
-        handle = other.handle;
         state = other.state;
         resource = other.resource;
-        PORTAL_ASSERT(handle != INVALID_RESOURCE_HANDLE, "Resource handle is invalid");
+        reference_manager = other.reference_manager;
+        registry = other.registry;
+
         PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
         PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
 
-        if (handle != INVALID_RESOURCE_HANDLE && reference_manager.has_value())
-            reference_manager.value().get().register_reference(handle,this);
+        if (resource_id != INVALID_STRING_ID && reference_manager.has_value())
+            reference_manager.value().get().register_reference(resource_id, this);
         return *this;
     }
 
@@ -84,19 +83,19 @@ public:
             return *this;
 
         if (reference_manager.has_value())
-            reference_manager.value().get().unregister_reference(handle, this);
+            reference_manager.value().get().unregister_reference(resource_id, this);
 
         resource_id = std::exchange(other.resource_id, INVALID_STRING_ID);
-        handle = std::exchange(other.handle, INVALID_RESOURCE_HANDLE);
         state = std::exchange(other.state, ResourceState::Unknown);
         resource = std::exchange(other.resource, nullptr);
+        reference_manager = std::exchange(other.reference_manager, std::nullopt);
+        registry = std::exchange(other.registry, std::nullopt);
 
-        PORTAL_ASSERT(handle != INVALID_RESOURCE_HANDLE, "Resource handle is invalid");
         PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
         PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
 
-        if (handle != INVALID_RESOURCE_HANDLE && reference_manager.has_value())
-            reference_manager.value().get().move_reference(handle, &other, this);
+        if (resource_id != INVALID_STRING_ID && reference_manager.has_value())
+            reference_manager.value().get().move_reference(resource_id, &other, this);
         return *this;
     }
 
@@ -114,7 +113,7 @@ public:
         // Check the state only when not yet loaded
         if (state != ResourceState::Loaded)
         {
-            auto result = registry->get().get_resource(handle);
+            auto result = registry->get().get_resource(resource_id);
             if (result.has_value())
             {
                 resource = reference_cast<T, Resource>(result.value());
@@ -153,10 +152,33 @@ public:
         return nullptr;
     }
 
-    T* operator->() { return get(); }
-    T& operator*() { return *get(); }
-    const T* operator->() const { return get(); }
-    const T& operator*() const { return *get(); }
+    T* operator->()
+    {
+        auto* ptr = get();
+        PORTAL_ASSERT(ptr, "Resource is null");
+        return ptr;
+    }
+
+    T& operator*()
+    {
+        auto* ptr = get();
+        PORTAL_ASSERT(ptr, "Resource is null");
+        return *ptr;
+    }
+
+    const T* operator->() const
+    {
+        auto* ptr = get();
+        PORTAL_ASSERT(ptr, "Resource is null");
+        return ptr;
+    }
+
+    const T& operator*() const
+    {
+        auto* ptr = get();
+        PORTAL_ASSERT(ptr, "Resource is null");
+        return *ptr;
+    }
 
     /**
      * @return The underlying `Reference` class to the resource
@@ -173,7 +195,7 @@ public:
 
     bool operator==(const ResourceReference& other) const
     {
-        return handle == other.handle;
+        return resource_id == other.resource_id;
     }
 
     template <ResourceConcept U>
@@ -183,10 +205,10 @@ public:
         if (!casted)
         {
             LOG_ERROR_TAG("Resource", "Failed to cast resource \"{}\" to type \"{}\"", resource_id, U::static_type());
-            return ResourceReference<U>(resource_id, INVALID_RESOURCE_HANDLE, registry, reference_manager);
+            return ResourceReference<U>(resource_id, registry, reference_manager);
         }
 
-        return ResourceReference<U>(resource_id, handle, registry, reference_manager);
+        return ResourceReference<U>(resource_id, registry, reference_manager);
     }
 
 private:
@@ -195,18 +217,22 @@ private:
 
     ResourceReference(
         const StringId& resource_id,
-        const ResourceHandle handle,
         ResourceRegistry& registry,
         ReferenceManager& reference_manager
         ) : reference_manager(reference_manager),
             registry(registry),
             resource_id(resource_id),
-            handle(handle),
             state(ResourceState::Unknown)
     {
-        PORTAL_ASSERT(handle != INVALID_RESOURCE_HANDLE, "Resource handle is invalid");
-        reference_manager.register_reference(handle, this);
-        get_state();
+        if (resource_id != INVALID_STRING_ID)
+        {
+            reference_manager.register_reference(resource_id, this);
+            get_state();
+        }
+        else
+        {
+            state = ResourceState::Null;
+        }
     }
 
 private:
@@ -214,7 +240,6 @@ private:
     std::optional<std::reference_wrapper<ResourceRegistry>> registry = std::nullopt;
 
     StringId resource_id = INVALID_STRING_ID;
-    ResourceHandle handle = INVALID_RESOURCE_HANDLE;
 
     ResourceState state = ResourceState::Null;
     Reference<T> resource = nullptr;

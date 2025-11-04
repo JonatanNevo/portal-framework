@@ -75,8 +75,10 @@ public:
             get_device().set_debug_name(get_object_type(), get_handle_u64(), debug_name.c_str());
     }
 
-private:
+protected:
     std::string debug_name;
+
+private:
     const VulkanDevice* device;
     Handle handle;
 };

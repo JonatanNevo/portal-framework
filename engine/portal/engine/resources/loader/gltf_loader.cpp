@@ -11,6 +11,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "portal/core/debug/profile.h"
+#include "portal/engine/settings.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/shaders/shader_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
@@ -35,7 +36,7 @@ namespace portal::resources
 
 static auto logger = Log::get_logger("Resources");
 // const auto SHADER = "mesh.shading.slang.spv";
-const auto SHADER = STRING_ID("pbr.slang");
+const auto SHADER = STRING_ID("pbr");
 
 renderer::TextureFilter extract_filter(const fastgltf::Filter filter)
 {
@@ -100,10 +101,14 @@ Reference<Resource> GltfLoader::load(const SourceMetadata& meta, const ResourceS
     LOGGER_TRACE("  - {} images", gltf.images.size());
     LOGGER_TRACE("  - {} samplers", gltf.samplers.size());
 
+
+    llvm::SmallVector<Job<>> texture_jobs{};
+    texture_jobs.reserve(gltf.textures.size());
     for (auto& texture : gltf.textures)
     {
-        load_texture(gltf, texture);
+        texture_jobs.emplace_back(load_texture(gltf, texture));
     }
+    registry.wait_all(texture_jobs);
 
     int material_index = 0;
     for (auto& material : gltf.materials)
@@ -129,7 +134,8 @@ Reference<Resource> GltfLoader::load(const SourceMetadata& meta, const ResourceS
 
 fastgltf::Asset GltfLoader::load_asset(const SourceMetadata& meta, fastgltf::GltfDataGetter& data)
 {
-    const auto parent_path = std::filesystem::path(meta.source.string).parent_path();
+    const auto root_resource_path = Settings::get().get_setting<std::filesystem::path>("application.resources-path");
+    const auto parent_path =  root_resource_path.value() / std::filesystem::path(meta.source.string).parent_path();
 
     constexpr auto glft_options = fastgltf::Options::DontRequireValidAssetMember | fastgltf::Options::AllowDouble |
         fastgltf::Options::LoadExternalBuffers | fastgltf::Options::LoadExternalImages;
@@ -146,12 +152,11 @@ fastgltf::Asset GltfLoader::load_asset(const SourceMetadata& meta, fastgltf::Glt
     return std::move(load.get());
 }
 
-void GltfLoader::load_texture(
+Job<> GltfLoader::load_texture(
     const fastgltf::Asset& asset,
     const fastgltf::Texture& texture
     ) const
 {
-
     std::unique_ptr<ResourceSource> image_source;
     SourceMetadata image_source_meta;
 
@@ -162,9 +167,9 @@ void GltfLoader::load_texture(
     const size_t index = texture.imageIndex.value();
     auto texture_name = texture.name.empty() ? image.name : texture.name;
 
-    if (registry.get<renderer::vulkan::VulkanTexture>(create_name(ResourceType::Texture, index, texture_name.c_str())).get_state() ==
+    if (registry.get<renderer::vulkan::VulkanTexture>(create_name(ResourceType::Texture, index, texture_name)).get_state() ==
         ResourceState::Loaded)
-        return;
+        co_return;
 
     auto visitor = fastgltf::visitor{
         [&](std::monostate)
@@ -186,10 +191,9 @@ void GltfLoader::load_texture(
         [&](const fastgltf::sources::URI& uri_source)
         {
             image_source = std::make_unique<FileSource>(uri_source.uri.path());
-            const auto name = create_name(ResourceType::Texture, index, texture_name.c_str());
+            const auto name = create_name(ResourceType::Texture, index, texture_name);
             image_source_meta = SourceMetadata{
                 .resource_id = name,
-                .handle = name.id,
                 .type = ResourceType::Texture,
                 .source = STRING_ID(uri_source.uri.path().data()),
                 .format = SourceFormat::Image,
@@ -198,10 +202,9 @@ void GltfLoader::load_texture(
         },
         [&](const fastgltf::sources::Array& array_source)
         {
-            const auto name = create_name(ResourceType::Texture, index, texture_name.c_str());
+            const auto name = create_name(ResourceType::Texture, index, texture_name);
             image_source_meta = SourceMetadata{
                 .resource_id = name,
-                .handle = name.id,
                 .type = ResourceType::Texture,
                 .source = STRING_ID("mem://gltf-texture-array"),
                 .format = SourceFormat::Memory,
@@ -211,10 +214,9 @@ void GltfLoader::load_texture(
         },
         [&](const fastgltf::sources::Vector& vector_source)
         {
-            const auto name = create_name(ResourceType::Texture, index, texture_name.c_str());
+            const auto name = create_name(ResourceType::Texture, index, texture_name);
             image_source_meta = SourceMetadata{
                 .resource_id = name,
-                .handle = name.id,
                 .type = ResourceType::Texture,
                 .source = STRING_ID("mem://gltf-texture-vector"),
                 .format = SourceFormat::Memory,
@@ -233,10 +235,9 @@ void GltfLoader::load_texture(
                         const auto* data_ptr = array_buffer.bytes.data() + buffer_view.byteOffset;
                         const auto data_size = buffer_view.byteLength;
 
-                        const auto name = create_name(ResourceType::Texture, index, texture_name.c_str());
+                        const auto name = create_name(ResourceType::Texture, index, texture_name);
                         image_source_meta = SourceMetadata{
                             .resource_id = name,
-                            .handle = name.id,
                             .type = ResourceType::Texture,
                             .source = STRING_ID("mem://gltf-texture-view-array"),
                             .format = SourceFormat::Memory,
@@ -249,10 +250,9 @@ void GltfLoader::load_texture(
                         const auto* data_ptr = vector_buffer.bytes.data() + buffer_view.byteOffset;
                         const auto data_size = buffer_view.byteLength;
 
-                        const auto name = create_name(ResourceType::Texture, index, texture_name.c_str());
+                        const auto name = create_name(ResourceType::Texture, index, texture_name);
                         image_source_meta = SourceMetadata{
                             .resource_id = name,
-                            .handle = name.id,
                             .type = ResourceType::Texture,
                             .source = STRING_ID("mem://gltf-texture-view-vector"),
                             .format = SourceFormat::Memory,
@@ -274,10 +274,19 @@ void GltfLoader::load_texture(
     if (!image_source)
     {
         LOGGER_ERROR("Failed to create image source for texture: {}", texture_name);
-        return;
+        co_return;
     }
 
-    const auto texture_resource = registry.load_direct(image_source_meta, *image_source);
+    auto job = registry.load_direct(image_source_meta, *image_source);
+    co_await job;
+    auto res = job.result();
+    if (!res)
+    {
+        LOGGER_ERROR("Failed to load image source for texture: {}", texture_name);
+        co_return;
+    }
+
+    const auto texture_resource = res.value();
     const auto vulkan_texture = reference_cast<renderer::vulkan::VulkanTexture>(texture_resource);
 
     auto sampler_index = texture.samplerIndex;
