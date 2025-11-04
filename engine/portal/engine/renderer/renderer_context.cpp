@@ -5,8 +5,6 @@
 
 #include "renderer_context.h"
 
-#include <__msvc_ranges_to.hpp>
-
 #include "portal/engine/reference.h"
 
 namespace portal

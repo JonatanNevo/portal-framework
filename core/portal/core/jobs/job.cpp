@@ -8,7 +8,6 @@
 #include <future>
 #include <iostream>
 #include <memory_resource>
-#include <stacktrace>
 
 
 #include "portal/core/debug/assert.h"

@@ -50,7 +50,7 @@ public:
 private:
     std::unordered_map<size_t, Reference<VulkanUniformBuffer>> buffers;
 
-    const VulkanDevice& device;
+    [[maybe_unused]] const VulkanDevice& device;
 };
 
 } // portal
