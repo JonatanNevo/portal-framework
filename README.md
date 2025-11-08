@@ -40,11 +40,12 @@ cmake --preset vs2022
 
 # Roadmap
 ## Missing modules
-[] audio system
-[] animations
-[] physics engine
-[] scripting capabilities
-[] mods (based on web assembly)
+* audio system
+* animations
+* physics engine
+* scripting capabilities
+* networking
+* mods (based on web assembly)
 
 # License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
