@@ -21,7 +21,10 @@ TODO
 cmake --preset xcode
 ```
 This will generate an Xcode project in the `build/xcode` directory. You can open the project in Xcode and build it from there.
-## vscode
+## visual studio 
+```
+cmake --preset vs2022
+```
 
 # Modules
  - [**Portal Core**](docs/core.md) - The core module, provides common functionalities and libraries 
@@ -34,6 +37,14 @@ This will generate an Xcode project in the `build/xcode` directory. You can open
 # Architecture
 
 # Examples
+
+# Roadmap
+## Missing modules
+[] audio system
+[] animations
+[] physics engine
+[] scripting capabilities
+[] mods (based on web assembly)
 
 # License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
