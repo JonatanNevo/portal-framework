@@ -203,6 +203,7 @@ void Application::run()
 
 
                 current_frame_count = (current_frame_count + 1) % vulkan_window->get_swapchain().get_frames_in_flight();
+                PORTAL_FRAME_MARK();
             }
 
             const auto time = static_cast<float>(glfwGetTime());

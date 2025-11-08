@@ -17,6 +17,9 @@ class RendererContext;
 
 namespace portal::renderer
 {
+namespace vulkan {
+    class VulkanPipeline;
+}
 
 class ShaderVariant;
 class Pipeline;
@@ -39,14 +42,17 @@ protected:
     static fastgltf::Asset load_asset(const SourceMetadata& meta, fastgltf::GltfDataGetter& data);
 
     Job<> load_texture(const fastgltf::Asset& asset, const fastgltf::Texture& texture) const;
-    void load_material(size_t index, const fastgltf::Asset& asset, const fastgltf::Material& material) const;
+    void load_material(size_t index, const fastgltf::Asset& asset, const fastgltf::Material& material);
     void load_mesh(size_t index, const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) const;
     std::vector<Reference<Scene>> load_scenes(const fastgltf::Asset& asset) const;
 
-    Reference<renderer::Pipeline> create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, bool depth) const;
+    Reference<renderer::Pipeline> create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, bool depth);
 
 protected:
     const RendererContext& context;
+
+    Reference<renderer::vulkan::VulkanPipeline> g_transparent_pipeline;
+    Reference<renderer::vulkan::VulkanPipeline> g_color_pipeline;
 };
 
 } // portal

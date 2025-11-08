@@ -55,20 +55,10 @@ ApplicationSpecification make_application_spec()
     };
 }
 
-struct A
-{
-    int a;
-};
-
 int main()
 {
     try
     {
-        auto a = glz::reflect<A>();
-        glz::for_each_field(a, [](auto& field) {
-            field += 1;
-        });
-
         initialize_settings();
         initialize_logger();
 

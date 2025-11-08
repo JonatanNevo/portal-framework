@@ -158,7 +158,6 @@ void Scheduler::worker_thread_loop(const std::stop_token& token, size_t worker_i
 
     while (!token.stop_requested())
     {
-        PORTAL_PROF_ZONE();
         const auto state = worker_thread_iteration(context);
 
 #if ENABLE_JOB_STATS
@@ -181,45 +180,32 @@ void Scheduler::worker_thread_loop(const std::stop_token& token, size_t worker_i
 
 WorkerIterationState Scheduler::worker_thread_iteration(WorkerContext& context)
 {
-    PORTAL_PROF_ZONE();
+    if (context.cache_index > 0)
     {
-        PORTAL_PROF_ZONE("Execute From Cache");
-
-        if (context.cache_index > 0)
-        {
-            execute_job(context.job_cache[--context.cache_index]);
-            return WorkerIterationState::Executed;
-        }
+        execute_job(context.job_cache[--context.cache_index]);
+        return WorkerIterationState::Executed;
     }
 
     if (tls_worker_id < num_workers)
     {
         if (++context.iterations_since_steal_check >= WorkerContext::STEAL_CHECK_INTERVAL)
         {
-            PORTAL_PROF_ZONE("Steal Migration");
-
             context.queue.migrate_jobs_to_stealable();
             context.iterations_since_steal_check = 0;
         }
 
+        const size_t dequeued = context.queue.try_pop_bulk(context.job_cache.data(), context.job_cache.size());
+        if (dequeued > 0)
         {
-            PORTAL_PROF_ZONE("Local Dequeue");
-
-            const size_t dequeued = context.queue.try_pop_bulk(context.job_cache.data(), context.job_cache.size());
-            if (dequeued > 0)
-            {
-                context.cache_index = dequeued;
-                stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Local);
-                return WorkerIterationState::FilledCache;
-            }
+            context.cache_index = dequeued;
+            stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Local);
+            return WorkerIterationState::FilledCache;
         }
     }
 
 #if ENABLE_JOB_STATS
     if (++context.iterations_since_sample >= WorkerContext::SAMPLE_INTERVAL)
     {
-        PORTAL_PROF_ZONE("Depth Sampling");
-
         const size_t local_depth =
             context.queue.get_local_count()[0].load(std::memory_order_relaxed) +
             context.queue.get_local_count()[1].load(std::memory_order_relaxed) +
@@ -235,27 +221,20 @@ WorkerIterationState Scheduler::worker_thread_iteration(WorkerContext& context)
     }
 #endif
 
+    const size_t stolen = try_steal(context.job_cache.data(), context.job_cache.size());
+    if (stolen > 0)
     {
-        PORTAL_PROF_ZONE("Steal Attempt");
-        const size_t stolen = try_steal(context.job_cache.data(), context.job_cache.size());
-        if (stolen > 0)
-        {
-            context.cache_index = stolen;
-            stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Stealable);
-            return WorkerIterationState::FilledCache;
-        }
+        context.cache_index = stolen;
+        stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Stealable);
+        return WorkerIterationState::FilledCache;
     }
 
+    const size_t dequeued_global = try_dequeue_global(context.job_cache.data(), context.job_cache.size());
+    if (dequeued_global > 0)
     {
-        PORTAL_PROF_ZONE("Global Dequeue");
-
-        const size_t dequeued_global = try_dequeue_global(context.job_cache.data(), context.job_cache.size());
-        if (dequeued_global > 0)
-        {
-            context.cache_index = dequeued_global;
-            stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Global);
-            return WorkerIterationState::FilledCache;
-        }
+        context.cache_index = dequeued_global;
+        stats.record_queue_hit(tls_worker_id, JobStats::QueueType::Global);
+        return WorkerIterationState::FilledCache;
     }
 
     // If we reach this place, it means that there is no work to do
@@ -264,7 +243,6 @@ WorkerIterationState Scheduler::worker_thread_iteration(WorkerContext& context)
 
 size_t Scheduler::try_steal(JobBase::handle_type* jobs, const size_t max_size)
 {
-    PORTAL_PROF_ZONE();
     if (num_workers == 0)
         return 0;
 

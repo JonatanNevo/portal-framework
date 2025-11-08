@@ -13,7 +13,7 @@
 #include "portal/core/jobs/worker_queue.h"
 
 #ifndef ENABLE_JOB_STATS
-#define ENABLE_JOB_STATS 1
+#define ENABLE_JOB_STATS 0
 #endif
 
 namespace portal

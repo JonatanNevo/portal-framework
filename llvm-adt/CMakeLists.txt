@@ -90,25 +90,26 @@ endif()
 configure_file("llvm/include/llvm/Config/llvm-config.h.cmake" "llvm/include/llvm/Config/llvm-config.h")
 
 file(GLOB_RECURSE LLVM_SOURCES CONFIGURE_DEPENDS "llvm/lib/*.cpp" "llvm/lib/*.c")
-file(GLOB_RECURSE LLVM_HEADER CONFIGURE_DEPENDS "llvm/include/*.h")
-
 add_library(llvm-adt STATIC ${LLVM_SOURCES})
 add_library(llvm::adt ALIAS llvm-adt)
 
 target_sources(llvm-adt PUBLIC
         FILE_SET HEADERS
-        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/llvm/include
-        FILES ${LLVM_HEADER}
+        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/llvm/include ${CMAKE_CURRENT_BINARY_DIR}/llvm/include
+        FILES ${LLVM_HEADER} "${CMAKE_CURRENT_BINARY_DIR}/llvm/include/llvm/Config/llvm-config.h"
 )
 
-target_include_directories(llvm-adt SYSTEM PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/llvm/include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/llvm/include>
-        $<INSTALL_INTERFACE:include>
-)
+set_target_properties(llvm-adt PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES $<TARGET_PROPERTY:llvm-adt,INTERFACE_INCLUDE_DIRECTORIES>)
 
 if(WIN32)
     target_link_libraries(llvm-adt PRIVATE ntdll)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
+        # Disable unreachable code warnings that occur with optimizations enabled (including during LTCG)
+        # Only for Release and Development builds where optimizations cause false positives
+        target_compile_options(llvm-adt PUBLIC
+                $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:/wd4702>
+        )
+    endif()
 elseif(APPLE)
     target_compile_options(llvm-adt PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fexperimental-library> $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 endif()

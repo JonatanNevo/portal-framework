@@ -13,7 +13,6 @@
 
 #include "portal/core/buffer.h"
 #include "portal/serialization/archive.h"
-#include "portal/serialization/property.h"
 
 using namespace portal;
 

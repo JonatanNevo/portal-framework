@@ -16,7 +16,7 @@ JobStats::JobStats(const size_t num_threads) : thread_stats(num_threads), start_
     global_stats.last_reset = start_time;
 }
 
-void JobStats::record_work_submitted(const size_t worker_id, JobPriority priority, size_t count)
+void JobStats::record_work_submitted([[maybe_unused]] const size_t worker_id, [[maybe_unused]] JobPriority priority, [[maybe_unused]] size_t count)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -34,7 +34,7 @@ void JobStats::record_work_submitted(const size_t worker_id, JobPriority priorit
 #endif
 }
 
-void JobStats::record_work_executed(const size_t worker_id, const size_t duration_ns)
+void JobStats::record_work_executed([[maybe_unused]] const size_t worker_id, [[maybe_unused]] const size_t duration_ns)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -54,7 +54,7 @@ void JobStats::record_work_executed(const size_t worker_id, const size_t duratio
 #endif
 }
 
-void JobStats::record_steal_attempt(const size_t worker_id, const bool success, const size_t jobs_stolen)
+void JobStats::record_steal_attempt([[maybe_unused]] const size_t worker_id,[[maybe_unused]] const bool success,[[maybe_unused]] const size_t jobs_stolen)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -76,7 +76,7 @@ void JobStats::record_steal_attempt(const size_t worker_id, const bool success, 
 #endif
 }
 
-void JobStats::record_work_stolen_from_me(const size_t worker_id, const size_t count)
+void JobStats::record_work_stolen_from_me([[maybe_unused]] const size_t worker_id, [[maybe_unused]] const size_t count)
 {
 #if ENABLE_JOB_STATS
     auto& stats = thread_stats.at(worker_id);
@@ -84,7 +84,7 @@ void JobStats::record_work_stolen_from_me(const size_t worker_id, const size_t c
 #endif
 }
 
-void JobStats::record_queue_depth(const size_t worker_id, const size_t local_depth, const size_t stealable_depth)
+void JobStats::record_queue_depth([[maybe_unused]] const size_t worker_id,[[maybe_unused]]  const size_t local_depth, [[maybe_unused]] const size_t stealable_depth)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -105,7 +105,7 @@ void JobStats::record_queue_depth(const size_t worker_id, const size_t local_dep
 #endif
 }
 
-void JobStats::record_idle_spin(const size_t worker_id)
+void JobStats::record_idle_spin([[maybe_unused]] const size_t worker_id)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -122,7 +122,7 @@ void JobStats::record_idle_spin(const size_t worker_id)
 #endif
 }
 
-void JobStats::record_idle_time(const size_t worker_id, const size_t duration_ns)
+void JobStats::record_idle_time([[maybe_unused]] const size_t worker_id, [[maybe_unused]] const size_t duration_ns)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -139,7 +139,7 @@ void JobStats::record_idle_time(const size_t worker_id, const size_t duration_ns
 #endif
 }
 
-void JobStats::record_queue_hit(size_t worker_id, QueueType type)
+void JobStats::record_queue_hit([[maybe_unused]] size_t worker_id,[[maybe_unused]]  QueueType type)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
