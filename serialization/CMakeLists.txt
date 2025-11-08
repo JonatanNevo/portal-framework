@@ -41,7 +41,7 @@ target_link_libraries(portal-serialization
         nlohmann_json::nlohmann_json
 )
 
-if(MSVC)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
     target_compile_options(portal-serialization PRIVATE /W4 /WX)
 else()
     target_compile_options(portal-serialization PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)

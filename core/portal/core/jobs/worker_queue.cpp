@@ -82,7 +82,6 @@ size_t WorkerQueue::try_pop_bulk(JobBase::handle_type* jobs, size_t max_count)
 
 void WorkerQueue::migrate_jobs_to_stealable()
 {
-    PORTAL_PROF_ZONE();
     constexpr size_t THRESHOLD = 64;  // Keep some work local
     constexpr size_t MOVE_COUNT = 32; // Move this many at a time
 

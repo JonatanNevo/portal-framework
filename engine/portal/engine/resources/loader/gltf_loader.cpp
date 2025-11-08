@@ -318,7 +318,7 @@ void GltfLoader::load_material(
     size_t index,
     const fastgltf::Asset& asset,
     const fastgltf::Material& gltf_material
-    ) const
+    )
 {
     // static bool set_default = false;
     // TODO: move to material loader
@@ -692,10 +692,7 @@ std::vector<Reference<Scene>> GltfLoader::load_scenes(const fastgltf::Asset& ass
     return scenes;
 }
 
-static Reference<renderer::vulkan::VulkanPipeline> g_transparent_pipeline;
-static Reference<renderer::vulkan::VulkanPipeline> g_color_pipeline;
-
-Reference<renderer::Pipeline> GltfLoader::create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, const bool depth) const
+Reference<renderer::Pipeline> GltfLoader::create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, const bool depth)
 {
     if (name == STRING_ID("transparent_pipeline") && g_transparent_pipeline != nullptr)
         return g_transparent_pipeline;

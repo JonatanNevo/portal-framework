@@ -75,7 +75,7 @@ TEST_F(JsonArchiveTest, SerializeBasicTypes)
     archive.add_property("string_value", std::string("hello world"));
 
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     std::string json_output = ss.str();
     EXPECT_FALSE(json_output.empty());
@@ -98,7 +98,7 @@ TEST_F(JsonArchiveTest, SerializeArrayTypes)
     archive.add_property("string_array", string_array);
 
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     std::string json_output = ss.str();
     EXPECT_NE(json_output.find("[1,2,3,4,5]"), std::string::npos);
@@ -116,7 +116,7 @@ TEST_F(JsonArchiveTest, SerializeNestedObjects)
     archive.add_property("object_array", object_array);
 
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     std::string json_output = ss.str();
     EXPECT_NE(json_output.find("\"test_object\""), std::string::npos);
@@ -132,7 +132,7 @@ TEST_F(JsonArchiveTest, WriteToFile)
     archive.add_property("test_string", std::string("file test"));
 
     auto output_path = test_dir / "test_output.json";
-    archive.archive(output_path);
+    archive.dump(output_path);
 
     EXPECT_TRUE(std::filesystem::exists(output_path));
 
@@ -217,7 +217,7 @@ TEST_F(JsonArchiveTest, RoundTripBasicTypes)
     write_archive.add_property("bool_val", true);
 
     std::stringstream ss;
-    write_archive.archive(ss);
+    write_archive.dump(ss);
 
     // Read it back
     JsonArchive read_archive;
@@ -249,7 +249,7 @@ TEST_F(JsonArchiveTest, RoundTripArrays)
     write_archive.add_property("string_array", string_array);
 
     std::stringstream ss;
-    write_archive.archive(ss);
+    write_archive.dump(ss);
 
     JsonArchive read_archive;
     read_archive.read(ss);
@@ -272,7 +272,7 @@ TEST_F(JsonArchiveTest, RoundTripComplexObjects)
     write_archive.add_property("test_obj", original);
 
     std::stringstream ss;
-    write_archive.archive(ss);
+    write_archive.dump(ss);
 
     JsonArchive read_archive;
     read_archive.read(ss);
@@ -287,7 +287,7 @@ TEST_F(JsonArchiveTest, RoundTripComplexObjects)
 TEST_F(JsonArchiveTest, EmptyArchive)
 {
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     const std::string json_output = ss.str();
     EXPECT_EQ(json_output, "{}");
@@ -304,7 +304,7 @@ TEST_F(JsonArchiveTest, EmptyContainers)
     archive.add_property("empty_map", empty_map);
 
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     JsonArchive read_archive;
     read_archive.read(ss);
@@ -355,7 +355,7 @@ TEST_F(JsonArchiveTest, LargeDataSet)
     archive.add_property("large_array", large_array);
 
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     JsonArchive read_archive;
     read_archive.read(ss);
@@ -371,7 +371,7 @@ TEST_F(JsonArchiveTest, SpecialCharactersInStrings)
     archive.add_property("special", special_string);
 
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     JsonArchive read_archive;
     read_archive.read(ss);
@@ -387,7 +387,7 @@ TEST_F(JsonArchiveTest, UnicodeStrings)
     archive.add_property("unicode", unicode_string);
 
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     JsonArchive read_archive;
     read_archive.read(ss);
@@ -405,7 +405,7 @@ TEST_F(JsonArchiveTest, NumericalLimits)
     archive.add_property("min_float", std::numeric_limits<float>::lowest());
 
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     JsonArchive read_archive;
     read_archive.read(ss);
@@ -430,7 +430,7 @@ TEST_F(JsonArchiveTest, PropertyOverwrite)
     archive.add_property("duplicate", 20);
 
     std::stringstream ss;
-    archive.archive(ss);
+    archive.dump(ss);
 
     JsonArchive read_archive;
     read_archive.read(ss);
@@ -456,7 +456,7 @@ TEST_F(JsonArchiveTest, DeepNesting)
     }
 
     std::stringstream ss;
-    root.archive(ss);
+    root.dump(ss);
 
     JsonArchive read_archive;
     read_archive.read(ss);

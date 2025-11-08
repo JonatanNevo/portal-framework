@@ -433,6 +433,7 @@ return portal::renderer::DescriptorType::TO
 
     CompiledShader ShaderCompiler::compile(const CompileRequest& request)
     {
+        LOGGER_DEBUG("Compiling shader: {}", request.name);
         auto data = request.shader_data;
         if (data[data.size - 1] != '\0')
         {
@@ -520,7 +521,7 @@ return portal::renderer::DescriptorType::TO
 
         // Instead of looking for hardcoded entry points, iterate through all available ones
         auto entry_point_count = module->getDefinedEntryPointCount();
-        LOGGER_TRACE("Found {} entry points in shader", entry_point_count);
+        LOGGER_DEBUG("Found {} entry points in shader", entry_point_count);
 
         std::vector<Slang::ComPtr<slang::IEntryPoint>> entry_points;
         std::vector<slang::IComponentType*> component_types = {module};
@@ -548,7 +549,7 @@ return portal::renderer::DescriptorType::TO
             }
 
             auto entry_point_name = reflection->getName();
-            LOGGER_TRACE("found entry point: {}", entry_point_name);
+            LOGGER_DEBUG("found entry point: {}", entry_point_name);
             component_types.push_back(entry_point);
         }
 
@@ -625,11 +626,6 @@ return portal::renderer::DescriptorType::TO
 
     ShaderReflection ShaderCompiler::reflect_shader(slang::ProgramLayout* layout)
     {
-        Slang::ComPtr<slang::IBlob> json_blob;
-        layout->toJson(json_blob.writeRef());
-        Buffer json_data = Buffer::copy(json_blob->getBufferPointer(), json_blob->getBufferSize());
-        LOGGER_TRACE(json_data.as_string());
-
         LOGGER_TRACE("===========================");
         LOGGER_TRACE(" Slang Shader Reflection");
         LOGGER_TRACE("===========================");

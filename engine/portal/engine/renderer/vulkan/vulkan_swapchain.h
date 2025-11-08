@@ -55,7 +55,7 @@ public:
     size_t get_image_count() const { return images_data.size(); }
     size_t get_width() const { return width; }
     size_t get_height() const { return height; }
-    vk::Format get_color_format() const { return color_format; }
+    const vk::Format& get_color_format() const { return color_format; }
     vk::ColorSpaceKHR get_color_space() const { return color_space; }
     size_t get_current_frame() const { return current_frame; }
     [[nodiscard]] size_t get_frames_in_flight() const { return frames_in_flight; }

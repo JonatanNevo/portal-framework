@@ -121,14 +121,12 @@ AllocatedImage& AllocatedImage::operator=(const nullptr_t nullptr_) noexcept
 
 AllocatedImage::~AllocatedImage()
 {
-    LOG_TRACE("VMA_DESTROY_IMAGE - '{}'", debug_name);
     destroy_image(get_handle());
 }
 
 AllocatedImage::AllocatedImage(const VulkanDevice& device, const ImageBuilder& builder) :
     Allocated(builder.get_allocation_create_info(), nullptr, &device)
 {
-    LOG_TRACE("VMA_CREATE_IMAGE - '{}'", builder.get_debug_name());
     set_handle(create_image(builder.get_create_info()));
     set_debug_name(builder.get_debug_name().c_str());
 }

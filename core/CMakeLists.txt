@@ -15,7 +15,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 option(PORTAL_DEBUG_ALLOCATIONS "Enable debug allocations (for debug only)" OFF)
-option(PORTAL_PROFILE "Enable profiling with Tracy" ON)
+option(PORTAL_PROFILE "Enable profiling with Tracy" OFF)
 option(PORTAL_BUILD_DIST "Build the distribution package" OFF)
 
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
@@ -32,6 +32,7 @@ file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/core/linux/*.h
 
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(mimalloc CONFIG REQUIRED)
 if (PORTAL_PROFILE)
     set(CACHE TRACY_ENABLE TYPE BOOL FORCE ON)
 else ()
@@ -60,6 +61,7 @@ target_link_libraries(portal-core
         llvm::adt
         spdlog::spdlog
         glm::glm
+        $<IF:$<TARGET_EXISTS:mimalloc-static>,mimalloc-static,mimalloc>
 )
 
 if (WIN32)
@@ -73,6 +75,9 @@ if (WIN32)
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
             FILES ${WINDOWS_HEADER}
     )
+    if (PORTAL_PROFILE)
+        target_compile_definitions(portal-core PUBLIC $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:MI_TRACK_ETW=1>)
+    endif()
 
 elseif (APPLE)
     set(PORTAL_PLATFORM_MACOS ON)
@@ -86,6 +91,9 @@ elseif (APPLE)
             FILES ${MACOS_HEADER}
     )
     target_compile_options(portal-core PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fexperimental-library> $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
+    if (PORTAL_PROFILE)
+        target_compile_definitions(portal-core PUBLIC $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:MI_TRACK_VALGRIND=1>)
+    endif()
 
 elseif (UNIX)
     set(PORTAL_PLATFORM_LINUX ON)
@@ -98,6 +106,10 @@ elseif (UNIX)
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
             FILES ${LINUX_HEADER}
     )
+    if (PORTAL_PROFILE)
+        target_compile_definitions(portal-core PUBLIC $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:MI_TRACK_VALGRIND=1>)
+    endif()
+
 else ()
     message(FATAL_ERROR "Unsupported platform")
 endif ()
@@ -105,7 +117,7 @@ endif ()
 if (NOT PORTAL_BUILD_DIST)
     target_compile_definitions(portal-core PUBLIC
             $<$<CONFIG:Debug>:PORTAL_DEBUG>
-            $<$<CONFIG:Development>:PORTAL_DEVELOPMENT>
+            $<$<CONFIG:RelWithDebInfo>:PORTAL_DEVELOPMENT>
             $<$<CONFIG:Release>:PORTAL_RELEASE>
     )
 else ()
@@ -122,11 +134,11 @@ target_compile_definitions(portal-core PUBLIC
 )
 
 if (PORTAL_PROFILE AND NOT PORTAL_BUILD_DIST)
-    target_compile_definitions(portal-core PUBLIC $<$<CONFIG:Release>:TRACY_ENABLE>)
+    target_compile_definitions(portal-core PUBLIC $<$<CONFIG:RelWithDebInfo>:TRACY_ENABLE>)
     target_link_libraries(portal-core PUBLIC Tracy::TracyClient)
 endif ()
 
-if (MSVC)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
     target_compile_options(portal-core PUBLIC
             "/Zc:__cplusplus"
             "/Zc:preprocessor"
@@ -139,6 +151,11 @@ if (MSVC)
     target_link_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:/DEBUG /OPT:REF /OPT:ICF>"
     )
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(portal-core PUBLIC
+            "$<$<CONFIG:Release>:-g>"
+    )
+    target_compile_options(portal-core PRIVATE -Wall -Wextra -Wpedantic -Wno-missing-designated-field-initializers)
 else ()
     target_compile_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:-g>"

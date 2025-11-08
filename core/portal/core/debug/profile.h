@@ -20,6 +20,10 @@
 
 #define PORTAL_PROF_LOCK(type, varname) TracyLockable(type, varname)
 
+#define PORTAL_FRAME_MARK(...) FrameMark
+#define PORTAL_FRAME_MARK_START(name) FrameMarkStart(name)
+#define PORTAL_FRAME_MARK_END(name) FrameMarkEnd(name)
+
 #else
 
 #define PORTAL_TRACE_ALLOC(...)
@@ -31,5 +35,9 @@
 #define PORTAL_NAME_THREAD(...)
 
 #define PORTAL_PROF_LOCK( type, varname ) type varname
+
+#define PORTAL_FRAME_MARK(...)
+#define PORTAL_FRAME_MARK_START(name)
+#define PORTAL_FRAME_MARK_END(name)
 
 #endif
