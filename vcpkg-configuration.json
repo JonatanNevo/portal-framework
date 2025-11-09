@@ -1,4 +1,5 @@
 {
+  "overlay-ports": ["cmake/vcpkg-overlay-ports"],
   "registries": [
     {
       "kind": "git",

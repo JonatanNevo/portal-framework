@@ -26,7 +26,7 @@ public:
     ~VulkanMaterial() override;
 
     void set_pipeline(const Reference<VulkanPipeline>& new_pipeline);
-    Reference<VulkanPipeline> get_pipeline() const;
+    [[nodiscard]] Reference<VulkanPipeline> get_pipeline() const;
 
     using Material::set;
     void set(StringId bind_point, const ResourceReference<Texture>& texture) override;
@@ -39,7 +39,6 @@ public:
     Reference<Image> get_image(StringId bind_point) override;
     Reference<ImageView> get_image_view(StringId bind_point) override;
     Reference<ShaderVariant> get_shader() override;
-    StringId get_id() override;
 
     [[nodiscard]] vk::DescriptorSet get_descriptor_set(size_t index) const;
 

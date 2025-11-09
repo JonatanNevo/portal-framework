@@ -86,11 +86,8 @@ public:
     template <ResourceConcept T>
     ResourceReference<T> get(const StringId resource_id)
     {
-        {
-            std::lock_guard guard(lock);
-            if (resources.contains(resource_id))
-                return ResourceReference<T>(resource_id, *this, reference_manager);
-        }
+        if (resources.contains(resource_id))
+            return ResourceReference<T>(resource_id, *this, reference_manager);
 
         auto res = database.find(resource_id);
         if (res.has_value())
@@ -166,7 +163,7 @@ private:
     template <ResourceConcept T>
     friend class ResourceReference;
 
-    ReentrantSpinLock<> lock;
+    SpinLock lock;
     // Resource container, all resource are managed
     // TODO: use custom allocator to have the resources next to each other on the heap
 #ifdef PORTAL_DEBUG

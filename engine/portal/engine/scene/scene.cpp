@@ -10,17 +10,13 @@
 namespace portal
 {
 
-Scene::Scene(const StringId& id) : Resource(id)
-{}
+Scene::Scene(const StringId& id, const std::vector<Reference<scene::Node>>& root_nodes): Resource(id), root_nodes(root_nodes)
+{
+}
 
 Scene::Scene(const Scene& other): Resource(other), root_nodes(other.root_nodes)
 {
 
-}
-
-void Scene::add_root_node(const Reference<scene::Node>& node)
-{
-    root_nodes.push_back(node);
 }
 
 std::span<Reference<scene::Node>> Scene::get_root_nodes()

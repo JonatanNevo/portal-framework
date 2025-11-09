@@ -7,13 +7,52 @@
 #include <expected>
 #include <llvm/ADT/SmallVector.h>
 
-#include "../source/resource_source.h"
+#include "portal/engine/renderer/image/image_types.h"
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/serialization/archive.h"
 
 
 namespace portal
 {
+namespace resources
+{
+    class ResourceSource;
+}
+
+struct SourceMetadata;
+
+struct EmptyMeta
+{
+    void archive(ArchiveObject&) const {}
+};
+
+struct CompositeMetadata
+{
+    std::unordered_map<std::string, SourceMetadata> children;
+    std::string type;
+
+    void archive(ArchiveObject& archive) const;
+    static CompositeMetadata dearchive(ArchiveObject& archive);
+};
+
+struct TextureMetadata
+{
+    bool hdr;
+    size_t width;
+    size_t height;
+    renderer::ImageFormat format;
+
+    void archive(ArchiveObject& archive) const;
+    static TextureMetadata dearchive(ArchiveObject& archive);
+};
+
+struct MaterialMetadata
+{
+    StringId shader;
+
+    void archive(ArchiveObject& archive) const;
+    static MaterialMetadata dearchive(ArchiveObject& archive);
+};
 
 struct SourceMetadata
 {
@@ -25,6 +64,9 @@ struct SourceMetadata
     // Source Information
     StringId source = INVALID_STRING_ID;
     SourceFormat format = SourceFormat::Unknown;
+
+    // Specific metadata
+    std::variant<TextureMetadata, CompositeMetadata, MaterialMetadata, EmptyMeta> meta = EmptyMeta{};
 
     void archive(ArchiveObject& archive) const;
     static SourceMetadata dearchive(ArchiveObject& archive);

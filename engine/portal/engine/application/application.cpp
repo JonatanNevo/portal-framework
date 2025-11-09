@@ -15,6 +15,7 @@
 #include "portal/engine/imgui/im_gui_module.h"
 #include "portal/engine/renderer/vulkan/vulkan_window.h"
 #include "portal/engine/resources/database/folder_resource_database.h"
+#include "portal/engine/resources/resources/composite.h"
 #include "portal/engine/scene/nodes/mesh_node.h"
 
 namespace portal
@@ -97,8 +98,9 @@ void Application::run()
     try
     {
         // TODO: Remove from here
-        engine_context->get_resource_registry().immediate_load<Scene>(STRING_ID("game/ABeautifulGame"));
-        auto scene = engine_context->get_resource_registry().get<Scene>(STRING_ID("Scene0-Scene"));
+        [[maybe_unused]] auto composite = engine_context->get_resource_registry().immediate_load<Composite>(STRING_ID("game/ABeautifulGame"));
+        auto scene = engine_context->get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
+        PORTAL_ASSERT(scene.get_state() == ResourceState::Loaded, "Failed to load scene");
 
         auto vulkan_window = std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window);
 
@@ -136,7 +138,7 @@ void Application::run()
                         auto draw_node = [](auto& self, const Reference<scene::Node>& node, int& node_id) -> void
                         {
                             ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
-                            if (node->children.empty())
+                            if (!node->has_children())
                             {
                                 flags |= ImGuiTreeNodeFlags_Leaf;
                             }
@@ -149,7 +151,7 @@ void Application::run()
                                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
                             }
 
-                            const bool open = ImGui::TreeNodeEx(node->id.string.data(), flags);
+                            const bool open = ImGui::TreeNodeEx(node->get_id().string.data(), flags);
 
                             if (is_mesh)
                             {
@@ -159,14 +161,22 @@ void Application::run()
                             if (ImGui::IsItemHovered())
                             {
                                 ImGui::BeginTooltip();
-                                const auto& translate = glm::vec3(node->local_transform[3]);
+                                const auto& translate = glm::vec3(node->get_local_transform()[3]);
                                 ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
+                                if (const auto mesh_node = reference_cast<scene::MeshNode>(node))
+                                {
+                                    ImGui::Text("Mesh: %s", mesh_node->get_mesh()->get_id().string.data());
+                                    for (auto& material: mesh_node->get_materials())
+                                    {
+                                        ImGui::Text("Material: %s", material->get_id().string.data());
+                                    }
+                                }
                                 ImGui::EndTooltip();
                             }
 
                             if (open)
                             {
-                                for (const auto& child : node->children)
+                                for (const auto& child : node->get_children())
                                 {
                                     self(self, child, node_id);
                                 }

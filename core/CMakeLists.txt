@@ -138,7 +138,7 @@ if (PORTAL_PROFILE AND NOT PORTAL_BUILD_DIST)
     target_link_libraries(portal-core PUBLIC Tracy::TracyClient)
 endif ()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
+if (MSVC)
     target_compile_options(portal-core PUBLIC
             "/Zc:__cplusplus"
             "/Zc:preprocessor"
@@ -151,11 +151,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Cla
     target_link_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:/DEBUG /OPT:REF /OPT:ICF>"
     )
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(portal-core PUBLIC
-            "$<$<CONFIG:Release>:-g>"
-    )
-    target_compile_options(portal-core PRIVATE -Wall -Wextra -Wpedantic -Wno-missing-designated-field-initializers)
 else ()
     target_compile_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:-g>"

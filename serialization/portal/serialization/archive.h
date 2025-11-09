@@ -427,12 +427,12 @@ public:
                 auto* value_child = child->get_object(key);
                 if (value_child)
                 {
-                    out[key] = ValueType::dearchive(*value_child);
+                    out[std::string(key)] = ValueType::dearchive(*value_child);
                 }
             }
             else
             {
-                out[key] = *property.value.as<typename T::mapped_type*>();
+                out[std::string(key)] = *property.value.as<typename T::mapped_type*>();
             }
         }
         return true;

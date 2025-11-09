@@ -110,11 +110,6 @@ Reference<ShaderVariant> VulkanMaterial::get_shader()
     return shader_variant;
 }
 
-StringId VulkanMaterial::get_id()
-{
-    return id;
-}
-
 vk::DescriptorSet VulkanMaterial::get_descriptor_set(const size_t index) const
 {
     if (descriptor_manager->get_first_set_index() == std::numeric_limits<size_t>::max())

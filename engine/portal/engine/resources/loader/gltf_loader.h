@@ -4,11 +4,20 @@
 //
 
 #pragma once
-#include <fastgltf/core.hpp>
+#include <filesystem>
 
 #include "portal/core/jobs/job.h"
 #include "portal/engine/resources/loader/loader.h"
 #include "portal/engine/scene/scene.h"
+
+namespace fastgltf
+{
+struct Mesh;
+struct Material;
+struct Texture;
+class Asset;
+class GltfDataGetter;
+}
 
 namespace portal
 {
@@ -17,7 +26,8 @@ class RendererContext;
 
 namespace portal::renderer
 {
-namespace vulkan {
+namespace vulkan
+{
     class VulkanPipeline;
 }
 
@@ -37,16 +47,21 @@ public:
     GltfLoader(ResourceRegistry& registry, const RendererContext& context);
 
     Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
+    static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
 
 protected:
     static fastgltf::Asset load_asset(const SourceMetadata& meta, fastgltf::GltfDataGetter& data);
 
-    Job<> load_texture(const fastgltf::Asset& asset, const fastgltf::Texture& texture) const;
-    void load_material(size_t index, const fastgltf::Asset& asset, const fastgltf::Material& material);
-    void load_mesh(size_t index, const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) const;
-    std::vector<Reference<Scene>> load_scenes(const fastgltf::Asset& asset) const;
+    static std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> find_image_source(
+        const std::filesystem::path& base_path,
+        const fastgltf::Asset& asset,
+        const fastgltf::Texture& texture
+        );
 
-    Reference<renderer::Pipeline> create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, bool depth);
+    Job<> load_texture(SourceMetadata texture_meta, const fastgltf::Asset& asset, const fastgltf::Texture& texture) const;
+    Job<> load_material(SourceMetadata material_meta, const fastgltf::Asset& asset, const fastgltf::Material& material) const;
+    Job<> load_mesh(SourceMetadata mesh_meta, const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) const;
+    void load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) const;
 
 protected:
     const RendererContext& context;

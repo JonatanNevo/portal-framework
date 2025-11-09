@@ -19,6 +19,7 @@ class VulkanShader final : public Shader
 {
 public:
     explicit VulkanShader(const StringId& id, const VulkanContext& context);
+    ~VulkanShader() override;
 
     WeakReference<ShaderVariant> get_shader(uint64_t shader_hash) override;
 

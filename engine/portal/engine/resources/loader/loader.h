@@ -8,6 +8,7 @@
 
 namespace portal
 {
+class ArchiveObject;
 class Resource;
 struct SourceMetadata;
 class ResourceRegistry;

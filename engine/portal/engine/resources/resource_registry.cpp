@@ -8,6 +8,7 @@
 #include <ranges>
 
 #include "portal/engine/renderer/renderer_context.h"
+#include "portal/engine/resources/source/file_source.h"
 
 namespace portal
 {
@@ -113,6 +114,9 @@ void ResourceRegistry::create_resource_immediate(const StringId& resource_id, [[
 Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource_id)
 {
     // TODO: synchronization for maps and sets?
+    if (pending_resources.contains(resource_id) || resources.contains(resource_id))
+        co_return nullptr;
+
     {
         std::lock_guard guard(lock);
         pending_resources.insert(resource_id);
