@@ -83,7 +83,6 @@ ArchiveObject* ArchiveObject::get_object(PropertyName name)
     const auto& prop = get_property_from_map(name);
     if (prop.type == reflection::PropertyType::invalid || prop.container_type != reflection::PropertyContainerType::object)
     {
-        LOG_ERROR_TAG("Serialization", "Property {} is not an object", name);
         return nullptr;
     }
     return prop.value.as<ArchiveObject*>();

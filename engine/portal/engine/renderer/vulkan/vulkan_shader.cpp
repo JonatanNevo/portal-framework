@@ -21,6 +21,11 @@ static auto logger = Log::get_logger("Vulkan");
 VulkanShader::VulkanShader(const StringId& id, const VulkanContext& context) : Shader(id), context(context)
 {}
 
+VulkanShader::~VulkanShader()
+{
+    LOG_TRACE("Shader Destroyed");
+}
+
 WeakReference<ShaderVariant> VulkanShader::get_shader(uint64_t shader_hash)
 {
     if (!shaders.contains(shader_hash))

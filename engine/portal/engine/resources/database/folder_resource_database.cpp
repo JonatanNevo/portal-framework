@@ -8,7 +8,8 @@
 #include <unordered_set>
 
 #include "portal/core/files/file_system.h"
-#include "../source/file_source.h"
+#include "portal/engine/resources/loader/loader_factory.h"
+#include "portal/engine/resources/source/file_source.h"
 #include "portal/serialization/archive/json_archive.h"
 
 namespace portal
@@ -83,7 +84,7 @@ std::expected<SourceMetadata, DatabaseError> FolderResourceDatabase::find(const 
     return std::unexpected{DatabaseErrorBit::MissingResource};
 }
 
-DatabaseError FolderResourceDatabase::add(const SourceMetadata meta)
+DatabaseError FolderResourceDatabase::add(SourceMetadata meta)
 {
     if (resources.contains(meta.resource_id))
     {
@@ -97,8 +98,12 @@ DatabaseError FolderResourceDatabase::add(const SourceMetadata meta)
         return DatabaseErrorBit::MissingResource;
     }
 
+
     const auto source_path = std::filesystem::path(meta.source.string);
     const auto metadata_path = root_path / fmt::format("{}{}", source_path.generic_string(), RESOURCE_METADATA_EXTENSION);
+
+    const resources::FileSource source(root_path / source_path);
+    resources::LoaderFactory::enrich_metadata(meta, source);
 
     JsonArchive archiver;
     meta.archive(archiver);
@@ -262,7 +267,7 @@ void FolderResourceDatabase::mend(const DatabaseError error)
                     auto [resource_type, source_format] = value.value();
 
                     // TODO: calculate dependencies?
-                    const SourceMetadata meta{
+                    SourceMetadata meta{
                         .resource_id = STRING_ID(relative_path.replace_extension("").generic_string()),
                         .type = resource_type,
                         .source = file_as_string_id,

@@ -30,6 +30,7 @@ uint64_t Shader::compile_with_permutations(const std::vector<ShaderDefine>& perm
 {
     const auto permutations_hash = calculate_permutations_hash(permutations);
 
+    std::lock_guard lock(shader_cache_lock);
     if (!shaders.contains(permutations_hash))
     {
         LOGGER_DEBUG("Compiling shader variant: {} [{}]", id, permutations_hash);

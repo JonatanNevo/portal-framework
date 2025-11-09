@@ -10,6 +10,7 @@
 #include "portal/core/buffer.h"
 #include "portal/core/reflection/property_concepts.h"
 #include "../vulkan/image/vulkan_image.h"
+#include "portal/core/concurrency/spin_lock.h"
 #include "portal/engine/reference.h"
 #include "portal/engine/renderer/shaders/shader_types.h"
 #include "portal/engine/renderer/descriptor_writer.h"
@@ -70,6 +71,7 @@ protected:
 protected:
     std::filesystem::path source_path;
     Buffer source;
+    SpinLock shader_cache_lock;
     std::unordered_map<uint64_t, CompiledShader> shaders;
 };
 

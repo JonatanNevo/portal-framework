@@ -124,7 +124,6 @@ public:
     virtual Reference<ImageView> get_image_view(const StringId bind_point) = 0;
 
     virtual Reference<ShaderVariant> get_shader() = 0;
-    virtual StringId get_id() = 0;
 
 protected:
     virtual void set_property(StringId bind_point, const reflection::Property& property) = 0;

@@ -30,7 +30,7 @@ class StubLoader final : public ResourceLoader
 public:
     explicit StubLoader(ResourceRegistry& registry) : ResourceLoader(registry) {}
 
-    Reference<Resource> load(const SourceMetadata&, const ResourceSource&) override { return nullptr; };
+    Reference<Resource> load(const SourceMetadata&, const ResourceSource&) override { return nullptr; }
 };
 
 
@@ -41,6 +41,7 @@ public:
 
     ResourceLoader& get(const SourceMetadata& meta);
 
+    static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
 protected:
     StubLoader stub_loader;
     llvm::DenseMap<ResourceType, std::shared_ptr<ResourceLoader>> loaders;

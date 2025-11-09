@@ -25,6 +25,7 @@ public:
     TextureLoader(ResourceRegistry& registry, const RendererContext& context);
 
     Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
+    static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
 
 protected:
     /**

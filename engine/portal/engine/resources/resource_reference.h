@@ -36,6 +36,7 @@ public:
         PORTAL_ASSERT(resource_id != INVALID_STRING_ID, "Resource handle is invalid");
         PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
         PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
+        PORTAL_ASSERT(state != ResourceState::Loaded || resource != nullptr, "Resource is empty");
 
         reference_manager.value().get().register_reference(resource_id, this);
     }
@@ -45,11 +46,12 @@ public:
         registry(other.registry),
         resource_id(std::exchange(other.resource_id, INVALID_STRING_ID)),
         state(std::exchange(other.state, ResourceState::Unknown)),
-        resource(std::exchange(resource, nullptr))
+        resource(std::exchange(other.resource, nullptr))
     {
         PORTAL_ASSERT(resource_id != INVALID_STRING_ID, "Resource handle is invalid");
         PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
         PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
+        PORTAL_ASSERT(state != ResourceState::Loaded || resource != nullptr, "Resource is empty");
 
         reference_manager.value().get().move_reference(resource_id, &other, this);
     }
@@ -71,6 +73,7 @@ public:
 
         PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
         PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
+        PORTAL_ASSERT(state != ResourceState::Loaded || resource != nullptr, "Resource is empty");
 
         if (resource_id != INVALID_STRING_ID && reference_manager.has_value())
             reference_manager.value().get().register_reference(resource_id, this);
@@ -93,6 +96,7 @@ public:
 
         PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
         PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
+        PORTAL_ASSERT(state != ResourceState::Loaded || resource != nullptr, "Resource is empty");
 
         if (resource_id != INVALID_STRING_ID && reference_manager.has_value())
             reference_manager.value().get().move_reference(resource_id, &other, this);
@@ -105,7 +109,7 @@ public:
      *
      * @return The state of the resource in the registry
      */
-    ResourceState get_state()
+    ResourceState get_state() const
     {
         if (state == ResourceState::Null)
             return state;
@@ -113,7 +117,7 @@ public:
         // Check the state only when not yet loaded
         if (state != ResourceState::Loaded)
         {
-            auto result = registry->get().get_resource(resource_id);
+            const auto result = registry->get().get_resource(resource_id);
             if (result.has_value())
             {
                 resource = reference_cast<T, Resource>(result.value());
@@ -132,7 +136,7 @@ public:
      *
      * @return True if the resource is loaded, false otherwise
      */
-    bool is_valid()
+    bool is_valid() const
     {
         return get_state() == ResourceState::Loaded;
     }
@@ -143,7 +147,7 @@ public:
      *
      * @return A pointer to the underlying resource, nullptr otherwise
      */
-    T* get()
+    T* get() const
     {
         if (is_valid())
             return resource.get();
@@ -198,22 +202,25 @@ public:
         return resource_id == other.resource_id;
     }
 
-    template <ResourceConcept U>
-    ResourceReference<U> cast()
+    template <ResourceConcept U> requires std::is_base_of_v<T, U>
+    ResourceReference<U> cast() const
     {
-        auto* casted = reference_cast<U, T>(resource);
+        auto casted = reference_cast<U, T>(resource);
         if (!casted)
         {
             LOG_ERROR_TAG("Resource", "Failed to cast resource \"{}\" to type \"{}\"", resource_id, U::static_type());
-            return ResourceReference<U>(resource_id, registry, reference_manager);
+            return ResourceReference<U>(resource_id, registry.value().get(), reference_manager.value().get());
         }
 
-        return ResourceReference<U>(resource_id, registry, reference_manager);
+        return ResourceReference<U>(resource_id, registry.value().get(), reference_manager.value().get());
     }
 
 private:
     friend class ResourceRegistry;
     friend class ReferenceManager;
+
+    template <ResourceConcept U>
+    friend class ResourceReference;
 
     ResourceReference(
         const StringId& resource_id,
@@ -241,7 +248,7 @@ private:
 
     StringId resource_id = INVALID_STRING_ID;
 
-    ResourceState state = ResourceState::Null;
-    Reference<T> resource = nullptr;
+    mutable ResourceState state = ResourceState::Null;
+    mutable Reference<T> resource = nullptr;
 };
 }

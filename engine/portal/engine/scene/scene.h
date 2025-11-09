@@ -17,14 +17,13 @@ namespace portal
 class Scene final : public Resource
 {
 public:
-    explicit Scene(const StringId& id);
-
+    Scene(const StringId& id, const std::vector<Reference<scene::Node>>& root_nodes);
     Scene(const Scene& other);
 
-    void add_root_node(const Reference<scene::Node>& node);
     std::span<Reference<scene::Node>> get_root_nodes();
 
     void draw(const glm::mat4& top_matrix, scene::DrawContext& context);
+
 private:
     std::vector<Reference<scene::Node>> root_nodes;
 };

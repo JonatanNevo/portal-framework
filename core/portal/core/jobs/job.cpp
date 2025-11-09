@@ -87,7 +87,20 @@ void JobPromise::unhandled_exception() noexcept
     PORTAL_PROF_ZONE();
     add_switch_information(SwitchType::Error);
 
+    const auto exception = std::current_exception();
+
     LOG_ERROR_TAG("Task", "Unhandled exception in task");
+    try
+    {
+        if (exception)
+            std::rethrow_exception(exception);
+    } catch (const std::exception& e)
+    {
+        LOG_ERROR_TAG("Task", "Exception: {}", e.what());
+    } catch (...)
+    {
+        LOG_ERROR_TAG("Task", "Unknown exception");
+    }
 }
 
 void JobPromise::add_switch_information(SwitchType type)

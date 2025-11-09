@@ -39,7 +39,7 @@ target_link_libraries(portal-application
 
 target_include_directories(portal-application PRIVATE ${Stb_INCLUDE_DIR})
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
+if(MSVC)
     target_compile_options(portal-application PRIVATE /W4 /WX)
 else()
     target_compile_options(portal-application PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)

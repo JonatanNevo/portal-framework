@@ -6,7 +6,7 @@
 #pragma once
 
 #include <portal/engine/renderer/vulkan/allocated_buffer.h>
-#include "portal/engine/resources/resources/mesh.h"
+#include "portal/engine/resources/resources/mesh_geometry.h"
 
 namespace portal::renderer {
 class Material;

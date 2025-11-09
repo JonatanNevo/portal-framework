@@ -42,7 +42,7 @@ enum class SourceFormat: uint8_t
     Memory,            // Source exists in memory
     Image,             // Image formats, e.g. PNG, JPEG
     Texture,           // Ktx or other texture formats
-    Material,          // Material files, e.g. MTL
+    Material,          // Material files, e.g. MDL
     Obj,               // Wavefront .obj files
     Shader,            // Shader files, e.g. slang
     PrecompiledShader, // Precompiled shader files, e.g. spv

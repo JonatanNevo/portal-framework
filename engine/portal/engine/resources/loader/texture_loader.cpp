@@ -23,6 +23,7 @@ namespace portal::resources
 
 static auto logger = Log::get_logger("Resources");
 
+
 TextureLoader::TextureLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
 {
     const uint32_t white = glm::packUnorm4x8(glm::vec4(1, 1, 1, 1));
@@ -105,6 +106,34 @@ Reference<Resource> TextureLoader::load(const SourceMetadata& meta, const Resour
 
     stbi_image_free(image_data);
     return texture;
+}
+
+void TextureLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& source)
+{
+    const auto data = source.load();
+    int width, height, n_channels;
+    void* image_data = nullptr;
+    renderer::ImageFormat format;
+
+    if (stbi_is_hdr_from_memory(data.as<uint8_t*>(), static_cast<int>(data.size)))
+    {
+        image_data = stbi_loadf_from_memory(data.as<const stbi_uc*>(), static_cast<int>(data.size), &width, &height, &n_channels, STBI_rgb_alpha);
+        format = renderer::ImageFormat::RGBA32_Float;
+    }
+    else
+    {
+        image_data = stbi_load_from_memory(data.as<const stbi_uc*>(), static_cast<int>(data.size), &width, &height, &n_channels, STBI_rgb_alpha);
+        format = renderer::ImageFormat::RGBA8_UNorm;
+    }
+
+    meta.meta = TextureMetadata{
+        .hdr = static_cast<bool>(stbi_is_hdr_from_memory(data.as<uint8_t*>(), static_cast<int>(data.size))),
+        .width = static_cast<size_t>(width),
+        .height = static_cast<size_t>(height),
+        .format = format
+    };
+
+    stbi_image_free(image_data);
 }
 
 void TextureLoader::create_standalone_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const
