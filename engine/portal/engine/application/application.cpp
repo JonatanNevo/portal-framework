@@ -12,6 +12,7 @@
 #include "portal/core/debug/assert.h"
 #include "portal/engine/settings.h"
 #include "portal/engine/application/window.h"
+#include "portal/engine/editor/panels/scene_graph_panel.h"
 #include "portal/engine/imgui/im_gui_module.h"
 #include "portal/engine/renderer/vulkan/vulkan_window.h"
 #include "portal/engine/resources/database/folder_resource_database.h"
@@ -68,6 +69,9 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
 
     // TODO: remove this
     imgui_module = std::make_unique<ImGuiModule>(engine_context);
+    // TODO: remove this
+    scene_graph_panel = std::make_unique<editor::SceneGraphPanel>();
+
 }
 
 Application::~Application()
@@ -75,6 +79,7 @@ Application::~Application()
     LOGGER_INFO("Shutting down application");
     vulkan_context->get_device().wait_idle();
 
+    scene_graph_panel.reset();
     imgui_module.reset();
     engine_context.reset();
 
@@ -101,6 +106,7 @@ void Application::run()
         [[maybe_unused]] auto composite = engine_context->get_resource_registry().immediate_load<Composite>(STRING_ID("game/ABeautifulGame"));
         auto scene = engine_context->get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
         PORTAL_ASSERT(scene.get_state() == ResourceState::Loaded, "Failed to load scene");
+        scene_graph_panel->set_scene_context(scene);
 
         auto vulkan_window = std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window);
 
@@ -132,74 +138,7 @@ void Application::run()
                     renderer->update_scene(time_step, scene);
 
                     renderer->update_imgui(time_step);
-                    ImGui::Begin("Scene");
-                    if (scene.get_state() == ResourceState::Loaded)
-                    {
-                        auto draw_node = [](auto& self, const Reference<scene::Node>& node, int& node_id) -> void
-                        {
-                            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
-                            if (!node->has_children())
-                            {
-                                flags |= ImGuiTreeNodeFlags_Leaf;
-                            }
-
-                            ImGui::PushID(node_id++);
-
-                            const bool is_mesh = reference_cast<scene::MeshNode>(node) != nullptr;
-                            if (is_mesh)
-                            {
-                                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
-                            }
-
-                            const bool open = ImGui::TreeNodeEx(node->get_id().string.data(), flags);
-
-                            if (is_mesh)
-                            {
-                                ImGui::PopStyleColor();
-                            }
-
-                            if (ImGui::IsItemHovered())
-                            {
-                                ImGui::BeginTooltip();
-                                const auto& translate = glm::vec3(node->get_local_transform()[3]);
-                                ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
-                                if (const auto mesh_node = reference_cast<scene::MeshNode>(node))
-                                {
-                                    ImGui::Text("Mesh: %s", mesh_node->get_mesh()->get_id().string.data());
-                                    for (auto& material: mesh_node->get_materials())
-                                    {
-                                        ImGui::Text("Material: %s", material->get_id().string.data());
-                                    }
-                                }
-                                ImGui::EndTooltip();
-                            }
-
-                            if (open)
-                            {
-                                for (const auto& child : node->get_children())
-                                {
-                                    self(self, child, node_id);
-                                }
-                                ImGui::TreePop();
-                            }
-
-                            ImGui::PopID();
-                        };
-
-                        ImGui::Text("Scene Graph");
-                        ImGui::Separator();
-                        int node_id = 0;
-
-                        for (const auto& scene_root : scene->get_root_nodes())
-                        {
-                            draw_node(draw_node, scene_root, node_id);
-                        }
-                    }
-                    else
-                    {
-                        ImGui::Text("No scene loaded");
-                    }
-                    ImGui::End();
+                    scene_graph_panel->on_gui_render();
                 }
 
                 {

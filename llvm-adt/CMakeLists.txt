@@ -103,6 +103,9 @@ set_target_properties(llvm-adt PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES $
 
 if(WIN32)
     target_link_libraries(llvm-adt PRIVATE ntdll)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
+        target_compile_options(llvm-adt PUBLIC /wd4702)
+    endif()
 elseif(APPLE)
     target_compile_options(llvm-adt PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fexperimental-library> $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 endif()

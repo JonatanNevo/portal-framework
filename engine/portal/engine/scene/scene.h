@@ -7,6 +7,7 @@
 
 #include <span>
 
+#include "llvm/ADT/DenseMap.h"
 #include "portal/engine/reference.h"
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/engine/scene/nodes/node.h"
@@ -23,9 +24,14 @@ public:
     std::span<Reference<scene::Node>> get_root_nodes();
 
     void draw(const glm::mat4& top_matrix, scene::DrawContext& context);
+    void create_reference_map();
+
+    [[nodiscard]] const llvm::DenseMap<StringId, WeakReference<scene::Node>>& get_nodes() const { return nodes; }
 
 private:
     std::vector<Reference<scene::Node>> root_nodes;
+
+    llvm::DenseMap<StringId, WeakReference<scene::Node>> nodes;
 };
 
 } // portal

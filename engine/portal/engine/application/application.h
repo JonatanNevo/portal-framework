@@ -15,6 +15,10 @@
 
 namespace portal
 {
+namespace editor {
+    class SceneGraphPanel;
+}
+
 class Module;
 
 struct ApplicationSpecification
@@ -66,6 +70,7 @@ private:
     std::unique_ptr<ResourceRegistry> resource_registry = nullptr;
 
     std::unique_ptr<ImGuiModule> imgui_module;
+    std::unique_ptr<editor::SceneGraphPanel> scene_graph_panel;
 
     Reference<EngineContext> engine_context;
 
