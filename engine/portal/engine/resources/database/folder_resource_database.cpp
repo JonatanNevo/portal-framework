@@ -109,7 +109,7 @@ DatabaseError FolderResourceDatabase::add(SourceMetadata meta)
     meta.archive(archiver);
     archiver.dump(metadata_path);
 
-    // TODO: thread safety?
+    // TODO(#45): thread safety?
     resources[meta.resource_id] = meta;
 
     return DatabaseErrorBit::Success;
@@ -212,7 +212,6 @@ DatabaseError FolderResourceDatabase::validate()
         error |= DatabaseErrorBit::StaleMetadata;
     }
 
-    // TODO: attempt to generate meta
     if (!missing_metadata.empty())
     {
         LOGGER_WARN("There are {} resources without metadata in database", missing_metadata.size());
