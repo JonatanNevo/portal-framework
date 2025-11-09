@@ -3,6 +3,7 @@
 A modular cross-platform framework for creating C++ applications, with focus on graphics (3D) application.
 
 ## Supported Platforms
+> MSVC would have a slower start time due to my string hash implementation not being constexpr on MSVC
 - Windows
   - Clang 19 (or clang-cl) or later [recommended]
   - MSVC 19.44 or later

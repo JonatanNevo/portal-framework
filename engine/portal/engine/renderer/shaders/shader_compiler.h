@@ -8,7 +8,7 @@
 
 #include "slang-com-ptr.h"
 #include "portal/engine/renderer/shaders/shader_types.h"
-#include "portal/engine/strings/string_id.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal::renderer
 {

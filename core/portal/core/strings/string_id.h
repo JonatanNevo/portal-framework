@@ -9,8 +9,8 @@
 #include <llvm/ADT/DenseMapInfo.h>
 #include "portal/core/common.h"
 
-#include "portal/engine/strings/hash.h"
-#include "portal/engine/strings/string_registry.h"
+#include "portal/core/strings/hash.h"
+#include "portal/core/strings/string_registry.h"
 
 namespace portal
 {
@@ -29,9 +29,6 @@ struct StringId
     StringId(HashType id, const std::string& string);
 
     bool operator==(const StringId&) const;
-
-    void serialize(Serializer& s) const;
-    static StringId deserialize(Deserializer& d);
 };
 
 const auto INVALID_STRING_ID = StringId{uint64_t{0}, INVALID_STRING_VIEW};

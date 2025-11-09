@@ -11,7 +11,7 @@
 #include <portal/core/glm.h>
 
 #include "portal/engine/reference.h"
-#include "portal/engine/strings/string_id.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal::scene {
 struct DrawContext;
