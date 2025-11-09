@@ -68,5 +68,8 @@
   }, {
     "name" : "mdl-sdk",
     "version>=" : "2025"
+  }, {
+    "name" : "frozen",
+    "version>=" : "1.2.0"
   } ]
 }

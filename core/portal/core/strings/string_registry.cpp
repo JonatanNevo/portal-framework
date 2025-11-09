@@ -5,16 +5,20 @@
 
 #include "string_registry.h"
 
+#include <map>
 #include <memory_resource>
 #include <stdexcept>
 
 namespace portal
 {
 
-
 std::string_view StringRegistry::store(uint64_t id, const std::string_view string)
 {
     auto& entries = get_entries();
+
+    if (constexpr_map.contains(id))
+        return constexpr_map.at(id);
+
     const auto it = entries.find(id);
     if (it != entries.end())
         return it->second;
@@ -45,8 +49,9 @@ std::pmr::memory_resource* StringRegistry::get_allocator()
     return &pool_resource;
 }
 
-std::pmr::unordered_map<uint64_t, std::pmr::string>& StringRegistry::get_entries() {
-    static std::pmr::unordered_map<uint64_t, std::pmr::string> entries {get_allocator()};
+std::pmr::unordered_map<uint64_t, std::pmr::string>& StringRegistry::get_entries()
+{
+    static std::pmr::unordered_map<uint64_t, std::pmr::string> entries{get_allocator()};
     return entries;
 }
 

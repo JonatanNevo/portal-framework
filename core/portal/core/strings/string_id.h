@@ -7,7 +7,9 @@
 
 #include <spdlog/spdlog.h>
 #include <llvm/ADT/DenseMapInfo.h>
+
 #include "portal/core/common.h"
+#include "portal/core/log.h"
 
 #include "portal/core/strings/hash.h"
 #include "portal/core/strings/string_registry.h"
@@ -23,8 +25,41 @@ struct StringId
     HashType id = 0;
     std::string_view string = INVALID_STRING_VIEW;
 
-    StringId() = default;
-    explicit StringId(HashType id);
+    constexpr StringId() = default;
+
+    constexpr explicit StringId(HashType id): id(id)
+    {
+        if consteval
+        {
+            string = StringRegistry::find_constexpr(id);
+            if (string == INVALID_STRING_VIEW)
+            {
+                throw std::runtime_error("Id not found in constant registry");
+            }
+        }
+        else
+        {
+            string = StringRegistry::find(id);
+            if (string == INVALID_STRING_VIEW)
+            {
+                LOG_ERROR_TAG("StringId", "StringId with id {} not found in registry", id);
+            }
+        }
+    }
+
+    explicit StringId(const std::string_view string_to_calculate)
+    {
+        // if consteval
+        // {
+        //     // TODO: find precalculated hash
+        // }
+        // else
+        // {
+        id = hash::rapidhash(string_to_calculate.data(), string_to_calculate.size());
+        string = StringRegistry::store(id, string_to_calculate);
+        // }
+    }
+
     StringId(HashType id, std::string_view string);
     StringId(HashType id, const std::string& string);
 
@@ -85,5 +120,5 @@ struct fmt::formatter<portal::StringId>
     }
 };
 
-#define STRING_ID(string) portal::StringId(portal::hash::rapidhash(string), std::string_view(string))
+#define STRING_ID(string) portal::StringId(std::string_view(string))
 
