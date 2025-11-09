@@ -66,7 +66,7 @@ target_link_libraries(portal-engine
         glaze::glaze
 )
 
-prepare_consteval_strings(portal-engine ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/portal/core/strings/string_map.h)
+prepare_consteval_strings(portal-engine ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/engine_map.inc)
 
 if(MSVC)
     target_compile_options(portal-engine PRIVATE /W4 /WX)
@@ -88,30 +88,30 @@ find_program(SLANG_COMPILER "slangc" REQUIRED)
 
 file(GLOB_RECURSE SHADERS CONFIGURE_DEPENDS "shaders/*.shading.slang")
 file(GLOB_RECURSE COMPUTE_SHADERS CONFIGURE_DEPENDS "shaders/*.compute.slang")
-foreach (SHADER ${SHADERS})
-    get_filename_component(SHADER_NAME ${SHADER} NAME)
-    get_filename_component(SHADER_DIR ${SHADER} DIRECTORY)
-    add_custom_command(
-            OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}"
-            COMMAND ${SLANG_COMPILER} "${SHADER}" -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name -entry vert_main -entry frag_main -o "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}.spv"
-            DEPENDS "${SHADER}"
-            WORKING_DIRECTORY "${SHADER_DIR}"
-            COMMENT "Compiling shader: ${SHADER_NAME} to ${RESOURCES_OUTPUT_FOLDER}/${SHADER_NAME}.spv"
-    )
-    list(APPEND COMPILED_SHADERS "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}")
-endforeach ()
-foreach (SHADER ${COMPUTE_SHADERS})
-    get_filename_component(SHADER_NAME ${SHADER} NAME)
-    get_filename_component(SHADER_DIR ${SHADER} DIRECTORY)
-    add_custom_command(
-            OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}"
-            COMMAND ${SLANG_COMPILER} "${SHADER}" -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name -entry compute_main -o "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}.spv"
-            DEPENDS "${SHADER}"
-            WORKING_DIRECTORY "${SHADER_DIR}"
-            COMMENT "Compiling shader: ${SHADER_NAME} to ${RESOURCES_OUTPUT_FOLDER}/${SHADER_NAME}.spv"
-    )
-    list(APPEND COMPILED_SHADERS "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}")
-endforeach ()
+#foreach (SHADER ${SHADERS})
+#    get_filename_component(SHADER_NAME ${SHADER} NAME)
+#    get_filename_component(SHADER_DIR ${SHADER} DIRECTORY)
+#    add_custom_command(
+#            OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}"
+#            COMMAND ${SLANG_COMPILER} "${SHADER}" -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name -entry vert_main -entry frag_main -o "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}.spv"
+#            DEPENDS "${SHADER}"
+#            WORKING_DIRECTORY "${SHADER_DIR}"
+#            COMMENT "Compiling shader: ${SHADER_NAME} to ${RESOURCES_OUTPUT_FOLDER}/${SHADER_NAME}.spv"
+#    )
+#    list(APPEND COMPILED_SHADERS "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}")
+#endforeach ()
+#foreach (SHADER ${COMPUTE_SHADERS})
+#    get_filename_component(SHADER_NAME ${SHADER} NAME)
+#    get_filename_component(SHADER_DIR ${SHADER} DIRECTORY)
+#    add_custom_command(
+#            OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}"
+#            COMMAND ${SLANG_COMPILER} "${SHADER}" -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name -entry compute_main -o "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}.spv"
+#            DEPENDS "${SHADER}"
+#            WORKING_DIRECTORY "${SHADER_DIR}"
+#            COMMENT "Compiling shader: ${SHADER_NAME} to ${RESOURCES_OUTPUT_FOLDER}/${SHADER_NAME}.spv"
+#    )
+#    list(APPEND COMPILED_SHADERS "${CMAKE_CURRENT_BINARY_DIR}/${SHADER_NAME}")
+#endforeach ()
 
 add_custom_target(compile-shaders ALL DEPENDS ${COMPILED_SHADERS})
 add_dependencies(portal-engine compile-shaders)

@@ -57,6 +57,12 @@ target_sources(portal-core PUBLIC
         FILES ${CORE_HEADER} ${LLVM_HEADER}
 )
 
+target_include_directories(portal-core
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
+        $<INSTALL_INTERFACE:include/generated>
+)
+
 set_target_properties(portal-core PROPERTIES EXPORT_NAME core)
 target_link_libraries(portal-core
         PUBLIC
@@ -67,7 +73,7 @@ target_link_libraries(portal-core
         $<IF:$<TARGET_EXISTS:mimalloc-static>,mimalloc-static,mimalloc>
 )
 
-prepare_consteval_strings(portal-core ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/portal/core/strings/string_map.h)
+prepare_consteval_strings(portal-core ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/core_map.inc)
 
 if (WIN32)
     set(PORTAL_PLATFORM_WINDOWS ON)
@@ -180,6 +186,13 @@ install(TARGETS portal-core
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         FILE_SET HEADERS DESTINATION include
 )
+
+# Install generated headers
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/generated/
+        DESTINATION include/generated
+        FILES_MATCHING PATTERN "*.h" PATTERN "*.inc"
+)
+
 
 # Generate and install the export targets
 install(EXPORT portal-core-targets
