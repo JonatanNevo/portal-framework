@@ -47,17 +47,18 @@ struct StringId
         }
     }
 
-    explicit StringId(const std::string_view string_to_calculate)
+    explicit constexpr StringId(const std::string_view string_to_calculate)
     {
-        // if consteval
-        // {
-        //     // TODO: find precalculated hash
-        // }
-        // else
-        // {
-        id = hash::rapidhash(string_to_calculate.data(), string_to_calculate.size());
-        string = StringRegistry::store(id, string_to_calculate);
-        // }
+        if consteval
+        {
+            id = StringRegistry::find_by_string_constexpr(string_to_calculate);
+            string = StringRegistry::find_constexpr(id);
+        }
+        else
+        {
+            id = hash::rapidhash(string_to_calculate.data(), string_to_calculate.size());
+            string = StringRegistry::store(id, string_to_calculate);
+        }
     }
 
     StringId(HashType id, std::string_view string);

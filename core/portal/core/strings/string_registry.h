@@ -11,9 +11,8 @@
 #include <unordered_map>
 
 #include <frozen/unordered_map.h>
-#include <frozen/string.h>
+#include "portal/core/strings/frozen_mapping.h"
 
-#include "portal/core/common.h"
 
 namespace portal
 {
@@ -24,10 +23,18 @@ constexpr static auto INVALID_STRING_VIEW = std::string_view("Invalid");
 class StringRegistry
 {
 public:
+    static constexpr uint64_t find_by_string_constexpr(const std::string_view string)
+    {
+        if (G_FROZEN_STRING_TO_ID.contains(string))
+            return G_FROZEN_STRING_TO_ID.at(string);
+
+        return 0;
+    }
+
     static constexpr std::string_view find_constexpr(const uint64_t id)
     {
-        if (constexpr_map.contains(id))
-            return constexpr_map.at(id);
+        if (G_FROZEN_ID_TO_STRING.contains(id))
+            return G_FROZEN_ID_TO_STRING.at(id);
 
         return INVALID_STRING_VIEW;
     }
@@ -38,10 +45,5 @@ public:
 private:
     static std::pmr::memory_resource* get_allocator();
     static std::pmr::unordered_map<uint64_t, std::pmr::string>& get_entries();
-
-    // TODO: find some constexpr mutable solution for this, or a way to automatically generate this map based on all constexpr strings
-    static constexpr frozen::unordered_map<uint64_t, std::string_view, 1> constexpr_map{
-        {12345, std::string_view("hello")}
-    };
 };
 } // portal

@@ -8,8 +8,6 @@ import pathlib
 import re
 
 def find_consteval_strings(base_dir: pathlib.Path) -> list[str]:
-    print(f"Looking for consteval strings in: {base_dir}")
-
     output = []
     for root, dirs, files in base_dir.walk(on_error=print):
         for name in files:
@@ -36,8 +34,23 @@ def make_hash_foreach_string(strings: list[str], executable: pathlib.Path) -> di
             print(result.stderr)
         output[int(result.stdout)] = string_to_hash
 
-    print(output)
     return output
+
+def prepare_inc_string(hashed: dict[int, str]) -> str:
+    output = ''
+    for string_id, string in hashed.items():
+        output += f"{{ {string_id}, \"{string}\" }},\n"
+    output = output[:-1]
+    return output
+
+def update_output_only_if_needed(output_path: pathlib.Path, new_content: str) -> None:
+    if output_path.exists():
+        old_content = output_path.read_text()
+        if old_content == new_content:
+            print(f"Skipping {output_path} as it is already up-to-date")
+            return
+    print(f"Updating {output_path}")
+    output_path.write_text(new_content)
 
 def main():
     if len(sys.argv) != 4:
@@ -49,9 +62,13 @@ def main():
     output_path = pathlib.Path(sys.argv[2])
     rapidhash_runner_path = pathlib.Path(sys.argv[3])
 
-    print(f"Rapidhash runner: {rapidhash_runner_path}")
+    final_output = ""
     strings = find_consteval_strings(base_dir)
-    hashes = make_hash_foreach_string(strings, rapidhash_runner_path)
+    if strings:
+        hashes = make_hash_foreach_string(strings, rapidhash_runner_path)
+        final_output = prepare_inc_string(hashes)
+
+    update_output_only_if_needed(output_path, final_output)
 
 if __name__ == '__main__':
     main()

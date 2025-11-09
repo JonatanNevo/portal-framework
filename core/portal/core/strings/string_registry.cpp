@@ -16,8 +16,8 @@ std::string_view StringRegistry::store(uint64_t id, const std::string_view strin
 {
     auto& entries = get_entries();
 
-    if (constexpr_map.contains(id))
-        return constexpr_map.at(id);
+    if (G_FROZEN_ID_TO_STRING.contains(id))
+        return G_FROZEN_ID_TO_STRING.at(id);
 
     const auto it = entries.find(id);
     if (it != entries.end())

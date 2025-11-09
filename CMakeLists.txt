@@ -15,3 +15,5 @@ add_subdirectory(application)
 add_subdirectory(input)
 add_subdirectory(serialization)
 add_subdirectory(engine)
+
+create_frozen_map_target(generated/portal/core/strings/frozen_mapping.h)
