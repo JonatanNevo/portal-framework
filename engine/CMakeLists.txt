@@ -65,6 +65,9 @@ target_link_libraries(portal-engine
         SPIRV-Tools-static
         glaze::glaze
 )
+
+prepare_consteval_strings(portal-engine ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/portal/core/strings/string_map.h)
+
 if(MSVC)
     target_compile_options(portal-engine PRIVATE /W4 /WX)
 else()

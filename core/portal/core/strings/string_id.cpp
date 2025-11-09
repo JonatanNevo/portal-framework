@@ -3,22 +3,11 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include "string_id.h"
-
-#include "portal/core/log.h"
+#include "portal/core/strings/string_id.h"
 #include "portal/core/strings/string_registry.h"
 
 namespace portal
 {
-
-StringId::StringId(const uint64_t id): id(id)
-{
-    string = StringRegistry::find(id);
-    if (string == INVALID_STRING_VIEW)
-    {
-        LOG_ERROR_TAG("StringId", "StringId with id {} not found in registry", id);
-    }
-}
 
 StringId::StringId(const uint64_t id, const std::string_view string): id(id)
 {

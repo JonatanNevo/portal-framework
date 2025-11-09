@@ -7,6 +7,7 @@ project(portal-core VERSION ${PROJECT_VERSION})
 message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
 include(../cmake/development.cmake)
+include(scripts/script_engine.cmake)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -33,6 +34,7 @@ file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/core/linux/*.h
 find_package(spdlog CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
+find_package(frozen CONFIG REQUIRED)
 if (PORTAL_PROFILE)
     set(CACHE TRACY_ENABLE TYPE BOOL FORCE ON)
 else ()
@@ -61,8 +63,11 @@ target_link_libraries(portal-core
         llvm::adt
         spdlog::spdlog
         glm::glm
+        frozen::frozen
         $<IF:$<TARGET_EXISTS:mimalloc-static>,mimalloc-static,mimalloc>
 )
+
+prepare_consteval_strings(portal-core ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/portal/core/strings/string_map.h)
 
 if (WIN32)
     set(PORTAL_PLATFORM_WINDOWS ON)
