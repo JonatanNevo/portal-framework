@@ -9,6 +9,7 @@
 #include <portal/core/reflection/property.h>
 
 #include "../../../core/portal/core/reflection/property_concepts.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal
 {
@@ -208,6 +209,13 @@ public:
         );
     }
 
+    // TODO: when serializing string ids, we should save all string in some `string map` and serialize only the ids
+    void add_value(const StringId& string_id)
+    {
+        add_value(string_id.string);
+        add_value(string_id.id);
+    }
+
     virtual void add_property(reflection::Property property) = 0;
 };
 
@@ -382,6 +390,18 @@ public:
         T t;
         get_value<T>(t);
         return t;
+    }
+
+    template<>
+    StringId get_value<StringId>()
+    {
+        std::string string;
+        uint64_t id;
+
+        get_value(string);
+        get_value(id);
+
+        return StringId{id, string};
     }
 
     void get_value(char*& t, const size_t length)

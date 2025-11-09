@@ -9,7 +9,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "portal/core/glm.h"
 #include "portal/engine/resources/loader/loader.h"
-#include "portal/engine/strings/string_id.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal
 {

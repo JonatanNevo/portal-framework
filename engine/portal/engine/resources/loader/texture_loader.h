@@ -7,7 +7,7 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
-#include "portal/engine/strings/string_id.h"
+#include "portal/core/strings/string_id.h"
 #include "loader.h"
 
 

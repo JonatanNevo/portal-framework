@@ -11,7 +11,7 @@
 #include "portal/engine/events/window_events.h"
 #include "portal/engine/imgui/im_gui_module.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
-#include "portal/engine/strings/string_id.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal
 {

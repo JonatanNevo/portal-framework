@@ -8,10 +8,10 @@
 #include <string>
 #include <portal/core/common.h>
 
-// skips non constexpr intrinsics in windows
 #include "rapidhash/rapidhash.h"
 
-// MSVC consteval does not support reinterpret cast correctly, therefore the hash cannot be constexpr
+// TODO: find a constexpr hash implementation :(
+// MSVC consteval does not support constexpr mul128 correctly, therefore the hash cannot be constexpr
 # if !defined(PORTAL_COMPILER_MSVC)
  #   define PORTAL_HASH_CONSTEXPR PORTAL_FORCE_INLINE constexpr
  # else
@@ -28,14 +28,14 @@ PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* data, const size_t length)
 
 PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string& str)
 {
-    return portal::hash::rapidhash(str.c_str(), str.length());
+    return ::rapidhash(str.c_str(), str.length());
 }
 
 template <size_t n>
 PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char (&data)[n])
 {
     // Exclude null terminator
-    return portal::hash::rapidhash(data, n - 1);
+    return ::rapidhash(data, n - 1);
 }
 
 }

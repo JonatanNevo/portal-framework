@@ -9,7 +9,7 @@
 #include "portal/engine/renderer/vulkan/allocated_buffer.h"
 #include "portal/engine/renderer/vulkan/allocated_image.h"
 #include "portal/engine/renderer/vulkan/vulkan_common.h"
-#include "portal/engine/strings/string_id.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal::vulkan {
 class DescriptorLayoutBuilder;

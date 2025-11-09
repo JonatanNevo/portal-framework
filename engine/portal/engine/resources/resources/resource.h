@@ -7,7 +7,7 @@
 
 #include "portal/core/flags.h"
 #include "portal/engine/resources/resource_types.h"
-#include "portal/engine/strings/string_id.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal
 {

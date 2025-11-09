@@ -6,7 +6,7 @@
 #pragma once
 
 
-#include "portal/engine/strings/string_id.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal::renderer {
 class ShaderVariant;

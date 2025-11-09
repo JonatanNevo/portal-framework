@@ -8,7 +8,7 @@
 #include <portal/core/reflection/property.h>
 
 #include "portal/engine/renderer/descriptors/descriptor_types.h"
-#include "portal/engine/strings/string_id.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal::renderer
 {

@@ -10,7 +10,7 @@
 // #include "portal/engine/resources/loader/loader_factory.h"
 // #include "portal/engine/resources/source/resource_source.h"
 // #include "portal/engine/resources/resources/resource.h"
-// #include "portal/engine/strings/string_id.h"
+// #include "portal/core/strings/string_id.h"
 // #include "../../../portal/engine/renderer/vulkan/gpu_context.h"
 // #include "../../../portal/engine/renderer/vulkan/image/vulkan_image.h"
 //
