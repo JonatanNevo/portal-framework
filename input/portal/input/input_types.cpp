@@ -227,7 +227,7 @@ const Key Keys::Android_Menu("Android_Menu");
 
 const Key Keys::Invalid("Invalid");
 
-// TODO: Changed based on controller
+// TODO(#41): Changed based on controller
 const Key Keys::Virtual_Accept = Keys::Gamepad_FaceButton_Bottom;
 const Key Keys::Virtual_Back = Keys::Gamepad_FaceButton_Right;
 

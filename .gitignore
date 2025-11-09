@@ -123,3 +123,11 @@ portal-ports/
 
 build*/
 
+# cc-sessions runtime files
+sessions/sessions-state.json
+sessions/transcripts/
+sessions/.archived/
+sessions/
+CLAUDE.md
+.claude/
+

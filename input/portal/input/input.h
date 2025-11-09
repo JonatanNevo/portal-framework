@@ -17,7 +17,7 @@
 namespace portal
 {
 
-// TODO: add reference to input id, eg keyboard, gamepad, etc
+// TODO(#41): add reference to input id, eg keyboard, gamepad, etc
 struct InputKeyParams
 {
     /** The key that has been pressed */

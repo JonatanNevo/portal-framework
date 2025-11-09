@@ -89,7 +89,7 @@ TEST_F(JobTest, SchedulerWithMultipleWorkerThreads)
 
 // NOTE: Negative worker count test disabled - reveals scheduler bug where
 // stats is initialized with num_worker_threads before num_workers is calculated
-// TODO: Fix scheduler.cpp:33 to initialize stats after num_workers calculation
+// TODO(#5): Fix scheduler.cpp:33 to initialize stats after num_workers calculation
 // TEST_F(JobTest, SchedulerWithNegativeWorkerCount)
 // {
 //     // -1 should use hardware_concurrency - 1
