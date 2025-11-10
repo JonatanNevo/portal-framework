@@ -5,7 +5,6 @@
 
 #include "node.h"
 
-#include <__msvc_ranges_to.hpp>
 #include <ranges>
 
 #include "portal/core/debug/profile.h"
@@ -13,7 +12,7 @@
 namespace portal::scene
 {
 
-Node::Node(const StringId& id, glm::mat4 local_transform) : id(id), local_transform(std::move(local_transform)), world_transform(local_transform)
+Node::Node(const StringId& id, const glm::mat4& local_transform) : id(id), local_transform(local_transform), world_transform(local_transform)
 {}
 
 void Node::add_child(const Reference<Node>& child)

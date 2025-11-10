@@ -28,7 +28,7 @@ def main():
     map_entries = []
     reversed_map_entries = []
 
-    pattern = re.compile(r'\{\s*(\d+)\s*,\s*(".*?")\s*\},?')
+    pattern = re.compile(r'\{\s*(\d+)ull\s*,\s*(".*?")\s*\},?')
     for file in inc_files:
         data = file.read_text().splitlines()
         data = [line for line in data if line.strip()]
@@ -40,7 +40,7 @@ def main():
             if match:
                 hash_id = match.group(1)
                 string_value = match.group(2)
-                reversed_entry = f"{{ {string_value}, {hash_id} }},"
+                reversed_entry = f"{{ {string_value}, {hash_id}ull }},"
                 reversed_map_entries.append(reversed_entry)
 
     output = FILE_TEMPLATE.format(
