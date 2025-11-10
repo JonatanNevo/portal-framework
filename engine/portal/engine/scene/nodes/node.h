@@ -24,7 +24,7 @@ class Node
 {
 public:
     virtual ~Node() = default;
-    explicit Node(const StringId& id, glm::mat4 local_transform);
+    explicit Node(const StringId& id, const glm::mat4& local_transform);
 
     void add_child(const Reference<Node>& child);
     void set_parent(const Reference<Node>& new_parent);

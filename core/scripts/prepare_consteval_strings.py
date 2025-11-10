@@ -39,7 +39,7 @@ def make_hash_foreach_string(strings: list[str], executable: pathlib.Path) -> di
 def prepare_inc_string(hashed: dict[int, str]) -> str:
     output = ''
     for string_id, string in hashed.items():
-        output += f"{{ {string_id}, \"{string}\" }},\n"
+        output += f"{{ {string_id}ull, \"{string}\" }},\n"
     output = output[:-1]
     return output
 

@@ -32,8 +32,6 @@ namespace portal::resources
 {
 
 static auto logger = Log::get_logger("Resources");
-// const auto SHADER = "mesh.shading.slang.spv";
-const auto SHADER = STRING_ID("pbr");
 
 renderer::TextureFilter extract_filter(const fastgltf::Filter filter)
 {
@@ -525,10 +523,6 @@ Job<> GltfLoader::load_mesh(
     ) const
 {
     const auto parent_path = std::filesystem::path(mesh_meta.resource_id.string).parent_path();
-    auto create_name = [&parent_path](const auto& part, ResourceType type)
-    {
-        return create_name_relative(parent_path, part, type);
-    };
 
     if (registry.get<MeshGeometry>(mesh_meta.resource_id).get_state() == ResourceState::Loaded)
         co_return;
