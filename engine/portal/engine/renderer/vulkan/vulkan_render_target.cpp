@@ -28,7 +28,7 @@ vk::AttachmentLoadOp to_load_op(const render_target::Specification& spec, const 
 VulkanRenderTarget::VulkanRenderTarget(
     const render_target::Specification& specs,
     const VulkanContext& context
-    ) : context(context), spec(specs)
+    ) : spec(specs)
 {
     width = specs.width;
     height = specs.height;

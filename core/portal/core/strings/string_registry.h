@@ -17,7 +17,7 @@
 namespace portal
 {
 
-constexpr static auto INVALID_STRING_VIEW = std::string_view("Invalid");
+constexpr auto INVALID_STRING_VIEW = std::string_view("Invalid");
 
 // TODO: have this not as global?
 class StringRegistry

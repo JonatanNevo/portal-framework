@@ -15,7 +15,7 @@
 namespace portal::resources
 {
 
-SceneLoader::SceneLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
+SceneLoader::SceneLoader(ResourceRegistry& registry) : ResourceLoader(registry)
 {}
 
 Reference<Resource> SceneLoader::load(const SourceMetadata& meta, const ResourceSource& source)

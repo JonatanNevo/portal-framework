@@ -118,7 +118,6 @@ const Key Keys::F11("F11");
 const Key Keys::F12("F12");
 
 const Key Keys::NumLock("NumLock");
-
 const Key Keys::ScrollLock("ScrollLock");
 
 const Key Keys::LeftShift("LeftShift");

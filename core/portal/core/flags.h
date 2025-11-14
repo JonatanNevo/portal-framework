@@ -9,6 +9,8 @@
 #include <type_traits>
 #include <compare>
 
+#include <vulkan/vulkan_raii.hpp>
+
 namespace portal
 {
 

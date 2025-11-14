@@ -16,12 +16,12 @@ using namespace std::literals;
 TEST(StringIdTest, constexpr_construction)
 {
     [[maybe_unused]] constexpr StringId def;
-    [[maybe_unused]] constexpr StringId hash_only(12345);
-    [[maybe_unused]] StringId name_hash(12345, "something"sv);
+    [[maybe_unused]] constexpr StringId hash_only(434649463043236531ull);
+    [[maybe_unused]] StringId name_hash(434649463043236531ull, "root"sv);
+    [[maybe_unused]] constexpr auto using_define = STRING_ID("root");
 
-
-    constexpr auto view = StringRegistry::find_constexpr(12345);
-    EXPECT_EQ(view, "hello");
+    EXPECT_EQ(hash_only, name_hash);
+    EXPECT_EQ(name_hash, using_define);
 }
 
 }

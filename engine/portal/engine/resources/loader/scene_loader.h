@@ -53,16 +53,13 @@ struct SceneDescription
 class SceneLoader final : public ResourceLoader
 {
 public:
-    SceneLoader(ResourceRegistry& registry, const RendererContext& context);
+    explicit SceneLoader(ResourceRegistry& registry);
     Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
 
 protected:
-    std::unordered_map<StringId, Reference<scene::Node>> load_scene_nodes(SceneDescription description) const;
+    [[nodiscard]] std::unordered_map<StringId, Reference<scene::Node>> load_scene_nodes(SceneDescription description) const;
 
     SceneDescription load_scene_description(const SourceMetadata& meta, const ResourceSource& source);
-
-private:
-    const RendererContext& context;
 };
 
 }

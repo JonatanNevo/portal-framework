@@ -91,12 +91,12 @@ private:
 
     DeletionQueue deletion_queue = {};
 
-    vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
+    // vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
 
     vk::raii::Fence immediate_fence = nullptr;
     vk::raii::CommandPool immediate_command_pool = nullptr;
     vk::raii::CommandBuffer immediate_command_buffer = nullptr;
-    TracyVkCtx tracy_context = nullptr;
+    // TracyVkCtx tracy_context = nullptr;
 
     vulkan::GPUSceneData scene_data{};
     std::vector<vk::raii::DescriptorSetLayout> scene_descriptor_set_layouts;

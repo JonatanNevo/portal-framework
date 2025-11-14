@@ -29,6 +29,7 @@ file(GLOB_RECURSE LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/input/linux/*
 file(GLOB_RECURSE LINUX_HEADER CONFIGURE_DEPENDS "portal/platform/input/linux/*.h")
 
 find_package(glfw3 CONFIG REQUIRED)
+find_package(glaze CONFIG REQUIRED)
 
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
@@ -82,6 +83,7 @@ set_target_properties(portal-input PROPERTIES EXPORT_NAME input)
 target_link_libraries(portal-input
         PUBLIC
         portal::core
+        glaze::glaze
         glfw
 )
 
@@ -90,6 +92,9 @@ if(MSVC)
 else()
     target_compile_options(portal-input PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
+
+prepare_consteval_strings(portal-input ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/input_map.inc)
+
 
 install(TARGETS portal-input
         EXPORT portal-input-targets

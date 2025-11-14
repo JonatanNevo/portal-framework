@@ -67,8 +67,10 @@ struct StringId
     bool operator==(const StringId&) const;
 };
 
-const auto INVALID_STRING_ID = StringId{uint64_t{0}, INVALID_STRING_VIEW};
-const auto MAX_STRING_ID = StringId{std::numeric_limits<StringId::HashType>::max(), INVALID_STRING_VIEW};
+#define STRING_ID(string) portal::StringId(std::string_view(string))
+
+constexpr static auto INVALID_STRING_ID = STRING_ID("Invalid");
+const static auto MAX_STRING_ID = StringId{std::numeric_limits<StringId::HashType>::max(), INVALID_STRING_VIEW};
 
 } // portal
 
@@ -120,6 +122,4 @@ struct fmt::formatter<portal::StringId>
         return fmt::format_to(ctx.out(), "id(\"{}\")", id.string);
     }
 };
-
-#define STRING_ID(string) portal::StringId(std::string_view(string))
 
