@@ -34,6 +34,9 @@ std::string_view StringRegistry::store(uint64_t id, const std::string_view strin
 
 std::string_view StringRegistry::find(const uint64_t id)
 {
+    if (G_FROZEN_ID_TO_STRING.contains(id))
+        return G_FROZEN_ID_TO_STRING.at(id);
+
     auto entries = get_entries();
     const auto it = entries.find(id);
     if (it != entries.end())

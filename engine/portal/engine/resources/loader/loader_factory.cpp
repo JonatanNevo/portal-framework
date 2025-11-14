@@ -22,7 +22,7 @@ LoaderFactory::LoaderFactory(ResourceRegistry& registry, const RendererContext& 
     loaders[ResourceType::Shader] = std::make_shared<ShaderLoader>(registry, context);
     loaders[ResourceType::Material] = std::make_shared<MaterialLoader>(registry, context);
     loaders[ResourceType::Mesh] = std::make_shared<MeshLoader>(registry, context);
-    loaders[ResourceType::Scene] = std::make_shared<SceneLoader>(registry, context);
+    loaders[ResourceType::Scene] = std::make_shared<SceneLoader>(registry);
     loaders[ResourceType::Composite] = std::make_shared<GltfLoader>(registry, context);
 }
 

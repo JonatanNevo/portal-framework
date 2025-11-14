@@ -8,6 +8,7 @@
 #include "portal/engine/settings.h"
 #include "portal/engine/application/application.h"
 #include "glaze/core/reflect.hpp"
+#include "portal/input/new/keys.h"
 
 using namespace portal;
 

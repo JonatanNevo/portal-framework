@@ -270,7 +270,6 @@ struct Keys
     static const Key F12;
 
     static const Key NumLock;
-
     static const Key ScrollLock;
 
     static const Key LeftShift;

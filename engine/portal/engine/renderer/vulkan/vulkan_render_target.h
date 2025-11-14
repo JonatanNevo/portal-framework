@@ -40,7 +40,6 @@ public:
 
 
 private:
-    const VulkanContext& context;
     render_target::Specification spec;
     size_t width = 0, height = 0;
 
