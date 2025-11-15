@@ -5,48 +5,12 @@
 
 #pragma once
 #include "llvm/ADT/DenseMap.h"
-#include "portal/core/timer.h"
-#include "portal/input/new/input_types.h"
-#include "portal/input/new/key_state.h"
+#include "portal/core/strings/string_id.h"
+#include "portal/input/new/action.h"
+#include "portal/input/new/key_data.h"
 
 namespace portal::ng
 {
-struct ActionKeyMapping;
-}
-
-namespace portal::ng
-{
-
-struct InputKeyEventParams
-{
-    // TODO: add some `input device id` to represent which device sent this input
-
-    /**
-     * The key that triggered this input event
-     */
-    Key key = Key::Invalid;
-
-    /**
-     * The type of event that occurred
-     */
-    InputEventType event = InputEventType::Pressed;
-
-    /**
-     * Delta time between that last frame and this frame
-     */
-    float delta_time = 1 / 60.f;
-
-    /**
-     * For analog key events,
-     * The number of samples that the value has
-     */
-    int32_t num_samples = 1;
-
-    /**
-     * The value that this input event has.
-     */
-    float amount_pressed = 0;
-};
 
 class Input
 {
@@ -54,66 +18,37 @@ public:
     Input();
 
     /**
-     * Processes all "in flight" input events and calls the corresponding action callbacks
+     * Report a new key event
      */
-    void process_inputs(float delta_time);
+    void update_key_state(Key key, KeyState state);
+    void update_modifiers(KeyModifierFlag modifiers);
 
     /**
-     * Flushes the lingering key states. used when transitioning input modes.
+     * Process all pending key events
+     * @param delta_time Time passed since last process class (last frame)
      */
-    void flush_key_states();
+    void process_events(float delta_time);
 
-    /**
-     * Handles a key input event.
-     * @return `true` if there is a registered action that handled the event, false otherwise.
-     */
-    bool input_key(const InputKeyEventParams& params);
+    void map_action(Key key, const StringId& action, KeyModifierFlag modifiers = KeyModifierBits::None);
+    void bind_action(const StringId& action, KeyState event, ActionBinding::action_function&& func);
 
-    /**
-     * @return true if the alt key is pressed
-     */
-    [[nodiscard]] bool is_alt_pressed() const;
-    /**
-     *@return true if the ctrl key is pressed
-     */
-    [[nodiscard]] bool is_ctrl_pressed() const;
-    /**
-     * @return true if the shift key is pressed
-     */
-    [[nodiscard]] bool is_shift_pressed() const;
-    /**
-     * @return true if the system key is pressed
-     */
-    [[nodiscard]] bool is_system_pressed() const;
-    /**
-     * @return True if the given key is currently pressed
-     */
-    [[nodiscard]] bool is_pressed(const Key& key) const;
-
-private:
-    bool process_analog_event(const InputKeyEventParams& params);
-    bool process_digital_event(const InputKeyEventParams& params);
-
-    bool is_key_handled_by_action(const Key& key) const;
-
-    void evaluate_key_states(float delta_time, llvm::SmallVectorImpl<std::pair<Key, KeyState*>>& keys_with_events);
-    void process_non_axes_keys(Key key, KeyState& state);
+    [[nodiscard]] bool is_key_pressed(Key key) const;
+    [[nodiscard]] bool is_key_released(Key key) const;
+    [[nodiscard]] bool is_key_repeating(Key key) const;
 
 private:
     /**
-     * A counter use to track the order in which events have occurred since the last input process time
+     * Transitions and prepares the key states for the next frame.
+     * Moves pressed to repeat
      */
-    uint32_t event_count = 0;
+    void transition_key_states();
 
-    llvm::DenseMap<Key, KeyState> key_state_map;
+private:
+    llvm::SmallVector<ActionKeyMapping> key_action_mappings;
+    llvm::SmallVector<ActionBinding> action_bindings;
 
-    llvm::SmallVector<ActionKeyMapping> action_mappings;
-
-    /**
-     * A timer that counts from the beginning of the input system
-     */
-    // TODO: have one global `application` timer
-    Timer timer;
+    llvm::DenseMap<Key, KeyData> key_states;
+    KeyModifierFlag modifiers = KeyModifierBits::None;
 };
 
 } // portal
