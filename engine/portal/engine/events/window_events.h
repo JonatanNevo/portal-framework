@@ -4,8 +4,8 @@
 //
 
 #pragma once
+#include "portal/core/events/event.h"
 
-#include "event.h"
 
 namespace portal
 {
@@ -18,7 +18,7 @@ public:
     [[nodiscard]] size_t get_width() const { return width; }
     [[nodiscard]] size_t get_height() const { return height; }
 
-    std::string to_string() const override
+    [[nodiscard]] std::string to_string() const override
     {
         return fmt::format("{}: {}x{}", get_name().string, width, height);
     }

@@ -15,7 +15,17 @@ namespace portal
 class EngineContext
 {
 public:
-    EngineContext(Renderer& renderer, ResourceRegistry& registry, Window& window) : renderer(renderer), resource_registry(registry), window(window) {}
+    EngineContext(
+        Renderer& renderer,
+        ResourceRegistry& registry,
+        Window& window,
+        Input& input
+        )
+        : renderer(renderer),
+          resource_registry(registry),
+          window(window),
+          input(input)
+    {}
 
     [[nodiscard]] const Renderer& get_renderer() const { return renderer.get(); }
     [[nodiscard]] Renderer& get_renderer() { return renderer.get(); }
@@ -26,10 +36,14 @@ public:
     [[nodiscard]] const Window& get_window() const { return window.get(); }
     [[nodiscard]] Window& get_window() { return window.get(); }
 
+    [[nodiscard]] const Input& get_input() const { return input.get(); }
+    [[nodiscard]] Input& get_input() { return input.get(); }
+
 protected:
     std::reference_wrapper<Renderer> renderer;
     std::reference_wrapper<ResourceRegistry> resource_registry;
     std::reference_wrapper<Window> window;
+    std::reference_wrapper<Input> input;
 };
 
 }

@@ -10,6 +10,7 @@
 #include <tracy/TracyVulkan.hpp>
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
+#include "portal/core/events/event_handler.h"
 
 #include "portal/engine/renderer/camera.h"
 #include "portal/engine/renderer/deletion_queue.h"
@@ -51,11 +52,11 @@ struct FrameData
     vulkan::DescriptorAllocator frame_descriptors;
 };
 
-class Renderer
+class Renderer final : public EventHandler
 {
 public:
-    Renderer(renderer::vulkan::VulkanContext& context, renderer::vulkan::VulkanWindow* window);
-    ~Renderer();
+    Renderer(Input& input, renderer::vulkan::VulkanContext& context, renderer::vulkan::VulkanWindow* window);
+    ~Renderer() override;
 
     void cleanup();
 
@@ -74,6 +75,8 @@ public:
     FrameData& get_current_frame_data();
 
     [[nodiscard]] const RendererContext& get_renderer_context() const;
+    void on_event(Event& event) override;
+
 private:
     void init_swap_chain();
     void init_descriptors();

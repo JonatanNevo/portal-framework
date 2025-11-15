@@ -7,7 +7,7 @@
 #include <filesystem>
 
 #include "portal/engine/engine_context.h"
-#include "portal/engine/events/event.h"
+#include "portal/core/events/event.h"
 #include "portal/engine/events/window_events.h"
 #include "portal/engine/imgui/im_gui_module.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
@@ -56,6 +56,7 @@ private:
 private:
     ApplicationSpecification spec;
 
+    std::unique_ptr<Input> input = nullptr;
     std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;
     Reference<Window> window = nullptr;
     Reference<Renderer> renderer = nullptr;
@@ -75,6 +76,8 @@ private:
     float time_step = 0;
 
     std::atomic_flag should_stop;
+
+    llvm::SmallVector<std::reference_wrapper<EventHandler>> event_handlers;
 };
 
 } // portal

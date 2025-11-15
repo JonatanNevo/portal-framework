@@ -70,7 +70,7 @@ ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context): context
     imgui_pool = (vulkan_context.get_device().get_handle()).createDescriptorPool(pool_info);
 
     const auto& vulkan_window = dynamic_cast<renderer::vulkan::VulkanWindow&>(context->get_window());
-    ImGui_ImplGlfw_InitForVulkan(vulkan_window.window, true);
+    ImGui_ImplGlfw_InitForVulkan(vulkan_window.get_glfw_window(), true);
 
     const auto& swapchain_format = vulkan_window.get_swapchain().get_color_format();
 

@@ -37,6 +37,13 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
     PORTAL_ASSERT(result == GLFW_TRUE, "Failed to initialize GLFW");
     glfwSetErrorCallback(glfw_error_callback);
 
+    input = std::make_unique<Input>(
+        [this](auto& event)
+        {
+            on_event(event);
+        }
+        );
+
     const WindowSpecification window_spec{
         .title = spec.name,
         .width = spec.width,
@@ -44,7 +51,7 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
     };
 
     vulkan_context = std::make_unique<renderer::vulkan::VulkanContext>();
-    window = make_reference<renderer::vulkan::VulkanWindow>(*vulkan_context, window_spec);
+    window = make_reference<renderer::vulkan::VulkanWindow>(*input, *vulkan_context, window_spec);
     window->set_event_callback(
         [this](auto& event)
         {
@@ -52,7 +59,7 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
         }
         );
 
-    renderer = make_reference<Renderer>(*vulkan_context, std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window).get());
+    renderer = make_reference<Renderer>(*input, *vulkan_context, std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window).get());
 
 
     scheduler = std::make_unique<jobs::Scheduler>(spec.scheduler_worker_num);
@@ -63,11 +70,16 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
     engine_context = make_reference<EngineContext>(
         *renderer,
         *resource_registry,
-        *window
+        *window,
+        *input
         );
 
     // TODO: remove this
     imgui_module = std::make_unique<ImGuiModule>(engine_context);
+
+    // TODO: find a better way of subscribing to this
+    event_handlers.emplace_back(*window);
+    event_handlers.emplace_back(*renderer);
 }
 
 Application::~Application()
@@ -166,7 +178,7 @@ void Application::run()
                                 if (const auto mesh_node = reference_cast<scene::MeshNode>(node))
                                 {
                                     ImGui::Text("Mesh: %s", mesh_node->get_mesh()->get_id().string.data());
-                                    for (auto& material: mesh_node->get_materials())
+                                    for (auto& material : mesh_node->get_materials())
                                     {
                                         ImGui::Text("Material: %s", material->get_id().string.data());
                                     }
@@ -252,15 +264,18 @@ void Application::on_update(float)
 
 void Application::on_event(Event& event)
 {
-    portal::EventDispatcher dispatcher(event);
-    dispatcher.dispatch<WindowCloseEvent>(
+    for (auto& handler: event_handlers)
+        handler.get().on_event(event);
+
+    EventRunner runner(event);
+    runner.run_on<WindowCloseEvent>(
         [&](WindowCloseEvent&)
         {
             should_stop.test_and_set();
             return false;
         }
         );
-    dispatcher.dispatch<WindowResizeEvent>([&](WindowResizeEvent& e) { return on_resize(e); });
+    runner.run_on<WindowResizeEvent>([&](WindowResizeEvent& e) { return on_resize(e); });
 }
 
 void Application::add_module(std::shared_ptr<Module>)

@@ -9,6 +9,7 @@
 #include "portal/engine/reference.h"
 #include "portal/engine/application/window.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
+#include "portal/input/input_provider.h"
 
 namespace portal::renderer::vulkan {
 class VulkanSwapchain;
@@ -25,7 +26,7 @@ namespace portal::renderer::vulkan
 class VulkanWindow final : public Window
 {
 public:
-    VulkanWindow(const VulkanContext& context, const WindowSpecification& spec);
+    VulkanWindow(InputProvider& input, const VulkanContext& context, const WindowSpecification& spec);
     ~VulkanWindow() override;
 
     void process_events() override;
@@ -51,8 +52,10 @@ public:
     [[nodiscard]] VulkanSwapchain& get_swapchain() const;
     void set_event_callback(std::function<void(Event&)> callback) override;
 
-    // TODO: temp!!!
-    GLFWwindow* window = nullptr;
+    void on_event(Event&) override;
+
+    GLFWwindow* get_glfw_window() const;
+
 private:
     struct WindowData
     {
@@ -60,14 +63,16 @@ private:
         size_t width, height;
 
         std::function<void(Event&)> event_callback;
+        InputProvider& input;
     };
 
+    GLFWwindow* window = nullptr;
     Reference<VulkanSwapchain> swapchain;
 
     GLFWcursor* cursors[9] = {};
     WindowSpecification spec;
 
-    WindowData data{};
+    WindowData data;
 
     [[maybe_unused]] const VulkanContext& context;
 };
