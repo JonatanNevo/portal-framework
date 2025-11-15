@@ -2,7 +2,7 @@
 name: Task
 about: Define a new task for the project
 title: "[TASK]"
-labels: Task
+labels: task
 assignees: ''
 
 ---
