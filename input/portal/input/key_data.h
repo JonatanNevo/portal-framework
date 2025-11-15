@@ -4,14 +4,14 @@
 //
 
 #pragma once
-#include "portal/input/new/input_types.h"
+#include "input_types.h"
 
-namespace portal::ng
+namespace portal
 {
 
 struct KeyData
 {
-    Key key;
+    Key key = Key::Invalid;
     KeyState state = KeyState::Released;
     KeyState previous_state = KeyState::Released;
 };

@@ -43,17 +43,19 @@
 #include "portal/engine/renderer/vulkan/vulkan_window.h"
 
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
+#include "portal/input/input_events.h"
 
 namespace portal
 {
 
 [[maybe_unused]] static auto logger = Log::get_logger("Renderer");
 
-Renderer::Renderer(renderer::vulkan::VulkanContext& context, renderer::vulkan::VulkanWindow* window)
+Renderer::Renderer(Input& input, renderer::vulkan::VulkanContext& context, renderer::vulkan::VulkanWindow* window)
     :
     context(context),
     window(window),
-    renderer_context(context, render_target, scene_descriptor_set_layouts)
+    renderer_context(context, render_target, scene_descriptor_set_layouts),
+    camera(input)
 {
     PORTAL_PROF_ZONE();
     PORTAL_ASSERT(window != nullptr, "window is null");
@@ -96,6 +98,32 @@ const RendererContext& Renderer::get_renderer_context() const
     return renderer_context;
 }
 
+void Renderer::on_event(Event& event)
+{
+    EventRunner runner(event);
+    runner.run_on<KeyPressedEvent>(
+        [&](const auto& e)
+        {
+            camera.on_key_down(e.get_key());
+            return false;
+        }
+        );
+    runner.run_on<KeyReleasedEvent>(
+        [&](const auto& e)
+        {
+            camera.on_key_up(e.get_key());
+            return false;
+        }
+        );
+    runner.run_on<MouseMovedEvent>(
+        [&](const auto& e)
+        {
+            camera.on_mouse_move(e.get_position());
+            return false;
+        }
+        );
+}
+
 void Renderer::update_imgui([[maybe_unused]] float delta_time)
 {
     ImGui::Begin("Stats");
@@ -130,7 +158,7 @@ void Renderer::update_scene([[maybe_unused]] float delta_time, ResourceReference
     ZoneScoped;
     auto start = std::chrono::system_clock::now();
     draw_context.render_objects.clear();
-    camera.update(delta_time, window->window);
+    camera.update(delta_time);
 
     const glm::mat4 view = camera.get_view();
     glm::mat4 projection = camera.get_projection();

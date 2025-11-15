@@ -4,7 +4,8 @@
 //
 
 #pragma once
-#include "portal/engine/events/event.h"
+#include "portal/core/events/event.h"
+#include "portal/core/events/event_handler.h"
 #include "portal/core/strings/string_id.h"
 
 namespace portal
@@ -21,11 +22,9 @@ struct WindowSpecification
     bool vsync = true; // TODO: should this be here?
 };
 
-class Window
+class Window: public EventHandler
 {
 public:
-    virtual ~Window() = default;
-
     virtual void process_events() = 0;
 
     virtual void swap_buffers() = 0; // TODO: ??

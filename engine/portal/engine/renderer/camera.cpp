@@ -12,31 +12,7 @@
 namespace portal
 {
 
-bool is_key_down(const int key_code, GLFWwindow* window)
-{
-    const int state = glfwGetKey(window, key_code);
-    return state == GLFW_PRESS || state == GLFW_REPEAT;
-}
-
-bool is_mouse_button_down(const int button, GLFWwindow* window)
-{
-    const int state = glfwGetMouseButton(window, button);
-    return state == GLFW_PRESS;
-}
-
-glm::vec2 get_mouse_position(GLFWwindow* window)
-{
-    double x, y;
-    glfwGetCursorPos(window, &x, &y);
-    return {static_cast<float>(x), static_cast<float>(y)};
-}
-
-void set_cursor_mode(const int mode, GLFWwindow* window)
-{
-    glfwSetInputMode(window, GLFW_CURSOR, mode);
-}
-
-Camera::Camera()
+Camera::Camera(Input& input): input(input)
 {
     forward_direction = glm::vec3{0, 0, -1};
     position = glm::vec3{0.f, 0.f, 5.f};
@@ -45,64 +21,24 @@ Camera::Camera()
     recalculate_view();
 }
 
-void Camera::update(const float delta_time, GLFWwindow* window)
+void Camera::update(const float delta_time)
 {
-    auto mouse_position = get_mouse_position(window);
-    auto delta = (mouse_position - last_mouse_position) * 0.002f;
-    last_mouse_position = mouse_position;
-
-    if (!is_mouse_button_down(GLFW_MOUSE_BUTTON_RIGHT, window))
-    {
-        set_cursor_mode(GLFW_CURSOR_NORMAL, window);
-        return;
-    }
-
-    set_cursor_mode(GLFW_CURSOR_DISABLED, window);
-
-    bool moved = false;
-
     constexpr glm::vec3 up_direction(0.0f, 1.0f, 0.0f);
-    glm::vec3 right_direction = glm::cross(forward_direction, up_direction);
+    const glm::vec3 right_direction = glm::cross(forward_direction, up_direction);
 
-    // Movement
-    if (is_key_down(GLFW_KEY_W, window))
+    if (should_move && (moved || std::ranges::any_of(directions, [](auto& d){ return d != 0;})))
     {
-        position += forward_direction * speed * delta_time;
-        moved = true;
-    }
-    else if (is_key_down(GLFW_KEY_S, window))
-    {
-        position -= forward_direction * speed * delta_time;
-        moved = true;
-    }
-    else if (is_key_down(GLFW_KEY_A, window))
-    {
-        position -= right_direction * speed * delta_time;
-        moved = true;
-    }
-    else if (is_key_down(GLFW_KEY_D, window))
-    {
-        position += right_direction * speed * delta_time;
-        moved = true;
-    }
-    else if (is_key_down(GLFW_KEY_Q, window))
-    {
-        position -= up_direction * speed * delta_time;
-        moved = true;
-    }
-    else if (is_key_down(GLFW_KEY_E, window))
-    {
-        position += up_direction * speed * delta_time;
-        moved = true;
-    }
+        glm::vec3 pos_delta{};
+        pos_delta += directions[0] * forward_direction;
+        pos_delta += directions[1] * right_direction;
+        pos_delta += directions[2] * up_direction;
 
-    // Rotation
-    if (delta.x != 0.0f || delta.y != 0.0f)
-    {
-        float pitch_delta = delta.y * get_rotation_speed();
-        float yaw_delta = delta.x * get_rotation_speed();
+        position += pos_delta * speed * delta_time;
 
-        glm::quat q = glm::normalize(
+        const float pitch_delta = mouse_delta.y * get_rotation_speed();
+        const float yaw_delta = mouse_delta.x * get_rotation_speed();
+
+        const glm::quat q = glm::normalize(
             glm::cross(
                 glm::angleAxis(-pitch_delta, right_direction),
                 glm::angleAxis(-yaw_delta, glm::vec3(0.f, 1.0f, 0.0f))
@@ -110,12 +46,100 @@ void Camera::update(const float delta_time, GLFWwindow* window)
             );
         forward_direction = glm::rotate(q, forward_direction);
 
-        moved = true;
+        recalculate_view();
+        moved = false;
     }
 
-    if (moved)
+    mouse_delta = glm::vec2{0.f};
+}
+
+void Camera::on_key_down(const Key key)
+{
+    if (key == Key::RightMouseButton)
     {
-        recalculate_view();
+        input.set_cursor_mode(CursorMode::Locked);
+        should_move = true;
+        reset_mouse_on_next_move = true;
+        return;
+    }
+
+    if (!should_move)
+        return;
+
+    if (key == Key::W)
+    {
+        directions[0] = 1.f;
+    }
+    if (key == Key::S)
+    {
+        directions[0] = -1.f;
+    }
+
+    if (key == Key::A)
+    {
+        directions[1] = -1.f;
+    }
+    if (key == Key::D)
+    {
+        directions[1] = 1.f;
+    }
+
+    if (key == Key::E || key == Key::SpaceBar)
+    {
+        directions[2] = 1.f;
+    }
+    if (key == Key::Q || key == Key::LeftShift)
+    {
+        directions[2] = -1.f;
+    }
+
+    moved = true;
+}
+
+void Camera::on_key_up(const Key key)
+{
+    if (key == Key::RightMouseButton)
+    {
+        input.set_cursor_mode(CursorMode::Normal);
+        should_move = false;
+    }
+
+    if (key == Key::W || key == Key::S)
+    {
+        directions[0] = 0.f;
+    }
+
+    if (key == Key::A || key == Key::D)
+    {
+        directions[1] = 0.f;
+    }
+
+    if (key == Key::E || key == Key::SpaceBar || key == Key::Q || key == Key::LeftShift)
+    {
+        directions[2] = 0.f;
+    }
+}
+
+void Camera::on_mouse_move(const glm::vec2& mouse_position)
+{
+    if (!should_move)
+        return;
+
+    if (reset_mouse_on_next_move)
+    {
+        // Consume the first warp after locking the cursor so we don't get a jump
+        last_mouse_position = mouse_position;
+        mouse_delta = glm::vec2{0.f};
+        moved = false;
+        reset_mouse_on_next_move = false;
+        return;
+    }
+
+    mouse_delta = (mouse_position - last_mouse_position) * 0.002f;
+    last_mouse_position = mouse_position;
+    if (mouse_delta.x != 0.0f || mouse_delta.y != 0.0f)
+    {
+        moved = true;
     }
 }
 

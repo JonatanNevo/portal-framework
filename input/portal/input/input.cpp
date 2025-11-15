@@ -5,395 +5,116 @@
 
 #include "input.h"
 
-#include <execution>
-#include <memory>
-#include <ranges>
-
 #include "portal/core/log.h"
-#include "../../../core/portal/core/random/random.h"
-
-// TODO: decuple from GLFW
+#include "input_events.h"
 
 namespace portal
 {
-void key_callback(GLFWwindow* window, int key, int scan_code, int action, int /*mods*/)
+
+static auto logger = Log::get_logger("Input");
+
+Input::Input(const std::optional<std::function<void(Event&)>>& event_callback)
 {
-    if (auto* input = static_cast<Input*>(glfwGetWindowUserPointer(window)))
+    if (event_callback)
     {
-        InputKeyParams params;
-        params.key = InputKeyManager::get().get_key_from_codes(scan_code);
-        if (!params.key.is_valid())
-        {
-            LOG_ERROR_TAG("Input", "Key {} is not valid!", key);
-            return;
-        }
-
-        if (action == GLFW_PRESS)
-            params.event = InputEvent::Pressed;
-        if (action == GLFW_RELEASE)
-            params.event = InputEvent::Released;
-        if (action == GLFW_REPEAT)
-            params.event = InputEvent::Repeat;
-
-        input->input_key(params);
+        this->event_callback = event_callback.value();
     }
-}
-
-void cursor_position_callback(GLFWwindow* window, const double xpos, const double ypos)
-{
-    if (auto* input = static_cast<Input*>(glfwGetWindowUserPointer(window)))
-    {
-        InputKeyParams mouse_x(Keys::MouseX, InputEvent::Axis, glm::vec3(static_cast<float>(xpos), 0.f, 0.f));
-        input->input_key(mouse_x);
-
-        InputKeyParams mouse_y(Keys::MouseY, InputEvent::Axis, glm::vec3(static_cast<float>(ypos), 0.f, 0.f));
-        input->input_key(mouse_y);
-    }
-}
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int /*mods*/)
-{
-    if (auto* input = static_cast<Input*>(glfwGetWindowUserPointer(window)))
-    {
-        InputKeyParams params;
-        if (button == GLFW_MOUSE_BUTTON_LEFT)
-            params.key = Keys::LeftMouseButton;
-        if (button == GLFW_MOUSE_BUTTON_RIGHT)
-            params.key = Keys::RightMouseButton;
-        if (button == GLFW_MOUSE_BUTTON_MIDDLE)
-            params.key = Keys::MiddleMouseButton;
-        if (button == GLFW_MOUSE_BUTTON_4)
-            params.key = Keys::ThumbMouseButton;
-        if (button == GLFW_MOUSE_BUTTON_5)
-            params.key = Keys::ThumbMouseButton2;
-
-        if (action == GLFW_PRESS)
-            params.event = InputEvent::Pressed;
-        if (action == GLFW_RELEASE)
-            params.event = InputEvent::Released;
-        if (action == GLFW_REPEAT)
-            params.event = InputEvent::Repeat;
-
-        input->input_key(params);
-    }
-}
-
-void Input::initialize(GLFWwindow* window_handle) {
-    window = window_handle;
-    // TODO: Create some "GLFW Application" or "GLFW Context" that will handle all glfw callbacks
-    glfwSetWindowUserPointer(window_handle, this);
-    glfwSetKeyCallback(window_handle, key_callback);
-    glfwSetCursorPosCallback(window_handle, cursor_position_callback);
-    glfwSetMouseButtonCallback(window_handle, mouse_button_callback);
-
-    glfwSetInputMode(window_handle, GLFW_STICKY_KEYS, 1);
-    glfwSetInputMode(window_handle, GLFW_STICKY_MOUSE_BUTTONS, 1);
-}
-
-bool Input::input_key(const InputKeyParams& params)
-{
-    // MouseX and MouseY should not be treated as analog if there are no samples, as they need their EventAccumulator to be incremented
-    // in the case of a Pressed or Released
-    const bool treat_as_analog =
-        params.key.is_analog() &&
-        ((params.key != Keys::MouseX && params.key != Keys::MouseX) || params.num_samples > 0);
-
-    if (treat_as_analog)
-    {
-        auto test_event_edges = [this, &params](KeyState& key_state, float edge_value)
-        {
-            if (edge_value == 0.f && glm::length(params.delta) != 0.f)
-            {
-                key_state.event_accumulator[static_cast<uint8_t>(InputEvent::Pressed)].push_back(++event_count);
-            }
-            else if (edge_value != 0.f && glm::length(params.delta) == 0.f)
-            {
-                key_state.event_accumulator[static_cast<uint8_t>(InputEvent::Released)].push_back(++event_count);
-            }
-            else
-            {
-                key_state.event_accumulator[static_cast<uint8_t>(InputEvent::Repeat)].push_back(++event_count);
-            }
-        };
-
-        {
-            // first event associated with this key, add it to the map
-            KeyState& state = key_state_map[params.key];
-            test_event_edges(state, state.value.x);
-
-            // accumulate deltas until processed next
-            state.sample_count_accumulator += params.num_samples;
-            state.raw_value_accumulator += params.delta;
-        }
-
-        // Mirror the key press to any associated paired axis
-        Key paired_key = params.key.get_paired_axis_key();
-        if (paired_key.is_valid())
-        {
-            PairedAxis axis = params.key.get_paired_axis();
-            KeyState& paired_state = key_state_map[paired_key];
-
-            KeyState& state = key_state_map[params.key];
-
-            if (axis == PairedAxis::X)
-            {
-                paired_state.raw_value_accumulator.x = state.raw_value_accumulator.x;
-                paired_state.pair_sampled_axes |= 0b001;
-            }
-            else if (axis == PairedAxis::Y)
-            {
-                paired_state.raw_value_accumulator.y = state.raw_value_accumulator.x;
-                paired_state.pair_sampled_axes |= 0b010;
-            }
-            else if (axis == PairedAxis::Z)
-            {
-                paired_state.raw_value_accumulator.z = state.raw_value_accumulator.x;
-                paired_state.pair_sampled_axes |= 0b100;
-            }
-            else
-            {
-                LOG_ERROR_TAG("Input", "Key {} has paired axis key {} but no valid paired axis!", params.key.get_name(), paired_key.get_name());
-            }
-
-            paired_state.sample_count_accumulator = std::max(paired_state.sample_count_accumulator, state.sample_count_accumulator);
-            test_event_edges(paired_state, length(paired_state.value));
-        }
-
-        return false;
-    }
-    // Non-analog key
     else
     {
-        // first event associated with this key, add it to the map
-        KeyState& state = key_state_map[params.key];
-
-        const float time_point = timer.elapsed();
-
-        switch (params.event)
+        this->event_callback = [](Event& e)
         {
-        case InputEvent::Pressed:
-        case InputEvent::Repeat:
-            state.raw_value_accumulator.x = params.delta.x;
-            state.event_accumulator[static_cast<uint8_t>(params.event)].push_back(++event_count);
-            if (!state.is_down_previous)
-            {
-                // check for doubleclick
-                // note, a tripleclick will currently count as a 2nd double click.
-                constexpr float double_click_time = 0.2f; // TODO: Get this from some config
-                if (time_point - state.last_up_down_transition_time < double_click_time)
-                {
-                    state.event_accumulator[static_cast<uint8_t>(InputEvent::DoubleClick)].push_back(++event_count);
-                }
-
-                // just went down
-                state.last_up_down_transition_time = time_point;
-            }
-            break;
-        case InputEvent::Released:
-            state.raw_value_accumulator.x = 0.f;
-            state.event_accumulator[static_cast<uint8_t>(InputEvent::Released)].push_back(++event_count);
-            break;
-        case InputEvent::DoubleClick:
-            state.raw_value_accumulator.x = params.delta.x;
-            state.event_accumulator[static_cast<uint8_t>(InputEvent::Pressed)].push_back(++event_count);
-            state.event_accumulator[static_cast<uint8_t>(InputEvent::DoubleClick)].push_back(++event_count);
-            break;
-        default:
-            break;
-        }
-        state.sample_count_accumulator++;
-
-        // We have now processed this key's state, so we can clear its "just flushed" flag and treat it normally
-        state.was_just_flushed = false;
-
-        return true;
+            LOGGER_ERROR("Unprocessed event: {}", e.to_string());
+        };
     }
-}
 
-void Input::process_inputs(const float delta_time)
-{
-    static std::unordered_map<Key, KeyState*> keys_with_events;
-    evaluate_key_states(delta_time, keys_with_events);
-    evaluate_input_delegates(delta_time, keys_with_events);
-    finish_processing_inputs();
-    keys_with_events.clear();
-}
-
-input::ActionBinding& Input::add_action_binding(input::ActionBinding in_bind)
-{
-    const auto& binding = action_bindings.emplace_back(std::make_shared<input::ActionBinding>(std::move(in_bind)));
-    binding->generate_new_handle();
-
-    if (binding->event == InputEvent::Pressed || binding->event == InputEvent::Released)
+    // We start from 1 to ignore `Key::Invalid`
+    for (int i = 1; i < std::to_underlying(Key::Max); i++)
     {
-        const auto paired_event = binding->event == InputEvent::Pressed ? InputEvent::Released : InputEvent::Pressed;
-        for (int32_t i = static_cast<int32_t>(action_bindings.size()) - 2; i >= 0; i--)
-        {
-            auto& action_binding = action_bindings[i];
-            if (action_binding->get_key() == binding->get_key())
-            {
-                // If we find a matching event that is already paired we know this is paired so mark it off and we're done
-                if (action_binding->is_paired())
-                {
-                    binding->paired = true;
-                    break;
-                }
-
-                // Otherwise if this is a pair to the new one mark them both as paired
-                // Don't break as there could be two bound paired events
-                if (action_binding->event == paired_event)
-                {
-                    action_binding->paired = true;
-                    binding->paired = true;
-                }
-            }
-        }
+        key_states[static_cast<Key>(i)] = KeyData{.key = static_cast<Key>(i)};
     }
-
-    return *binding;
 }
 
-void Input::clear_action_binding()
+bool Input::is_key_pressed(const Key key) const
 {
-    action_bindings.clear();
+    return key_states.at(key).state == KeyState::Pressed || key_states.at(key).state == KeyState::Repeat;
 }
 
-void Input::evaluate_key_states(const float delta_time, std::unordered_map<Key, KeyState*>& keys_with_events)
+bool Input::is_key_released(const Key key) const
 {
-    for (auto& [key, state] : key_state_map)
+    return key_states.at(key).state == KeyState::Released;
+}
+
+bool Input::is_key_repeating(const Key key) const
+{
+    return key_states.at(key).state == KeyState::Repeat;
+}
+
+void Input::report_key_action(const Key key, const KeyState state, const std::optional<KeyModifierFlag> modifiers)
+{
+    active_modifiers = modifiers.value_or(active_modifiers);
+
+    auto& key_data = key_states[key];
+    key_data.previous_state = key_data.state;
+    key_data.state = state;
+
+    // TODO: accumulate actions between process calls and make all events in one location
+    switch (state)
     {
-        bool key_has_events = false;
-
-        for (size_t i = 0; i < static_cast<uint8_t>(InputEvent::Max); i++)
-        {
-            state.event_counts[i].clear();
-            std::swap(state.event_counts[i], state.event_accumulator[i]);
-
-            if (!key_has_events && state.event_counts[i].size() > 0)
-            {
-                keys_with_events[key] = &state;
-                key_has_events = true;
-            }
-        }
-
-        if (state.sample_count_accumulator > 0 || key.should_update_axis_without_samples())
-        {
-            if (state.pair_sampled_axes)
-            {
-                // Paired keys sample only the axes that have changed, leaving unaltered axes in their previous state
-                for (int axis = 0; axis < 3; ++axis)
-                {
-                    if (state.pair_sampled_axes & (1 << axis))
-                    {
-                        state.raw_value[axis] = state.raw_value_accumulator[axis];
-                    }
-                }
-            }
-            else
-            {
-                // Unpaired keys just take the whole accumulator
-                state.raw_value = state.raw_value_accumulator;
-            }
-
-            // if we had no samples, we'll assume the state hasn't changed
-            // except for some axes, where no samples means the mouse stopped moving
-            if (state.sample_count_accumulator == 0)
-            {
-                state.event_counts[static_cast<uint8_t>(InputEvent::Released)].push_back(++event_count);
-                if (!key_has_events)
-                {
-                    keys_with_events[key] = &state;
-                    key_has_events = true;
-                }
-            }
-        }
-
-        if (key == Keys::MouseX && state.raw_value_accumulator.x != 0.f)
-        {
-            // calculate sampling time
-            // make sure not first non-zero sample
-            if (smoothed_mouse[0] != 0)
-            {
-                // not first non-zero
-                mouse_sampling_total += delta_time;
-                mouse_samples += state.sample_count_accumulator;
-            }
-        }
-
-        // if (key.is_axis_2D())
-        // {
-        // state.value = MassageVectorAxisInput(InKey, KeyState->RawValue);
-        // }
-        // else
-        // {
-        // KeyState->Value.X = MassageAxisInput(InKey, KeyState->RawValue.X);
-        // }
-
-        const auto press_delta = state.event_counts[static_cast<uint8_t>(InputEvent::Pressed)].size() - state.event_counts[static_cast<uint8_t>(
-            InputEvent::Released)].size();
-        if (press_delta < 0)
-        {
-            // If this is negative, we definitely released
-            state.is_down = false;
-        }
-        else if (press_delta > 0)
-        {
-            // If this is positive, we definitely pressed
-            state.is_down = true;
-        }
-        else
-        {
-            // If this is 0, we maintain state
-            state.is_down = state.is_down_previous;
-        }
-
-        // reset the accumulators
-        state.raw_value_accumulator = glm::vec3(0);
-        state.sample_count_accumulator = 0;
-        state.pair_sampled_axes = 0;
-    }
-    event_count = 0;
-}
-
-void Input::evaluate_input_delegates(float /*delta_time*/, std::unordered_map<Key, KeyState*>& keys_with_events)
-{
-    // TODO(#41): Handle axis
-    static std::vector<std::shared_ptr<input::ActionBinding>> actions;
-
-    for (auto& [key, state] : keys_with_events)
+    case KeyState::Pressed:
     {
-        // TODO: Use map instead
-        for (auto& action_bind: action_bindings)
-        {
-            if (action_bind->get_key() == key)
-            {
-                if (!state->event_counts[static_cast<uint8_t>(action_bind->event)].empty())
-                {
-                    actions.emplace_back(action_bind);
-                }
-            }
-        }
-
-        for (auto& action: actions)
-        {
-            if (action->delegate.is_bound())
-            {
-                // TODO: Cache all delegates and fire simultaneously
-                action->delegate.execute(key);
-            }
-        }
+        KeyPressedEvent event(key, active_modifiers);
+        event_callback(event);
+        break;
     }
-
-    actions.clear();
-}
-
-void Input::finish_processing_inputs()
-{
-    // finished processing input for this frame, clean up for next update
-    for (auto& state : key_state_map | std::views::values)
+    case KeyState::Released:
     {
-        state.is_down_previous = state.is_down;
-        state.is_consumed = false;
+        KeyReleasedEvent event(key);
+        event_callback(event);
+        break;
+    }
+    case KeyState::Repeat:
+    {
+        KeyRepeatEvent event(key, active_modifiers);
+        event_callback(event);
+        break;
+    }
     }
 }
-} // portal
+
+void Input::report_axis_change(Axis axis, glm::vec2 value)
+{
+    // TODO: accumulate changes between process calls and make all events in one location
+    switch (axis)
+    {
+    case Axis::Mouse:
+    {
+        mouse_position = value;
+        MouseMovedEvent event(value);
+        event_callback(event);
+        break;
+    }
+    case Axis::MouseScroll:
+    {
+        mouse_scroll = value;
+        MouseScrolledEvent event(value);
+        event_callback(event);
+        break;
+    }
+    }
+}
+
+void Input::set_cursor_mode(const CursorMode mode) const
+{
+    SetMouseCursorEvent event(mode);
+    event_callback(event);
+}
+
+void Input::transition_key_states()
+{
+    for (const auto& [key, data] : key_states)
+    {
+        if (data.state == KeyState::Pressed)
+            report_key_action(key, KeyState::Repeat, std::nullopt);
+    }
+}
+}
