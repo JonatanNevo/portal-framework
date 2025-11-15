@@ -3,12 +3,13 @@
 A modular cross-platform framework for creating C++ applications, with focus on graphics (3D) application.
 
 ## Supported Platforms
-> MSVC would have a slower start time due to my string hash implementation not being constexpr on MSVC
-- Windows
-  - Clang 19 (or clang-cl) or later [recommended]
+> MSVC builds would have a slower start time due to my string hash implementation not being constexpr on MSVC
+- Windows 11
+  - Clang 19 or later [recommended]
   - MSVC 19.44 or later
+- macOS 15 (Sequoia) or later
 - Linux
-- macOS
+  - TODO
 
 # Installation
 TODO
@@ -16,16 +17,21 @@ TODO
 TODO
 ## Submodule
 TODO
+
+# Standalone Build
 ## xcode
-TODO
 ```shell
 cmake --preset xcode
 ```
 This will generate an Xcode project in the `build/xcode` directory. You can open the project in Xcode and build it from there.
-## visual studio 
-```
+## visual studio
+```bash
 cmake --preset vs2022
 ```
+This will generate a Visual Studio solution in the `build/vs2022` directory.
+> vs2026 is also supported, but cmake 4.2+ is required
+
+
 
 # Modules
  - [**Portal Core**](docs/core.md) - The core module, provides common functionalities and libraries 
