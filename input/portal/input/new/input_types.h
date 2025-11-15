@@ -6,68 +6,24 @@
 #pragma once
 
 #include "portal/core/flags.h"
+#include "portal/engine/resources/resources/resource.h"
 
 namespace portal::ng
 {
-
-enum class ConsoleType
-{
-    None,
-    Xbox,
-    PlayStation
-};
-
-enum class PairedAxis : uint8_t
-{
-    Unpaired,
-    X,
-    Y,
-    Z,
-};
-
-enum class KeyFlagsBits: uint16_t
-{
-    GamepadKey               = 0b0000000000000001,
-    Touch                    = 0b0000000000000010,
-    MouseButton              = 0b0000000000000100,
-    ModifierKey              = 0b0000000000001000,
-    Axis1D                   = 0b0000000000010000,
-    Axis2D                   = 0b0000000000100000,
-    Axis3D                   = 0b0000000001000000,
-    UpdateAxisWithoutSamples = 0b0000000010000000,
-    ButtonAxis               = 0b0000000100000000, // Emulates a 1D axis with a digital button
-
-    // A key is "Virtual" if it is an abstract key whose actual value may change dependent on the platform.
-    // For example, the standard "Accept" button on some platforms may be Gamepad_FaceButton_Down, while on
-    // other platforms it may be Gamepad_FaceButton_Right.
-    //
-    // Virtual keys are typically the most useful when it comes to building UI related code because they allow you
-    // to create experiences and screens displayed to the end user which are consistent with the platform's UI.
-    Virtual = 0b0000010000000000,
-    Empty   = 0
-};
-
-using KeyFlags = Flags<KeyFlagsBits>;
-
 
 enum class Key: uint16_t
 {
     Invalid = 0,
     /// ----- Mouse -----
-    // Axis
-    MouseX,
-    MouseY,
-    Mouse2D,
-    MouseScrollUp,
-    MouseScrollDown,
-    MouseWheelAxis,
-
-    // Keys
-    LeftMouseButton,
-    RightMouseButton,
-    MiddleMouseButton,
-    ThumbMouseButton,
-    ThumbMouseButton2,
+    MouseButton0,
+    MouseButton1,
+    MouseButton2,
+    MouseButton3,
+    MouseButton4,
+    MouseButton5,
+    LeftMouseButton   = MouseButton0,
+    RightMouseButton  = MouseButton1,
+    MiddleMouseButton = MouseButton2,
 
     /// ----- Letters -----
     A,
@@ -133,7 +89,7 @@ enum class Key: uint16_t
     RightControl,
     LeftAlt,
     RightAlt,
-    LeftSystem,     // Windows Key in Windows, Command in Mac
+    LeftSystem, // Windows Key in Windows, Command in Mac
     RightSystem,
 
     /// ----- Control Keys -----
@@ -196,87 +152,48 @@ enum class Key: uint16_t
     RightParantheses,
     Quote,
 
-    /// ----- Gamepad -----
-    // Axis
-    GamepadLeftX,
-    GamepadLeftY,
-    GamepadLeft2D,
-    GamepadRightX,
-    GamepadRightY,
-    GamepadRight2D,
-    GamepadLeftTriggerAxis,
-    GamepadRightTriggerAxis,
+    // TODO: Add controller support
 
-    // Keys
-    GamepadLeftThumbstick,
-    GamepadRightThumbstick,
-    GamepadLeftShoulder, // TODO: Some newer controller have the shoulder button as an analog axis as well
-    GamepadRightShoulder,
-    GamepadLeftTrigger,
-    GamepadRightTrigger,
-    GamepadFaceRight,
-    GamepadFaceLeft,
-    GamepadFaceUp,
-    GamepadFaceDown,
-    GamepadDPadRight,
-    GamepadDPadLeft,
-    GamepadDPadUp,
-    GamepadDPadDown,
-    GamepadSpecialLeft,
-    GamepadSpecialRight,
-
-    /// ----- Virtual Keys -----
-
-    // Gamepad
-    GamepadLeftStickLeft,
-    GamepadLeftStickRight,
-    GamepadLeftStickUp,
-    GamepadLeftStickDown,
-    GamepadRightStickLeft,
-    GamepadRightStickRight,
-    GamepadRightStickUp,
-    GamepadRightStickDown,
-    GamepadVirtualAccept,
-    GamepadVirtualBack,
-
+    Max,
     Any = std::numeric_limits<std::underlying_type_t<Key>>::max()
 };
 
-enum class InputEventType: uint8_t
+enum class KeyState
 {
     Pressed,
     Released,
     Repeat,
-    DoubleClick,
-    Axis
 };
+
+enum class CursorMode
+{
+    Normal,
+    Hidden,
+    Locked
+};
+
+enum class KeyModifierBits: uint8_t
+{
+    None     = 0x00000000,
+    Shift    = 0x00000001,
+    Ctrl     = 0x00000010,
+    Alt      = 0x00000100,
+    System   = 0x00001000,
+    CapsLock = 0x00010000,
+    NumLock  = 0x00100000,
+};
+
+using KeyModifierFlag = Flags<KeyModifierBits>;
 
 }
 
 template <>
-struct ::portal::FlagTraits<::portal::ng::KeyFlagsBits>
+struct portal::FlagTraits<portal::ng::KeyModifierBits>
 {
-    using enum ng::KeyFlagsBits;
+    using enum ng::KeyModifierBits;
 
     static constexpr bool is_bitmask = true;
-    static constexpr Flags<ng::KeyFlagsBits> all_flags = GamepadKey | Touch | MouseButton | ModifierKey | Axis1D | Axis2D | Axis3D |
-        UpdateAxisWithoutSamples | ButtonAxis | Virtual;
+    static constexpr Flags<ng::KeyModifierBits> all_flags = Shift | Ctrl | Alt | System | CapsLock | NumLock;
 };
 
-// template <>
-// struct std::hash<portal::ng::Key>
-// {
-//     size_t operator()(const portal::ng::Key& key) const noexcept
-//     {
-//         return std::to_underlying(key);
-//     }
-// };
-//
-// template <>
-// struct frozen::elsa<portal::ng::Key>
-// {
-//     constexpr std::size_t operator()(const portal::ng::Key& value, const std::size_t seed) const
-//     {
-//         return seed ^ std::to_underlying(value);
-//     }
-// };
+
