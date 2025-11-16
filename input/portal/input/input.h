@@ -6,13 +6,13 @@
 #pragma once
 #include "llvm/ADT/DenseMap.h"
 #include "portal/core/events/event.h"
-#include "input_provider.h"
 #include "key_data.h"
+#include "portal/input/input_event_consumer.h"
 
 namespace portal
 {
 
-class Input final : public InputProvider
+class Input final : public InputEventConsumer
 {
 public:
     explicit Input(const std::optional<std::function<void(Event&)>>& event_callback = std::nullopt);

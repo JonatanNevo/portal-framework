@@ -6,7 +6,7 @@
 #include "allocated_buffer.h"
 
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
-#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
+#include "device/vulkan_physical_device.h"
 
 namespace portal::renderer::vulkan
 {

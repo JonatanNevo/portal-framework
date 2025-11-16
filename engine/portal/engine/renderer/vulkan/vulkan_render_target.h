@@ -22,8 +22,6 @@ public:
     ~VulkanRenderTarget() override;
 
     void resize(size_t new_width, size_t new_height, bool force_recreate) override;
-    void initialize();
-    void release();
 
     [[nodiscard]] size_t get_width() const override;
     [[nodiscard]] size_t get_height() const override;
@@ -38,6 +36,9 @@ public:
 
     [[nodiscard]] const vk::RenderingInfo& get_rendering_info() const;
 
+protected:
+    void initialize();
+    void release();
 
 private:
     render_target::Specification spec;

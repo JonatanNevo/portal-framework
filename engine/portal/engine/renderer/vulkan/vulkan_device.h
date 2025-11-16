@@ -5,13 +5,16 @@
 
 #pragma once
 
-#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
+#include "device/vulkan_physical_device.h"
 #include "portal/engine/renderer/vulkan/allocated_buffer.h"
 #include "portal/engine/renderer/vulkan/allocated_image.h"
 #include "portal/engine/renderer/vulkan/vulkan_common.h"
 #include "portal/core/strings/string_id.h"
+#include "portal/engine/renderer/device/device.h"
+#include "portal/engine/renderer/vulkan/queue/vulkan_queue.h"
 
-namespace portal::vulkan {
+namespace portal::vulkan
+{
 class DescriptorLayoutBuilder;
 }
 
@@ -19,20 +22,26 @@ namespace portal::renderer::vulkan
 {
 struct BufferBuilder;
 class PipelineBuilder;
+class VulkanQueue;
 
-class VulkanDevice final
+class VulkanDevice final : public Device
 {
 public:
-    using Features = vk::StructureChain<
-        vk::PhysicalDeviceFeatures2,
-        vk::PhysicalDeviceVulkan11Features,
-        vk::PhysicalDeviceVulkan12Features,
-        vk::PhysicalDeviceVulkan13Features,
-        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
-    >;
+    enum class QueueType
+    {
+        Graphics,
+        Compute,
+        Transfer,
+        Present
+    };
 
 public:
-    VulkanDevice(const VulkanPhysicalDevice& physical_device, const Features& device_features);
+    VulkanDevice(const VulkanPhysicalDevice& physical_device, const VulkanPhysicalDevice::Features& device_features);
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Queue Operations
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    void add_present_queue(Surface& surface);
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Object Creation
@@ -56,7 +65,25 @@ public:
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Synchronization
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Waits for one or more fences to be signaled or until the timeout expires.
+     *
+     * This method is used to synchronize the execution of the application with
+     * the GPU by waiting for specified fences to achieve the signaled state.
+     * This can be helpful in ensuring that GPU operations are completed before
+     * the application progresses further.
+     *
+     * @param fenceHandles A list of fence handles to wait on. These fences must
+     *        have been created and submitted prior to the invocation of this method.
+     * @param timeout The maximum amount of time, in nanoseconds, to wait for the
+     *        fences to become signaled. A value of UINT64_MAX can be used to wait
+     *        indefinitely.
+     * @param waitAll A boolean value indicating whether the function should wait
+     *        for all of the specified fences to be signaled (true) or any one
+     *        fence to be signaled (false).
+     * @return Returns a success or timeout result indicating whether the operation
+     *         completed successfully, timed out, or encountered an error.
+     */
 
     void wait_for_fences(vk::ArrayProxy<const vk::Fence> fences, bool wait_all, size_t timeout = std::numeric_limits<size_t>::max()) const;
     void wait_idle() const;
@@ -67,17 +94,17 @@ public:
 
     [[nodiscard]] vk::raii::Device& get_handle() { return device; }
     [[nodiscard]] const vk::raii::Device& get_handle() const { return device; }
-    [[nodiscard]] vk::Queue get_queue(size_t index, const StringId& name = INVALID_STRING_ID) const;
-    [[nodiscard]] vk::Queue get_graphics_queue() const { return graphics_queue; }
-    [[nodiscard]] vk::Queue get_compute_queue() const { return compute_queue; }
-    [[nodiscard]] vk::Queue get_transfer_queue() const { return transfer_queue; }
+    [[nodiscard]] const VulkanQueue& get_graphics_queue() const;
+    [[nodiscard]] const VulkanQueue& get_compute_queue() const;
+    [[nodiscard]] const VulkanQueue& get_transfer_queue() const;
+    [[nodiscard]] const VulkanQueue& get_present_queue() const;
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Debug
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    template<typename T>
+    template <typename T>
     void set_debug_name(const T& handle, StringId name) const
     {
         set_debug_name(handle, name.string.data());
@@ -105,7 +132,6 @@ public:
 
     void set_debug_name(vk::ObjectType type, uint64_t handle, const char* name) const;
 
-
 private:
     struct ImmediateCommandBuffer
     {
@@ -118,21 +144,13 @@ private:
     void initialize_immediate_commands();
 
 private:
+    const VulkanPhysicalDevice& physical_device;
     vk::raii::Device device = nullptr;
 
-    const VulkanPhysicalDevice& physical_device;
-
-    Features enabled_features;
-
-    vk::Queue graphics_queue = nullptr;
-    vk::Queue compute_queue = nullptr;
-    vk::Queue transfer_queue = nullptr;
+    std::unordered_map<QueueType, VulkanQueue> queues;
 
     ImmediateCommandBuffer immediate_command_buffer;
-
     vk::raii::PipelineCache pipeline_cache = nullptr;
-
-    // TODO: present queue?
 
     bool debug_marker_enabled = false;
 

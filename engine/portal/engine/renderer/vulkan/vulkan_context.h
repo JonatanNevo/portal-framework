@@ -8,7 +8,7 @@
 
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_instance.h"
-#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
+#include "device/vulkan_physical_device.h"
 
 namespace portal::renderer::vulkan
 {
@@ -21,15 +21,14 @@ public:
 
     const vk::raii::Instance& get_instance() const;
     const VulkanDevice& get_device() const;
+    VulkanDevice& get_device();
     const VulkanPhysicalDevice& get_physical_device() const;
 
 private:
-    // Vulkan types
     vk::raii::Context context{};
     VulkanInstance instance;
 
-    // Overloaded renderer types
-    VulkanPhysicalDevice physical_device;
+    VulkanPhysicalDevice& physical_device;
     VulkanDevice device;
 };
 

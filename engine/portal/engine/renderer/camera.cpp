@@ -14,8 +14,8 @@ namespace portal
 
 Camera::Camera(Input& input): input(input)
 {
-    forward_direction = glm::vec3{0, 0, -1};
-    position = glm::vec3{0.f, 0.f, 5.f};
+    forward_direction = glm::vec3{0.54, -0.42, -0.72};
+    position = glm::vec3{-0.51f, 0.4f, 0.74f};
 
     recalculate_projection();
     recalculate_view();

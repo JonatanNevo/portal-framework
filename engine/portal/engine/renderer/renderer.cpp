@@ -36,11 +36,10 @@
 #include "portal/engine/renderer/pipeline/pipeline.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_material.h"
-#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
+#include "vulkan/device/vulkan_physical_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_pipeline.h"
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
-#include "portal/engine/renderer/vulkan/vulkan_window.h"
 
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
 #include "portal/input/input_events.h"
@@ -50,18 +49,17 @@ namespace portal
 
 [[maybe_unused]] static auto logger = Log::get_logger("Renderer");
 
-Renderer::Renderer(Input& input, renderer::vulkan::VulkanContext& context, renderer::vulkan::VulkanWindow* window)
+Renderer::Renderer(Input& input, renderer::vulkan::VulkanContext& context, const Reference<renderer::vulkan::VulkanSwapchain>& swapchain)
     :
+    swapchain(swapchain),
     context(context),
-    window(window),
     renderer_context(context, render_target, scene_descriptor_set_layouts),
     camera(input)
 {
     PORTAL_PROF_ZONE();
-    PORTAL_ASSERT(window != nullptr, "window is null");
 
-    init_swap_chain();
-    camera.on_resize(static_cast<uint32_t>(window->get_width()), static_cast<uint32_t>(window->get_height()));
+    make_render_target();
+    camera.on_resize(static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height()));
     init_descriptors();
 
     is_initialized = true;
@@ -89,6 +87,7 @@ void Renderer::cleanup()
         frame_data.clear();
         scene_descriptor_set_layouts.clear();
         render_target = nullptr;
+        swapchain.reset();
     }
     is_initialized = false;
 }
@@ -96,6 +95,16 @@ void Renderer::cleanup()
 const RendererContext& Renderer::get_renderer_context() const
 {
     return renderer_context;
+}
+
+size_t Renderer::get_frames_in_flight() const
+{
+    return swapchain->get_frames_in_flight();
+}
+
+const renderer::vulkan::VulkanSwapchain& Renderer::get_swapchain() const
+{
+    return *swapchain;
 }
 
 void Renderer::on_event(Event& event)
@@ -150,7 +159,7 @@ void Renderer::update_imgui([[maybe_unused]] float delta_time)
 FrameData& Renderer::get_current_frame_data()
 {
     ZoneScoped;
-    return frame_data[window->get_swapchain().get_current_frame()];
+    return frame_data[swapchain->get_current_frame()];
 }
 
 void Renderer::update_scene([[maybe_unused]] float delta_time, ResourceReference<Scene>& scene)
@@ -186,17 +195,23 @@ void Renderer::update_scene([[maybe_unused]] float delta_time, ResourceReference
 void Renderer::begin_frame()
 {
     PORTAL_PROF_ZONE();
+    swapchain->begin_frame();
 
-    const auto& current_command_buffer = window->get_swapchain().get_current_draw_command_buffer();
+    // Resets descriptor pools
+    clean_frame();
+
+    const auto& current_command_buffer = swapchain->get_current_draw_command_buffer();
     // begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
     current_command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
 }
 
 void Renderer::end_frame()
 {
-    const auto& current_command_buffer = window->get_swapchain().get_current_draw_command_buffer();
+    const auto& current_command_buffer = swapchain->get_current_draw_command_buffer();
     current_command_buffer.end();
     // TODO: should we submit to graphics queue here?
+
+    swapchain->present();
 }
 
 void Renderer::clean_frame()
@@ -208,7 +223,7 @@ void Renderer::clean_frame()
 
 void Renderer::draw_geometry()
 {
-    auto& current_command_buffer = window->get_swapchain().get_current_draw_command_buffer();
+    auto& current_command_buffer = swapchain->get_current_draw_command_buffer();
 
     auto draw_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_image(0));
     auto depth_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_depth_image());
@@ -258,7 +273,7 @@ void Renderer::draw_geometry()
             );
         vulkan::transition_image_layout(
             current_command_buffer,
-            window->get_swapchain().get_current_draw_image(),
+            swapchain->get_current_draw_image(),
             1,
             vk::ImageLayout::eUndefined,
             vk::ImageLayout::eTransferDstOptimal,
@@ -273,9 +288,9 @@ void Renderer::draw_geometry()
         vulkan::copy_image_to_image(
             current_command_buffer,
             draw_image->get_image_info().image.get_handle(),
-            window->get_swapchain().get_current_draw_image(),
+            swapchain->get_current_draw_image(),
             {static_cast<uint32_t>(draw_image->get_width()), static_cast<uint32_t>(draw_image->get_height())},
-            {static_cast<uint32_t>(window->get_swapchain().get_width()), static_cast<uint32_t>(window->get_swapchain().get_height())}
+            {static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height())}
             );
     }
 }
@@ -291,7 +306,7 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
     auto start = std::chrono::system_clock::now();
     auto& current_frame = get_current_frame_data();
 
-    auto current_frame_index = window->get_swapchain().get_current_frame();
+    auto current_frame_index = swapchain->get_current_frame();
 
     std::unordered_map<StringId, std::vector<uint32_t>> render_by_material;
     render_by_material.reserve(draw_context.render_objects.size());
@@ -360,15 +375,15 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
                         vk::Viewport(
                             0.0f,
                             0.0f,
-                            static_cast<float>(window->get_width()),
-                            static_cast<float>(window->get_height()),
+                            static_cast<float>(swapchain->get_width()),
+                            static_cast<float>(swapchain->get_height()),
                             0.0f,
                             1.0f
                             )
                         );
                     command_buffer.setScissor(
                         0,
-                        vk::Rect2D(vk::Offset2D(0, 0), {static_cast<uint32_t>(window->get_width()), static_cast<uint32_t>(window->get_height())})
+                        vk::Rect2D(vk::Offset2D(0, 0), {static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height())})
                         );
                 }
 
@@ -437,18 +452,19 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
     stats.mesh_draw_time = elapsed.count() / 1000.f;
 }
 
-void Renderer::on_resize(size_t new_width, size_t new_height)
+void Renderer::on_resize(const size_t new_width, const size_t new_height)
 {
+    swapchain->on_resize(new_width, new_height);
     render_target->resize(new_width, new_height, true);
     camera.on_resize(static_cast<uint32_t>(new_width), static_cast<uint32_t>(new_height));
 }
 
 
-void Renderer::init_swap_chain()
+void Renderer::make_render_target()
 {
     renderer::render_target::Specification spec{
-        .width = window->get_width(),
-        .height = window->get_height(),
+        .width = swapchain->get_width(),
+        .height = swapchain->get_height(),
         .attachments = {
             .attachments = {
                 {
@@ -479,9 +495,9 @@ void Renderer::init_descriptors()
     };
 
     frame_data.clear();
-    frame_data.reserve(window->get_swapchain().get_frames_in_flight());
+    frame_data.reserve(swapchain->get_frames_in_flight());
 
-    for (size_t i = 0; i < window->get_swapchain().get_frames_in_flight(); ++i)
+    for (size_t i = 0; i < swapchain->get_frames_in_flight(); ++i)
     {
         std::vector<vulkan::DescriptorAllocator::PoolSizeRatio> frame_sizes = {
             {vk::DescriptorType::eStorageImage, 3},
@@ -535,7 +551,7 @@ void Renderer::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& 
         .pCommandBufferInfos = &cmd_submit_info
     };
 
-    context.get_device().get_graphics_queue().submit2({submit_info}, immediate_fence);
+    context.get_device().get_graphics_queue().submit({submit_info}, immediate_fence);
     context.get_device().wait_for_fences({immediate_fence}, true, std::numeric_limits<uint64_t>::max());
 }
 

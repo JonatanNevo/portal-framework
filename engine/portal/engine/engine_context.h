@@ -7,7 +7,7 @@
 
 #include "portal/engine/renderer/renderer.h"
 #include "portal/engine/resources/resource_registry.h"
-#include "portal/engine/application/window.h"
+#include "window/window.h"
 
 namespace portal
 {

@@ -13,10 +13,10 @@ namespace portal
 /**
  * An internal class for type-erased communication between the platform message loop and the input system
  */
-class InputProvider
+class InputEventConsumer
 {
 public:
-    virtual ~InputProvider() = default;
+    virtual ~InputEventConsumer() = default;
 
     virtual void report_key_action(Key key, KeyState state,std::optional<KeyModifierFlag> modifiers);
     virtual void report_axis_change(Axis axis, glm::vec2 value);

@@ -10,8 +10,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "portal/engine/reference.h"
 #include "portal/engine/renderer/deletion_queue.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
+#include "portal/engine/renderer/vulkan/surface/vulkan_surface.h"
 
 namespace portal::renderer::vulkan
 {
@@ -42,7 +44,7 @@ struct FrameInFlightData
 class VulkanSwapchain
 {
 public:
-    VulkanSwapchain(const VulkanContext& context, GLFWwindow* window);
+    VulkanSwapchain(const VulkanContext& context, const Reference<Surface>& surface);
 
     void create(uint32_t* request_width, uint32_t* request_height, bool new_vsync);
     void destroy();
@@ -60,9 +62,9 @@ public:
     size_t get_current_frame() const { return current_frame; }
     [[nodiscard]] size_t get_frames_in_flight() const { return frames_in_flight; }
 
-    vk::raii::CommandBuffer& get_current_draw_command_buffer() { return images_data[current_image].command_buffer; }
+    const vk::raii::CommandBuffer& get_current_draw_command_buffer() const { return images_data[current_image].command_buffer; }
     vk::raii::CommandPool& get_current_draw_command_pool() { return images_data[current_image].command_pool; }
-    vk::raii::ImageView& get_current_draw_image_view() { return images_data[current_image].image_view; }
+    const vk::raii::ImageView& get_current_draw_image_view() const { return images_data[current_image].image_view; }
     vk::Image get_current_draw_image() const { return images_data[current_image].image; }
 
     void set_vsync(const bool new_vsync) { vsync = new_vsync; }
@@ -76,15 +78,12 @@ private:
     const VulkanContext& context;
     bool vsync = false;
 
+    Reference<VulkanSurface> surface;
     vk::raii::SwapchainKHR swapchain = nullptr;
-    vk::raii::SurfaceKHR surface = nullptr;
-    size_t present_queue_family_index = 0;
-    vk::Queue present_queue = nullptr;
 
     size_t width = 0, height = 0;
     vk::Format color_format{};
     vk::ColorSpaceKHR color_space{};
-
 
     std::vector<vk::Image> swap_chain_images;
     std::vector<SwapchainImageData> images_data;
