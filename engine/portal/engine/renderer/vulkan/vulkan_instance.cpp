@@ -9,6 +9,8 @@
 
 #include "portal/core/debug/assert.h"
 #include "portal/core/debug/profile.h"
+#include "portal/engine/renderer/vulkan/vulkan_device.h"
+#include "portal/engine/renderer/vulkan/device/vulkan_physical_device.h"
 
 namespace portal::renderer::vulkan
 {
@@ -23,6 +25,54 @@ constexpr bool ENABLE_VALIDATION_LAYERS = true;
 constexpr bool ENABLE_VALIDATION_LAYERS = false;
 #endif
 const auto logger = Log::get_logger("Vulkan");
+
+uint32_t rate_device_suitability(const VulkanPhysicalDevice& device)
+{
+    uint32_t score = 0;
+    const auto& properties = device.get_properties();
+    const auto& features = device.get_features();
+    const auto& queue_families = device.get_queue_family_properties();
+
+    if (std::ranges::find_if(
+        queue_families,
+        [](const auto& prop)
+        {
+            return (prop.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
+        }
+        ) == queue_families.end())
+    {
+        LOGGER_TRACE("Candidate: {} does not support graphics queue", properties.deviceName.data());
+        return 0;
+    }
+
+    for (const auto& extension : REQUIRED_DEVICE_EXTENSIONS)
+    {
+        if (!device.is_extension_supported(extension))
+        {
+            LOGGER_TRACE("Candidate: {} does not support extension {}", extension, extension);
+            return 0;
+        }
+    }
+
+    if (!features.samplerAnisotropy)
+    {
+        LOGGER_TRACE("Candidate: {} does not support sampler anisotropy", properties.deviceName.data());
+        return 0;
+    }
+
+    // Discrete GPUs have a significant performance advantage
+    if (properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+    {
+        score += 1000;
+    }
+
+    // Maximum possible size of textures affects graphics quality
+    score += properties.limits.maxImageDimension2D;
+
+    LOGGER_DEBUG("Gpu candidate: {} with score {}", properties.deviceName.data(), score);
+    return score;
+}
+
 
 
 bool check_driver_api_version_support(const uint32_t requested_version)
@@ -191,6 +241,8 @@ VulkanInstance::VulkanInstance(vk::raii::Context& context): context(context)
         };
         debug_messenger = instance.createDebugUtilsMessengerEXT(debug_utils_create);
     }
+
+    query_physical_devices();
 }
 
 const vk::raii::Instance& VulkanInstance::get_instance() const
@@ -201,6 +253,46 @@ const vk::raii::Instance& VulkanInstance::get_instance() const
 const DebugMessenger& VulkanInstance::get_debug_messenger() const
 {
     return messenger;
+}
+
+VulkanPhysicalDevice& VulkanInstance::get_suitable_gpu() const
+{
+    PORTAL_ASSERT(!physical_devices.empty(), "No physical devices found!");
+
+
+    std::multimap<uint32_t, std::reference_wrapper<VulkanPhysicalDevice>> candidates;
+    for (const auto& dev : physical_devices)
+    {
+        uint32_t score = rate_device_suitability(*dev );
+        candidates.emplace(score, *dev);
+    }
+
+    // Check if the best candidate is suitable at all
+    if (candidates.rbegin()->first > 0)
+    {
+        auto& dev = candidates.rbegin()->second.get();
+        LOGGER_INFO("Picked GPU: {}", dev.get_properties().deviceName.data());
+        return dev;
+    }
+
+    LOGGER_ERROR("Failed to find suitable GPU!");
+    throw std::runtime_error("Failed to find suitable GPU!");
+}
+
+void VulkanInstance::query_physical_devices()
+{
+    const auto devices = instance.enumeratePhysicalDevices();
+    if (devices.empty())
+    {
+        LOGGER_ERROR("No Vulkan physical devices found!");
+        throw std::runtime_error("No Vulkan physical devices found!");
+    }
+
+    // Create gpus wrapper objects from the vk::PhysicalDevice's
+    for (auto device: devices)
+    {
+        physical_devices.emplace_back(std::make_unique<VulkanPhysicalDevice>(std::move(device)));
+    }
 }
 
 std::vector<const char*> VulkanInstance::get_required_instance_extensions(const bool enable_validation_layers)

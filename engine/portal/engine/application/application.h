@@ -12,6 +12,7 @@
 #include "portal/engine/imgui/im_gui_module.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/core/strings/string_id.h"
+#include "portal/engine/window/window_event_consumer.h"
 
 namespace portal
 {
@@ -30,11 +31,11 @@ struct ApplicationSpecification
     int32_t scheduler_worker_num = 1;
 };
 
-class Application
+class Application: public WindowEventConsumer
 {
 public:
     explicit Application(const ApplicationSpecification& spec);
-    ~Application();
+    ~Application() override;
 
     void run();
     void stop();
@@ -50,8 +51,10 @@ public:
 
     void render_gui();
 
-private:
-    bool on_resize(WindowResizeEvent& e);
+    void on_resize(WindowExtent extent) override;
+    void on_focus(bool set_focused) override;
+    void on_close() override;
+
 
 private:
     ApplicationSpecification spec;
@@ -74,6 +77,7 @@ private:
     float last_frame_time = 0;
     float frame_time = 0;
     float time_step = 0;
+    [[maybe_unused]] bool focused = true;
 
     std::atomic_flag should_stop;
 

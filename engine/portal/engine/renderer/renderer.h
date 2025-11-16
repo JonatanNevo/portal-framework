@@ -18,6 +18,7 @@
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/rendering_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
+#include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 #include "portal/engine/scene/draw_context.h"
 #include "portal/engine/scene/scene.h"
 
@@ -55,7 +56,7 @@ struct FrameData
 class Renderer final : public EventHandler
 {
 public:
-    Renderer(Input& input, renderer::vulkan::VulkanContext& context, renderer::vulkan::VulkanWindow* window);
+    Renderer(Input& input, renderer::vulkan::VulkanContext& context, const Reference<renderer::vulkan::VulkanSwapchain>& swapchain);
     ~Renderer() override;
 
     void cleanup();
@@ -75,19 +76,21 @@ public:
     FrameData& get_current_frame_data();
 
     [[nodiscard]] const RendererContext& get_renderer_context() const;
+    [[nodiscard]] size_t get_frames_in_flight() const;
+    [[nodiscard]] const renderer::vulkan::VulkanSwapchain& get_swapchain() const;
+
     void on_event(Event& event) override;
 
 private:
-    void init_swap_chain();
+    void make_render_target();
     void init_descriptors();
 
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
 
 private:
+    Reference<renderer::vulkan::VulkanSwapchain> swapchain;
     renderer::vulkan::VulkanContext& context;
 
-    // TODO: should this be pointer?
-    renderer::vulkan::VulkanWindow* window = nullptr;
     Reference<renderer::RenderTarget> render_target = nullptr;
 
     EngineStats stats = {};

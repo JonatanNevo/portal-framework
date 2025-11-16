@@ -12,7 +12,7 @@
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
-#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
+#include "device/vulkan_physical_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"
 
 namespace portal::renderer::vulkan
@@ -47,77 +47,17 @@ vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& av
     return present_mode;
 }
 
-VulkanSwapchain::VulkanSwapchain(const VulkanContext& context, GLFWwindow* window) : context(context)
+VulkanSwapchain::VulkanSwapchain(const VulkanContext& context, const Reference<Surface>& surface): context(context), surface(reference_cast<VulkanSurface>(surface))
 {
-    auto& physical_device = context.get_physical_device();
-    auto& device = context.get_device();
-
-    VkSurfaceKHR surface_handle;
-    if (glfwCreateWindowSurface(*context.get_instance(), window, nullptr, &surface_handle) != VK_SUCCESS)
-    {
-        LOGGER_ERROR("Failed to create window surface!");
-        //TODO: exit?
-        return;
-    }
-    surface = vk::raii::SurfaceKHR(context.get_instance(), surface_handle);
-
-    // TODO: move queue creation to device somehow?
-    const auto queue_family_properties = physical_device.get_handle().getQueueFamilyProperties();
-
-    // Iterate over each queue to learn whether it supports presenting:
-    // Find a queue with present support
-    // Will be used to present the swap chain images to the windowing system
-    std::vector supports_present(queue_family_properties.size(), false);
-    for (uint32_t i = 0; i < queue_family_properties.size(); i++)
-    {
-        supports_present[i] = physical_device.get_handle().getSurfaceSupportKHR(i, *surface);
-    }
-
-
-    // Search for a graphics and a present queue in the array of queue
-    // families, try to find one that supports both
-    size_t graphics_queue_index = std::numeric_limits<size_t>::max();
-    size_t present_queue_index = std::numeric_limits<size_t>::max();
-
-    size_t i = 0;
-    for (auto& prop : queue_family_properties)
-    {
-        if ((prop.queueFlags & vk::QueueFlagBits::eGraphics) != vk::QueueFlagBits{0})
-        {
-            if (graphics_queue_index == std::numeric_limits<size_t>::max())
-                graphics_queue_index = i;
-
-            if (supports_present[i])
-            {
-                graphics_queue_index = i;
-                present_queue_index = i;
-                break;
-            }
-        }
-        ++i;
-    }
-
-    if (present_queue_index == std::numeric_limits<size_t>::max())
-    {
-        // If there's no queue that supports both present and graphics
-        // try to find a separate present queue
-        for (size_t index = 0; index < queue_family_properties.size(); ++index)
-        {
-            if (supports_present[index])
-            {
-                present_queue_index = index;
-                break;
-            }
-        }
-    }
-
-    PORTAL_ASSERT(graphics_queue_index != std::numeric_limits<size_t>::max(), "Failed to find a suitable graphics queue!");
-    PORTAL_ASSERT(present_queue_index != std::numeric_limits<size_t>::max(), "Failed to find a suitable present queue!");
-
-    present_queue_family_index = present_queue_index;
-    present_queue = device.get_queue(present_queue_index);
     find_image_format_and_color_space();
 
+    auto extent = surface->get_extent();
+    // TODO: propagate vsync to swapchain?
+    create(reinterpret_cast<uint32_t*>(&extent.x), reinterpret_cast<uint32_t*>(&extent.y), true);
+    if (extent != surface->get_extent())
+    {
+        LOG_WARN("Extent changed during swapchain creation");
+    }
 }
 
 void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, const bool new_vsync)
@@ -133,8 +73,8 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
 
     auto old_swapchain = std::move(swapchain);
 
-    const auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(*surface);
-    const auto present_modes = physical_device.getSurfacePresentModesKHR(*surface);
+    const auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(surface->get_vulkan_surface());
+    const auto present_modes = physical_device.getSurfacePresentModesKHR(surface->get_vulkan_surface());
 
     vk::Extent2D swapchain_extent = {};
     if (surface_capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
@@ -195,7 +135,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
 
     vk::SwapchainCreateInfoKHR swap_chain_create_info = {
         .flags = vk::SwapchainCreateFlagsKHR(),
-        .surface = surface,
+        .surface = surface->get_vulkan_surface(),
         .minImageCount = min_image_count,
         .imageFormat = color_format,
         .imageColorSpace = color_space,
@@ -255,7 +195,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
 
         const vk::CommandPoolCreateInfo pool_info{
             .flags = vk::CommandPoolCreateFlagBits::eTransient,
-            .queueFamilyIndex = static_cast<uint32_t>(present_queue_family_index),
+            .queueFamilyIndex = static_cast<uint32_t>(context.get_device().get_graphics_queue().get_family_index()),
         };
         command_pool = device.get_handle().createCommandPool(pool_info);
         device.set_debug_name(command_pool, fmt::format("swapchain_command_pool_{}", i).c_str());
@@ -348,16 +288,36 @@ void VulkanSwapchain::present()
     const auto& frame = frame_data[current_frame];
     const auto& image = images_data[current_image];
 
-    vk::PipelineStageFlags wait_destination_stage_mask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+    const vk::PipelineStageFlags2 wait_destination_stage_mask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
 
-    const vk::SubmitInfo submit_info{
-        .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &*frame.image_available_semaphore,
-        .pWaitDstStageMask = &wait_destination_stage_mask,
-        .commandBufferCount = 1,
-        .pCommandBuffers = &*image.command_buffer,
-        .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &*frame.render_finished_semaphore,
+    const vk::SemaphoreSubmitInfo wait_semaphore_info{
+        .semaphore = *frame.image_available_semaphore,
+        .value = 0, // Assuming binary semaphores are used (value is ignored/defaulted)
+        .stageMask = wait_destination_stage_mask,
+        .deviceIndex = 0,
+    };
+
+    const vk::SemaphoreSubmitInfo signal_semaphore_info{
+        .semaphore = *frame.render_finished_semaphore,
+        .value = 0, // Assuming binary semaphores are used
+        .stageMask = vk::PipelineStageFlagBits2::eAllCommands, // Signal when all commands are done
+        .deviceIndex = 0,
+    };
+
+    const vk::CommandBufferSubmitInfo command_buffer_info{
+        .commandBuffer = *image.command_buffer,
+        .deviceMask = 0
+    };
+
+    const vk::SubmitInfo2 submit_info{
+        .waitSemaphoreInfoCount = 1,
+        .pWaitSemaphoreInfos = &wait_semaphore_info,
+
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &command_buffer_info,
+
+        .signalSemaphoreInfoCount = 1,
+        .pSignalSemaphoreInfos = &signal_semaphore_info,
     };
 
     context.get_device().get_handle().resetFences({frame.wait_fence});
@@ -381,7 +341,7 @@ void VulkanSwapchain::present()
         };
         try
         {
-            const auto result = present_queue.presentKHR(present_info);
+            const auto result = context.get_device().get_present_queue().present(present_info);
             if (result != vk::Result::eSuccess)
             {
                 if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
@@ -445,7 +405,7 @@ void VulkanSwapchain::find_image_format_and_color_space()
 {
     const auto physical_device = context.get_physical_device().get_handle();
 
-    auto surface_formats = physical_device.getSurfaceFormatsKHR(*surface);
+    auto surface_formats = physical_device.getSurfaceFormatsKHR(surface->get_vulkan_surface());
 
     // If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
     // there is no preferred format, so we assume eB8G8R8A8Unorm

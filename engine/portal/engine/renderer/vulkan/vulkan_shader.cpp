@@ -9,7 +9,7 @@
 
 #include "portal/engine/renderer/descriptor_layout_builder.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
-#include "portal/engine/renderer/vulkan/vulkan_physical_device.h"
+#include "device/vulkan_physical_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 

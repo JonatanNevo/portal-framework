@@ -11,12 +11,13 @@
 #include "portal/core/log.h"
 #include "portal/core/debug/assert.h"
 #include "portal/engine/settings.h"
-#include "portal/engine/application/window.h"
+#include "../window/window.h"
 #include "portal/engine/imgui/im_gui_module.h"
-#include "portal/engine/renderer/vulkan/vulkan_window.h"
+#include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 #include "portal/engine/resources/database/folder_resource_database.h"
 #include "portal/engine/resources/resources/composite.h"
 #include "portal/engine/scene/nodes/mesh_node.h"
+#include "portal/engine/window/glfw_window.h"
 
 namespace portal
 {
@@ -25,42 +26,31 @@ class WindowCloseEvent;
 
 static auto logger = Log::get_logger("Application");
 
-static void glfw_error_callback(int error, const char* description)
-{
-    LOGGER_ERROR("GLFW error {}: {}", error, description);
-}
-
 Application::Application(const ApplicationSpecification& spec) : spec(spec)
 {
-    // TODO: make generic
-    const auto result = glfwInit();
-    PORTAL_ASSERT(result == GLFW_TRUE, "Failed to initialize GLFW");
-    glfwSetErrorCallback(glfw_error_callback);
-
     input = std::make_unique<Input>(
-        [this](auto& event)
-        {
-            on_event(event);
-        }
-        );
+    [this](auto& event)
+    {
+        on_event(event);
+    }
+    );
 
-    const WindowSpecification window_spec{
+
+    const WindowProperties window_properties{
         .title = spec.name,
-        .width = spec.width,
-        .height = spec.height,
+        .extent = {spec.width, spec.width},
     };
+    window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, *input});
+
 
     vulkan_context = std::make_unique<renderer::vulkan::VulkanContext>();
-    window = make_reference<renderer::vulkan::VulkanWindow>(*input, *vulkan_context, window_spec);
-    window->set_event_callback(
-        [this](auto& event)
-        {
-            on_event(event);
-        }
-        );
 
-    renderer = make_reference<Renderer>(*input, *vulkan_context, std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window).get());
+    auto surface = window->create_surface(*vulkan_context);
+    // TODO: find better surface control
+    vulkan_context->get_device().add_present_queue(*surface);
 
+    auto swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(*vulkan_context, surface);
+    renderer = make_reference<Renderer>(*input, *vulkan_context, swapchain);
 
     scheduler = std::make_unique<jobs::Scheduler>(spec.scheduler_worker_num);
     reference_manager = std::make_unique<ReferenceManager>();
@@ -114,8 +104,6 @@ void Application::run()
         auto scene = engine_context->get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
         PORTAL_ASSERT(scene.get_state() == ResourceState::Loaded, "Failed to load scene");
 
-        auto vulkan_window = std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window);
-
         should_stop.clear();
 
         LOGGER_INFO("Starting application");
@@ -130,10 +118,6 @@ void Application::run()
 
             // Run single iteration of renderer::draw
             {
-                vulkan_window->get_swapchain().begin_frame();
-
-                // Resets descriptor pools
-                renderer->clean_frame();
                 renderer->begin_frame();
                 imgui_module->begin();
 
@@ -221,10 +205,9 @@ void Application::run()
                 }
 
                 renderer->end_frame();
-                window->swap_buffers();
 
 
-                current_frame_count = (current_frame_count + 1) % vulkan_window->get_swapchain().get_frames_in_flight();
+                current_frame_count = (current_frame_count + 1) % renderer->get_frames_in_flight();
                 PORTAL_FRAME_MARK();
             }
 
@@ -264,18 +247,8 @@ void Application::on_update(float)
 
 void Application::on_event(Event& event)
 {
-    for (auto& handler: event_handlers)
+    for (auto& handler : event_handlers)
         handler.get().on_event(event);
-
-    EventRunner runner(event);
-    runner.run_on<WindowCloseEvent>(
-        [&](WindowCloseEvent&)
-        {
-            should_stop.test_and_set();
-            return false;
-        }
-        );
-    runner.run_on<WindowResizeEvent>([&](WindowResizeEvent& e) { return on_resize(e); });
 }
 
 void Application::add_module(std::shared_ptr<Module>)
@@ -290,15 +263,26 @@ void Application::render_gui()
 {
 }
 
-bool Application::on_resize(portal::WindowResizeEvent& e)
+void Application::on_resize(const WindowExtent extent)
 {
-    if (e.get_width() == 0 || e.get_height() == 0)
-        return false;
+    if (extent.width == 0 || extent.height == 0)
+        return;
 
-    const auto vulkan_window = std::dynamic_pointer_cast<renderer::vulkan::VulkanWindow>(window);
-    vulkan_window->get_swapchain().on_resize(e.get_width(), e.get_height());
-    renderer->on_resize(e.get_width(), e.get_height());
-    return false;
+    const auto glfw_window = reference_cast<GlfwWindow>(window);
+    auto [width, height] = glfw_window->resize(extent);
+
+    renderer->on_resize(width, height);
 }
+
+void Application::on_focus(const bool set_focused)
+{
+    focused = set_focused;
+}
+
+void Application::on_close()
+{
+    should_stop.test_and_set();
+}
+
 
 } // portal
