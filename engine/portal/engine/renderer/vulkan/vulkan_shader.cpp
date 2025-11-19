@@ -327,7 +327,7 @@ void VulkanShaderVariant::create_descriptors()
             shader_descriptor_set.storage_images.size()
             );
 
-        builder.set_name(STRING_ID(fmt::format("{}_layout_{}", name.string, set)));
+        builder.set_name(STRING_ID(std::format("{}_layout_{}", name.string, set)));
         descriptor_layouts.emplace_back(device.create_descriptor_set_layout(builder));
     }
 }

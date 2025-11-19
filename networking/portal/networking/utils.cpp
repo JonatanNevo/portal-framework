@@ -5,6 +5,8 @@
 
 #include "utils.h"
 
+#include <ranges>
+
 #include "portal/core/string_utils.h"
 
 #ifdef _WIN32
@@ -54,11 +56,16 @@ std::vector<SteamNetworkingIPAddr> resolve_address(std::string_view address)
     std::string domain, port;
     if (has_port)
     {
-        auto domain_and_port = split(address, ':');
-        if (domain_and_port.size() != 2)
+        auto domain_and_port = address | std::views::split(':');
+        if (std::ranges::distance(domain_and_port) != 2)
             return {};
-        domain = domain_and_port[0];
-        port = domain_and_port[1];
+
+        auto it = domain_and_port.begin();
+        auto domain_range = *it;
+        auto port_range = *++it;
+
+        domain = std::string(domain_range.begin(), domain_range.end());
+        port = std::string(port_range.begin(), port_range.end());
         address = domain;
     }
 

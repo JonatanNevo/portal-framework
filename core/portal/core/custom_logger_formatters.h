@@ -8,7 +8,7 @@
 #include "portal/core/glm.h"
 #include "portal/core/common.h"
 
-namespace fmt
+namespace std
 {
 template <>
 struct formatter<glm::vec2>
@@ -32,8 +32,8 @@ struct formatter<glm::vec2>
     auto format(const glm::vec2& vec, FormatContext& ctx) const
     {
         return presentation == 'f'
-                   ? fmt::format_to(ctx.out(), "({:.3f}, {:.3f})", vec.x, vec.y)
-                   : fmt::format_to(ctx.out(), "({:.3e}, {:.3e})", vec.x, vec.y);
+                   ? std::format_to(ctx.out(), "({:.3f}, {:.3f})", vec.x, vec.y)
+                   : std::format_to(ctx.out(), "({:.3e}, {:.3e})", vec.x, vec.y);
     }
 };
 
@@ -59,8 +59,8 @@ struct formatter<glm::vec3>
     auto format(const glm::vec3& vec, FormatContext& ctx) const
     {
         return presentation == 'f'
-                   ? fmt::format_to(ctx.out(), "({:.3f}, {:.3f}, {:.3f})", vec.x, vec.y, vec.z)
-                   : fmt::format_to(ctx.out(), "({:.3e}, {:.3e}, {:.3e})", vec.x, vec.y, vec.z);
+                   ? std::format_to(ctx.out(), "({:.3f}, {:.3f}, {:.3f})", vec.x, vec.y, vec.z)
+                   : std::format_to(ctx.out(), "({:.3e}, {:.3e}, {:.3e})", vec.x, vec.y, vec.z);
     }
 };
 
@@ -86,11 +86,10 @@ struct formatter<glm::vec4>
     auto format(const glm::vec4& vec, FormatContext& ctx) const
     {
         return presentation == 'f'
-                   ? fmt::format_to(ctx.out(), "({:.3f}, {:.3f}, {:.3f}, {:.3f})", vec.x, vec.y, vec.z, vec.w)
-                   : fmt::format_to(ctx.out(), "({:.3e}, {:.3e}, {:.3e}, {:.3e})", vec.x, vec.y, vec.z, vec.w);
+                   ? std::format_to(ctx.out(), "({:.3f}, {:.3f}, {:.3f}, {:.3f})", vec.x, vec.y, vec.z, vec.w)
+                   : std::format_to(ctx.out(), "({:.3e}, {:.3e}, {:.3e}, {:.3e})", vec.x, vec.y, vec.z, vec.w);
     }
 };
-
 
 #if !defined(PORTAL_COMPILER_CLANG) && !defined(PORTAL_COMPILER_GCC)
 
@@ -118,21 +117,21 @@ struct formatter<portal::uint128_t>
         if (presentation == 'x')
         {
             if (value.hi == 0)
-                return fmt::format_to(ctx.out(), "{:x}", value.lo);
-            return fmt::format_to(ctx.out(), "{:x}{:016x}", value.hi, value.lo);
+                return std::format_to(ctx.out(), "{:x}", value.lo);
+            return std::format_to(ctx.out(), "{:x}{:016x}", value.hi, value.lo);
         }
         else if (presentation == 'b')
         {
             // Binary representation
             if (value.hi == 0)
             {
-                return fmt::format_to(ctx.out(), "0b{:b}", value.lo);
+                return std::format_to(ctx.out(), "0b{:b}", value.lo);
             }
             else
             {
                 std::string bin_hi = std::format("{:b}", value.hi);
                 std::string bin_lo = std::format("{:064b}", value.lo);
-                return fmt::format_to(ctx.out(), "0b{}{}", bin_hi, bin_lo);
+                return std::format_to(ctx.out(), "0b{}{}", bin_hi, bin_lo);
             }
         }
         else
@@ -140,7 +139,7 @@ struct formatter<portal::uint128_t>
             // Decimal format (default)
             if (value.hi == 0)
             {
-                return fmt::format_to(ctx.out(), "{}", value.lo);
+                return std::format_to(ctx.out(), "{}", value.lo);
             }
             else
             {
@@ -152,7 +151,7 @@ struct formatter<portal::uint128_t>
                     result.insert(0, 1, '0' + static_cast<char>(remainder.lo));
                     temp = temp / 10;
                 }
-                return result.empty() ? fmt::format_to(ctx.out(), "0") : fmt::format_to(ctx.out(), "{}", result);
+                return result.empty() ? std::format_to(ctx.out(), "0") : std::format_to(ctx.out(), "{}", result);
             }
         }
     }

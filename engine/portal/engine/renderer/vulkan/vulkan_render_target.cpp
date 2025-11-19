@@ -47,12 +47,12 @@ VulkanRenderTarget::VulkanRenderTarget(
 
         if (utils::is_depth_format(attachment_spec.format))
         {
-            image_spec.name = STRING_ID(fmt::format("{}_depth_attachment_{}", specs.name.string, index));
+            image_spec.name = STRING_ID(std::format("{}_depth_attachment_{}", specs.name.string, index));
             depth_attachment = make_reference<VulkanImage>(image_spec, context);
         }
         else
         {
-            image_spec.name = STRING_ID(fmt::format("{}_color_attachment_{}", specs.name.string, index));
+            image_spec.name = STRING_ID(std::format("{}_color_attachment_{}", specs.name.string, index));
             color_attachments.emplace_back(make_reference<VulkanImage>(image_spec, context));
         }
 

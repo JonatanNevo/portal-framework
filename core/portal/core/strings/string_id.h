@@ -109,9 +109,9 @@ struct std::hash<portal::StringId>
 };
 
 template <>
-struct fmt::formatter<portal::StringId>
+struct std::formatter<portal::StringId>
 {
-    static constexpr auto parse(const fmt::format_parse_context& ctx) -> decltype(ctx.begin())
+    static constexpr auto parse(const std::format_parse_context& ctx) -> decltype(ctx.begin())
     {
         return ctx.begin();
     }
@@ -119,7 +119,7 @@ struct fmt::formatter<portal::StringId>
     template <typename FormatContext>
     auto format(const portal::StringId& id, FormatContext& ctx) const
     {
-        return fmt::format_to(ctx.out(), "id(\"{}\")", id.string);
+        return std::format_to(ctx.out(), "id(\"{}\")", id.string);
     }
 };
 

@@ -24,10 +24,10 @@ class Event
 public:
     virtual ~Event() = default;
 
-    virtual EventType get_event_type() const = 0;
-    virtual StringId get_name() const = 0;
-    virtual EventCategory get_category() const = 0;
-    virtual std::string to_string() const { return std::string(get_name().string); }
+    [[nodiscard]] virtual EventType get_event_type() const = 0;
+    [[nodiscard]] virtual StringId get_name() const = 0;
+    [[nodiscard]] virtual EventCategory get_category() const = 0;
+    [[nodiscard]] virtual std::string to_string() const { return std::string(get_name().string); }
 
     [[nodiscard]] bool is_handled() const { return handled; }
 

@@ -329,7 +329,7 @@ void JobStats::log() const
         std::string steal_success;
         if (stats.steal_attempts > 0)
         {
-            steal_success = fmt::format("{:.2f}%", static_cast<double>(stats.steal_successes) / stats.steal_attempts * 100.0);
+            steal_success = std::format("{:.2f}%", static_cast<double>(stats.steal_successes) / stats.steal_attempts * 100.0);
         }
         else
         {

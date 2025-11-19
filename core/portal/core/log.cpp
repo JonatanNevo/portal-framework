@@ -48,7 +48,7 @@ public:
                 filename = full_path.substr(last_slash + 1);
             }
 
-            std::string location = fmt::format("{}:{}", filename, msg.source.line);
+            std::string location = std::format("{}:{}", filename, msg.source.line);
 
             // Pad to specified width, left-aligned
             if (location.length() < width_)

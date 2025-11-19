@@ -39,7 +39,7 @@ Scheduler::Scheduler(const int32_t num_worker_threads, const size_t job_cache_si
     {
         threads.emplace_back(
             ThreadSpecification{
-                .name = fmt::format("Worker Thread {}", i),
+                .name = std::format("Worker Thread {}", i),
                 .affinity = ThreadAffinity::CoreLean,
                 .core = static_cast<uint16_t>(i)
             },

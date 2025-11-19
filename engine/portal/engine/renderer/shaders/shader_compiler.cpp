@@ -6,6 +6,7 @@
 #include "shader_compiler.h"
 
 #include "shader_types.h"
+#include "portal/core/string_utils.h"
 
 namespace portal::renderer
 {
@@ -25,16 +26,16 @@ namespace portal::renderer
         switch (prop.container_type)
         {
         case reflection::PropertyContainerType::scalar:
-            return utils::to_string(prop.type);
+            return std::string(to_string(prop.type));
         case reflection::PropertyContainerType::array:
-            return fmt::format("{}[{}]", prop.type, prop.elements_number);
+            return std::format("{}[{}]", prop.type, prop.elements_number);
         case reflection::PropertyContainerType::string:
         case reflection::PropertyContainerType::null_term_string:
             return "string";
         case reflection::PropertyContainerType::vector:
-            return fmt::format("vec{}<{}>", prop.elements_number, prop.type);
+            return std::format("vec{}<{}>", prop.elements_number, prop.type);
         case reflection::PropertyContainerType::matrix:
-            return fmt::format("mat{0}x{0}<{1}>", floor(sqrt(prop.elements_number)), prop.type);
+            return std::format("mat{0}x{0}<{1}>", floor(sqrt(prop.elements_number)), prop.type);
         case reflection::PropertyContainerType::object:
         case reflection::PropertyContainerType::invalid:
             break;
@@ -650,7 +651,7 @@ return portal::renderer::DescriptorType::TO
                 continue;
             }
 
-            const auto uniform_name = STRING_ID(fmt::format("{}.{}", buffer_name.string, member_name));
+            const auto uniform_name = STRING_ID(std::format("{}.{}", buffer_name.string, member_name));
             const auto size = field_layout->getSize();
             const auto offset = field->getOffset() - buffer_offset;
 
@@ -763,7 +764,7 @@ return portal::renderer::DescriptorType::TO
                 if ((resource_shape & SLANG_TEXTURE_COMBINED_FLAG) != 0)
                 {
                     // Combined texture sampler
-                    const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
+                    const auto resource_name_id = STRING_ID(std::format("{}.{}", name, field_name));
 
                     shader_reflection::ImageSamplerDescriptor image_sampler;
                     image_sampler.type = DescriptorType::CombinedImageSampler;
@@ -794,7 +795,7 @@ return portal::renderer::DescriptorType::TO
                 else
                 {
                     // Separate texture/sampler
-                    const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
+                    const auto resource_name_id = STRING_ID(std::format("{}.{}", name, field_name));
 
                     shader_reflection::ImageSamplerDescriptor image;
                     image.type = DescriptorType::SampledImage;

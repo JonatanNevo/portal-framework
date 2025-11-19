@@ -119,10 +119,3 @@ struct ShaderReflection
 };
 
 }
-
-namespace portal::utils
-{
-
-std::string to_string(const renderer::DescriptorType type);
-
-}

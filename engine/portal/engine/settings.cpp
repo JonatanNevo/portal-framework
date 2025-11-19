@@ -98,7 +98,7 @@ void Settings::debug_print_scalar(const std::string& name, const reflection::Pro
     case reflection::PropertyType::binary:
     {
         std::byte data = *prop.value.as<std::byte*>();
-        LOG_DEBUG("{}: {}", name, data);
+        LOG_DEBUG("{}: {}", name, static_cast<uint8_t>(data));
         break;
     }
     case reflection::PropertyType::integer8:
@@ -270,7 +270,7 @@ void Settings::debug_print(std::string base_name, const ArchiveObject& object) c
         if (base_name.empty())
             name = key;
         else
-            name = fmt::format("{}.{}", base_name, key);
+            name = std::format("{}.{}", base_name, key);
 
         switch (prop.container_type)
         {

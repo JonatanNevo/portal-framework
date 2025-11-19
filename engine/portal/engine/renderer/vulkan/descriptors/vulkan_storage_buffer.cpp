@@ -92,7 +92,7 @@ VulkanStorageBufferSet::VulkanStorageBufferSet(const size_t buffer_size, const s
     for (size_t i = 0; i < size; i++)
     {
         buffers[i] = make_reference<VulkanStorageBuffer>(
-            StorageBufferSpecification{buffer_size, true, STRING_ID(fmt::format("sub_storage_{}", i))},
+            StorageBufferSpecification{buffer_size, true, STRING_ID(std::format("sub_storage_{}", i))},
             device
             );
     }

@@ -85,7 +85,7 @@ vk::Bool32 renderer::vulkan::DebugMessenger::log(
     std::string objects;
     if (callback_data->cmdBufLabelCount)
     {
-        labels = fmt::format("\tLabels({}): \n", callback_data->cmdBufLabelCount);
+        labels = std::format("\tLabels({}): \n", callback_data->cmdBufLabelCount);
         for (uint32_t i = 0; i < callback_data->cmdBufLabelCount; ++i)
         {
             const auto& label = callback_data->pCmdBufLabels[i];
@@ -98,7 +98,7 @@ vk::Bool32 renderer::vulkan::DebugMessenger::log(
 
     if (callback_data->objectCount)
     {
-        objects = fmt::format("\tObjects({}): \n", callback_data->objectCount);
+        objects = std::format("\tObjects({}): \n", callback_data->objectCount);
         for (uint32_t i = 0; i < callback_data->objectCount; ++i)
         {
             const auto& object = callback_data->pObjects[i];
