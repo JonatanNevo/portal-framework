@@ -7,7 +7,7 @@
 
 #include "vulkan/vulkan_common.h"
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 DescriptorLayoutBuilder& DescriptorLayoutBuilder::add_binding(
     const size_t binding,

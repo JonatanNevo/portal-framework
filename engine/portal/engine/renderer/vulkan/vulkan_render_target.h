@@ -4,6 +4,7 @@
 //
 
 #pragma once
+
 #include <memory>
 #include <vulkan/vulkan_raii.hpp>
 
@@ -18,7 +19,7 @@ class VulkanImage;
 class VulkanRenderTarget final: public RenderTarget
 {
 public:
-    VulkanRenderTarget(const render_target::Specification& specs, const VulkanContext& context);
+    VulkanRenderTarget(const RenderTargetProperties& prop, const VulkanContext& context);
     ~VulkanRenderTarget() override;
 
     void resize(size_t new_width, size_t new_height, bool force_recreate) override;
@@ -32,7 +33,7 @@ public:
     [[nodiscard]] bool has_depth_attachment() const override;
     [[nodiscard]] Reference<Image> get_depth_image() const override;
 
-    [[nodiscard]] const render_target::Specification& get_spec() const override;
+    [[nodiscard]] const RenderTargetProperties& get_properties() const override;
 
     [[nodiscard]] const vk::RenderingInfo& get_rendering_info() const;
 
@@ -41,7 +42,7 @@ protected:
     void release();
 
 private:
-    render_target::Specification spec;
+    RenderTargetProperties prop;
     size_t width = 0, height = 0;
 
     std::vector<Reference<VulkanImage>> color_attachments;

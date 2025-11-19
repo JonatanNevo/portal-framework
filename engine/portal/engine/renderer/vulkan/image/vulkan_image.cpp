@@ -131,7 +131,7 @@ void VulkanImage::reallocate()
                     .layerCount = static_cast<uint32_t>(spec.layers)
                 };
 
-                portal::vulkan::transition_image_layout(
+                portal::renderer::vulkan::transition_image_layout(
                     command_buffer,
                     image_info.image.get_handle(),
                     range,
@@ -159,7 +159,7 @@ void VulkanImage::reallocate()
                     .layerCount = static_cast<uint32_t>(spec.layers)
                 };
 
-                portal::vulkan::transition_image_layout(
+                portal::renderer::vulkan::transition_image_layout(
                     command_buffer,
                     image_info.image.get_handle(),
                     range,
@@ -356,7 +356,7 @@ void VulkanImage::set_data(const Buffer buffer)
                 .layerCount = 1
             };
 
-            portal::vulkan::transition_image_layout(
+            portal::renderer::vulkan::transition_image_layout(
                 command_buffer,
                 image_info.image.get_handle(),
                 range,
@@ -390,7 +390,7 @@ void VulkanImage::set_data(const Buffer buffer)
                 {copy_region}
                 );
 
-            portal::vulkan::transition_image_layout(
+            portal::renderer::vulkan::transition_image_layout(
                 command_buffer,
                 image_info.image.get_handle(),
                 range,
@@ -436,7 +436,7 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
                 .layerCount = 1
             };
 
-            portal::vulkan::transition_image_layout(
+            portal::renderer::vulkan::transition_image_layout(
                 command_buffer,
                 image_info.image.get_handle(),
                 range,
@@ -478,7 +478,7 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
                 mip_height = std::max(1u, mip_height / 2);
             }
 
-            portal::vulkan::transition_image_layout(
+            portal::renderer::vulkan::transition_image_layout(
                 command_buffer,
                 image_info.image.get_handle(),
                 range,

@@ -9,7 +9,7 @@
 
 #include "vulkan/allocated_buffer.h"
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 
 struct Vertex

@@ -8,7 +8,7 @@
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "vulkan/allocated_buffer.h"
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 void DescriptorWriter::write_image(
     const uint32_t binding,

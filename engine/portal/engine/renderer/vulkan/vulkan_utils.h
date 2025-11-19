@@ -8,7 +8,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 
 const std::vector g_validation_layers = {

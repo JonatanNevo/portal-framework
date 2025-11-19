@@ -7,6 +7,7 @@
 
 #include <ranges>
 
+#include "portal/engine/renderer/render_target/render_target.h"
 #include "portal/engine/renderer/vulkan/vulkan_common.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_shader.h"
@@ -142,7 +143,7 @@ PipelineBuilder& PipelineBuilder::set_blending_alpha(const size_t index)
     return *this;
 }
 
-PipelineBuilder& PipelineBuilder::set_blend(const size_t index, const bool enable, const render_target::BlendMode blend_mode)
+PipelineBuilder& PipelineBuilder::set_blend(const size_t index, const bool enable, const BlendMode blend_mode)
 {
     PORTAL_ASSERT(index < color_blend_attachments.size(), "Color attachment index out of range");
     auto& attachment = color_blend_attachments[index];
@@ -157,22 +158,22 @@ PipelineBuilder& PipelineBuilder::set_blend(const size_t index, const bool enabl
 
     switch (blend_mode)
     {
-    case render_target::BlendMode::Additive:
+    case BlendMode::Additive:
         attachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
         attachment.dstColorBlendFactor = vk::BlendFactor::eOne;
         attachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
         attachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
-    case render_target::BlendMode::OneZero:
+    case BlendMode::OneZero:
         attachment.srcColorBlendFactor = vk::BlendFactor::eOne;
         attachment.dstColorBlendFactor = vk::BlendFactor::eZero;
         break;
-    case render_target::BlendMode::SrcAlphaOneMinusSrcAlpha:
+    case BlendMode::SrcAlphaOneMinusSrcAlpha:
         attachment.srcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
         attachment.dstColorBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
         attachment.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
         attachment.dstAlphaBlendFactor = vk::BlendFactor::eOneMinusSrcAlpha;
         break;
-    case render_target::BlendMode::ZeroSrcColor:
+    case BlendMode::ZeroSrcColor:
         attachment.srcColorBlendFactor = vk::BlendFactor::eZero;
         attachment.dstColorBlendFactor = vk::BlendFactor::eSrcColor;
         break;

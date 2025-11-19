@@ -16,28 +16,28 @@
 namespace portal::renderer::vulkan
 {
 
-VulkanPipeline::VulkanPipeline(const pipeline::Specification& spec, const VulkanContext& context) : context(context), spec(spec)
+VulkanPipeline::VulkanPipeline(const PipelineProperties& prop, const VulkanContext& context) : context(context), prop(prop)
 {
-    PORTAL_ASSERT(spec.shader, "Invalid pipeline shader");
+    PORTAL_ASSERT(prop.shader, "Invalid pipeline shader");
 
     initialize();
-    LOG_TRACE("PIPELINE CREATED {}", spec.debug_name);
+    LOG_TRACE("PIPELINE CREATED {}", prop.debug_name);
 }
 
 VulkanPipeline::~VulkanPipeline()
 {
     // TODO: submit resources for destruction?
-    LOG_TRACE("PIPELINE DEAD {}", spec.debug_name);
+    LOG_TRACE("PIPELINE DEAD {}", prop.debug_name);
 }
 
-pipeline::Specification& VulkanPipeline::get_spec()
+PipelineProperties& VulkanPipeline::get_properties()
 {
-    return spec;
+    return prop;
 }
 
-const pipeline::Specification& VulkanPipeline::get_spec() const
+const PipelineProperties& VulkanPipeline::get_properties() const
 {
-    return spec;
+    return prop;
 }
 
 void VulkanPipeline::initialize()
@@ -46,7 +46,7 @@ void VulkanPipeline::initialize()
 
     auto& device = context.get_device();
 
-    auto shader = reference_cast<VulkanShaderVariant>(spec.shader);
+    auto shader = reference_cast<VulkanShaderVariant>(prop.shader);
 
     // Create the pipeline layout used to generate the rendering pipelines that are based on this descriptor set layout
     // In a more complex scenario you would have different pipeline layouts for different descriptor set layouts that could be reused
@@ -63,21 +63,19 @@ void VulkanPipeline::initialize()
     pipeline_layout = device.create_pipeline_layout(pipeline_layout_info);
 
     builder.set_layout(pipeline_layout)
-           .set_input_topology(to_primitive_topology(spec.topology))
-           .set_polygon_mode(spec.wireframe ? vk::PolygonMode::eLine : vk::PolygonMode::eFill)
-           .set_cull_mode(spec.backface_culling ? vk::CullModeFlagBits::eBack : vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise)
-           .set_line_width(spec.line_width); // this is dynamic;
+           .set_input_topology(to_primitive_topology(prop.topology))
+           .set_polygon_mode(prop.wireframe ? vk::PolygonMode::eLine : vk::PolygonMode::eFill)
+           .set_cull_mode(prop.backface_culling ? vk::CullModeFlagBits::eBack : vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise)
+           .set_line_width(prop.line_width); // this is dynamic;
 
-    auto render_target = reference_cast<VulkanRenderTarget>(spec.render_target);
-    const size_t color_attachment_count = render_target->get_color_attachment_count();
+    const size_t color_attachment_count = prop.attachments.color_attachments.size();
 
     builder.set_color_attachment_number(color_attachment_count);
     std::vector<ImageFormat> color_formats;
     auto depth_format = ImageFormat::None;
     color_formats.reserve(color_attachment_count);
 
-    const auto& rt_spec = render_target->get_spec();
-    const auto& atts = rt_spec.attachments.attachments;
+    const auto& atts = prop.attachments.color_attachments;
 
     size_t color_index = 0;
     for (size_t i = 0; i < atts.size(); ++i)
@@ -94,18 +92,18 @@ void VulkanPipeline::initialize()
 
         color_formats.push_back(attachment_spec.format);
 
-        const auto blend_mode = render_target->get_spec().blend_mode == render_target::BlendMode::None
+        const auto blend_mode = prop.attachments.blend_mode == BlendMode::None
             ? attachment_spec.blend_mode
-            : render_target->get_spec().blend_mode;
-        builder.set_blend(color_index, render_target->get_spec().blend, blend_mode);
+            : prop.attachments.blend_mode;
+        builder.set_blend(color_index, prop.attachments.blend, blend_mode);
         color_index++;
     }
 
     builder.set_color_attachment_formats(color_formats)
            .set_depth_format(depth_format);
 
-    if (spec.depth_test)
-        builder.enable_depth_stencil(spec.depth_write, spec.depth_compare_operator);
+    if (prop.depth_test)
+        builder.enable_depth_stencil(prop.depth_write, prop.depth_compare_operator);
     else
         builder.disable_depth_stencil();
 
@@ -116,17 +114,17 @@ void VulkanPipeline::initialize()
 
     builder.add_shader(*shader);
     pipeline = device.create_pipeline(builder);
-    device.set_debug_name(pipeline, spec.debug_name);
+    device.set_debug_name(pipeline, prop.debug_name);
 }
 
 Reference<ShaderVariant> VulkanPipeline::get_shader() const
 {
-    return spec.shader;
+    return prop.shader;
 }
 
 bool VulkanPipeline::is_dynamic_line_width() const
 {
-    return spec.topology == PrimitiveTopology::Lines || spec.topology == PrimitiveTopology::LineStrip || spec.wireframe;
+    return prop.topology == PrimitiveTopology::Lines || prop.topology == PrimitiveTopology::LineStrip || prop.wireframe;
 }
 
 vk::Pipeline VulkanPipeline::get_vulkan_pipeline()

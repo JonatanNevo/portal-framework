@@ -97,7 +97,7 @@ VulkanDescriptorSetManager::~VulkanDescriptorSetManager()
 VulkanDescriptorSetManager VulkanDescriptorSetManager::create(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device)
 {
     // TODO: use raios generated from shader
-    std::vector<portal::vulkan::DescriptorAllocator::PoolSizeRatio> pool_sizes =
+    std::vector<portal::renderer::vulkan::DescriptorAllocator::PoolSizeRatio> pool_sizes =
     {
         {vk::DescriptorType::eSampler, 10},
         {vk::DescriptorType::eCombinedImageSampler, 10},
@@ -112,7 +112,7 @@ VulkanDescriptorSetManager VulkanDescriptorSetManager::create(const DescriptorSe
         {vk::DescriptorType::eInputAttachment, 10}
     };
 
-    return VulkanDescriptorSetManager(spec, device, portal::vulkan::DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes));
+    return VulkanDescriptorSetManager(spec, device, portal::renderer::vulkan::DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes));
 }
 
 std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_unique(
@@ -121,7 +121,7 @@ std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_u
     )
 {
     // TODO: use raios generated from shader
-    std::vector<portal::vulkan::DescriptorAllocator::PoolSizeRatio> pool_sizes =
+    std::vector<portal::renderer::vulkan::DescriptorAllocator::PoolSizeRatio> pool_sizes =
     {
         {vk::DescriptorType::eSampler, 10},
         {vk::DescriptorType::eCombinedImageSampler, 10},
@@ -140,7 +140,7 @@ std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_u
         new VulkanDescriptorSetManager(
             spec,
             device,
-            portal::vulkan::DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes)
+            portal::renderer::vulkan::DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes)
             )
         );
 }
@@ -149,7 +149,7 @@ std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_u
 VulkanDescriptorSetManager::VulkanDescriptorSetManager(
     const DescriptorSetManagerSpecification& spec,
     const VulkanDevice& device,
-    portal::vulkan::DescriptorAllocator&& descriptor_allocator
+    portal::renderer::vulkan::DescriptorAllocator&& descriptor_allocator
     ) : spec(spec), device(device), descriptor_allocator(std::move(descriptor_allocator))
 {
     init();

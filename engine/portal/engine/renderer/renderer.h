@@ -50,7 +50,7 @@ struct FrameData
 
     vk::raii::DescriptorSet global_descriptor_set = nullptr;
     renderer::vulkan::AllocatedBuffer scene_data_buffer = nullptr;
-    vulkan::DescriptorAllocator frame_descriptors;
+    renderer::vulkan::DescriptorAllocator frame_descriptors;
 };
 
 class Renderer final : public EventHandler
@@ -104,7 +104,7 @@ private:
     vk::raii::CommandBuffer immediate_command_buffer = nullptr;
     // TracyVkCtx tracy_context = nullptr;
 
-    vulkan::GPUSceneData scene_data{};
+    renderer::vulkan::GPUSceneData scene_data{};
     std::vector<vk::raii::DescriptorSetLayout> scene_descriptor_set_layouts;
     std::vector<FrameData> frame_data;
 

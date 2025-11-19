@@ -200,7 +200,7 @@ vk::raii::Sampler VulkanDevice::create_sampler(const vk::SamplerCreateInfo& info
     return device.createSampler(info);
 }
 
-vk::raii::DescriptorSetLayout VulkanDevice::create_descriptor_set_layout(portal::vulkan::DescriptorLayoutBuilder& builder) const
+vk::raii::DescriptorSetLayout VulkanDevice::create_descriptor_set_layout(portal::renderer::vulkan::DescriptorLayoutBuilder& builder) const
 {
     return builder.build(device);
 }

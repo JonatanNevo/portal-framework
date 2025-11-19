@@ -14,16 +14,15 @@
 #include "portal/engine/resources/database/resource_database.h"
 #include "portal/engine/resources/source/resource_source.h"
 
-namespace portal::renderer::vulkan {
+namespace portal::renderer::vulkan
+{
 class VulkanMaterial;
 }
 
 namespace portal::resources
 {
-
 MaterialLoader::MaterialLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
 {
-
 }
 
 Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const ResourceSource& source)
@@ -107,9 +106,9 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& na
         return color_pipeline;
 
     // TODO: add pipeline cache
-    renderer::pipeline::Specification pipeline_spec{
+    renderer::PipelineProperties pipeline_properties{
         .shader = shader,
-        .render_target = context.get_render_target(),
+        .attachments = context.get_render_target()->get_properties().attachments,
         .topology = renderer::PrimitiveTopology::Triangles,
         .depth_compare_operator = renderer::DepthCompareOperator::GreaterOrEqual,
         .backface_culling = false,
@@ -118,7 +117,7 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& na
         .wireframe = false,
         .debug_name = name
     };
-    auto pipeline = make_reference<renderer::vulkan::VulkanPipeline>(pipeline_spec, context.get_gpu_context());
+    auto pipeline = make_reference<renderer::vulkan::VulkanPipeline>(pipeline_properties, context.get_gpu_context());
 
     if (name == STRING_ID("color_pipeline"))
         color_pipeline = pipeline;
@@ -128,5 +127,4 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& na
 
     return pipeline;
 }
-
 } // portal

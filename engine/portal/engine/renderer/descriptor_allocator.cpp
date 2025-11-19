@@ -7,7 +7,7 @@
 
 #include "portal/core/debug/assert.h"
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 
 DescriptorAllocator::DescriptorAllocator(const vk::raii::Device& device, const uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios)

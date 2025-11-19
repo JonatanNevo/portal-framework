@@ -56,4 +56,4 @@ void shutdown()
         created = false;
     }
 }
-} // portal::vulkan::allocation
+} // portal::renderer::vulkan::allocation

@@ -124,7 +124,7 @@ void ImGuiModule::end()
     const auto& command_buffer = swapchain.get_current_draw_command_buffer();
 
     // set swapchain image layout to Attachment Optimal so we can draw it
-    vulkan::transition_image_layout(
+    renderer::vulkan::transition_image_layout(
         command_buffer,
         swapchain.get_current_draw_image(),
         1,
@@ -172,7 +172,7 @@ void ImGuiModule::end()
     }
 
     // set swapchain image layout to Present so we can draw it
-    vulkan::transition_image_layout(
+    renderer::vulkan::transition_image_layout(
         command_buffer,
         swapchain.get_current_draw_image(),
         1,
