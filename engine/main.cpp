@@ -38,7 +38,7 @@ void initialize_logger()
     Settings::get().debug_print();
 }
 
-ApplicationSpecification make_application_spec()
+ApplicationProperties make_application_spec()
 {
     auto& settings = Settings::get();
 
@@ -48,7 +48,7 @@ ApplicationSpecification make_application_spec()
     const auto resources_path = settings.get_setting<std::filesystem::path>("application.resources-path");
     const auto scheduler_worker_num = settings.get_setting<int32_t>("application.scheduler-threads");
 
-    return ApplicationSpecification{
+    return ApplicationProperties{
         .name = STRING_ID(name.value()),
         .width = width.value(),
         .height = height.value(),
@@ -64,9 +64,9 @@ int main()
         initialize_settings();
         initialize_logger();
 
-        const auto spec = make_application_spec();
+        const auto prop = make_application_spec();
 
-        Application app{spec};
+        Application app{prop};
         app.run();
     }
     catch (std::exception& e)

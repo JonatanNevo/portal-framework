@@ -12,7 +12,7 @@
 
 namespace portal::renderer::vulkan
 {
-class AllocatedImage;
+class ImageAllocation;
 class VulkanDevice;
 
 struct ImageBuilder final : BuilderBase<ImageBuilder, vk::ImageCreateInfo>
@@ -31,25 +31,26 @@ public:
     ImageBuilder& with_usage(vk::ImageUsageFlags usage);
     ImageBuilder& with_flags(vk::ImageCreateFlags flags);
 
-    AllocatedImage build(const VulkanDevice& device) const;
+    ImageAllocation build(const VulkanDevice& device) const;
 };
 
-class AllocatedImage final : public allocation::Allocated<vk::Image>
+// TODO: redundant class? can combine with `Image` class
+class ImageAllocation final : public allocation::Allocated<vk::Image>
 {
 public:
-    AllocatedImage();
-    AllocatedImage(nullptr_t);
+    ImageAllocation();
+    ImageAllocation(nullptr_t);
 
-    AllocatedImage(AllocatedImage&& other) noexcept;
-    AllocatedImage& operator=(AllocatedImage&& other) noexcept;
-    AllocatedImage& operator=(nullptr_t) noexcept override;
+    ImageAllocation(ImageAllocation&& other) noexcept;
+    ImageAllocation& operator=(ImageAllocation&& other) noexcept;
+    ImageAllocation& operator=(nullptr_t) noexcept override;
 
-    AllocatedImage(const AllocatedImage&) = delete;
-    AllocatedImage& operator=(const AllocatedImage&) = delete;
+    ImageAllocation(const ImageAllocation&) = delete;
+    ImageAllocation& operator=(const ImageAllocation&) = delete;
 
-    ~AllocatedImage() override;
+    ~ImageAllocation() override;
 protected:
     friend struct ImageBuilder;
-    AllocatedImage(const VulkanDevice& device, const ImageBuilder& builder);
+    ImageAllocation(const VulkanDevice& device, const ImageBuilder& builder);
 };
 } // portal

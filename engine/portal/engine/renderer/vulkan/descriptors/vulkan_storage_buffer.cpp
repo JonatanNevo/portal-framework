@@ -11,10 +11,10 @@
 namespace portal::renderer::vulkan
 {
 
-VulkanStorageBuffer::VulkanStorageBuffer(const StorageBufferSpecification& spec, const VulkanDevice& device)
-    : StorageBuffer(spec.debug_name),
+VulkanStorageBuffer::VulkanStorageBuffer(const StorageBufferProperties& properties, const VulkanDevice& device)
+    : StorageBuffer(properties.debug_name),
       device(device),
-      spec(spec)
+      properties(properties)
 {
     init();
 }
@@ -26,12 +26,12 @@ VulkanStorageBuffer::~VulkanStorageBuffer()
 
 void VulkanStorageBuffer::set_data(const Buffer data, const size_t offset)
 {
-    PORTAL_ASSERT(!spec.gpu_only, "Cannot set data on a GPU only buffer");
+    PORTAL_ASSERT(!properties.gpu_only, "Cannot set data on a GPU only buffer");
 
     local_storage.write(data, offset);
 
     [[maybe_unused]] const auto updated = buffer.update(local_storage, 0);
-    PORTAL_ASSERT(updated == spec.size, "Failed to update buffer");
+    PORTAL_ASSERT(updated == properties.size, "Failed to update buffer");
 }
 
 const Buffer& VulkanStorageBuffer::get_data() const
@@ -41,7 +41,7 @@ const Buffer& VulkanStorageBuffer::get_data() const
 
 void VulkanStorageBuffer::resize(const size_t new_size)
 {
-    spec.size = new_size;
+    properties.size = new_size;
     init();
 }
 
@@ -60,11 +60,11 @@ void VulkanStorageBuffer::init()
 {
     release();
 
-    BufferBuilder builder(spec.size);
+    BufferBuilder builder(properties.size);
     builder.with_usage(vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eStorageBuffer)
-           .with_debug_name(spec.debug_name.string.data());
+           .with_debug_name(properties.debug_name.string.data());
 
-    if (spec.gpu_only)
+    if (properties.gpu_only)
     {
         builder.with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
     }
@@ -76,11 +76,11 @@ void VulkanStorageBuffer::init()
 
     buffer = device.create_buffer(builder);
 
-    local_storage = Buffer::allocate(spec.size);
+    local_storage = Buffer::allocate(properties.size);
     descriptor_buffer_info = {
         .buffer = buffer.get_handle(),
         .offset = 0,
-        .range = spec.size
+        .range = properties.size
     };
 }
 
@@ -92,7 +92,7 @@ VulkanStorageBufferSet::VulkanStorageBufferSet(const size_t buffer_size, const s
     for (size_t i = 0; i < size; i++)
     {
         buffers[i] = make_reference<VulkanStorageBuffer>(
-            StorageBufferSpecification{buffer_size, true, STRING_ID(std::format("sub_storage_{}", i))},
+            StorageBufferProperties{buffer_size, true, STRING_ID(std::format("sub_storage_{}", i))},
             device
             );
     }

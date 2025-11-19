@@ -80,20 +80,20 @@ void VulkanPipeline::initialize()
     size_t color_index = 0;
     for (size_t i = 0; i < atts.size(); ++i)
     {
-        const auto& attachment_spec = atts[i];
+        const auto& attachment_prop = atts[i];
 
-        if (utils::is_depth_format(attachment_spec.format))
+        if (utils::is_depth_format(attachment_prop.format))
         {
             if (depth_format != ImageFormat::None)
-                PORTAL_ASSERT(depth_format == attachment_spec.format, "Multiple depth formats not supported");
-            depth_format = attachment_spec.format;
+                PORTAL_ASSERT(depth_format == attachment_prop.format, "Multiple depth formats not supported");
+            depth_format = attachment_prop.format;
             continue;
         }
 
-        color_formats.push_back(attachment_spec.format);
+        color_formats.push_back(attachment_prop.format);
 
         const auto blend_mode = prop.attachments.blend_mode == BlendMode::None
-            ? attachment_spec.blend_mode
+            ? attachment_prop.blend_mode
             : prop.attachments.blend_mode;
         builder.set_blend(color_index, prop.attachments.blend, blend_mode);
         color_index++;

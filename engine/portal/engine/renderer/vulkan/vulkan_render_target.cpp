@@ -35,25 +35,25 @@ VulkanRenderTarget::VulkanRenderTarget(
 
     size_t index = 0;
     color_attachments.reserve(prop.attachments.color_attachments.size());
-    for (auto& attachment_spec : prop.attachments.color_attachments)
+    for (auto& attachment_prop : prop.attachments.color_attachments)
     {
-        image::Specification image_spec{
-            .format = attachment_spec.format,
+        image::Properties image_prop{
+            .format = attachment_prop.format,
             .usage = ImageUsage::Attachment,
             .transfer = prop.transfer,
             .width = static_cast<size_t>(width * prop.scale),
             .height = static_cast<size_t>(height * prop.scale)
         };
 
-        if (utils::is_depth_format(attachment_spec.format))
+        if (utils::is_depth_format(attachment_prop.format))
         {
-            image_spec.name = STRING_ID(std::format("{}_depth_attachment_{}", prop.name.string, index));
-            depth_attachment = make_reference<VulkanImage>(image_spec, context);
+            image_prop.name = STRING_ID(std::format("{}_depth_attachment_{}", prop.name.string, index));
+            depth_attachment = make_reference<VulkanImage>(image_prop, context);
         }
         else
         {
-            image_spec.name = STRING_ID(std::format("{}_color_attachment_{}", prop.name.string, index));
-            color_attachments.emplace_back(make_reference<VulkanImage>(image_spec, context));
+            image_prop.name = STRING_ID(std::format("{}_color_attachment_{}", prop.name.string, index));
+            color_attachments.emplace_back(make_reference<VulkanImage>(image_prop, context));
         }
 
         index++;
@@ -77,16 +77,16 @@ void VulkanRenderTarget::initialize()
     rendering_attachments.reserve(prop.attachments.color_attachments.size());
 
     size_t index = 0;
-    for (auto& attachment_spec : prop.attachments.color_attachments)
+    for (auto& attachment_prop : prop.attachments.color_attachments)
     {
-        if (utils::is_depth_format(attachment_spec.format))
+        if (utils::is_depth_format(attachment_prop.format))
         {
             depth_attachment->resize(static_cast<size_t>(width * prop.scale), static_cast<size_t>(height * prop.scale));
 
             depth_rendering = vk::RenderingAttachmentInfo{
                 .imageView = depth_attachment->get_image_info().view,
                 .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
-                .loadOp = to_load_op(prop, attachment_spec),
+                .loadOp = to_load_op(prop, attachment_prop),
                 .storeOp = vk::AttachmentStoreOp::eStore,
                 .clearValue = vk::ClearDepthStencilValue{prop.depth_clear_value, 0}
             };
@@ -100,7 +100,7 @@ void VulkanRenderTarget::initialize()
             rendering_attachment = vk::RenderingAttachmentInfo{
                 .imageView = image->get_image_info().view,
                 .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                .loadOp = to_load_op(prop, attachment_spec),
+                .loadOp = to_load_op(prop, attachment_prop),
                 .storeOp = vk::AttachmentStoreOp::eStore,
                 .clearValue = vk::ClearColorValue{prop.clear_color.r, prop.clear_color.g, prop.clear_color.b, prop.clear_color.a}
             };

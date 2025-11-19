@@ -16,11 +16,11 @@ namespace portal::renderer::vulkan
 
 namespace utils
 {
-    bool validate_spec(const TextureSpecification& spec)
+    bool validate_prop(const TextureProperties& properties)
     {
         bool result = true;
-        result = spec.width > 0 && spec.height > 0 && spec.depth > 0 && spec.width < std::numeric_limits<uint32_t>::max() && spec.height <
-            std::numeric_limits<uint32_t>::max() && spec.depth < std::numeric_limits<uint32_t>::max();
+        result = properties.width > 0 && properties.height > 0 && properties.depth > 0 && properties.width < std::numeric_limits<uint32_t>::max() && properties.height <
+            std::numeric_limits<uint32_t>::max() && properties.depth < std::numeric_limits<uint32_t>::max();
         PORTAL_ASSERT(result, "Invalid texture specification");
 
         return result;
@@ -60,13 +60,13 @@ namespace utils
         return vk::SamplerAddressMode::eClampToEdge;
     }
 
-    vk::ImageViewType get_view_type(const TextureSpecification& spec)
+    vk::ImageViewType get_view_type(const TextureProperties& properties)
     {
-        if (spec.width >= 1)
+        if (properties.width >= 1)
         {
-            if (spec.height >= 1)
+            if (properties.height >= 1)
             {
-                if (spec.depth > 1)
+                if (properties.depth > 1)
                 {
                     return vk::ImageViewType::e3D;
                 }
@@ -83,12 +83,12 @@ namespace utils
 
 VulkanTexture::VulkanTexture(
     const StringId& id,
-    const TextureSpecification& spec,
+    const TextureProperties& properties,
     const Buffer& data,
     const VulkanContext& context
-    ) : Texture(id), spec(spec), context(context), device(context.get_device())
+    ) : Texture(id), properties(properties), context(context), device(context.get_device())
 {
-    utils::validate_spec(spec);
+    utils::validate_prop(properties);
 
     if (data)
     {
@@ -96,7 +96,7 @@ VulkanTexture::VulkanTexture(
     }
     else
     {
-        const auto size = renderer::utils::get_image_memory_size(spec.format, spec.width, spec.height, spec.depth);
+        const auto size = renderer::utils::get_image_memory_size(properties.format, properties.width, properties.height, properties.depth);
         image_data = Buffer::allocate(size);
         image_data.zero_initialize();
     }
@@ -111,9 +111,9 @@ void VulkanTexture::resize(const glm::uvec3& size)
 
 void VulkanTexture::resize(const size_t width, const size_t height, const size_t depth)
 {
-    spec.width = width;
-    spec.height = height;
-    spec.depth = depth;
+    properties.width = width;
+    properties.height = height;
+    properties.depth = depth;
 
     recreate();
 }
@@ -128,7 +128,7 @@ void VulkanTexture::set_sampler(const Reference<Sampler>& sampler)
     const auto vulkan_sampler = reference_cast<VulkanSampler>(sampler);
     PORTAL_ASSERT(vulkan_sampler, "Invalid sampler type");
 
-    spec.sampler_spec = vulkan_sampler->get_spec();
+    properties.sampler_prop = vulkan_sampler->get_prop();
 
     auto& info = image->get_image_info();
     info.sampler = vulkan_sampler;
@@ -137,37 +137,37 @@ void VulkanTexture::set_sampler(const Reference<Sampler>& sampler)
 
 ImageFormat VulkanTexture::get_format() const
 {
-    return spec.format;
+    return properties.format;
 }
 
 size_t VulkanTexture::get_width() const
 {
-    return spec.width;
+    return properties.width;
 }
 
 size_t VulkanTexture::get_height() const
 {
-    return spec.height;
+    return properties.height;
 }
 
 size_t VulkanTexture::get_depth() const
 {
-    return spec.depth;
+    return properties.depth;
 }
 
 glm::uvec3 VulkanTexture::get_size() const
 {
-    return {spec.width, spec.height, spec.depth};
+    return {properties.width, properties.height, properties.depth};
 }
 
 uint32_t VulkanTexture::get_mip_level_count() const
 {
-    return static_cast<uint32_t>(renderer::utils::calculate_mip_count(spec.width, spec.height, spec.depth));
+    return static_cast<uint32_t>(renderer::utils::calculate_mip_count(properties.width, properties.height, properties.depth));
 }
 
 glm::uvec3 VulkanTexture::get_mip_size(const uint32_t mip) const
 {
-    return {spec.width >> mip, spec.height >> mip, spec.depth >> mip};
+    return {properties.width >> mip, properties.height >> mip, properties.depth >> mip};
 }
 
 Reference<Image> VulkanTexture::get_image() const
@@ -182,7 +182,7 @@ Buffer VulkanTexture::get_writeable_buffer()
 
 TextureType VulkanTexture::get_type() const
 {
-    return spec.type;
+    return properties.type;
 }
 
 const vk::DescriptorImageInfo& VulkanTexture::get_descriptor_image_info() const
@@ -200,23 +200,23 @@ void VulkanTexture::recreate()
     if (image != nullptr)
         image.reset();
 
-    const auto mip_count = spec.generate_mipmaps ? get_mip_level_count() : 1;
+    const auto mip_count = properties.generate_mipmaps ? get_mip_level_count() : 1;
     const auto layer_count = get_array_layer_count();
 
-    image::Specification image_spec{
-        .format = spec.format,
-        .width = spec.width,
-        .height = spec.height,
-        .depth = spec.depth,
+    image::Properties image_prop{
+        .format = properties.format,
+        .width = properties.width,
+        .height = properties.height,
+        .depth = properties.depth,
         .mips = mip_count,
         .layers = layer_count,
         .create_sampler = false,
         .name = id,
     };
 
-    if (spec.storage)
-        image_spec.usage = ImageUsage::Storage;
-    image = make_reference<VulkanImage>(image_spec, context);
+    if (properties.storage)
+        image_prop.usage = ImageUsage::Storage;
+    image = make_reference<VulkanImage>(image_prop, context);
     image->update_descriptor();
 
     auto& info = image->get_image_info();
@@ -256,19 +256,19 @@ void VulkanTexture::recreate()
     // CREATE TEXTURE SAMPLER (owned by Image)
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    if (spec.sampler_spec.has_value())
+    if (properties.sampler_prop.has_value())
     {
-        auto& sampler_spec = spec.sampler_spec.value();
-        info.sampler = make_reference<VulkanSampler>(STRING_ID(std::format("{}-sampler", id)), sampler_spec, device);
+        auto& sampler_prop = properties.sampler_prop.value();
+        info.sampler = make_reference<VulkanSampler>(STRING_ID(std::format("{}-sampler", id)), sampler_prop, device);
         image->update_descriptor();
     }
 
-    if (!spec.storage)
+    if (!properties.storage)
     {
         const vk::ImageViewCreateInfo view_info{
             .image = info.image.get_handle(),
-            .viewType = utils::get_view_type(spec),
-            .format = to_format(spec.format),
+            .viewType = utils::get_view_type(properties),
+            .format = to_format(properties.format),
             .components = {vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA},
             // The subresource range describes the set of mip levels (and array layers) that can be accessed through this image view
             // It's possible to create multiple image views for a single image referring to different (and/or overlapping) ranges of the image
@@ -330,9 +330,9 @@ void VulkanTexture::set_data(const Buffer& data)
                     .layerCount = layer_count
                 },
                 .imageExtent = {
-                    static_cast<uint32_t>(spec.width),
-                    static_cast<uint32_t>(spec.height),
-                    static_cast<uint32_t>(spec.depth)
+                    static_cast<uint32_t>(properties.width),
+                    static_cast<uint32_t>(properties.height),
+                    static_cast<uint32_t>(properties.depth)
                 }
             };
 
@@ -344,7 +344,7 @@ void VulkanTexture::set_data(const Buffer& data)
                 {copy_region}
                 );
 
-            const size_t mip_count = spec.generate_mipmaps ? get_mip_level_count() : 1;
+            const size_t mip_count = properties.generate_mipmaps ? get_mip_level_count() : 1;
             if (mip_count > 1)
             {
                 // There are mips to generate, move to get ready to transfer
@@ -378,8 +378,8 @@ void VulkanTexture::set_data(const Buffer& data)
         }
         );
 
-    const size_t mip_count = spec.generate_mipmaps ? get_mip_level_count() : 1;
-    if (mip_count > 1 && spec.generate_mipmaps)
+    const size_t mip_count = properties.generate_mipmaps ? get_mip_level_count() : 1;
+    if (mip_count > 1 && properties.generate_mipmaps)
         generate_mipmaps();
 }
 
@@ -405,9 +405,9 @@ void VulkanTexture::generate_mipmaps() const
                             .layerCount = 1
                         },
                         .srcOffsets = std::array{vk::Offset3D{},
-                                                 vk::Offset3D{static_cast<int32_t>(spec.width) >> (i - 1),
-                                                              static_cast<int32_t>(spec.height) >> (i - 1),
-                                                              static_cast<int32_t>(spec.depth) >> (i - 1)}},
+                                                 vk::Offset3D{static_cast<int32_t>(properties.width) >> (i - 1),
+                                                              static_cast<int32_t>(properties.height) >> (i - 1),
+                                                              static_cast<int32_t>(properties.depth) >> (i - 1)}},
 
                         .dstSubresource = {
                             .aspectMask = vk::ImageAspectFlagBits::eColor,
@@ -416,9 +416,9 @@ void VulkanTexture::generate_mipmaps() const
                             .layerCount = 1
                         },
                         .dstOffsets = std::array{vk::Offset3D{},
-                                                 vk::Offset3D{static_cast<int32_t>(spec.width) >> i,
-                                                              static_cast<int32_t>(spec.height) >> i,
-                                                              static_cast<int32_t>(spec.depth) >> i}},
+                                                 vk::Offset3D{static_cast<int32_t>(properties.width) >> i,
+                                                              static_cast<int32_t>(properties.height) >> i,
+                                                              static_cast<int32_t>(properties.depth) >> i}},
                     };
 
                     vk::ImageSubresourceRange range{
@@ -448,7 +448,7 @@ void VulkanTexture::generate_mipmaps() const
                         .dstImageLayout = vk::ImageLayout::eTransferDstOptimal,
                         .regionCount = 1,
                         .pRegions = &blit,
-                        .filter = utils::to_filter(spec.sampler_spec.value_or(SamplerSpecification{}).filter),
+                        .filter = utils::to_filter(properties.sampler_prop.value_or(SamplerProperties{}).filter),
                     };
                     command_buffer.blitImage2(blit_info);
 
@@ -492,7 +492,7 @@ void VulkanTexture::generate_mipmaps() const
 
 uint32_t VulkanTexture::get_array_layer_count() const
 {
-    if (spec.type == TextureType::TextureCube)
+    if (properties.type == TextureType::TextureCube)
         return 6;
     return 1;
 }

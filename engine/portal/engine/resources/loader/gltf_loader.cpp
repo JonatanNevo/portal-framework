@@ -452,7 +452,7 @@ Job<> GltfLoader::load_texture(
     PORTAL_ASSERT(sampler_index.has_value(), "Texture references invalid sampler: {}", texture_name);
 
     const auto sampler = asset.samplers[sampler_index.value()];
-    renderer::SamplerSpecification sampler_spec = {
+    renderer::SamplerProperties sampler_prop = {
         .filter = extract_filter(sampler.magFilter.value_or(fastgltf::Filter::Nearest)),
         .mipmap_mode = extract_mipmap_mode(sampler.minFilter.value_or(fastgltf::Filter::Nearest)),
         .min_lod = 0,
@@ -461,7 +461,7 @@ Job<> GltfLoader::load_texture(
 
     const auto sampler_ref = make_reference<renderer::vulkan::VulkanSampler>(
         STRING_ID(std::format("{}-sampler", texture_meta.resource_id.string)),
-        sampler_spec,
+        sampler_prop,
         context.get_gpu_context().get_device()
         );
     vulkan_texture->set_sampler(sampler_ref);

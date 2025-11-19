@@ -22,7 +22,7 @@ class VulkanContext;
 class VulkanMaterial final : public Material
 {
 public:
-    VulkanMaterial(const MaterialSpecification& spec, const VulkanContext& context);
+    VulkanMaterial(const MaterialProperties& properties, const VulkanContext& context);
     ~VulkanMaterial() override;
 
     void set_pipeline(const Reference<VulkanPipeline>& new_pipeline);
@@ -60,7 +60,7 @@ public:
     };
 
 private:
-    MaterialSpecification spec;
+    MaterialProperties properties;
 
     const VulkanDevice& device;
     Reference<VulkanShaderVariant> shader_variant;

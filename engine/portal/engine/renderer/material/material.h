@@ -18,7 +18,7 @@ namespace portal::renderer
 class ImageView;
 class Image;
 
-struct MaterialSpecification
+struct MaterialProperties
 {
     StringId id;
     Reference<ShaderVariant> shader;

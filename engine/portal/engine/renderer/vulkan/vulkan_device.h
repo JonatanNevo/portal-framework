@@ -48,7 +48,7 @@ public:
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     [[nodiscard]] AllocatedBuffer create_buffer(const BufferBuilder& builder) const;
     [[nodiscard]] std::shared_ptr<AllocatedBuffer> create_buffer_shared(const BufferBuilder& builder) const;
-    [[nodiscard]] AllocatedImage create_image(const ImageBuilder& builder) const;
+    [[nodiscard]] ImageAllocation create_image(const ImageBuilder& builder) const;
     [[nodiscard]] vk::raii::ImageView create_image_view(const vk::ImageViewCreateInfo& info) const;
     [[nodiscard]] vk::raii::Sampler create_sampler(const vk::SamplerCreateInfo& info) const;
 

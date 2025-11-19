@@ -360,7 +360,7 @@ Reference<renderer::Surface> GlfwWindow::create_surface(const renderer::vulkan::
     };
     return make_reference<renderer::vulkan::VulkanSurface>(context, props);
     // swapchain = make_reference<VulkanSwapchain>(context, window);
-    // swapchain->create(reinterpret_cast<uint32_t*>(&data.width), reinterpret_cast<uint32_t*>(&data.height), spec.vsync);
+    // swapchain->create(reinterpret_cast<uint32_t*>(&data.width), reinterpret_cast<uint32_t*>(&data.height), properties.vsync);
 }
 
 void GlfwWindow::process_events()

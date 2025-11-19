@@ -21,7 +21,7 @@ class VulkanImage;
 class VulkanTexture final : public Texture
 {
 public:
-    explicit VulkanTexture(const StringId& id, const TextureSpecification& spec, const Buffer& data, const VulkanContext& context);
+    explicit VulkanTexture(const StringId& id, const TextureProperties& properties, const Buffer& data, const VulkanContext& context);
 
     void resize(const glm::uvec3& size) override;
     void resize(size_t width, size_t height, size_t depth) override;
@@ -59,7 +59,7 @@ private:
     uint32_t get_array_layer_count() const;
 
 private:
-    TextureSpecification spec;
+    TextureProperties properties;
     Buffer image_data;
 
     const VulkanContext& context;

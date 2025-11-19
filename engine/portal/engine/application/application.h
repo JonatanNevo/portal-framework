@@ -18,7 +18,7 @@ namespace portal
 {
 class Module;
 
-struct ApplicationSpecification
+struct ApplicationProperties
 {
     StringId name = STRING_ID("Portal Engine");
     size_t width = 1600;
@@ -34,7 +34,7 @@ struct ApplicationSpecification
 class Application: public WindowEventConsumer
 {
 public:
-    explicit Application(const ApplicationSpecification& spec);
+    explicit Application(const ApplicationProperties& properties);
     ~Application() override;
 
     void run();
@@ -57,7 +57,7 @@ public:
 
 
 private:
-    ApplicationSpecification spec;
+    ApplicationProperties properties;
 
     std::unique_ptr<Input> input = nullptr;
     std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;

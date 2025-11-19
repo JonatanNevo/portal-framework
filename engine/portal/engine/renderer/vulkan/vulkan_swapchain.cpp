@@ -22,7 +22,7 @@ static auto logger = Log::get_logger("Vulkan");
 
 vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& available_present_modes, bool vsync)
 {
-    // The eFifo mode must always be present as per spec
+    // The eFifo mode must always be present as per properties
     // This mode waits for the vertical blank ("v-sync")
     auto present_mode = vk::PresentModeKHR::eFifo;
 
