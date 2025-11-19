@@ -12,11 +12,13 @@
 
 #include "portal/engine/reference.h"
 #include "portal/engine/renderer/deletion_queue.h"
+#include "portal/engine/renderer/render_target/render_target.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/surface/vulkan_surface.h"
 
 namespace portal::renderer::vulkan
 {
+class VulkanRenderTarget;
 
 struct SwapchainImageData
 {
@@ -28,6 +30,8 @@ struct SwapchainImageData
 
     // Track which frame last used this image
     size_t last_used_frame = std::numeric_limits<size_t>::max();
+
+    Reference<VulkanRenderTarget> render_target = nullptr;
 };
 
 struct FrameInFlightData
@@ -59,13 +63,15 @@ public:
     [[nodiscard]] size_t get_height() const { return height; }
     [[nodiscard]] const vk::Format& get_color_format() const { return color_format; }
     [[nodiscard]] vk::ColorSpaceKHR get_color_space() const { return color_space; }
-    [[nodiscard]] size_t get_current_frame() const { return current_frame; }
+    [[nodiscard]] size_t current_frame_index() const { return current_frame; }
     [[nodiscard]] [[nodiscard]] size_t get_frames_in_flight() const { return frames_in_flight; }
 
     [[nodiscard]] const vk::raii::CommandBuffer& get_current_draw_command_buffer() const { return images_data[current_image].command_buffer; }
     [[nodiscard]] vk::raii::CommandPool& get_current_draw_command_pool() { return images_data[current_image].command_pool; }
     [[nodiscard]] const vk::raii::ImageView& get_current_draw_image_view() const { return images_data[current_image].image_view; }
     [[nodiscard]] vk::Image get_current_draw_image() const { return images_data[current_image].image; }
+    [[nodiscard]] const Reference<VulkanRenderTarget>& get_current_render_target() const { return images_data[current_image].render_target; }
+    [[nodiscard]] const RenderTargetAttachmentProperties& get_attachments() const { return attachments; }
 
     void set_vsync(const bool new_vsync) { vsync = new_vsync; }
 
@@ -90,6 +96,10 @@ private:
 
     size_t frames_in_flight = 0;
     std::vector<FrameInFlightData> frame_data;
+
+    //TODO: find a better place
+    RenderTargetAttachmentProperties attachments;
+
 
     // Index of the frame we are currently working on, up to max frames in flight
     size_t current_frame = 0;

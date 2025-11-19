@@ -12,22 +12,22 @@
 #include "portal/core/debug/profile.h"
 #include "portal/engine/engine_context.h"
 #include "portal/engine/renderer/renderer_context.h"
+#include "portal/engine/renderer/vulkan/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/vulkan_utils.h"
 #include "portal/engine/window/glfw_window.h"
 
 namespace portal
 {
-
-ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context): context(context)
+ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context) : context(context)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
     io.ConfigWindowsMoveFromTitleBarOnly = true;
 
     ImGui::StyleColorsDark();
@@ -120,23 +120,26 @@ void ImGuiModule::end()
 
     const auto& renderer = context->get_renderer();
     auto& swapchain = renderer.get_swapchain();
+    auto& current_render_target = swapchain.get_current_render_target();
+
+    const auto draw_image = reference_cast<renderer::vulkan::VulkanImage>(current_render_target->get_image(0));
+    const auto depth_image = reference_cast<renderer::vulkan::VulkanImage>(current_render_target->get_depth_image());
 
     const auto& command_buffer = swapchain.get_current_draw_command_buffer();
 
     // set swapchain image layout to Attachment Optimal so we can draw it
     renderer::vulkan::transition_image_layout(
         command_buffer,
-        swapchain.get_current_draw_image(),
+        draw_image->get_image_info().image.get_handle(),
         1,
-        vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::ePresentSrcKHR,
         vk::ImageLayout::eColorAttachmentOptimal,
-        vk::AccessFlagBits2::eTransferWrite,
+        vk::AccessFlagBits2::eNone,
         vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
-        vk::PipelineStageFlagBits2::eTransfer,
+        vk::PipelineStageFlagBits2::eBottomOfPipe,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::ImageAspectFlagBits::eColor
-        );
-
+    );
 
     ImGui::Render();
 
@@ -144,7 +147,7 @@ void ImGuiModule::end()
     const auto height = static_cast<uint32_t>(swapchain.get_height());
 
     vk::RenderingAttachmentInfo color_attachment = {
-        .imageView = swapchain.get_current_draw_image_view(),
+        .imageView = draw_image->get_image_info().view,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eLoad,
         .storeOp = vk::AttachmentStoreOp::eStore
@@ -171,10 +174,10 @@ void ImGuiModule::end()
         ImGui::RenderPlatformWindowsDefault();
     }
 
-    // set swapchain image layout to Present so we can draw it
+    // set draw image layout to Present so we can present it
     renderer::vulkan::transition_image_layout(
         command_buffer,
-        swapchain.get_current_draw_image(),
+        draw_image->get_image_info().image.get_handle(),
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,
@@ -183,8 +186,7 @@ void ImGuiModule::end()
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::PipelineStageFlagBits2::eBottomOfPipe,
         vk::ImageAspectFlagBits::eColor
-        );
-
+    );
 }
 
 void ImGuiModule::on_gui_render() {

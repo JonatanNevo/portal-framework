@@ -18,6 +18,27 @@ namespace portal::renderer::vulkan
 
 static auto logger = Log::get_logger("Vulkan");
 
+VulkanImage::VulkanImage(const vk::Image image, const image::Properties& properties, const VulkanContext& context): Image(properties.name), device(context.get_device()), properties(properties)
+{
+    // TODO: move this to the `reallocate` somehow?
+    image_info.image = ImageAllocation(image);
+    const vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+
+    const vk::ImageViewCreateInfo view_info{
+        .image = image_info.image.get_handle(),
+        .viewType = properties.layers > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D,
+        .format = to_format(properties.format),
+        .subresourceRange = {
+            .aspectMask = aspect_mask,
+            .baseMipLevel = 0,
+            .levelCount = static_cast<uint32_t>(properties.mips),
+            .baseArrayLayer = 0,
+            .layerCount = static_cast<uint32_t>(properties.layers)
+        }
+    };
+    image_info.view = device.create_image_view(view_info);
+}
+
 VulkanImage::VulkanImage(const image::Properties& properties, const VulkanContext& context) : Image(properties.name), device(context.get_device()), properties(properties)
 {
     PORTAL_ASSERT(properties.width > 0 && properties.height > 0, "Invalid image size");
@@ -239,7 +260,7 @@ std::pair<size_t, size_t> VulkanImage::get_mip_level_dimensions(const size_t mip
     return {properties.width >> mip_level, properties.height >> mip_level};
 }
 
-image::Properties& VulkanImage::get_props()
+image::Properties& VulkanImage::get_prop()
 {
     return properties;
 }

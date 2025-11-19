@@ -9,6 +9,7 @@
 #include "portal/engine/renderer/material/material.h"
 #include "portal/engine/renderer/vulkan/vulkan_material.h"
 #include "portal/engine/renderer/vulkan/vulkan_shader.h"
+#include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 #include "portal/engine/resources/resource_reference.h"
 #include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/resources/database/resource_database.h"
@@ -108,7 +109,7 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& na
     // TODO: add pipeline cache
     renderer::PipelineProperties pipeline_properties{
         .shader = shader,
-        .attachments = context.get_render_target()->get_properties().attachments,
+        .attachments = context.get_swapchain()->get_attachments(),
         .topology = renderer::PrimitiveTopology::Triangles,
         .depth_compare_operator = renderer::DepthCompareOperator::GreaterOrEqual,
         .backface_culling = false,

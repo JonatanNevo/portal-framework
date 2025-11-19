@@ -99,6 +99,9 @@ ImageAllocation::ImageAllocation() : Allocated({}, nullptr, nullptr) {}
 
 ImageAllocation::ImageAllocation(nullptr_t) : ImageAllocation() {}
 
+ImageAllocation::ImageAllocation(vk::Image image): Allocated({}, image, nullptr)
+{}
+
 ImageAllocation::ImageAllocation(ImageAllocation&& other) noexcept : Allocated(std::move(other))
 {}
 

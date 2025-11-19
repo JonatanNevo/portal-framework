@@ -34,8 +34,8 @@ VulkanRenderTarget::VulkanRenderTarget(
     height = prop.height;
 
     size_t index = 0;
-    color_attachments.reserve(prop.attachments.color_attachments.size());
-    for (auto& attachment_prop : prop.attachments.color_attachments)
+    color_attachments.reserve(prop.attachments.attachment_images.size());
+    for (auto& attachment_prop : prop.attachments.attachment_images)
     {
         image::Properties image_prop{
             .format = attachment_prop.format,
@@ -45,7 +45,15 @@ VulkanRenderTarget::VulkanRenderTarget(
             .height = static_cast<size_t>(height * prop.scale)
         };
 
-        if (utils::is_depth_format(attachment_prop.format))
+        if (prop.existing_images.contains(index))
+        {
+            if (utils::is_depth_format(attachment_prop.format))
+                depth_attachment = reference_cast<VulkanImage>(prop.existing_images.at(index));
+            else
+                color_attachments.emplace_back(); // Will be filled out in `resize`
+
+        }
+        else if (utils::is_depth_format(attachment_prop.format))
         {
             image_prop.name = STRING_ID(std::format("{}_depth_attachment_{}", prop.name.string, index));
             depth_attachment = make_reference<VulkanImage>(image_prop, context);
@@ -74,14 +82,22 @@ void VulkanRenderTarget::initialize()
     release();
 
     // Using vulkan 1.4, no need to create frame buffer object
-    rendering_attachments.reserve(prop.attachments.color_attachments.size());
+    rendering_attachments.reserve(prop.attachments.attachment_images.size());
 
     size_t index = 0;
-    for (auto& attachment_prop : prop.attachments.color_attachments)
+    for (auto& attachment_prop : prop.attachments.attachment_images)
     {
         if (utils::is_depth_format(attachment_prop.format))
         {
-            depth_attachment->resize(static_cast<size_t>(width * prop.scale), static_cast<size_t>(height * prop.scale));
+            if (prop.existing_images.contains(index))
+            {
+                const auto image = reference_cast<VulkanImage>(prop.existing_images.at(index));
+                depth_attachment = image;
+            }
+            else
+            {
+                depth_attachment->resize(static_cast<size_t>(width * prop.scale), static_cast<size_t>(height * prop.scale));
+            }
 
             depth_rendering = vk::RenderingAttachmentInfo{
                 .imageView = depth_attachment->get_image_info().view,
@@ -93,8 +109,17 @@ void VulkanRenderTarget::initialize()
         }
         else
         {
-            const auto& image = color_attachments[index];
-            image->resize(static_cast<size_t>(width * prop.scale), static_cast<size_t>(height * prop.scale));
+            Reference<VulkanImage> image;
+            if (prop.existing_images.contains(index))
+            {
+                image = reference_cast<VulkanImage>(prop.existing_images.at(index));
+                color_attachments[index] = image;
+            }
+            else
+            {
+                image = color_attachments[index];
+                image->resize(static_cast<size_t>(width * prop.scale), static_cast<size_t>(height * prop.scale));
+            }
 
             auto& rendering_attachment = rendering_attachments.emplace_back();
             rendering_attachment = vk::RenderingAttachmentInfo{
@@ -120,13 +145,23 @@ void VulkanRenderTarget::initialize()
 
 void VulkanRenderTarget::release()
 {
+    size_t index = 0;
     for (const auto& image : color_attachments)
     {
+        if (prop.existing_images.contains(index))
+            continue;
+
         image->release();
+        index++;
     }
 
     if (depth_attachment)
-        depth_attachment->release();
+    {
+        // If we don't own the depth attachment
+        if (!prop.existing_images.contains(prop.attachments.attachment_images.size() - 1))
+            depth_attachment->release();
+    }
+
 
     rendering_attachments.clear();
 }

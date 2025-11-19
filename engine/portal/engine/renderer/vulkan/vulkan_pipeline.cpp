@@ -68,14 +68,14 @@ void VulkanPipeline::initialize()
            .set_cull_mode(prop.backface_culling ? vk::CullModeFlagBits::eBack : vk::CullModeFlagBits::eNone, vk::FrontFace::eClockwise)
            .set_line_width(prop.line_width); // this is dynamic;
 
-    const size_t color_attachment_count = prop.attachments.color_attachments.size();
+    const size_t color_attachment_count = prop.attachments.attachment_images.size() - 1;
 
     builder.set_color_attachment_number(color_attachment_count);
     std::vector<ImageFormat> color_formats;
     auto depth_format = ImageFormat::None;
     color_formats.reserve(color_attachment_count);
 
-    const auto& atts = prop.attachments.color_attachments;
+    const auto& atts = prop.attachments.attachment_images;
 
     size_t color_index = 0;
     for (size_t i = 0; i < atts.size(); ++i)
