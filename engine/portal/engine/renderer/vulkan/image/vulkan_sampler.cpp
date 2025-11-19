@@ -12,19 +12,19 @@
 namespace portal::renderer::vulkan
 {
 
-VulkanSampler::VulkanSampler(const StringId& id, const SamplerSpecification& spec, const VulkanDevice& device) : id(id), spec(spec)
+VulkanSampler::VulkanSampler(const StringId& id, const SamplerProperties& properties, const VulkanDevice& device) : id(id), properties(properties)
 {
     const vk::SamplerCreateInfo sampler_info{
-        .magFilter = to_filter(spec.filter),
-        .minFilter = to_filter(spec.filter),
-        .mipmapMode = to_mipmap_mode(spec.mipmap_mode),
-        .addressModeU = to_address_mode(spec.wrap),
-        .addressModeV = to_address_mode(spec.wrap),
-        .addressModeW = to_address_mode(spec.wrap),
+        .magFilter = to_filter(properties.filter),
+        .minFilter = to_filter(properties.filter),
+        .mipmapMode = to_mipmap_mode(properties.mipmap_mode),
+        .addressModeU = to_address_mode(properties.wrap),
+        .addressModeV = to_address_mode(properties.wrap),
+        .addressModeW = to_address_mode(properties.wrap),
         .anisotropyEnable = false,
         .maxAnisotropy = 1.f,
-        .minLod = spec.min_lod,
-        .maxLod = spec.max_lod,
+        .minLod = properties.min_lod,
+        .maxLod = properties.max_lod,
         .borderColor = vk::BorderColor::eFloatOpaqueWhite,
     };
 
@@ -37,9 +37,9 @@ vk::Sampler VulkanSampler::get_vk_sampler() const
     return sampler;
 }
 
-const SamplerSpecification& VulkanSampler::get_spec() const
+const SamplerProperties& VulkanSampler::get_prop() const
 {
-    return spec;
+    return properties;
 }
 
 } // portal

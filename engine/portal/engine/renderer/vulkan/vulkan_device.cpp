@@ -184,7 +184,7 @@ std::shared_ptr<AllocatedBuffer> VulkanDevice::create_buffer_shared(const Buffer
     return builder.build_shared(*this);
 }
 
-AllocatedImage VulkanDevice::create_image(const ImageBuilder& builder) const
+ImageAllocation VulkanDevice::create_image(const ImageBuilder& builder) const
 {
     return builder.build(*this);
 }

@@ -19,8 +19,8 @@ class VulkanDescriptorSetManager final : public DescriptorSetManager
 public:
     ~VulkanDescriptorSetManager() override;
 
-    static VulkanDescriptorSetManager create(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device);
-    static std::unique_ptr<VulkanDescriptorSetManager> create_unique(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device);
+    static VulkanDescriptorSetManager create(const DescriptorSetManagerProperties& properties, const VulkanDevice& device);
+    static std::unique_ptr<VulkanDescriptorSetManager> create_unique(const DescriptorSetManagerProperties& properties, const VulkanDevice& device);
 
     VulkanDescriptorSetManager(const VulkanDescriptorSetManager&) = delete;
     VulkanDescriptorSetManager& operator=(const VulkanDescriptorSetManager&) = delete;
@@ -54,7 +54,7 @@ public:
     const std::vector<vk::raii::DescriptorSet>& get_descriptor_sets(size_t frame_index) const;
 
 private:
-    VulkanDescriptorSetManager(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device, portal::renderer::vulkan::DescriptorAllocator&& descriptor_allocator);
+    VulkanDescriptorSetManager(const DescriptorSetManagerProperties& properties, const VulkanDevice& device, portal::renderer::vulkan::DescriptorAllocator&& descriptor_allocator);
 
     VulkanDescriptorSetManager& init();
     std::set<size_t> get_buffer_sets();
@@ -75,7 +75,7 @@ public:
     std::vector<std::unordered_map<size_t, std::unordered_map<size_t, WriteDescriptor>>> write_descriptors_map;
 
 private:
-    DescriptorSetManagerSpecification spec;
+    DescriptorSetManagerProperties properties;
     const VulkanDevice& device;
 
     portal::renderer::vulkan::DescriptorAllocator descriptor_allocator;

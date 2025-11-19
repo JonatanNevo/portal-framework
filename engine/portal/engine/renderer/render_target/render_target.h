@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <glaze/reflection/get_name.hpp>
+
 #include "portal/engine/reference.h"
 #include "portal/engine/renderer/image/image_types.h"
 
@@ -61,6 +63,9 @@ struct RenderTargetProperties
 
     // Will it be used for transfer ops?
     bool transfer = false;
+
+    // Tells the render target to use these images instead of creating new ones
+    std::unordered_map<size_t, Reference<Image>> existing_images;
     StringId name;
 };
 

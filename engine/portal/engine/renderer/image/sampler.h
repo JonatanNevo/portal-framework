@@ -13,7 +13,7 @@ class Sampler
 public:
     virtual ~Sampler() = default;
 
-    [[nodiscard]] virtual const SamplerSpecification& get_spec() const = 0;
+    [[nodiscard]] virtual const SamplerProperties& get_prop() const = 0;
 };
 
 }

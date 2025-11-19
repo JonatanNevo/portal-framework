@@ -26,7 +26,7 @@ class WindowCloseEvent;
 
 static auto logger = Log::get_logger("Application");
 
-Application::Application(const ApplicationSpecification& spec) : spec(spec)
+Application::Application(const ApplicationProperties& properties) : properties(properties)
 {
     input = std::make_unique<Input>(
     [this](auto& event)
@@ -37,8 +37,8 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
 
 
     const WindowProperties window_properties{
-        .title = spec.name,
-        .extent = {spec.width, spec.width},
+        .title = properties.name,
+        .extent = {properties.width, properties.width},
     };
     window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, *input});
 
@@ -52,9 +52,9 @@ Application::Application(const ApplicationSpecification& spec) : spec(spec)
     auto swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(*vulkan_context, surface);
     renderer = make_reference<Renderer>(*input, *vulkan_context, swapchain);
 
-    scheduler = std::make_unique<jobs::Scheduler>(spec.scheduler_worker_num);
+    scheduler = std::make_unique<jobs::Scheduler>(properties.scheduler_worker_num);
     reference_manager = std::make_unique<ReferenceManager>();
-    resource_database = std::make_unique<FolderResourceDatabase>(spec.resources_path);
+    resource_database = std::make_unique<FolderResourceDatabase>(properties.resources_path);
     resource_registry = std::make_unique<ResourceRegistry>(*reference_manager, *resource_database, *scheduler, renderer->get_renderer_context());
 
     engine_context = make_reference<EngineContext>(

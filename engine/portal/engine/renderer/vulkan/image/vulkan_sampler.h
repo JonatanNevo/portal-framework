@@ -16,14 +16,14 @@ class VulkanDevice;
 class VulkanSampler final : public Sampler
 {
 public:
-    VulkanSampler(const StringId& id, const SamplerSpecification& spec, const VulkanDevice& device);
+    VulkanSampler(const StringId& id, const SamplerProperties& properties, const VulkanDevice& device);
 
     vk::Sampler get_vk_sampler() const;
-    [[nodiscard]] const SamplerSpecification& get_spec() const override;
+    [[nodiscard]] const SamplerProperties& get_prop() const override;
 
 private:
     StringId id;
-    SamplerSpecification spec;
+    SamplerProperties properties;
     vk::raii::Sampler sampler = nullptr;
 };
 

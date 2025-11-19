@@ -28,7 +28,7 @@ public:
     [[nodiscard]] virtual bool has_mip() const = 0;
 
     [[nodiscard]] virtual float get_aspect_ratio() const = 0;
-    [[nodiscard]] virtual const image::Specification& get_spec() const = 0;
+    [[nodiscard]] virtual const image::Properties& get_prop() const = 0;
 
     [[nodiscard]] virtual Buffer get_buffer() const = 0;
     [[nodiscard]] virtual Buffer& get_buffer() = 0;
@@ -39,7 +39,7 @@ public:
     virtual Buffer copy_to_host_buffer() = 0;
 };
 
-struct ImageViewSpecification
+struct ImageViewProperties
 {
     Reference<Image> image;
     size_t mip = 0;

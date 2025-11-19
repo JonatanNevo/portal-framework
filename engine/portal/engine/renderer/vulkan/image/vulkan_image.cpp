@@ -18,9 +18,9 @@ namespace portal::renderer::vulkan
 
 static auto logger = Log::get_logger("Vulkan");
 
-VulkanImage::VulkanImage(const image::Specification& spec, const VulkanContext& context) : Image(spec.name), device(context.get_device()), spec(spec)
+VulkanImage::VulkanImage(const image::Properties& properties, const VulkanContext& context) : Image(properties.name), device(context.get_device()), properties(properties)
 {
-    PORTAL_ASSERT(spec.width > 0 && spec.height > 0, "Invalid image size");
+    PORTAL_ASSERT(properties.width > 0 && properties.height > 0, "Invalid image size");
     reallocate();
 }
 
@@ -31,8 +31,8 @@ VulkanImage::~VulkanImage()
 
 void VulkanImage::resize(const size_t width, const size_t height)
 {
-    spec.width = width;
-    spec.height = height;
+    properties.width = width;
+    properties.height = height;
     reallocate();
 }
 
@@ -40,85 +40,85 @@ void VulkanImage::reallocate()
 {
     release();
 
-    ImageBuilder builder(spec.width, spec.height, 1);
+    ImageBuilder builder(properties.width, properties.height, 1);
 
     vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eSampled;
-    if (spec.usage == ImageUsage::Attachment)
+    if (properties.usage == ImageUsage::Attachment)
     {
-        if (utils::is_depth_format(spec.format))
+        if (utils::is_depth_format(properties.format))
             usage |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
         else
             usage |= vk::ImageUsageFlagBits::eColorAttachment;
     }
-    if (spec.transfer || spec.usage == ImageUsage::Texture)
+    if (properties.transfer || properties.usage == ImageUsage::Texture)
     {
         usage |= vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst;
     }
-    if (spec.usage == ImageUsage::Storage)
+    if (properties.usage == ImageUsage::Storage)
     {
         usage |= vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eTransferDst;
     }
 
-    vk::ImageAspectFlags aspect_mask = utils::is_depth_format(spec.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
-    if (utils::is_stencil_format(spec.format))
+    vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+    if (utils::is_stencil_format(properties.format))
         aspect_mask |= vk::ImageAspectFlagBits::eStencil;
 
-    const vk::Format format = to_format(spec.format);
+    const vk::Format format = to_format(properties.format);
 
-    const VmaMemoryUsage memory_usage = spec.usage == ImageUsage::HostRead ? VMA_MEMORY_USAGE_GPU_TO_CPU : VMA_MEMORY_USAGE_GPU_ONLY;
+    const VmaMemoryUsage memory_usage = properties.usage == ImageUsage::HostRead ? VMA_MEMORY_USAGE_GPU_TO_CPU : VMA_MEMORY_USAGE_GPU_ONLY;
 
     builder.with_usage(usage)
            .with_image_type(vk::ImageType::e2D)
            .with_format(format)
-           .with_mips_levels(spec.mips)
-           .with_array_layers(spec.layers)
+           .with_mips_levels(properties.mips)
+           .with_array_layers(properties.layers)
            .with_sample_count(vk::SampleCountFlagBits::e1)
-           .with_tiling(spec.usage == ImageUsage::HostRead ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal)
+           .with_tiling(properties.usage == ImageUsage::HostRead ? vk::ImageTiling::eLinear : vk::ImageTiling::eOptimal)
            .with_vma_usage(memory_usage)
            .with_vma_required_flags(vk::MemoryPropertyFlagBits::eDeviceLocal)
-           .with_debug_name(std::string(spec.name.string));
+           .with_debug_name(std::string(properties.name.string));
 
-    if (spec.flags == image::Flags::CubeCompatible)
+    if (properties.flags == image::Flags::CubeCompatible)
         builder.with_flags(vk::ImageCreateFlagBits::eCubeCompatible);
 
     image_info.image = device.create_image(builder);
 
     const vk::ImageViewCreateInfo view_info{
         .image = image_info.image.get_handle(),
-        .viewType = spec.layers > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D,
+        .viewType = properties.layers > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D,
         .format = format,
         .subresourceRange = {
             .aspectMask = aspect_mask,
             .baseMipLevel = 0,
-            .levelCount = static_cast<uint32_t>(spec.mips),
+            .levelCount = static_cast<uint32_t>(properties.mips),
             .baseArrayLayer = 0,
-            .layerCount = static_cast<uint32_t>(spec.layers)
+            .layerCount = static_cast<uint32_t>(properties.layers)
         }
     };
     image_info.view = device.create_image_view(view_info);
-    device.set_debug_name(image_info.view, std::format("default_image_view_{}", spec.name.string).c_str());
+    device.set_debug_name(image_info.view, std::format("default_image_view_{}", properties.name.string).c_str());
 
-    if (spec.create_sampler)
+    if (properties.create_sampler)
     {
-        SamplerSpecification sampler_spec{
+        SamplerProperties sampler_prop{
             .wrap = TextureWrap::Clamp,
         };
 
-        if (utils::is_integer_format(spec.format))
+        if (utils::is_integer_format(properties.format))
         {
-            sampler_spec.filter = TextureFilter::Nearest;
-            sampler_spec.mipmap_mode = SamplerMipmapMode::Nearest;
+            sampler_prop.filter = TextureFilter::Nearest;
+            sampler_prop.mipmap_mode = SamplerMipmapMode::Nearest;
         }
         else
         {
-            sampler_spec.filter = TextureFilter::Linear;
-            sampler_spec.mipmap_mode = SamplerMipmapMode::Linear;
+            sampler_prop.filter = TextureFilter::Linear;
+            sampler_prop.mipmap_mode = SamplerMipmapMode::Linear;
         }
 
-        image_info.sampler = make_reference<VulkanSampler>(STRING_ID(std::format("default_sampler_{}", spec.name.string)), sampler_spec, device);
+        image_info.sampler = make_reference<VulkanSampler>(STRING_ID(std::format("default_sampler_{}", properties.name.string)), sampler_prop, device);
     }
 
-    if (spec.usage == ImageUsage::Storage)
+    if (properties.usage == ImageUsage::Storage)
     {
         device.immediate_submit(
             [&](const auto& command_buffer)
@@ -126,12 +126,12 @@ void VulkanImage::reallocate()
                 vk::ImageSubresourceRange range{
                     .aspectMask = vk::ImageAspectFlagBits::eColor,
                     .baseMipLevel = 0,
-                    .levelCount = static_cast<uint32_t>(spec.mips),
+                    .levelCount = static_cast<uint32_t>(properties.mips),
                     .baseArrayLayer = 0,
-                    .layerCount = static_cast<uint32_t>(spec.layers)
+                    .layerCount = static_cast<uint32_t>(properties.layers)
                 };
 
-                portal::renderer::vulkan::transition_image_layout(
+                vulkan::transition_image_layout(
                     command_buffer,
                     image_info.image.get_handle(),
                     range,
@@ -146,7 +146,7 @@ void VulkanImage::reallocate()
             );
     }
 
-    if (spec.usage == ImageUsage::HostRead)
+    if (properties.usage == ImageUsage::HostRead)
     {
         device.immediate_submit(
             [&](const auto& command_buffer)
@@ -154,12 +154,12 @@ void VulkanImage::reallocate()
                 vk::ImageSubresourceRange range{
                     .aspectMask = vk::ImageAspectFlagBits::eColor,
                     .baseMipLevel = 0,
-                    .levelCount = static_cast<uint32_t>(spec.mips),
+                    .levelCount = static_cast<uint32_t>(properties.mips),
                     .baseArrayLayer = 0,
-                    .layerCount = static_cast<uint32_t>(spec.layers)
+                    .layerCount = static_cast<uint32_t>(properties.layers)
                 };
 
-                portal::renderer::vulkan::transition_image_layout(
+                vulkan::transition_image_layout(
                     command_buffer,
                     image_info.image.get_handle(),
                     range,
@@ -196,71 +196,71 @@ bool VulkanImage::is_image_valid() const
 
 size_t VulkanImage::get_width() const
 {
-    return spec.width;
+    return properties.width;
 }
 
 size_t VulkanImage::get_height() const
 {
-    return spec.height;
+    return properties.height;
 }
 
 glm::uvec2 VulkanImage::get_size() const
 {
-    return {spec.width, spec.height};
+    return {properties.width, properties.height};
 }
 
 vk::Format VulkanImage::get_format() const
 {
-    return to_format(spec.format);
+    return to_format(properties.format);
 }
 
 bool VulkanImage::has_mip() const
 {
-    return spec.mips > 1;
+    return properties.mips > 1;
 }
 
 float VulkanImage::get_aspect_ratio() const
 {
-    return static_cast<float>(spec.width) / static_cast<float>(spec.height);
+    return static_cast<float>(properties.width) / static_cast<float>(properties.height);
 }
 
 int VulkanImage::get_closest_mip_level(const size_t width, const size_t height) const
 {
-    if (width > spec.width / 2 || height > spec.height / 2)
+    if (width > properties.width / 2 || height > properties.height / 2)
         return 0;
 
-    const int a = static_cast<int>(glm::log2(glm::min(static_cast<float>(spec.width), static_cast<float>(spec.height))));
+    const int a = static_cast<int>(glm::log2(glm::min(static_cast<float>(properties.width), static_cast<float>(properties.height))));
     const int b = static_cast<int>(glm::log2(glm::min(static_cast<float>(width), static_cast<float>(height))));
     return a - b;
 }
 
 std::pair<size_t, size_t> VulkanImage::get_mip_level_dimensions(const size_t mip_level) const
 {
-    return {spec.width >> mip_level, spec.height >> mip_level};
+    return {properties.width >> mip_level, properties.height >> mip_level};
 }
 
-image::Specification& VulkanImage::get_specs()
+image::Properties& VulkanImage::get_props()
 {
-    return spec;
+    return properties;
 }
 
-const image::Specification& VulkanImage::get_spec() const
+const image::Properties& VulkanImage::get_prop() const
 {
-    return spec;
+    return properties;
 }
 
 void VulkanImage::create_per_layer_image_view()
 {
-    PORTAL_ASSERT(spec.layers > 1, "Cannot create per layer image view for single layer image");
+    PORTAL_ASSERT(properties.layers > 1, "Cannot create per layer image view for single layer image");
 
-    vk::ImageAspectFlags aspect_mask = utils::is_depth_format(spec.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
-    if (utils::is_stencil_format(spec.format))
+    vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+    if (utils::is_stencil_format(properties.format))
         aspect_mask |= vk::ImageAspectFlagBits::eStencil;
 
-    const vk::Format format = to_format(spec.format);
+    const vk::Format format = to_format(properties.format);
 
-    per_layer_image_views.reserve(spec.layers);
-    for (size_t i = 0; i < spec.layers; ++i)
+    per_layer_image_views.reserve(properties.layers);
+    for (size_t i = 0; i < properties.layers; ++i)
     {
         const vk::ImageViewCreateInfo view_info{
             .image = image_info.image.get_handle(),
@@ -269,13 +269,13 @@ void VulkanImage::create_per_layer_image_view()
             .subresourceRange = {
                 .aspectMask = aspect_mask,
                 .baseMipLevel = 0,
-                .levelCount = static_cast<uint32_t>(spec.mips),
+                .levelCount = static_cast<uint32_t>(properties.mips),
                 .baseArrayLayer = 0,
                 .layerCount = 1
             }
         };
         per_layer_image_views.emplace_back(device.create_image_view(view_info));
-        device.set_debug_name(per_layer_image_views[i], std::format("{}_layer_view_{}", spec.name.string, i).c_str());
+        device.set_debug_name(per_layer_image_views[i], std::format("{}_layer_view_{}", properties.name.string, i).c_str());
     }
 }
 
@@ -283,11 +283,11 @@ vk::ImageView VulkanImage::get_mip_image_view(size_t mip_level)
 {
     if (!per_mip_image_views.contains(mip_level))
     {
-        vk::ImageAspectFlags aspect_mask = utils::is_depth_format(spec.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
-        if (utils::is_stencil_format(spec.format))
+        vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+        if (utils::is_stencil_format(properties.format))
             aspect_mask |= vk::ImageAspectFlagBits::eStencil;
 
-        const vk::Format format = to_format(spec.format);
+        const vk::Format format = to_format(properties.format);
 
         const vk::ImageViewCreateInfo view_info{
             .image = image_info.image.get_handle(),
@@ -302,14 +302,14 @@ vk::ImageView VulkanImage::get_mip_image_view(size_t mip_level)
             }
         };
         per_mip_image_views.emplace(mip_level, device.create_image_view(view_info));
-        device.set_debug_name(per_mip_image_views.at(mip_level), std::format("{}_mip_view_{}", spec.name.string, mip_level).c_str());
+        device.set_debug_name(per_mip_image_views.at(mip_level), std::format("{}_mip_view_{}", properties.name.string, mip_level).c_str());
     }
     return per_mip_image_views.at(mip_level);
 }
 
 vk::ImageView VulkanImage::get_layer_image_view(const size_t layer)
 {
-    PORTAL_ASSERT(layer < spec.layers, "Invalid layer index");
+    PORTAL_ASSERT(layer < properties.layers, "Invalid layer index");
     return per_layer_image_views[layer];
 }
 
@@ -321,6 +321,21 @@ VulkanImageInfo& VulkanImage::get_image_info()
 const vk::DescriptorImageInfo& VulkanImage::get_descriptor_image_info() const
 {
     return descriptor_image_info;
+}
+
+const ImageAllocation& VulkanImage::get_image() const
+{
+    return image_info.image;
+}
+
+const vk::raii::ImageView& VulkanImage::get_view() const
+{
+    return image_info.view;
+}
+
+const Reference<VulkanSampler>& VulkanImage::get_sampler() const
+{
+    return image_info.sampler;
 }
 
 Buffer VulkanImage::get_buffer() const
@@ -335,7 +350,7 @@ Buffer& VulkanImage::get_buffer()
 
 void VulkanImage::set_data(const Buffer buffer)
 {
-    PORTAL_ASSERT(spec.transfer, "Image was not created with transfer bit");
+    PORTAL_ASSERT(properties.transfer, "Image was not created with transfer bit");
 
     if (!buffer)
     {
@@ -377,8 +392,8 @@ void VulkanImage::set_data(const Buffer buffer)
                     .layerCount = 1
                 },
                 .imageExtent = {
-                    static_cast<uint32_t>(spec.width),
-                    static_cast<uint32_t>(spec.height),
+                    static_cast<uint32_t>(properties.width),
+                    static_cast<uint32_t>(properties.height),
                     1
                 }
             };
@@ -409,7 +424,7 @@ void VulkanImage::set_data(const Buffer buffer)
 
 portal::Buffer VulkanImage::copy_to_host_buffer()
 {
-    const size_t buffer_size = utils::get_image_memory_size(spec.format, spec.width, spec.height);
+    const size_t buffer_size = utils::get_image_memory_size(properties.format, properties.width, properties.height);
 
     BufferBuilder builder(buffer_size);
     builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
@@ -422,8 +437,8 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
 
     // TODO: support copy of mips?
     constexpr uint32_t mip_count = 1;
-    auto mip_width = static_cast<uint32_t>(spec.width);
-    auto mip_height = static_cast<uint32_t>(spec.height);
+    auto mip_width = static_cast<uint32_t>(properties.width);
+    auto mip_height = static_cast<uint32_t>(properties.height);
 
     device.immediate_submit(
         [&](const vk::raii::CommandBuffer& command_buffer)
@@ -473,7 +488,7 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
                     {copy_region}
                     );
 
-                mip_data_offset += utils::get_image_memory_size(spec.format, mip_width, mip_height);
+                mip_data_offset += utils::get_image_memory_size(properties.format, mip_width, mip_height);
                 mip_width = std::max(1u, mip_width / 2);
                 mip_height = std::max(1u, mip_height / 2);
             }
@@ -499,11 +514,11 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
 
 void VulkanImage::update_descriptor()
 {
-    if (utils::is_depth_format(spec.format))
+    if (utils::is_depth_format(properties.format))
         descriptor_image_info.imageLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
-    else if (spec.usage == ImageUsage::Storage)
+    else if (properties.usage == ImageUsage::Storage)
         descriptor_image_info.imageLayout = vk::ImageLayout::eGeneral;
-    else if (spec.usage == ImageUsage::HostRead)
+    else if (properties.usage == ImageUsage::HostRead)
         descriptor_image_info.imageLayout = vk::ImageLayout::eTransferDstOptimal;
     else
         descriptor_image_info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;

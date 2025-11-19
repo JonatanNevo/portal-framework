@@ -94,7 +94,7 @@ VulkanDescriptorSetManager::~VulkanDescriptorSetManager()
     descriptor_allocator.destroy_pools();
 }
 
-VulkanDescriptorSetManager VulkanDescriptorSetManager::create(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device)
+VulkanDescriptorSetManager VulkanDescriptorSetManager::create(const DescriptorSetManagerProperties& properties, const VulkanDevice& device)
 {
     // TODO: use raios generated from shader
     std::vector<portal::renderer::vulkan::DescriptorAllocator::PoolSizeRatio> pool_sizes =
@@ -112,11 +112,11 @@ VulkanDescriptorSetManager VulkanDescriptorSetManager::create(const DescriptorSe
         {vk::DescriptorType::eInputAttachment, 10}
     };
 
-    return VulkanDescriptorSetManager(spec, device, portal::renderer::vulkan::DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes));
+    return VulkanDescriptorSetManager(properties, device, portal::renderer::vulkan::DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes));
 }
 
 std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_unique(
-    const DescriptorSetManagerSpecification& spec,
+    const DescriptorSetManagerProperties& properties,
     const VulkanDevice& device
     )
 {
@@ -138,7 +138,7 @@ std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_u
 
     return std::unique_ptr<VulkanDescriptorSetManager>(
         new VulkanDescriptorSetManager(
-            spec,
+            properties,
             device,
             portal::renderer::vulkan::DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes)
             )
@@ -147,10 +147,10 @@ std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_u
 
 
 VulkanDescriptorSetManager::VulkanDescriptorSetManager(
-    const DescriptorSetManagerSpecification& spec,
+    const DescriptorSetManagerProperties& properties,
     const VulkanDevice& device,
     portal::renderer::vulkan::DescriptorAllocator&& descriptor_allocator
-    ) : spec(spec), device(device), descriptor_allocator(std::move(descriptor_allocator))
+    ) : properties(properties), device(device), descriptor_allocator(std::move(descriptor_allocator))
 {
     init();
 }
@@ -161,7 +161,7 @@ void VulkanDescriptorSetManager::set_input(StringId name, const Reference<Unifor
     if (decl)
         input_resources.at(decl->set).at(decl->binding_index).set(buffer);
     else
-        LOGGER_WARN("[{}] Input {} not found", spec.debug_name.string, name.string);
+        LOGGER_WARN("[{}] Input {} not found", properties.debug_name.string, name.string);
 }
 
 void VulkanDescriptorSetManager::set_input(StringId name, const Reference<UniformBuffer>& buffer)
@@ -170,7 +170,7 @@ void VulkanDescriptorSetManager::set_input(StringId name, const Reference<Unifor
     if (decl)
         input_resources.at(decl->set).at(decl->binding_index).set(buffer);
     else
-        LOGGER_WARN("[{}] Input {} not found", spec.debug_name.string, name.string);
+        LOGGER_WARN("[{}] Input {} not found", properties.debug_name.string, name.string);
 }
 
 void VulkanDescriptorSetManager::set_input(StringId name, const Reference<StorageBufferSet>& buffer)
@@ -179,7 +179,7 @@ void VulkanDescriptorSetManager::set_input(StringId name, const Reference<Storag
     if (decl)
         input_resources.at(decl->set).at(decl->binding_index).set(buffer);
     else
-        LOGGER_WARN("[{}] Input {} not found", spec.debug_name.string, name.string);
+        LOGGER_WARN("[{}] Input {} not found", properties.debug_name.string, name.string);
 }
 
 void VulkanDescriptorSetManager::set_input(StringId name, const Reference<StorageBuffer>& buffer)
@@ -188,7 +188,7 @@ void VulkanDescriptorSetManager::set_input(StringId name, const Reference<Storag
     if (decl)
         input_resources.at(decl->set).at(decl->binding_index).set(buffer);
     else
-        LOGGER_WARN("[{}] Input {} not found", spec.debug_name.string, name.string);
+        LOGGER_WARN("[{}] Input {} not found", properties.debug_name.string, name.string);
 }
 
 void VulkanDescriptorSetManager::set_input(StringId name, const Reference<Texture>& texture)
@@ -197,7 +197,7 @@ void VulkanDescriptorSetManager::set_input(StringId name, const Reference<Textur
     if (decl)
         input_resources.at(decl->set).at(decl->binding_index).set(texture);
     else
-        LOGGER_WARN("[{}] Input {} not found", spec.debug_name.string, name.string);
+        LOGGER_WARN("[{}] Input {} not found", properties.debug_name.string, name.string);
 }
 
 void VulkanDescriptorSetManager::set_input(StringId name, const Reference<Image>& image)
@@ -206,7 +206,7 @@ void VulkanDescriptorSetManager::set_input(StringId name, const Reference<Image>
     if (decl)
         input_resources.at(decl->set).at(decl->binding_index).set(image);
     else
-        LOGGER_WARN("[{}] Input {} not found", spec.debug_name.string, name.string);
+        LOGGER_WARN("[{}] Input {} not found", properties.debug_name.string, name.string);
 }
 
 void VulkanDescriptorSetManager::set_input(StringId name, const Reference<ImageView>& image)
@@ -215,7 +215,7 @@ void VulkanDescriptorSetManager::set_input(StringId name, const Reference<ImageV
     if (decl)
         input_resources.at(decl->set).at(decl->binding_index).set(image);
     else
-        LOGGER_WARN("[{}] Input {} not found", spec.debug_name.string, name.string);
+        LOGGER_WARN("[{}] Input {} not found", properties.debug_name.string, name.string);
 }
 
 Reference<RendererResource> VulkanDescriptorSetManager::get_input(StringId name)
@@ -232,7 +232,7 @@ Reference<RendererResource> VulkanDescriptorSetManager::get_input(StringId name)
         }
     }
 
-    LOGGER_WARN("[{}] Input {} not found", spec.debug_name.string, name.string);
+    LOGGER_WARN("[{}] Input {} not found", properties.debug_name.string, name.string);
     return nullptr;
 }
 
@@ -248,31 +248,31 @@ bool VulkanDescriptorSetManager::is_invalidated(size_t set, size_t binding_index
 
 bool VulkanDescriptorSetManager::validate()
 {
-    const auto reflection_descriptor_sets = spec.shader->get_reflection().descriptor_sets;
+    const auto reflection_descriptor_sets = properties.shader->get_reflection().descriptor_sets;
 
-    const auto end_set = std::min(spec.end_set, reflection_descriptor_sets.size());
-    for (size_t set = spec.start_set; set < end_set; ++set)
+    const auto end_set = std::min(properties.end_set, reflection_descriptor_sets.size());
+    for (size_t set = properties.start_set; set < end_set; ++set)
     {
         if (!reflection_descriptor_sets[set])
             continue;
 
         if (!input_resources.contains(set))
         {
-            LOGGER_ERROR("[{}] No input resources for set {}", spec.debug_name, set);
+            LOGGER_ERROR("[{}] No input resources for set {}", properties.debug_name, set);
             return false;
         }
 
         const auto& set_input_resources = input_resources.at(set);
 
         [[maybe_unused]] auto& descriptor_set = reflection_descriptor_sets[set];
-        auto& write_descriptor_sets = reference_cast<VulkanShaderVariant>(spec.shader)->get_write_descriptor_sets(static_cast<uint32_t>(set));
+        auto& write_descriptor_sets = reference_cast<VulkanShaderVariant>(properties.shader)->get_write_descriptor_sets(static_cast<uint32_t>(set));
         for (auto&& [name, write_descriptor] : write_descriptor_sets)
         {
             auto binding = write_descriptor.dstBinding;
             if (!set_input_resources.contains(binding))
             {
-                LOGGER_ERROR("[{}] No input resource for {}.{}", spec.debug_name, set, binding);
-                LOGGER_ERROR("[{}] Required resource is {} ({})", spec.debug_name, name, vk::to_string(write_descriptor.descriptorType));
+                LOGGER_ERROR("[{}] No input resource for {}.{}", properties.debug_name, set, binding);
+                LOGGER_ERROR("[{}] Required resource is {} ({})", properties.debug_name, name, vk::to_string(write_descriptor.descriptorType));
                 return false;
             }
 
@@ -281,7 +281,7 @@ bool VulkanDescriptorSetManager::validate()
             {
                 LOGGER_ERROR(
                     "[{}] Required resource is wrong type! {} but needs {}",
-                    spec.debug_name,
+                    properties.debug_name,
                     portal::to_string(resource.type),
                     vk::to_string(write_descriptor.descriptorType)
                     );
@@ -290,7 +290,7 @@ bool VulkanDescriptorSetManager::validate()
 
             if (resource.type != DescriptorResourceType::Image && resource.input[0] == nullptr)
             {
-                LOGGER_ERROR("[{}] Resource is null! {} ({}.{})", spec.debug_name, name, set, binding);
+                LOGGER_ERROR("[{}] Resource is null! {} ({}.{})", properties.debug_name, name, set, binding);
                 return false;
             }
         }
@@ -304,14 +304,14 @@ void VulkanDescriptorSetManager::bake()
     // Make sure all resources are present and we can properly bake
     if (!validate())
     {
-        LOGGER_ERROR("[{}] Bake - validation failed", spec.debug_name);
+        LOGGER_ERROR("[{}] Bake - validation failed", properties.debug_name);
         return;
     }
 
     // If valid, we can create descriptor sets
 
     auto buffer_sets = get_buffer_sets();
-    const size_t descriptor_set_count = spec.frame_in_flights;
+    const size_t descriptor_set_count = properties.frame_in_flights;
     descriptor_sets.resize(descriptor_set_count);
 
     for (auto& set : descriptor_sets)
@@ -321,7 +321,7 @@ void VulkanDescriptorSetManager::bake()
     {
         for (size_t frame_index = 0; frame_index < descriptor_set_count; ++frame_index)
         {
-            auto layout = reference_cast<VulkanShaderVariant>(spec.shader)->get_descriptor_layout(set);
+            auto layout = reference_cast<VulkanShaderVariant>(properties.shader)->get_descriptor_layout(set);
 
             auto& descriptor_set = descriptor_sets[frame_index].emplace_back(descriptor_allocator.allocate(layout));
             auto& write_descriptor_map = write_descriptors_map[frame_index][set];
@@ -630,7 +630,7 @@ void VulkanDescriptorSetManager::invalidate_and_update(const size_t frame_index)
 
         LOGGER_DEBUG(
             "{} - updating {} descriptors in set {} (frame index = {})",
-            spec.shader->get_name(),
+            properties.shader->get_name(),
             write_descriptor_to_update.size(),
             set,
             frame_index
@@ -661,15 +661,15 @@ const std::vector<vk::raii::DescriptorSet>& VulkanDescriptorSetManager::get_desc
 
 VulkanDescriptorSetManager& VulkanDescriptorSetManager::init()
 {
-    const auto& reflection_descriptor_sets = spec.shader->get_reflection().descriptor_sets;
-    const auto frames_in_flight = spec.frame_in_flights;
+    const auto& reflection_descriptor_sets = properties.shader->get_reflection().descriptor_sets;
+    const auto frames_in_flight = properties.frame_in_flights;
     write_descriptors_map.resize(frames_in_flight);
 
-    const auto end_set = std::min(spec.end_set, reflection_descriptor_sets.size());
-    for (size_t set = spec.start_set; set < end_set; ++set)
+    const auto end_set = std::min(properties.end_set, reflection_descriptor_sets.size());
+    for (size_t set = properties.start_set; set < end_set; ++set)
     {
         [[maybe_unused]] auto& descriptor_set = reflection_descriptor_sets[set];
-        auto& write_descriptor_sets = reference_cast<VulkanShaderVariant>(spec.shader)->get_write_descriptor_sets(set);
+        auto& write_descriptor_sets = reference_cast<VulkanShaderVariant>(properties.shader)->get_write_descriptor_sets(set);
         for (auto&& [name, write_descriptor] : write_descriptor_sets)
         {
             const auto binding = write_descriptor.dstBinding;
@@ -689,7 +689,7 @@ VulkanDescriptorSetManager& VulkanDescriptorSetManager::init()
             {
                 for (size_t i = 0; i < input.input.size(); i++)
                 {
-                    input.input[i] = spec.default_texture;
+                    input.input[i] = properties.default_texture;
                 }
             }
 

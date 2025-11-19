@@ -87,7 +87,7 @@ Reference<Resource> TextureLoader::load(const SourceMetadata& meta, const Resour
         return nullptr;
     }
 
-    renderer::TextureSpecification spec = {
+    renderer::TextureProperties properties = {
         .format = format,
         .width = static_cast<size_t>(width),
         .height = static_cast<size_t>(height),
@@ -96,13 +96,13 @@ Reference<Resource> TextureLoader::load(const SourceMetadata& meta, const Resour
 
     if (meta.format != SourceFormat::Memory)
     {
-        spec.sampler_spec = {
+        properties.sampler_prop = {
             .filter = renderer::TextureFilter::Linear
         };
     }
     // TODO: get sampler info from metadata
 
-    auto texture = make_reference<renderer::vulkan::VulkanTexture>(meta.resource_id, spec, Buffer{image_data, size}, context.get_gpu_context());
+    auto texture = make_reference<renderer::vulkan::VulkanTexture>(meta.resource_id, properties, Buffer{image_data, size}, context.get_gpu_context());
 
     stbi_image_free(image_data);
     return texture;
@@ -138,17 +138,17 @@ void TextureLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& 
 
 void TextureLoader::create_standalone_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const
 {
-    const renderer::TextureSpecification spec = {
+    const renderer::TextureProperties properties = {
         .format = renderer::ImageFormat::RGBA8_UNorm,
         .width = static_cast<size_t>(extent.width),
         .height = static_cast<size_t>(extent.height),
         .depth = static_cast<size_t>(extent.depth),
-        .sampler_spec = renderer::SamplerSpecification{
+        .sampler_prop = renderer::SamplerProperties{
             .filter = renderer::TextureFilter::Nearest,
         }
     };
 
-    registry.allocate<renderer::vulkan::VulkanTexture>(id, id, spec, Buffer{data.data(), data.size() * sizeof(uint32_t)}, context.get_gpu_context());
+    registry.allocate<renderer::vulkan::VulkanTexture>(id, id, properties, Buffer{data.data(), data.size() * sizeof(uint32_t)}, context.get_gpu_context());
 }
 
 } // portal

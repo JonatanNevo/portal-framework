@@ -34,7 +34,7 @@ Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const Resou
     const auto hash = shader->compile_with_permutations({});
     const auto variant = shader->get_shader(hash).lock();
 
-    renderer::MaterialSpecification spec{
+    renderer::MaterialProperties properties{
         .id = meta.resource_id,
         .shader = variant,
         .set_start_index = global_descriptor_sets.size(),
@@ -48,7 +48,7 @@ Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const Resou
         throw std::runtime_error("Unknown material format");
 
 
-    const auto material = make_reference<renderer::vulkan::VulkanMaterial>(spec, context.get_gpu_context());
+    const auto material = make_reference<renderer::vulkan::VulkanMaterial>(properties, context.get_gpu_context());
 
     // TODO: make this generic
     material->set(STRING_ID("material_data.color_factors"), details.color_factors);

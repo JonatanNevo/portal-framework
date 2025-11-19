@@ -11,7 +11,7 @@
 namespace portal::renderer
 {
 
-struct StorageBufferSpecification
+struct StorageBufferProperties
 {
     size_t size;
     bool gpu_only = true;

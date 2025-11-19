@@ -15,7 +15,7 @@ class VulkanDevice;
 class VulkanStorageBuffer final : public StorageBuffer
 {
 public:
-    VulkanStorageBuffer(const StorageBufferSpecification& spec, const VulkanDevice& device);
+    VulkanStorageBuffer(const StorageBufferProperties& properties, const VulkanDevice& device);
     ~VulkanStorageBuffer() override;
 
     void set_data(Buffer data, size_t offset) override;
@@ -31,7 +31,7 @@ private:
 
 private:
     const VulkanDevice& device;
-    StorageBufferSpecification spec;
+    StorageBufferProperties properties;
 
     AllocatedBuffer buffer;
     vk::DescriptorBufferInfo descriptor_buffer_info;

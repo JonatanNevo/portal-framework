@@ -21,21 +21,21 @@
 namespace portal::renderer::vulkan
 {
 
-VulkanMaterial::VulkanMaterial(const MaterialSpecification& spec, const VulkanContext& context): Material(spec.id), spec(spec), device(context.get_device())
+VulkanMaterial::VulkanMaterial(const MaterialProperties& properties, const VulkanContext& context): Material(properties.id), properties(properties), device(context.get_device())
 {
-    shader_variant = reference_cast<VulkanShaderVariant, ShaderVariant>(spec.shader);
+    shader_variant = reference_cast<VulkanShaderVariant, ShaderVariant>(properties.shader);
 
     // TODO: register dependency on shader
 
-    const DescriptorSetManagerSpecification descriptor_spec{
+    const DescriptorSetManagerProperties descriptor_prop{
         .shader = shader_variant,
         .debug_name = id,
-        .start_set = spec.set_start_index,
-        .end_set = spec.set_end_index,
-        .default_texture = spec.default_texture,
+        .start_set = properties.set_start_index,
+        .end_set = properties.set_end_index,
+        .default_texture = properties.default_texture,
         .frame_in_flights = 3 // TODO: get it from somewhere?
     };
-    descriptor_manager = VulkanDescriptorSetManager::create_unique(descriptor_spec, device);
+    descriptor_manager = VulkanDescriptorSetManager::create_unique(descriptor_prop, device);
 
     for (const auto& [name, decl] : descriptor_manager->input_declarations)
     {
@@ -43,7 +43,7 @@ VulkanMaterial::VulkanMaterial(const MaterialSpecification& spec, const VulkanCo
         {
         case DescriptorType::CombinedImageSampler:
         {
-            descriptor_manager->set_input(name, spec.default_texture);
+            descriptor_manager->set_input(name, properties.default_texture);
             break;
         }
         default:
@@ -214,13 +214,13 @@ void VulkanMaterial::allocate_storage()
             auto& data = shader_variant->get_reflection().descriptor_sets[resource.set].storage_buffers.at(resource.binding_index);
             buffer_uniforms = get_uniform_pointer(data);
 
-            StorageBufferSpecification buf_spec{
+            StorageBufferProperties buf_prop{
                 .size = data.size,
                 .gpu_only = false,
                 .debug_name = STRING_ID("storage buffer")
             };
 
-            auto buffer = make_reference<VulkanStorageBuffer>(buf_spec, device);
+            auto buffer = make_reference<VulkanStorageBuffer>(buf_prop, device);
             buffers[resource.name] = reference_cast<BufferDescriptor>(buffer);
             descriptor_manager->set_input(data.name, reference_cast<StorageBuffer>(buffer));
         }

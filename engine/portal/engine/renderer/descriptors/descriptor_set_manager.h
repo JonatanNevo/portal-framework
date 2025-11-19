@@ -12,7 +12,7 @@ namespace portal::renderer
 {
 class ShaderVariant;
 
-struct DescriptorSetManagerSpecification
+struct DescriptorSetManagerProperties
 {
     Reference<ShaderVariant> shader;
     StringId debug_name;

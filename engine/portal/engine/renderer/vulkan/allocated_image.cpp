@@ -90,19 +90,19 @@ ImageBuilder& ImageBuilder::with_flags(const vk::ImageCreateFlags flags)
     return *this;
 }
 
-AllocatedImage ImageBuilder::build(const VulkanDevice& device) const
+ImageAllocation ImageBuilder::build(const VulkanDevice& device) const
 {
     return {device, *this};
 }
 
-AllocatedImage::AllocatedImage() : Allocated({}, nullptr, nullptr) {}
+ImageAllocation::ImageAllocation() : Allocated({}, nullptr, nullptr) {}
 
-AllocatedImage::AllocatedImage(nullptr_t) : AllocatedImage() {}
+ImageAllocation::ImageAllocation(nullptr_t) : ImageAllocation() {}
 
-AllocatedImage::AllocatedImage(AllocatedImage&& other) noexcept : Allocated(std::move(other))
+ImageAllocation::ImageAllocation(ImageAllocation&& other) noexcept : Allocated(std::move(other))
 {}
 
-AllocatedImage& AllocatedImage::operator=(AllocatedImage&& other) noexcept
+ImageAllocation& ImageAllocation::operator=(ImageAllocation&& other) noexcept
 {
     if (this != &other)
     {
@@ -112,19 +112,19 @@ AllocatedImage& AllocatedImage::operator=(AllocatedImage&& other) noexcept
     return *this;
 }
 
-AllocatedImage& AllocatedImage::operator=(const nullptr_t nullptr_) noexcept
+ImageAllocation& ImageAllocation::operator=(const nullptr_t nullptr_) noexcept
 {
     destroy_image(get_handle());
     Allocated::operator=(nullptr_);
     return *this;
 }
 
-AllocatedImage::~AllocatedImage()
+ImageAllocation::~ImageAllocation()
 {
     destroy_image(get_handle());
 }
 
-AllocatedImage::AllocatedImage(const VulkanDevice& device, const ImageBuilder& builder) :
+ImageAllocation::ImageAllocation(const VulkanDevice& device, const ImageBuilder& builder) :
     Allocated(builder.get_allocation_create_info(), nullptr, &device)
 {
     set_handle(create_image(builder.get_create_info()));

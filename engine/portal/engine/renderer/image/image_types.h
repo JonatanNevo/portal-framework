@@ -110,7 +110,7 @@ enum class TextureType
     TextureCube
 };
 
-struct SamplerSpecification
+struct SamplerProperties
 {
     TextureWrap wrap = TextureWrap::Repeat;
     TextureFilter filter = TextureFilter::Nearest;
@@ -128,7 +128,7 @@ namespace image
         CubeCompatible
     };
 
-    struct Specification
+    struct Properties
     {
         ImageFormat format = ImageFormat::RGBA8_UNorm;
         ImageUsage usage = ImageUsage::Texture;
@@ -163,7 +163,7 @@ namespace image
     };
 }
 
-struct TextureSpecification
+struct TextureProperties
 {
     ImageFormat format = ImageFormat::RGBA8_UNorm;
     TextureType type = TextureType::Texture;
@@ -171,7 +171,7 @@ struct TextureSpecification
     size_t height = 1;
     size_t depth = 1;
 
-    std::optional<SamplerSpecification> sampler_spec = std::nullopt;
+    std::optional<SamplerProperties> sampler_prop = std::nullopt;
 
     bool generate_mipmaps = true;
     bool storage = false;
