@@ -9,6 +9,7 @@
 
 #include <ranges>
 
+#include "portal/core/string_utils.h"
 #include "portal/engine/resources/loader/gltf_loader.h"
 
 namespace portal
@@ -39,7 +40,7 @@ void TextureMetadata::archive(ArchiveObject& archive) const
     child->add_property<bool>("hdr", hdr);
     child->add_property<size_t>("width", width);
     child->add_property<size_t>("height", height);
-    child->add_property("format", renderer::utils::to_string(format));
+    child->add_property("format", to_string(format));
 }
 
 TextureMetadata TextureMetadata::dearchive(ArchiveObject& archive)
@@ -57,7 +58,7 @@ TextureMetadata TextureMetadata::dearchive(ArchiveObject& archive)
         hdr,
         width,
         height,
-        renderer::utils::to_image_format(format)
+        from_string<renderer::ImageFormat>(format)
     };
 }
 
@@ -79,14 +80,14 @@ MaterialMetadata MaterialMetadata::dearchive(ArchiveObject& archive)
 void SourceMetadata::archive(ArchiveObject& archive) const
 {
     archive.add_property("resource_id", resource_id.string);
-    archive.add_property("type", utils::to_string(type));
+    archive.add_property("type", to_string(type));
     archive.add_property(
         "dependencies",
         dependencies | std::ranges::views::transform([](const auto& id) { return id.string; }) | std::ranges::to<std::vector>()
         ); // TODO: support views
 
     archive.add_property("source", source.string);
-    archive.add_property("format", utils::to_string(format));
+    archive.add_property("format", to_string(format));
 
     std::visit(
         [&archive](const auto& meta)
@@ -116,10 +117,10 @@ SourceMetadata SourceMetadata::dearchive(ArchiveObject& archive)
     auto string_id_view = dependencies | std::ranges::views::transform([](const auto& id) { return STRING_ID(id); });
     SourceMetadata metadata{
         STRING_ID(resource_name),
-        utils::to_resource_type(type_string),
+        from_string<ResourceType>(type_string),
         string_id_view | std::ranges::to<llvm::SmallVector<StringId>>(),
         STRING_ID(source),
-        utils::to_source_format(format_string)
+        from_string<SourceFormat>(format_string)
     };
 
     switch (metadata.type)

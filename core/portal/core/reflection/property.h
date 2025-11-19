@@ -130,103 +130,8 @@ constexpr size_t get_property_size(const Property& prop)
 }
 }
 
-namespace portal::utils
-{
-inline std::string to_string(const portal::reflection::PropertyType& type)
-{
-    switch (type)
-    {
-    case reflection::PropertyType::binary:
-        return "binary";
-    case reflection::PropertyType::integer8:
-        return "integer8";
-    case reflection::PropertyType::integer16:
-        return "integer16";
-    case reflection::PropertyType::integer32:
-        return "integer32";
-    case reflection::PropertyType::integer64:
-        return "integer64";
-    case reflection::PropertyType::integer128:
-        return "integer128";
-    case reflection::PropertyType::floating32:
-        return "floating32";
-    case reflection::PropertyType::floating64:
-        return "floating64";
-    case reflection::PropertyType::character:
-        return "character";
-    case reflection::PropertyType::boolean:
-        return "boolean";
-    case reflection::PropertyType::object:
-        return "object";
-    case reflection::PropertyType::null_term_string:
-        return "null_term_string";
-    case reflection::PropertyType::string:
-        return "string";
-    case reflection::PropertyType::invalid:
-        return "invalid";
-    }
-    return "invalid";
-}
-
-inline std::string to_string(const portal::reflection::PropertyContainerType& type)
-{
-    switch (type)
-    {
-    case reflection::PropertyContainerType::invalid:
-        return "invalid";
-    case reflection::PropertyContainerType::scalar:
-        return "scalar";
-    case reflection::PropertyContainerType::array:
-        return "array";
-    case reflection::PropertyContainerType::string:
-        return "string";
-    case reflection::PropertyContainerType::null_term_string:
-        return "null_term_string";
-    case reflection::PropertyContainerType::vector:
-        return "vector";
-    case reflection::PropertyContainerType::matrix:
-        return "matrix";
-    case reflection::PropertyContainerType::object:
-        return "object";
-    }
-    return "invalid";
-}
-}
-
-namespace fmt
-{
 template <>
-struct formatter<portal::reflection::PropertyType>
-{
-    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
-    {
-        return ctx.begin();
-    }
-
-    template <typename FormatContext>
-    auto format(const portal::reflection::PropertyType& type, FormatContext& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(type));
-    }
-};
-
-template <>
-struct formatter<portal::reflection::PropertyContainerType>
-{
-    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
-    {
-        return ctx.begin();
-    }
-
-    template <typename FormatContext>
-    auto format(const portal::reflection::PropertyContainerType& type, FormatContext& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(type));
-    }
-};
-
-template <>
-struct formatter<portal::reflection::Property>
+struct std::formatter<portal::reflection::Property>
 {
     static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
     {
@@ -237,7 +142,7 @@ struct formatter<portal::reflection::Property>
     auto format(const portal::reflection::Property& prop, FormatContext& ctx) const
     {
         if (prop.value.data == nullptr)
-            return fmt::format_to(
+            return std::format_to(
                 ctx.out(),
                 "Property(.type={}, .container_type={}, .elements_number={})",
                 prop.type,
@@ -245,7 +150,7 @@ struct formatter<portal::reflection::Property>
                 prop.elements_number
                 );
 
-        return fmt::format_to(
+        return std::format_to(
             ctx.out(),
             "Property(.value=Buffer(.size={}), .type={}, .container_type={}, .elements_number={})",
             prop.value.size,
@@ -255,4 +160,3 @@ struct formatter<portal::reflection::Property>
             );
     }
 };
-}

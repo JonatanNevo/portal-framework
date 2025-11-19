@@ -52,54 +52,8 @@ enum class SourceFormat: uint8_t
 namespace utils
 {
     std::optional<std::pair<ResourceType, SourceFormat>> find_extension_type(std::string_view extension);
-
-    ResourceType to_resource_type(std::string_view resource_type);
-    SourceFormat to_source_format(std::string_view source_format);
-
-    const char* to_string(ResourceState resource_state);
-    std::string to_string(ResourceType resource_type);
-    std::string to_string(SourceFormat source_format);
 }
 }
-
-template <>
-struct fmt::formatter<portal::ResourceType>
-{
-    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
-    {
-        return ctx.begin();
-    }
-
-    template <typename FormatContext>
-    auto format(const portal::ResourceType& type, FormatContext& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(type));
-    }
-};
-
-template <>
-struct fmt::formatter<portal::SourceFormat>
-{
-    static constexpr auto parse(const format_parse_context& ctx) { return ctx.begin(); }
-
-    template <typename FormatContext>
-    auto format(const portal::SourceFormat& format, FormatContext& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(format));
-    }
-};
-
-template <>
-struct fmt::formatter<portal::ResourceState>
-{
-    static constexpr auto parse(const format_parse_context& ctx) { return ctx.begin(); }
-
-    template <typename FormatContext>
-    auto format(const portal::ResourceState& format, FormatContext& ctx) const
-    {
-        return fmt::format_to(ctx.out(), "{}", portal::utils::to_string(format));
-    }
-};
 
 template <>
 struct std::hash<portal::ResourceType>

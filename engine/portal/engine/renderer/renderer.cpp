@@ -225,8 +225,8 @@ void Renderer::draw_geometry()
 {
     auto& current_command_buffer = swapchain->get_current_draw_command_buffer();
 
-    auto draw_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_image(0));
-    auto depth_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_depth_image());
+    const auto draw_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_image(0));
+    const auto depth_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_depth_image());
 
     {
         vulkan::transition_image_layout(

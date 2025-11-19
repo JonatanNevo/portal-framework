@@ -144,45 +144,6 @@ public:
         );
 
     static bool print_assert_message(std::string_view file, int line, std::string_view function, std::string_view message);
-
-public:
-    static const char* level_to_string(const LogLevel level)
-    {
-        switch (level)
-        {
-        case LogLevel::Trace:
-            return "TRACE";
-        case LogLevel::Debug:
-            return "DEBUG";
-        case LogLevel::Info:
-            return "INFO";
-        case LogLevel::Warn:
-            return "WARN";
-        case LogLevel::Error:
-            return "ERROR";
-        case LogLevel::Fatal:
-            return "FATAL";
-        }
-        return "";
-    }
-
-    static LogLevel level_from_string(const std::string_view string)
-    {
-        if (string == "TRACE")
-            return LogLevel::Trace;
-        if (string == "DEBUG")
-            return LogLevel::Debug;
-        if (string == "INFO")
-            return LogLevel::Info;
-        if (string == "WARN")
-            return LogLevel::Warn;
-        if (string == "ERROR")
-            return LogLevel::Error;
-        if (string == "FATAL")
-            return LogLevel::Fatal;
-        return LogLevel::Trace;
-    }
-
 private:
     static std::unordered_map<std::string, std::shared_ptr<spdlog::logger>>& get_loggers();
 };
@@ -242,7 +203,7 @@ void Log::print_message_tag(
 #endif
     if (const auto& logger = get_logger(tag.data()))
     {
-        logger->log(loc, static_cast<spdlog::level::level_enum>(level), fmt::runtime(format), std::forward<Args>(args)...);
+        logger->log(loc, static_cast<spdlog::level::level_enum>(level), format, std::forward<Args>(args)...);
     }
 #if defined(PORTAL_COMPILER_MSVC)
 #pragma warning(pop)
@@ -272,7 +233,7 @@ bool Log::print_assert_message(
     Args&&... args
     )
 {
-    const std::string formatted = fmt::format(format, std::forward<Args>(args)...);
+    const std::string formatted = std::format(format, std::forward<Args>(args)...);
     return print_assert_message(file, line, function, formatted);
 }
 } // namespace portal

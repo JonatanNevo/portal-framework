@@ -100,7 +100,7 @@ DatabaseError FolderResourceDatabase::add(SourceMetadata meta)
 
 
     const auto source_path = std::filesystem::path(meta.source.string);
-    const auto metadata_path = root_path / fmt::format("{}{}", source_path.generic_string(), RESOURCE_METADATA_EXTENSION);
+    const auto metadata_path = root_path / std::format("{}{}", source_path.generic_string(), RESOURCE_METADATA_EXTENSION);
 
     const resources::FileSource source(root_path / source_path);
     resources::LoaderFactory::enrich_metadata(meta, source);
@@ -125,7 +125,7 @@ DatabaseError FolderResourceDatabase::remove(const StringId resource_id)
 
     auto meta = resources.at(resource_id);
 
-    FileSystem::remove(root_path / fmt::format("{}{}", meta.source.string, RESOURCE_METADATA_EXTENSION));
+    FileSystem::remove(root_path / std::format("{}{}", meta.source.string, RESOURCE_METADATA_EXTENSION));
     // TODO: remove resource file as well?
 
     resources.erase(resource_id);

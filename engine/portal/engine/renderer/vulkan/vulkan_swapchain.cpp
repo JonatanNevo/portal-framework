@@ -187,7 +187,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
         auto& [image, image_view, command_pool, command_buffer, last_used_frame] = images_data[i];
         image = swap_chain_images[i];
         image_view = device.get_handle().createImageView(view_info);
-        device.set_debug_name(image_view, fmt::format("swapchain_image_view_{}", i).c_str());
+        device.set_debug_name(image_view, std::format("swapchain_image_view_{}", i).c_str());
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Command buffer
@@ -198,7 +198,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             .queueFamilyIndex = static_cast<uint32_t>(context.get_device().get_graphics_queue().get_family_index()),
         };
         command_pool = device.get_handle().createCommandPool(pool_info);
-        device.set_debug_name(command_pool, fmt::format("swapchain_command_pool_{}", i).c_str());
+        device.set_debug_name(command_pool, std::format("swapchain_command_pool_{}", i).c_str());
 
         const vk::CommandBufferAllocateInfo alloc_info{
             .commandPool = command_pool,
@@ -206,7 +206,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             .commandBufferCount = 1,
         };
         command_buffer = std::move(device.get_handle().allocateCommandBuffers(alloc_info).front());
-        device.set_debug_name(command_buffer, fmt::format("swapchain_command_buffer_{}", i).c_str());
+        device.set_debug_name(command_buffer, std::format("swapchain_command_buffer_{}", i).c_str());
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,17 +226,17 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
     for (auto& data : frame_data)
     {
         data.image_available_semaphore = device.get_handle().createSemaphore({});
-        device.set_debug_name(data.image_available_semaphore, fmt::format("swapchain_image_available_semaphore_{}", frame_index).c_str());
+        device.set_debug_name(data.image_available_semaphore, std::format("swapchain_image_available_semaphore_{}", frame_index).c_str());
 
         data.render_finished_semaphore = device.get_handle().createSemaphore({});
-        device.set_debug_name(data.render_finished_semaphore, fmt::format("swapchain_render_finished_semaphore_{}", frame_index).c_str());
+        device.set_debug_name(data.render_finished_semaphore, std::format("swapchain_render_finished_semaphore_{}", frame_index).c_str());
 
         data.wait_fence = device.get_handle().createFence(
             {
                 .flags = vk::FenceCreateFlagBits::eSignaled
             }
             );
-        device.set_debug_name(data.wait_fence, fmt::format("swapchain_wait_fence_{}", frame_index).c_str());
+        device.set_debug_name(data.wait_fence, std::format("swapchain_wait_fence_{}", frame_index).c_str());
     }
 }
 

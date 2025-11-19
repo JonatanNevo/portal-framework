@@ -7,11 +7,8 @@
 
 #include <numeric>
 
-#include "slang.h"
-#include "slang-com-ptr.h"
-#include "portal/core/files/file_system.h"
+#include <portal/core/string_utils.h>
 
-#include "portal/engine/renderer/descriptor_layout_builder.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/resources/source/resource_source.h"

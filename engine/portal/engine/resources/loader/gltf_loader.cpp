@@ -67,7 +67,7 @@ renderer::SamplerMipmapMode extract_mipmap_mode(const fastgltf::Filter filter)
 
 std::string create_name_relative(const std::filesystem::path path, const auto& part, const ResourceType type)
 {
-    return (path / fmt::format("gltf-{}-{}", utils::to_string(type), part)).generic_string();
+    return (path / std::format("gltf-{}-{}", to_string(type), part)).generic_string();
 }
 
 GltfLoader::GltfLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
@@ -133,7 +133,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
             .resource_id = resource_id,
             .type = ResourceType::Material,
             .dependencies = dependencies,
-            .source = STRING_ID(fmt::format("mem://gltf-material/{}", material.name)),
+            .source = STRING_ID(std::format("mem://gltf-material/{}", material.name)),
             .format = SourceFormat::Memory
         };
 
@@ -163,7 +163,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
             .resource_id = resource_id,
             .type = ResourceType::Mesh,
             .dependencies = dependencies,
-            .source = STRING_ID(fmt::format("mem://gltf-mesh/{}", mesh.name.c_str())),
+            .source = STRING_ID(std::format("mem://gltf-mesh/{}", mesh.name.c_str())),
             .format = SourceFormat::Memory
         };
 
@@ -202,7 +202,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
             .resource_id = resource_id,
             .type = ResourceType::Scene,
             .dependencies = dependencies,
-            .source = STRING_ID(fmt::format("mem://gltf-scene/{}", scene.name)),
+            .source = STRING_ID(std::format("mem://gltf-scene/{}", scene.name)),
             .format = SourceFormat::Memory
         };
 
@@ -356,7 +356,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
             image_source_meta = SourceMetadata{
                 .resource_id = STRING_ID(create_name_relative(base_path, texture_name, ResourceType::Texture)),
                 .type = ResourceType::Texture,
-                .source = STRING_ID(fmt::format("mem://gltf-texture/array/{}", texture_name)),
+                .source = STRING_ID(std::format("mem://gltf-texture/array/{}", texture_name)),
                 .format = SourceFormat::Memory,
             };
 
@@ -367,7 +367,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
             image_source_meta = SourceMetadata{
                 .resource_id = STRING_ID(create_name_relative(base_path, texture_name, ResourceType::Texture)),
                 .type = ResourceType::Texture,
-                .source = STRING_ID(fmt::format("mem://gltf-texture/vector/{}", texture_name)),
+                .source = STRING_ID(std::format("mem://gltf-texture/vector/{}", texture_name)),
                 .format = SourceFormat::Memory,
             };
 
@@ -387,7 +387,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
                         image_source_meta = SourceMetadata{
                             .resource_id = STRING_ID(create_name_relative(base_path, texture_name, ResourceType::Texture)),
                             .type = ResourceType::Texture,
-                            .source = STRING_ID(fmt::format("mem://gltf-texture/view/array/{}", texture_name)),
+                            .source = STRING_ID(std::format("mem://gltf-texture/view/array/{}", texture_name)),
                             .format = SourceFormat::Memory,
                         };
 
@@ -401,7 +401,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
                         image_source_meta = SourceMetadata{
                             .resource_id = STRING_ID(create_name_relative(base_path, texture_name, ResourceType::Texture)),
                             .type = ResourceType::Texture,
-                            .source = STRING_ID(fmt::format("mem://gltf-texture/view/vector/{}", texture_name)),
+                            .source = STRING_ID(std::format("mem://gltf-texture/view/vector/{}", texture_name)),
                             .format = SourceFormat::Memory,
                         };
 
@@ -460,7 +460,7 @@ Job<> GltfLoader::load_texture(
     };
 
     const auto sampler_ref = make_reference<renderer::vulkan::VulkanSampler>(
-        STRING_ID(fmt::format("{}-sampler", texture_meta.resource_id.string)),
+        STRING_ID(std::format("{}-sampler", texture_meta.resource_id.string)),
         sampler_spec,
         context.get_gpu_context().get_device()
         );
@@ -653,7 +653,7 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
     for (auto& node : asset.nodes)
     {
         NodeDescription node_description{
-            .name = STRING_ID(fmt::format("node-{}", node.name))
+            .name = STRING_ID(std::format("node-{}", node.name))
         };
 
         if (node.meshIndex.has_value())

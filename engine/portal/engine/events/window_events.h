@@ -20,7 +20,7 @@ public:
 
     [[nodiscard]] std::string to_string() const override
     {
-        return fmt::format("{}: {}x{}", get_name().string, width, height);
+        return std::format("{}: {}x{}", get_name().string, width, height);
     }
 
     EVENT_CLASS_TYPE(WindowResize)

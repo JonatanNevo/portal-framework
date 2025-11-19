@@ -54,18 +54,18 @@ public:
     void begin_frame();
     void present();
 
-    size_t get_image_count() const { return images_data.size(); }
-    size_t get_width() const { return width; }
-    size_t get_height() const { return height; }
-    const vk::Format& get_color_format() const { return color_format; }
-    vk::ColorSpaceKHR get_color_space() const { return color_space; }
-    size_t get_current_frame() const { return current_frame; }
-    [[nodiscard]] size_t get_frames_in_flight() const { return frames_in_flight; }
+    [[nodiscard]] size_t get_image_count() const { return images_data.size(); }
+    [[nodiscard]] size_t get_width() const { return width; }
+    [[nodiscard]] size_t get_height() const { return height; }
+    [[nodiscard]] const vk::Format& get_color_format() const { return color_format; }
+    [[nodiscard]] vk::ColorSpaceKHR get_color_space() const { return color_space; }
+    [[nodiscard]] size_t get_current_frame() const { return current_frame; }
+    [[nodiscard]] [[nodiscard]] size_t get_frames_in_flight() const { return frames_in_flight; }
 
-    const vk::raii::CommandBuffer& get_current_draw_command_buffer() const { return images_data[current_image].command_buffer; }
-    vk::raii::CommandPool& get_current_draw_command_pool() { return images_data[current_image].command_pool; }
-    const vk::raii::ImageView& get_current_draw_image_view() const { return images_data[current_image].image_view; }
-    vk::Image get_current_draw_image() const { return images_data[current_image].image; }
+    [[nodiscard]] const vk::raii::CommandBuffer& get_current_draw_command_buffer() const { return images_data[current_image].command_buffer; }
+    [[nodiscard]] vk::raii::CommandPool& get_current_draw_command_pool() { return images_data[current_image].command_pool; }
+    [[nodiscard]] const vk::raii::ImageView& get_current_draw_image_view() const { return images_data[current_image].image_view; }
+    [[nodiscard]] vk::Image get_current_draw_image() const { return images_data[current_image].image; }
 
     void set_vsync(const bool new_vsync) { vsync = new_vsync; }
 

@@ -7,6 +7,7 @@
 
 #include <ranges>
 
+#include "portal/core/string_utils.h"
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/shaders/shader.h"
 #include "portal/engine/renderer/vulkan/vulkan_shader.h"
@@ -281,7 +282,7 @@ bool VulkanDescriptorSetManager::validate()
                 LOGGER_ERROR(
                     "[{}] Required resource is wrong type! {} but needs {}",
                     spec.debug_name,
-                    portal::utils::to_string(resource.type),
+                    portal::to_string(resource.type),
                     vk::to_string(write_descriptor.descriptorType)
                     );
                 return false;

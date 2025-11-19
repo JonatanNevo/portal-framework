@@ -7,6 +7,8 @@
 
 #include <ranges>
 
+#include "portal/core/string_utils.h"
+
 #include "portal/engine/renderer/image/texture.h"
 #include "portal/engine/renderer/image/image.h"
 

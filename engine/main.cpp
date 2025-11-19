@@ -9,6 +9,7 @@
 #include "portal/engine/application/application.h"
 #include "glaze/core/reflect.hpp"
 #include "../input/portal/input/input.h"
+#include "portal/core/string_utils.h"
 
 using namespace portal;
 
@@ -31,7 +32,7 @@ void initialize_logger()
     auto log_level_string = Settings::get().get_setting<std::string>(LOG_LEVEL_ENTRY);
     if (log_level_string)
     {
-        const auto log_level = Log::level_from_string(*log_level_string);
+        const auto log_level = portal::from_string<Log::LogLevel>(*log_level_string);
         Log::set_default_log_level(log_level);
     }
     Settings::get().debug_print();
