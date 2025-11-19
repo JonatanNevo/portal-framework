@@ -82,7 +82,6 @@ public:
     void on_event(Event& event) override;
 
 private:
-    void make_render_target();
     void init_descriptors();
 
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
@@ -90,8 +89,6 @@ private:
 private:
     Reference<renderer::vulkan::VulkanSwapchain> swapchain;
     renderer::vulkan::VulkanContext& context;
-
-    Reference<renderer::RenderTarget> render_target = nullptr;
 
     EngineStats stats = {};
 

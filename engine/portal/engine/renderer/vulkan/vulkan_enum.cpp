@@ -58,6 +58,53 @@ return vk::Format::TO
 #undef CASE
 }
 
+ImageFormat to_format(vk::Format format)
+{
+#define CASE(TO, FROM)                       \
+case vk::Format::FROM:                       \
+return portal::renderer::ImageFormat::TO
+    switch (format)
+    {
+        CASE(None, eUndefined);
+        CASE(R8_UNorm, eR8Unorm);
+        CASE(R8_UInt, eR8Uint);
+        CASE(R16_UInt, eR16Uint);
+        CASE(R32_UInt, eR32Uint);
+        CASE(R16_Float, eR16Sfloat);
+        CASE(R32_Float, eR32Sfloat);
+        CASE(RG8_UNorm, eR8G8Unorm);
+        CASE(RG8_UInt, eR8G8Uint);
+        CASE(RG16_UInt, eR16G16Uint);
+        CASE(RG32_UInt, eR32G32Uint);
+        CASE(RG16_Float, eR16G16Sfloat);
+        CASE(RG32_Float, eR32G32Sfloat);
+        CASE(RGB8_UNorm, eR8G8B8Unorm);
+        CASE(RGB8_UInt, eR8G8B8Uint);
+        CASE(RGB16_UInt, eR16G16B16Uint);
+        CASE(RGB32_UInt, eR32G32B32Uint);
+        CASE(RGB16_Float, eR16G16B16Sfloat);
+        CASE(RGB32_Float, eR32G32B32Sfloat);
+        CASE(RGBA8_UNorm, eR8G8B8A8Unorm);
+        CASE(RGBA8_UInt, eR8G8B8A8Uint);
+        CASE(RGBA16_UInt, eR16G16B16A16Uint);
+        CASE(RGBA32_UInt, eR32G32B32A32Uint);
+        CASE(RGBA16_Float, eR16G16B16A16Sfloat);
+        CASE(RGBA32_Float, eR32G32B32A32Sfloat);
+        CASE(SRGB, eR8G8B8Srgb);
+        CASE(SRGBA, eR8G8B8A8Srgb);
+        CASE(Depth_32Float_Stencil_8UInt, eD32SfloatS8Uint);
+        CASE(Depth_32Float, eD32Sfloat);
+        CASE(Depth_24UNorm_Stencil_8UInt, eD24UnormS8Uint);
+        CASE(Depth_16UNorm_Stencil_8UInt, eD16UnormS8Uint);
+    default:
+        break;
+    }
+    PORTAL_ASSERT(false, "Unknown vulkan format");
+    return portal::renderer::ImageFormat::None;
+#undef CASE
+}
+
+
 vk::ShaderStageFlagBits to_shader_stage(const ShaderStage stage)
 {
 #define CASE(FROM, TO)                       \

@@ -27,6 +27,7 @@ struct VulkanImageInfo
 class VulkanImage final : public Image
 {
 public:
+    VulkanImage(vk::Image image, const image::Properties& properties, const VulkanContext& context);
     VulkanImage(const image::Properties& properties, const VulkanContext& context);
     ~VulkanImage() override;
 
@@ -47,7 +48,7 @@ public:
     int get_closest_mip_level(size_t width, size_t height) const;
     std::pair<size_t, size_t> get_mip_level_dimensions(size_t mip_level) const;
 
-    [[nodiscard]] image::Properties& get_props();
+    [[nodiscard]] image::Properties& get_prop();
     [[nodiscard]] const image::Properties& get_prop() const override;
 
     void create_per_layer_image_view() override;

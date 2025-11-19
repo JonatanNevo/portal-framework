@@ -46,7 +46,6 @@
 
 namespace portal
 {
-
 using namespace renderer;
 
 [[maybe_unused]] static auto logger = Log::get_logger("Renderer");
@@ -55,12 +54,11 @@ Renderer::Renderer(Input& input, renderer::vulkan::VulkanContext& context, const
     :
     swapchain(swapchain),
     context(context),
-    renderer_context(context, render_target, scene_descriptor_set_layouts),
+    renderer_context(context, scene_descriptor_set_layouts, swapchain),
     camera(input)
 {
     PORTAL_PROF_ZONE();
 
-    make_render_target();
     camera.on_resize(static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height()));
     init_descriptors();
 
@@ -88,7 +86,6 @@ void Renderer::cleanup()
 
         frame_data.clear();
         scene_descriptor_set_layouts.clear();
-        render_target = nullptr;
         swapchain.reset();
     }
     is_initialized = false;
@@ -118,21 +115,21 @@ void Renderer::on_event(Event& event)
             camera.on_key_down(e.get_key());
             return false;
         }
-        );
+    );
     runner.run_on<KeyReleasedEvent>(
         [&](const auto& e)
         {
             camera.on_key_up(e.get_key());
             return false;
         }
-        );
+    );
     runner.run_on<MouseMovedEvent>(
         [&](const auto& e)
         {
             camera.on_mouse_move(e.get_position());
             return false;
         }
-        );
+    );
 }
 
 void Renderer::update_imgui([[maybe_unused]] float delta_time)
@@ -161,7 +158,7 @@ void Renderer::update_imgui([[maybe_unused]] float delta_time)
 FrameData& Renderer::get_current_frame_data()
 {
     ZoneScoped;
-    return frame_data[swapchain->get_current_frame()];
+    return frame_data[swapchain->current_frame_index()];
 }
 
 void Renderer::update_scene([[maybe_unused]] float delta_time, ResourceReference<Scene>& scene)
@@ -227,74 +224,51 @@ void Renderer::draw_geometry()
 {
     auto& current_command_buffer = swapchain->get_current_draw_command_buffer();
 
-    const auto draw_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_image(0));
-    const auto depth_image = reference_cast<renderer::vulkan::VulkanImage>(render_target->get_depth_image());
+    auto& current_render_target = swapchain->get_current_render_target();
 
-    {
-        vulkan::transition_image_layout(
-            current_command_buffer,
-            draw_image->get_image_info().image.get_handle(),
-            1,
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eColorAttachmentOptimal,
-            vk::AccessFlagBits2::eMemoryWrite,
-            vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
-            vk::PipelineStageFlagBits2::eTopOfPipe,
-            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-            vk::ImageAspectFlagBits::eColor
-            );
-        vulkan::transition_image_layout(
-            current_command_buffer,
-            depth_image->get_image_info().image.get_handle(),
-            1,
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eDepthAttachmentOptimal,
-            vk::AccessFlagBits2::eMemoryWrite,
-            vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
-            vk::PipelineStageFlagBits2::eTopOfPipe,
-            vk::PipelineStageFlagBits2::eEarlyFragmentTests,
-            vk::ImageAspectFlagBits::eDepth
-            );
-    }
+    const auto draw_image = reference_cast<vulkan::VulkanImage>(current_render_target->get_image(0));
+    const auto depth_image = reference_cast<vulkan::VulkanImage>(current_render_target->get_depth_image());
+
+    vulkan::transition_image_layout(
+        current_command_buffer,
+        draw_image->get_image_info().image.get_handle(),
+        1,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::AccessFlagBits2::eMemoryWrite,
+        vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
+        vk::PipelineStageFlagBits2::eTopOfPipe,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::ImageAspectFlagBits::eColor
+    );
+    vulkan::transition_image_layout(
+        current_command_buffer,
+        depth_image->get_image_info().image.get_handle(),
+        1,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eDepthAttachmentOptimal,
+        vk::AccessFlagBits2::eMemoryWrite,
+        vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        vk::PipelineStageFlagBits2::eTopOfPipe,
+        vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+        vk::ImageAspectFlagBits::eDepth
+    );
 
     draw_geometry(current_command_buffer);
 
-    {
-        //transition the draw image and the swapchain image into their correct transfer layouts
-        vulkan::transition_image_layout(
-            current_command_buffer,
-            draw_image->get_image_info().image.get_handle(),
-            1,
-            vk::ImageLayout::eColorAttachmentOptimal,
-            vk::ImageLayout::eTransferSrcOptimal,
-            vk::AccessFlagBits2::eColorAttachmentWrite,
-            vk::AccessFlagBits2::eTransferRead,
-            vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-            vk::PipelineStageFlagBits2::eTransfer,
-            vk::ImageAspectFlagBits::eColor
-            );
-        vulkan::transition_image_layout(
-            current_command_buffer,
-            swapchain->get_current_draw_image(),
-            1,
-            vk::ImageLayout::eUndefined,
-            vk::ImageLayout::eTransferDstOptimal,
-            vk::AccessFlagBits2::eMemoryWrite,
-            vk::AccessFlagBits2::eTransferWrite,
-            vk::PipelineStageFlagBits2::eTopOfPipe,
-            vk::PipelineStageFlagBits2::eTransfer,
-            vk::ImageAspectFlagBits::eColor
-            );
-
-        // execute a copy from the draw image into the swapchain
-        vulkan::copy_image_to_image(
-            current_command_buffer,
-            draw_image->get_image_info().image.get_handle(),
-            swapchain->get_current_draw_image(),
-            {static_cast<uint32_t>(draw_image->get_width()), static_cast<uint32_t>(draw_image->get_height())},
-            {static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height())}
-            );
-    }
+    // set draw image layout to Present so we can present it
+    vulkan::transition_image_layout(
+        current_command_buffer,
+        draw_image->get_image_info().image.get_handle(),
+        1,
+        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::ImageLayout::ePresentSrcKHR,
+        vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
+        vk::AccessFlagBits2::eNone,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits2::eBottomOfPipe,
+        vk::ImageAspectFlagBits::eColor
+    );
 }
 
 
@@ -308,7 +282,8 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
     auto start = std::chrono::system_clock::now();
     auto& current_frame = get_current_frame_data();
 
-    auto current_frame_index = swapchain->get_current_frame();
+    auto current_frame_index = swapchain->current_frame_index();
+    auto& render_target = swapchain->get_current_render_target();
 
     std::unordered_map<StringId, std::vector<uint32_t>> render_by_material;
     render_by_material.reserve(draw_context.render_objects.size());
@@ -320,10 +295,8 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
             render_by_material[object.material->get_id()].push_back(i);
     }
 
-    auto vulkan_target = reference_cast<renderer::vulkan::VulkanRenderTarget>(render_target);
-
     {
-        command_buffer.beginRendering(vulkan_target->get_rendering_info());
+        command_buffer.beginRendering(render_target->get_rendering_info());
 
         current_frame.scene_data_buffer = renderer::vulkan::BufferBuilder(sizeof(vulkan::GPUSceneData))
                                           .with_usage(vk::BufferUsageFlagBits::eUniformBuffer)
@@ -370,7 +343,7 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
                         0,
                         {current_frame.global_descriptor_set},
                         {}
-                        );
+                    );
 
                     command_buffer.setViewport(
                         0,
@@ -381,12 +354,15 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
                             static_cast<float>(swapchain->get_height()),
                             0.0f,
                             1.0f
-                            )
-                        );
+                        )
+                    );
                     command_buffer.setScissor(
                         0,
-                        vk::Rect2D(vk::Offset2D(0, 0), {static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height())})
-                        );
+                        vk::Rect2D(
+                            vk::Offset2D(0, 0),
+                            {static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height())}
+                        )
+                    );
                 }
 
                 const auto descriptor_set = material->get_descriptor_set(current_frame_index);
@@ -400,7 +376,7 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
                     1,
                     descriptor_set_array,
                     {}
-                    );
+                );
             }
 
             //rebind index buffer if needed
@@ -419,7 +395,7 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
                 vk::ShaderStageFlagBits::eVertex,
                 0,
                 {push_constants}
-                );
+            );
 
             command_buffer.drawIndexed(object.index_count, 1, object.first_index, 0, 0);
 
@@ -445,7 +421,7 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
             current_frame.scene_data_buffer = nullptr;
             current_frame.global_descriptor_set = nullptr;
         }
-        );
+    );
 
     auto end = std::chrono::system_clock::now();
 
@@ -457,34 +433,7 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
 void Renderer::on_resize(const size_t new_width, const size_t new_height)
 {
     swapchain->on_resize(new_width, new_height);
-    render_target->resize(new_width, new_height, true);
     camera.on_resize(static_cast<uint32_t>(new_width), static_cast<uint32_t>(new_height));
-}
-
-
-void Renderer::make_render_target()
-{
-    RenderTargetProperties properties{
-        .width = swapchain->get_width(),
-        .height = swapchain->get_height(),
-        .attachments = {
-            .color_attachments = {
-                {
-                    .format = ImageFormat::RGBA16_Float,
-                    .blend = false
-                },
-                {
-                    .format = ImageFormat::Depth_32Float,
-                    .blend = true,
-                    .blend_mode = BlendMode::Additive
-                }
-            },
-            .blend = true,
-        },
-        .transfer = true,
-        .name = STRING_ID("root_render_target")
-    };
-    render_target = std::make_shared<vulkan::VulkanRenderTarget>(properties, context);
 }
 
 void Renderer::init_descriptors()
@@ -512,14 +461,14 @@ void Renderer::init_descriptors()
             FrameData{
                 .frame_descriptors = vulkan::DescriptorAllocator(context.get_device().get_handle(), 1000, frame_sizes)
             }
-            );
+        );
 
         deletion_queue.push_deleter(
             [&, i]
             {
                 frame_data[i].frame_descriptors.destroy_pools();
             }
-            );
+        );
     }
 
     {
@@ -556,5 +505,4 @@ void Renderer::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& 
     context.get_device().get_graphics_queue().submit({submit_info}, immediate_fence);
     context.get_device().wait_for_fences({immediate_fence}, true, std::numeric_limits<uint64_t>::max());
 }
-
 } // portal

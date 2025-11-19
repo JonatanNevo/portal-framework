@@ -40,6 +40,7 @@ class ImageAllocation final : public allocation::Allocated<vk::Image>
 public:
     ImageAllocation();
     ImageAllocation(nullptr_t);
+    ImageAllocation(vk::Image image);
 
     ImageAllocation(ImageAllocation&& other) noexcept;
     ImageAllocation& operator=(ImageAllocation&& other) noexcept;

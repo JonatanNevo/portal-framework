@@ -13,11 +13,12 @@
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "device/vulkan_physical_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"
+#include "portal/engine/renderer/vulkan/image/vulkan_image.h"
 
 namespace portal::renderer::vulkan
 {
-
 static auto logger = Log::get_logger("Vulkan");
 
 vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& available_present_modes, bool vsync)
@@ -47,17 +48,34 @@ vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& av
     return present_mode;
 }
 
-VulkanSwapchain::VulkanSwapchain(const VulkanContext& context, const Reference<Surface>& surface): context(context), surface(reference_cast<VulkanSurface>(surface))
+VulkanSwapchain::VulkanSwapchain(const VulkanContext& context, const Reference<Surface>& surface) : context(context),
+    surface(reference_cast<VulkanSurface>(surface))
 {
     find_image_format_and_color_space();
 
     auto extent = surface->get_extent();
+    attachments = {
+        .attachment_images = {
+                {
+                    .format = to_format(get_color_format()),
+                    .blend = false
+                },
+                {
+                    .format = ImageFormat::Depth_32Float,
+                    .blend = true,
+                    .blend_mode = BlendMode::Additive
+                }
+        },
+        .blend = true,
+    };
+
     // TODO: propagate vsync to swapchain?
     create(reinterpret_cast<uint32_t*>(&extent.x), reinterpret_cast<uint32_t*>(&extent.y), true);
     if (extent != surface->get_extent())
     {
         LOG_WARN("Extent changed during swapchain creation");
     }
+
 }
 
 void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, const bool new_vsync)
@@ -89,12 +107,12 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             *request_width,
             surface_capabilities.minImageExtent.width,
             surface_capabilities.maxImageExtent.width
-            );
+        );
         swapchain_extent.height = std::clamp<uint32_t>(
             *request_height,
             surface_capabilities.minImageExtent.height,
             surface_capabilities.maxImageExtent.height
-            );
+        );
     }
 
     width = swapchain_extent.width;
@@ -184,7 +202,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             },
         };
 
-        auto& [image, image_view, command_pool, command_buffer, last_used_frame] = images_data[i];
+        auto& [image, image_view, command_pool, command_buffer, last_used_frame, render_target] = images_data[i];
         image = swap_chain_images[i];
         image_view = device.get_handle().createImageView(view_info);
         device.set_debug_name(image_view, std::format("swapchain_image_view_{}", i).c_str());
@@ -207,6 +225,23 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
         };
         command_buffer = std::move(device.get_handle().allocateCommandBuffers(alloc_info).front());
         device.set_debug_name(command_buffer, std::format("swapchain_command_buffer_{}", i).c_str());
+
+        image::Properties image_properties{
+            .format = to_format(get_color_format()),
+            .usage = ImageUsage::Attachment,
+            .width = get_width(),
+            .height = get_height(),
+        };
+
+        RenderTargetProperties properties{
+            .width = width,
+            .height = height,
+            .attachments = attachments,
+            .transfer = true,
+            .existing_images = {{0, reference_cast<Image>(make_reference<VulkanImage>(image, image_properties, context))}},
+            .name = STRING_ID(std::format("render-target-{}", i)),
+        };
+        render_target = make_reference<VulkanRenderTarget>(std::move(properties), context);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,7 +270,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             {
                 .flags = vk::FenceCreateFlagBits::eSignaled
             }
-            );
+        );
         device.set_debug_name(data.wait_fence, std::format("swapchain_wait_fence_{}", frame_index).c_str());
     }
 }
@@ -292,15 +327,18 @@ void VulkanSwapchain::present()
 
     const vk::SemaphoreSubmitInfo wait_semaphore_info{
         .semaphore = *frame.image_available_semaphore,
-        .value = 0, // Assuming binary semaphores are used (value is ignored/defaulted)
+        .value = 0,
+        // Assuming binary semaphores are used (value is ignored/defaulted)
         .stageMask = wait_destination_stage_mask,
         .deviceIndex = 0,
     };
 
     const vk::SemaphoreSubmitInfo signal_semaphore_info{
         .semaphore = *frame.render_finished_semaphore,
-        .value = 0, // Assuming binary semaphores are used
-        .stageMask = vk::PipelineStageFlagBits2::eAllCommands, // Signal when all commands are done
+        .value = 0,
+        // Assuming binary semaphores are used
+        .stageMask = vk::PipelineStageFlagBits2::eAllCommands,
+        // Signal when all commands are done
         .deviceIndex = 0,
     };
 
@@ -376,7 +414,7 @@ size_t VulkanSwapchain::acquire_next_image()
         std::numeric_limits<uint64_t>::max(),
         frame.image_available_semaphore,
         nullptr
-        );
+    );
 
     if (result != vk::Result::eSuccess)
     {
@@ -387,7 +425,7 @@ size_t VulkanSwapchain::acquire_next_image()
                 std::numeric_limits<uint64_t>::max(),
                 frame.image_available_semaphore,
                 nullptr
-                );
+            );
             if (new_result != vk::Result::eSuccess)
             {
                 LOGGER_ERROR("Failed to acquire swapchain image!");
@@ -408,10 +446,10 @@ void VulkanSwapchain::find_image_format_and_color_space()
     auto surface_formats = physical_device.getSurfaceFormatsKHR(surface->get_vulkan_surface());
 
     // If the surface format list only includes one entry with VK_FORMAT_UNDEFINED,
-    // there is no preferred format, so we assume eB8G8R8A8Unorm
+    // there is no preferred format, so we assume eR8G8B8A8Unorm
     if (surface_formats.size() == 1 && surface_formats[0].format == vk::Format::eUndefined)
     {
-        color_format = vk::Format::eB8G8R8A8Unorm;
+        color_format = vk::Format::eR8G8B8A8Unorm;
         color_space = surface_formats[0].colorSpace;
         return;
     }
@@ -421,16 +459,16 @@ void VulkanSwapchain::find_image_format_and_color_space()
     bool found_srgb = false;
     for (auto&& [format, color_scape] : surface_formats)
     {
-        if (format == vk::Format::eB8G8R8A8Srgb && color_space == vk::ColorSpaceKHR::eSrgbNonlinear)
+        if (format == vk::Format::eR8G8B8A8Srgb && color_space == vk::ColorSpaceKHR::eSrgbNonlinear)
         {
-            color_format = vk::Format::eB8G8R8A8Srgb;
+            color_format = vk::Format::eR8G8B8A8Srgb;
             color_space = color_scape;
             found_srgb = true;
             break;
         }
     }
 
-    // in case eB8G8R8A8Srgb is not available,
+    // in case eR8G8B8A8Srgb is not available,
     // we select the first available color format
     if (!found_srgb)
     {

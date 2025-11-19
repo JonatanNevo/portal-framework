@@ -25,6 +25,7 @@ vk::PipelineStageFlagBits to_pipeline_stage(PipelineStage stage);
 vk::AccessFlagBits to_access_flag(ResourceAccessFlags flags);
 
 vk::Format to_format(const reflection::Property& prop);
+ImageFormat to_format(vk::Format format);
 
 vk::Filter to_filter(TextureFilter filter);
 vk::SamplerAddressMode to_address_mode(TextureWrap warp);

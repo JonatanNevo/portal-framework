@@ -40,7 +40,7 @@ struct RenderTargetTextureProperties
 
 struct RenderTargetAttachmentProperties
 {
-    std::vector<RenderTargetTextureProperties> color_attachments;
+    std::vector<RenderTargetTextureProperties> attachment_images;
 
     // Master switch (individual attachments can be disabled in RenderTargetTextureProperties)
     bool blend = true;
