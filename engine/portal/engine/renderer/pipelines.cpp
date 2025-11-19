@@ -7,7 +7,7 @@
 
 #include "portal/core/files/file_system.h"
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 vk::raii::ShaderModule load_shader_module(const std::filesystem::path& path, const vk::raii::Device& device)
 {

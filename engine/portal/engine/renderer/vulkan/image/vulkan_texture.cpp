@@ -237,7 +237,7 @@ void VulkanTexture::recreate()
                     .layerCount = layer_count
                 };
 
-                portal::vulkan::transition_image_layout(
+                portal::renderer::vulkan::transition_image_layout(
                     command_buffer,
                     info.image.get_handle(),
                     range,
@@ -309,7 +309,7 @@ void VulkanTexture::set_data(const Buffer& data)
             };
 
             // Transition the texture image layout to transfer target, so we can safely copy our buffer data to it.
-            portal::vulkan::transition_image_layout(
+            portal::renderer::vulkan::transition_image_layout(
                 command_buffer,
                 info.image.get_handle(),
                 range,
@@ -348,7 +348,7 @@ void VulkanTexture::set_data(const Buffer& data)
             if (mip_count > 1)
             {
                 // There are mips to generate, move to get ready to transfer
-                portal::vulkan::transition_image_layout(
+                portal::renderer::vulkan::transition_image_layout(
                     command_buffer,
                     info.image.get_handle(),
                     range,
@@ -363,7 +363,7 @@ void VulkanTexture::set_data(const Buffer& data)
             else
             {
                 // There are mips to generate, move to get ready to transfer
-                portal::vulkan::transition_image_layout(
+                portal::renderer::vulkan::transition_image_layout(
                     command_buffer,
                     info.image.get_handle(),
                     range,
@@ -429,7 +429,7 @@ void VulkanTexture::generate_mipmaps() const
                         .layerCount = 1
                     };
 
-                    portal::vulkan::transition_image_layout(
+                    portal::renderer::vulkan::transition_image_layout(
                         command_buffer,
                         info.image.get_handle(),
                         range,
@@ -452,7 +452,7 @@ void VulkanTexture::generate_mipmaps() const
                     };
                     command_buffer.blitImage2(blit_info);
 
-                    portal::vulkan::transition_image_layout(
+                    portal::renderer::vulkan::transition_image_layout(
                         command_buffer,
                         info.image.get_handle(),
                         range,
@@ -475,7 +475,7 @@ void VulkanTexture::generate_mipmaps() const
                 .layerCount = layer_count
             };
 
-            portal::vulkan::transition_image_layout(
+            portal::renderer::vulkan::transition_image_layout(
                 command_buffer,
                 info.image.get_handle(),
                 range,

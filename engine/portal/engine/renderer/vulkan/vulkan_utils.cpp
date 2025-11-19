@@ -9,7 +9,7 @@
 
 #include "portal/core/log.h"
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 static auto logger = Log::get_logger("Renderer");
 

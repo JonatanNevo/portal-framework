@@ -7,7 +7,7 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 vk::raii::CommandPool create_command_pool(
     const vk::raii::Device& device,

@@ -5,7 +5,7 @@
 
 #include "vulkan_init.h"
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 vk::raii::CommandPool create_command_pool(
     const vk::raii::Device& device,

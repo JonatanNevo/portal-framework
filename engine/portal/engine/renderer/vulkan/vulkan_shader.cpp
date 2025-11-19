@@ -213,7 +213,7 @@ void VulkanShaderVariant::create_descriptors()
         // Descriptor Set Layout
         //////////////////////////////////////////////////////////////////////
 
-        portal::vulkan::DescriptorLayoutBuilder builder;
+        portal::renderer::vulkan::DescriptorLayoutBuilder builder;
         auto& write_descriptor_set = write_descriptor_sets[set];
 
         for (auto& [binding_index, uniform_buffer] : shader_descriptor_set.uniform_buffers)

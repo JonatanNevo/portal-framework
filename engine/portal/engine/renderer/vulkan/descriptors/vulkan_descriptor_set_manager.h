@@ -54,7 +54,7 @@ public:
     const std::vector<vk::raii::DescriptorSet>& get_descriptor_sets(size_t frame_index) const;
 
 private:
-    VulkanDescriptorSetManager(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device, portal::vulkan::DescriptorAllocator&& descriptor_allocator);
+    VulkanDescriptorSetManager(const DescriptorSetManagerSpecification& spec, const VulkanDevice& device, portal::renderer::vulkan::DescriptorAllocator&& descriptor_allocator);
 
     VulkanDescriptorSetManager& init();
     std::set<size_t> get_buffer_sets();
@@ -78,7 +78,7 @@ private:
     DescriptorSetManagerSpecification spec;
     const VulkanDevice& device;
 
-    portal::vulkan::DescriptorAllocator descriptor_allocator;
+    portal::renderer::vulkan::DescriptorAllocator descriptor_allocator;
 };
 
 }

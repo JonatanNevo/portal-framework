@@ -4,52 +4,50 @@
 //
 
 #pragma once
+
 #include "portal/engine/reference.h"
 #include "portal/engine/renderer/pipeline/pipeline_types.h"
+#include "portal/engine/renderer/render_target/render_target.h"
 
 namespace portal::renderer
 {
-class RenderTarget;
 
-namespace pipeline
+struct PipelineProperties
 {
-    struct Specification
-    {
-        Reference<ShaderVariant> shader;
-        Reference<RenderTarget> render_target;
+    Reference<ShaderVariant> shader;
+    RenderTargetAttachmentProperties attachments;
 
-        PrimitiveTopology topology = PrimitiveTopology::Triangles;
-        DepthCompareOperator depth_compare_operator = DepthCompareOperator::GreaterOrEqual;
+    PrimitiveTopology topology = PrimitiveTopology::Triangles;
+    DepthCompareOperator depth_compare_operator = DepthCompareOperator::GreaterOrEqual;
 
-        bool backface_culling = true;
-        bool depth_test = true;
-        bool depth_write = true;
-        bool wireframe = false;
+    bool backface_culling = true;
+    bool depth_test = true;
+    bool depth_write = true;
+    bool wireframe = false;
 
-        float line_width = 1.f;
+    float line_width = 1.f;
 
-        StringId debug_name = INVALID_STRING_ID;
-    };
+    StringId debug_name = INVALID_STRING_ID;
+};
 
-    struct Statistics
-    {
-        size_t vertices = 0;
-        size_t primitives = 0;
-        size_t vertex_shader_invocations = 0;
-        size_t clipping_invocations = 0;
-        size_t clipping_primitives = 0;
-        size_t fragment_shader_invocations = 0;
-        size_t compute_shader_invocations = 0;
-    };
-}
+struct PipelineStatistics
+{
+    size_t vertices = 0;
+    size_t primitives = 0;
+    size_t vertex_shader_invocations = 0;
+    size_t clipping_invocations = 0;
+    size_t clipping_primitives = 0;
+    size_t fragment_shader_invocations = 0;
+    size_t compute_shader_invocations = 0;
+};
 
 class Pipeline
 {
 public:
     virtual ~Pipeline() = default;
 
-    [[nodiscard]] virtual pipeline::Specification& get_spec() = 0;
-    [[nodiscard]] virtual const pipeline::Specification& get_spec() const = 0;
+    [[nodiscard]] virtual PipelineProperties& get_properties() = 0;
+    [[nodiscard]] virtual const PipelineProperties& get_properties() const = 0;
 
     [[nodiscard]] virtual Reference<ShaderVariant> get_shader() const = 0;
 };

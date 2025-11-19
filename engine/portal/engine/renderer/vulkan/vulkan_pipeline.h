@@ -15,11 +15,11 @@ class VulkanContext;
 class VulkanPipeline final : public Pipeline
 {
 public:
-    explicit VulkanPipeline(const pipeline::Specification& spec, const VulkanContext& context);
+    explicit VulkanPipeline(const PipelineProperties& prop, const VulkanContext& context);
     ~VulkanPipeline() override;
 
-    [[nodiscard]] pipeline::Specification& get_spec() override;
-    [[nodiscard]] const pipeline::Specification& get_spec() const override;
+    [[nodiscard]] PipelineProperties& get_properties() override;
+    [[nodiscard]] const PipelineProperties& get_properties() const override;
 
     [[nodiscard]] Reference<ShaderVariant> get_shader() const override;
 
@@ -33,7 +33,7 @@ private:
 
 private:
     const VulkanContext& context;
-    pipeline::Specification spec;
+    PipelineProperties prop;
 
     vk::raii::Pipeline pipeline = nullptr;
     vk::raii::PipelineLayout pipeline_layout = nullptr;

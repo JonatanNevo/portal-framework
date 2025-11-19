@@ -8,7 +8,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include "portal/engine/renderer/pipeline/pipeline_types.h"
-#include "portal/engine/renderer/render_target/render_target_types.h"
+#include "portal/engine/renderer/render_target/render_target.h"
 
 namespace portal::renderer::vulkan
 {
@@ -38,7 +38,7 @@ public:
     PipelineBuilder& set_blending_additive(size_t index);
     PipelineBuilder& set_blending_alpha(size_t index);
 
-    PipelineBuilder& set_blend(size_t index, bool enable, render_target::BlendMode blend_mode);
+    PipelineBuilder& set_blend(size_t index, bool enable, BlendMode blend_mode);
     PipelineBuilder& disable_color_blending(int index = -1);
 
     PipelineBuilder& set_color_attachment_formats(std::vector<ImageFormat>& formats);

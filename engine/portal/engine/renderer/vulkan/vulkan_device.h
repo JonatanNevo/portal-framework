@@ -13,7 +13,7 @@
 #include "portal/engine/renderer/device/device.h"
 #include "portal/engine/renderer/vulkan/queue/vulkan_queue.h"
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 class DescriptorLayoutBuilder;
 }
@@ -52,7 +52,7 @@ public:
     [[nodiscard]] vk::raii::ImageView create_image_view(const vk::ImageViewCreateInfo& info) const;
     [[nodiscard]] vk::raii::Sampler create_sampler(const vk::SamplerCreateInfo& info) const;
 
-    [[nodiscard]] vk::raii::DescriptorSetLayout create_descriptor_set_layout(portal::vulkan::DescriptorLayoutBuilder& builder) const;
+    [[nodiscard]] vk::raii::DescriptorSetLayout create_descriptor_set_layout(portal::renderer::vulkan::DescriptorLayoutBuilder& builder) const;
     [[nodiscard]] vk::raii::PipelineLayout create_pipeline_layout(const vk::PipelineLayoutCreateInfo& pipeline_layout_info) const;
     [[nodiscard]] vk::raii::ShaderModule create_shader_module(const Buffer& code) const;
     [[nodiscard]] vk::raii::Pipeline create_pipeline(vulkan::PipelineBuilder& builder) const;

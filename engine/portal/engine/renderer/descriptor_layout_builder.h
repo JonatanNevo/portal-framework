@@ -10,7 +10,7 @@
 #include "portal/core/strings/string_id.h"
 
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 
 class DescriptorLayoutBuilder

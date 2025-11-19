@@ -47,6 +47,8 @@
 namespace portal
 {
 
+using namespace renderer;
+
 [[maybe_unused]] static auto logger = Log::get_logger("Renderer");
 
 Renderer::Renderer(Input& input, renderer::vulkan::VulkanContext& context, const Reference<renderer::vulkan::VulkanSwapchain>& swapchain)
@@ -462,27 +464,27 @@ void Renderer::on_resize(const size_t new_width, const size_t new_height)
 
 void Renderer::make_render_target()
 {
-    renderer::render_target::Specification spec{
+    RenderTargetProperties properties{
         .width = swapchain->get_width(),
         .height = swapchain->get_height(),
         .attachments = {
-            .attachments = {
+            .color_attachments = {
                 {
-                    .format = renderer::ImageFormat::RGBA16_Float,
+                    .format = ImageFormat::RGBA16_Float,
                     .blend = false
                 },
                 {
-                    .format = renderer::ImageFormat::Depth_32Float,
+                    .format = ImageFormat::Depth_32Float,
                     .blend = true,
-                    .blend_mode = renderer::render_target::BlendMode::Additive
+                    .blend_mode = BlendMode::Additive
                 }
-            }
+            },
+            .blend = true,
         },
-        .blend = true,
         .transfer = true,
         .name = STRING_ID("root_render_target")
     };
-    render_target = std::make_shared<renderer::vulkan::VulkanRenderTarget>(spec, context);
+    render_target = std::make_shared<vulkan::VulkanRenderTarget>(properties, context);
 }
 
 void Renderer::init_descriptors()

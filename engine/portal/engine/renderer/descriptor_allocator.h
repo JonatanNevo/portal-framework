@@ -9,7 +9,7 @@
 #include <memory>
 
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 
 class DescriptorAllocator

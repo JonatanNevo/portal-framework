@@ -14,7 +14,7 @@ class VulkanDevice;
 class AllocatedBuffer;
 }
 
-namespace portal::vulkan
+namespace portal::renderer::vulkan
 {
 
 struct DescriptorWriter

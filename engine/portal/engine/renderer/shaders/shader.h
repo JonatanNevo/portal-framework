@@ -200,7 +200,7 @@ protected:
 //
 //         std::unordered_map<StringId, BindingPointer> binding_points;
 //
-//         std::vector<portal::vulkan::DescriptorWriter> descriptor_writers;
+//         std::vector<portal::renderer::vulkan::DescriptorWriter> descriptor_writers;
 //         Ref<Shader> shader;
 //     };
 // }
