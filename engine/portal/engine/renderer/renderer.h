@@ -19,7 +19,7 @@
 #include "portal/engine/renderer/rendering_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
-#include "portal/engine/scene/draw_context.h"
+#include "draw_context.h"
 #include "portal/engine/scene/scene.h"
 
 namespace portal
@@ -78,17 +78,24 @@ public:
     [[nodiscard]] const RendererContext& get_renderer_context() const;
     [[nodiscard]] size_t get_frames_in_flight() const;
     [[nodiscard]] const renderer::vulkan::VulkanSwapchain& get_swapchain() const;
+    [[nodiscard]] const renderer::DrawContext& get_draw_context() const;
 
     void on_event(Event& event) override;
 
 private:
+    void init_render_target();
     void init_descriptors();
 
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
 
 private:
     Reference<renderer::vulkan::VulkanSwapchain> swapchain;
+    renderer::AttachmentProperties attachments;
     renderer::vulkan::VulkanContext& context;
+
+    // TODO: move from here to some `g buffer` class
+    Reference<renderer::vulkan::VulkanImage> depth_image;
+    Reference<renderer::vulkan::VulkanRenderTarget> render_target;
 
     EngineStats stats = {};
 
@@ -106,8 +113,9 @@ private:
     std::vector<FrameData> frame_data;
 
     RendererContext renderer_context;
-    scene::DrawContext draw_context{};
+    renderer::DrawContext draw_context{};
     bool is_initialized = false;
+
 
 public:
     // TODO: use input class... and resources....

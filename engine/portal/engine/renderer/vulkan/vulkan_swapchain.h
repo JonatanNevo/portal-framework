@@ -30,8 +30,6 @@ struct SwapchainImageData
 
     // Track which frame last used this image
     size_t last_used_frame = std::numeric_limits<size_t>::max();
-
-    Reference<VulkanRenderTarget> render_target = nullptr;
 };
 
 struct FrameInFlightData
@@ -70,8 +68,6 @@ public:
     [[nodiscard]] vk::raii::CommandPool& get_current_draw_command_pool() { return images_data[current_image].command_pool; }
     [[nodiscard]] const vk::raii::ImageView& get_current_draw_image_view() const { return images_data[current_image].image_view; }
     [[nodiscard]] vk::Image get_current_draw_image() const { return images_data[current_image].image; }
-    [[nodiscard]] const Reference<VulkanRenderTarget>& get_current_render_target() const { return images_data[current_image].render_target; }
-    [[nodiscard]] const RenderTargetAttachmentProperties& get_attachments() const { return attachments; }
 
     void set_vsync(const bool new_vsync) { vsync = new_vsync; }
 
@@ -96,10 +92,6 @@ private:
 
     size_t frames_in_flight = 0;
     std::vector<FrameInFlightData> frame_data;
-
-    //TODO: find a better place
-    RenderTargetAttachmentProperties attachments;
-
 
     // Index of the frame we are currently working on, up to max frames in flight
     size_t current_frame = 0;

@@ -120,17 +120,15 @@ void ImGuiModule::end()
 
     const auto& renderer = context->get_renderer();
     auto& swapchain = renderer.get_swapchain();
-    auto& current_render_target = swapchain.get_current_render_target();
 
-    const auto draw_image = reference_cast<renderer::vulkan::VulkanImage>(current_render_target->get_image(0));
-    const auto depth_image = reference_cast<renderer::vulkan::VulkanImage>(current_render_target->get_depth_image());
+    const auto draw_image =  renderer.get_draw_context().draw_image;
 
     const auto& command_buffer = swapchain.get_current_draw_command_buffer();
 
     // set swapchain image layout to Attachment Optimal so we can draw it
     renderer::vulkan::transition_image_layout(
         command_buffer,
-        draw_image->get_image_info().image.get_handle(),
+        draw_image,
         1,
         vk::ImageLayout::ePresentSrcKHR,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -147,7 +145,7 @@ void ImGuiModule::end()
     const auto height = static_cast<uint32_t>(swapchain.get_height());
 
     vk::RenderingAttachmentInfo color_attachment = {
-        .imageView = draw_image->get_image_info().view,
+        .imageView = renderer.get_draw_context().draw_image_view,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eLoad,
         .storeOp = vk::AttachmentStoreOp::eStore
@@ -177,7 +175,7 @@ void ImGuiModule::end()
     // set draw image layout to Present so we can present it
     renderer::vulkan::transition_image_layout(
         command_buffer,
-        draw_image->get_image_info().image.get_handle(),
+        draw_image,
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,

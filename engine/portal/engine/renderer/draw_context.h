@@ -9,19 +9,21 @@
 #include "portal/engine/resources/resources/mesh_geometry.h"
 
 namespace portal::renderer {
-class Material;
+
 }
 
-namespace portal::scene
+namespace portal::renderer
 {
+
+class Material;
 
 struct RenderObject
 {
     uint32_t index_count = 0;
     uint32_t first_index = 0;
-    std::shared_ptr<renderer::vulkan::AllocatedBuffer> index_buffer = nullptr;
+    std::shared_ptr<vulkan::AllocatedBuffer> index_buffer = nullptr;
 
-    Reference<renderer::Material> material = nullptr;
+    Reference<Material> material = nullptr;
     resources::Bounds bounds{};
 
     glm::mat4 transform = glm::mat4(1.0f);
@@ -70,7 +72,13 @@ struct RenderObject
 
 struct DrawContext
 {
-    std::vector<RenderObject> render_objects;
+    // TODO: switch with generic `Image` class
+    vk::Image draw_image;
+    vk::ImageView draw_image_view;
+    vk::Image depth_image;
+    vk::ImageView depth_image_view;
+
+    llvm::SmallVector<RenderObject> render_objects;
 };
 
 } // portal

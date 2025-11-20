@@ -13,13 +13,6 @@
 namespace portal::renderer
 {
 
-enum class AttachmentLoadOperator
-{
-    Inherit,
-    Clear,
-    Load
-};
-
 enum class BlendMode
 {
     None,
@@ -29,24 +22,34 @@ enum class BlendMode
     ZeroSrcColor
 };
 
-struct RenderTargetTextureProperties
+enum class AttachmentLoadOperator
+{
+    Inherit,
+    Clear,
+    Load
+};
+
+struct AttachmentTextureProperty
 {
     ImageFormat format{};
     bool blend = true;
-
     BlendMode blend_mode = BlendMode::SrcAlphaOneMinusSrcAlpha;
     AttachmentLoadOperator load_operator = AttachmentLoadOperator::Inherit;
 };
 
-struct RenderTargetAttachmentProperties
+struct AttachmentProperties
 {
-    std::vector<RenderTargetTextureProperties> attachment_images;
+    // A list of attachments, depth attachment is always last
+    std::vector<AttachmentTextureProperty> attachment_images;
+
+    // TODO: move depth attachment out of the vector as an optional member?
 
     // Master switch (individual attachments can be disabled in RenderTargetTextureProperties)
     bool blend = true;
     // None means use BlendMode in RenderTargetTextureProperties
     BlendMode blend_mode = BlendMode::None;
 };
+
 
 struct RenderTargetProperties
 {
@@ -58,14 +61,12 @@ struct RenderTargetProperties
     bool clear_color_on_load = true;
     bool clear_depth_on_load = true;
 
-    RenderTargetAttachmentProperties attachments;
+    AttachmentProperties attachments;
     uint32_t samples = 1; // multisampling
 
     // Will it be used for transfer ops?
     bool transfer = false;
 
-    // Tells the render target to use these images instead of creating new ones
-    std::unordered_map<size_t, Reference<Image>> existing_images;
     StringId name;
 };
 
@@ -79,11 +80,8 @@ public:
     [[nodiscard]] virtual size_t get_width() const = 0;
     [[nodiscard]] virtual size_t get_height() const = 0;
 
-    [[nodiscard]] virtual Reference<Image> get_image(size_t index) const = 0;
     [[nodiscard]] virtual size_t get_color_attachment_count() const = 0;
-
     [[nodiscard]] virtual bool has_depth_attachment() const = 0;
-    [[nodiscard]] virtual Reference<Image> get_depth_image() const = 0;
 
     [[nodiscard]] virtual const RenderTargetProperties& get_properties() const = 0;
 };
