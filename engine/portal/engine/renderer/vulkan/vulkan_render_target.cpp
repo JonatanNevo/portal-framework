@@ -7,12 +7,11 @@
 
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
-#include "portal/engine/scene/draw_context.h"
+#include "../draw_context.h"
 
 namespace portal::renderer::vulkan
 {
-
-vk::AttachmentLoadOp to_load_op(const RenderTargetProperties& prop, const RenderTargetTextureProperties& attachment)
+vk::AttachmentLoadOp to_load_op(const RenderTargetProperties& prop, const AttachmentTextureProperty& attachment)
 {
     if (attachment.load_operator == AttachmentLoadOperator::Inherit)
     {
@@ -26,45 +25,24 @@ vk::AttachmentLoadOp to_load_op(const RenderTargetProperties& prop, const Render
 }
 
 VulkanRenderTarget::VulkanRenderTarget(
-    const RenderTargetProperties& prop,
-    const VulkanContext& context
-    ) : prop(prop)
+    const RenderTargetProperties& prop
+) : prop(prop)
 {
     width = prop.width;
     height = prop.height;
 
-    size_t index = 0;
-    color_attachments.reserve(prop.attachments.attachment_images.size());
-    for (auto& attachment_prop : prop.attachments.attachment_images)
+    color_formats.reserve(prop.attachments.attachment_images.size());
+    for (const auto& attachment : prop.attachments.attachment_images)
     {
-        image::Properties image_prop{
-            .format = attachment_prop.format,
-            .usage = ImageUsage::Attachment,
-            .transfer = prop.transfer,
-            .width = static_cast<size_t>(width * prop.scale),
-            .height = static_cast<size_t>(height * prop.scale)
-        };
-
-        if (prop.existing_images.contains(index))
+        if (utils::is_depth_format(attachment.format))
         {
-            if (utils::is_depth_format(attachment_prop.format))
-                depth_attachment = reference_cast<VulkanImage>(prop.existing_images.at(index));
-            else
-                color_attachments.emplace_back(); // Will be filled out in `resize`
-
-        }
-        else if (utils::is_depth_format(attachment_prop.format))
-        {
-            image_prop.name = STRING_ID(std::format("{}_depth_attachment_{}", prop.name.string, index));
-            depth_attachment = make_reference<VulkanImage>(image_prop, context);
+            PORTAL_ASSERT(!depth_format.has_value(), "Multiple depth images requested");
+            depth_format = attachment.format;
         }
         else
         {
-            image_prop.name = STRING_ID(std::format("{}_color_attachment_{}", prop.name.string, index));
-            color_attachments.emplace_back(make_reference<VulkanImage>(image_prop, context));
+            color_formats.push_back(attachment.format);
         }
-
-        index++;
     }
 
     resize(width, height, true);
@@ -73,8 +51,6 @@ VulkanRenderTarget::VulkanRenderTarget(
 VulkanRenderTarget::~VulkanRenderTarget()
 {
     release();
-    color_attachments.clear();
-    depth_attachment.reset();
 }
 
 void VulkanRenderTarget::initialize()
@@ -89,18 +65,7 @@ void VulkanRenderTarget::initialize()
     {
         if (utils::is_depth_format(attachment_prop.format))
         {
-            if (prop.existing_images.contains(index))
-            {
-                const auto image = reference_cast<VulkanImage>(prop.existing_images.at(index));
-                depth_attachment = image;
-            }
-            else
-            {
-                depth_attachment->resize(static_cast<size_t>(width * prop.scale), static_cast<size_t>(height * prop.scale));
-            }
-
             depth_rendering = vk::RenderingAttachmentInfo{
-                .imageView = depth_attachment->get_image_info().view,
                 .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
                 .loadOp = to_load_op(prop, attachment_prop),
                 .storeOp = vk::AttachmentStoreOp::eStore,
@@ -109,26 +74,14 @@ void VulkanRenderTarget::initialize()
         }
         else
         {
-            Reference<VulkanImage> image;
-            if (prop.existing_images.contains(index))
-            {
-                image = reference_cast<VulkanImage>(prop.existing_images.at(index));
-                color_attachments[index] = image;
-            }
-            else
-            {
-                image = color_attachments[index];
-                image->resize(static_cast<size_t>(width * prop.scale), static_cast<size_t>(height * prop.scale));
-            }
-
-            auto& rendering_attachment = rendering_attachments.emplace_back();
-            rendering_attachment = vk::RenderingAttachmentInfo{
-                .imageView = image->get_image_info().view,
-                .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
-                .loadOp = to_load_op(prop, attachment_prop),
-                .storeOp = vk::AttachmentStoreOp::eStore,
-                .clearValue = vk::ClearColorValue{prop.clear_color.r, prop.clear_color.g, prop.clear_color.b, prop.clear_color.a}
-            };
+            rendering_attachments.emplace_back(
+                vk::RenderingAttachmentInfo{
+                    .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                    .loadOp = to_load_op(prop, attachment_prop),
+                    .storeOp = vk::AttachmentStoreOp::eStore,
+                    .clearValue = vk::ClearColorValue{prop.clear_color.r, prop.clear_color.g, prop.clear_color.b, prop.clear_color.a}
+                }
+            );
         }
         index++;
     }
@@ -145,24 +98,6 @@ void VulkanRenderTarget::initialize()
 
 void VulkanRenderTarget::release()
 {
-    size_t index = 0;
-    for (const auto& image : color_attachments)
-    {
-        if (prop.existing_images.contains(index))
-            continue;
-
-        image->release();
-        index++;
-    }
-
-    if (depth_attachment)
-    {
-        // If we don't own the depth attachment
-        if (!prop.existing_images.contains(prop.attachments.attachment_images.size() - 1))
-            depth_attachment->release();
-    }
-
-
     rendering_attachments.clear();
 }
 
@@ -174,6 +109,36 @@ void VulkanRenderTarget::resize(const size_t new_width, const size_t new_height,
     width = static_cast<size_t>(new_width * prop.scale);
     height = static_cast<size_t>(new_height * prop.scale);;
     initialize();
+}
+
+vk::RenderingInfo VulkanRenderTarget::make_rendering_info(const DrawContext& draw_context)
+{
+    llvm::SmallVector<vk::ImageView, 4> color_attachments = {draw_context.draw_image_view};
+    const std::optional depth_attachment = draw_context.depth_image_view;
+
+    return make_rendering_info(color_attachments, depth_attachment);
+}
+
+vk::RenderingInfo VulkanRenderTarget::make_rendering_info(
+    const std::span<vk::ImageView> color_images,
+    const std::optional<vk::ImageView>& depth_image
+)
+{
+    if (depth_image.has_value())
+    {
+        PORTAL_ASSERT(depth_format.has_value(), "Depth image requested but no depth attachment");
+        depth_rendering.imageView = depth_image.value();
+    }
+
+    PORTAL_ASSERT(color_images.size() == rendering_attachments.size(), "Invalid number of color attachments");
+
+    size_t index = 0;
+    for (const auto& image : color_images)
+    {
+        rendering_attachments[index++].imageView = image;
+    }
+
+    return rendering_info;
 }
 
 
@@ -189,23 +154,13 @@ size_t VulkanRenderTarget::get_height() const
 
 size_t VulkanRenderTarget::get_color_attachment_count() const
 {
-    return color_attachments.size();
+    return color_formats.size();
 }
 
-Reference<Image> VulkanRenderTarget::get_image(const size_t index) const
-{
-    PORTAL_ASSERT(index < color_attachments.size(), "Invalid color attachment index");
-    return color_attachments[index];
-}
 
 bool VulkanRenderTarget::has_depth_attachment() const
 {
-    return depth_attachment != nullptr;
-}
-
-Reference<Image> VulkanRenderTarget::get_depth_image() const
-{
-    return depth_attachment;
+    return depth_format.has_value();
 }
 
 const RenderTargetProperties& VulkanRenderTarget::get_properties() const
@@ -213,8 +168,13 @@ const RenderTargetProperties& VulkanRenderTarget::get_properties() const
     return prop;
 }
 
-const vk::RenderingInfo& VulkanRenderTarget::get_rendering_info() const
+ImageFormat VulkanRenderTarget::get_depth_format() const
 {
-    return rendering_info;
+    return depth_format.value_or(ImageFormat::None);
+}
+
+std::span<const ImageFormat> VulkanRenderTarget::get_color_formats() const
+{
+    return std::span{color_formats};
 }
 }

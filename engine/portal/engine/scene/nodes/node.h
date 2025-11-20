@@ -13,13 +13,13 @@
 #include "portal/engine/reference.h"
 #include "portal/core/strings/string_id.h"
 
-namespace portal::scene {
+namespace portal::renderer
+{
 struct DrawContext;
 }
 
 namespace portal::scene
 {
-
 class Node
 {
 public:
@@ -37,7 +37,7 @@ public:
     [[nodiscard]] const glm::mat4& get_local_transform() const;
 
     void refresh_transform(const glm::mat4& parent_matrix);
-    virtual void draw(const glm::mat4& top_matrix, DrawContext& context);
+    virtual void draw(const glm::mat4& top_matrix, renderer::DrawContext& context);
 
 protected:
     StringId id;
@@ -47,5 +47,4 @@ protected:
     glm::mat4 local_transform;
     glm::mat4 world_transform;
 };
-
 } // portal

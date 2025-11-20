@@ -12,10 +12,11 @@ namespace portal
 RendererContext::RendererContext(
     renderer::vulkan::VulkanContext& gpu_context,
     std::vector<vk::raii::DescriptorSetLayout>& global_descriptor_set_layout,
-    const Reference<renderer::vulkan::VulkanSwapchain>& swapchain
+    const renderer::AttachmentProperties& attachments
 ) : gpu_context(gpu_context),
-    swapchain(swapchain),
-    global_descriptor_set_layout(global_descriptor_set_layout) {
+    global_descriptor_set_layout(global_descriptor_set_layout),
+    attachments(attachments)
+{
 }
 
 const renderer::vulkan::VulkanContext& RendererContext::get_gpu_context() const
@@ -26,5 +27,10 @@ const renderer::vulkan::VulkanContext& RendererContext::get_gpu_context() const
 renderer::vulkan::VulkanContext& RendererContext::get_gpu_context()
 {
     return gpu_context;
+}
+
+const renderer::AttachmentProperties& RendererContext::get_attachments() const
+{
+    return attachments;
 }
 } // portal

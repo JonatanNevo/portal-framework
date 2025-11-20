@@ -21,7 +21,7 @@ public:
         const std::vector<ResourceReference<renderer::Material>>& materials
         );
 
-    void draw(const glm::mat4& top_matrix, DrawContext& context) override;
+    void draw(const glm::mat4& top_matrix, renderer::DrawContext& context) override;
 
     [[nodiscard]] const ResourceReference<MeshGeometry>& get_mesh() const { return mesh; }
     [[nodiscard]] const std::vector<ResourceReference<renderer::Material>>& get_materials() const { return materials; }

@@ -109,7 +109,7 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& na
     // TODO: add pipeline cache
     renderer::PipelineProperties pipeline_properties{
         .shader = shader,
-        .attachments = context.get_swapchain()->get_attachments(),
+        .attachments = context.get_attachments(),
         .topology = renderer::PrimitiveTopology::Triangles,
         .depth_compare_operator = renderer::DepthCompareOperator::GreaterOrEqual,
         .backface_culling = false,

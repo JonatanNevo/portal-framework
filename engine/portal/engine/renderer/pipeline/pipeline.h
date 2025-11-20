@@ -15,7 +15,7 @@ namespace portal::renderer
 struct PipelineProperties
 {
     Reference<ShaderVariant> shader;
-    RenderTargetAttachmentProperties attachments;
+    AttachmentProperties attachments;
 
     PrimitiveTopology topology = PrimitiveTopology::Triangles;
     DepthCompareOperator depth_compare_operator = DepthCompareOperator::GreaterOrEqual;

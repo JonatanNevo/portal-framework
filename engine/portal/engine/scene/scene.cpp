@@ -24,7 +24,7 @@ std::span<Reference<scene::Node>> Scene::get_root_nodes()
     return root_nodes;
 }
 
-void Scene::draw(const glm::mat4& top_matrix, scene::DrawContext& context)
+void Scene::draw(const glm::mat4& top_matrix, renderer::DrawContext& context)
 {
     for (auto& n : root_nodes)
     {

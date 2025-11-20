@@ -54,21 +54,6 @@ VulkanSwapchain::VulkanSwapchain(const VulkanContext& context, const Reference<S
     find_image_format_and_color_space();
 
     auto extent = surface->get_extent();
-    attachments = {
-        .attachment_images = {
-                {
-                    .format = to_format(get_color_format()),
-                    .blend = false
-                },
-                {
-                    .format = ImageFormat::Depth_32Float,
-                    .blend = true,
-                    .blend_mode = BlendMode::Additive
-                }
-        },
-        .blend = true,
-    };
-
     // TODO: propagate vsync to swapchain?
     create(reinterpret_cast<uint32_t*>(&extent.x), reinterpret_cast<uint32_t*>(&extent.y), true);
     if (extent != surface->get_extent())
@@ -202,7 +187,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             },
         };
 
-        auto& [image, image_view, command_pool, command_buffer, last_used_frame, render_target] = images_data[i];
+        auto& [image, image_view, command_pool, command_buffer, last_used_frame] = images_data[i];
         image = swap_chain_images[i];
         image_view = device.get_handle().createImageView(view_info);
         device.set_debug_name(image_view, std::format("swapchain_image_view_{}", i).c_str());
@@ -232,16 +217,6 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             .width = get_width(),
             .height = get_height(),
         };
-
-        RenderTargetProperties properties{
-            .width = width,
-            .height = height,
-            .attachments = attachments,
-            .transfer = true,
-            .existing_images = {{0, reference_cast<Image>(make_reference<VulkanImage>(image, image_properties, context))}},
-            .name = STRING_ID(std::format("render-target-{}", i)),
-        };
-        render_target = make_reference<VulkanRenderTarget>(std::move(properties), context);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

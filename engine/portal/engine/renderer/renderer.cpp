@@ -35,6 +35,7 @@
 #include "portal/engine/renderer/material/material.h"
 #include "portal/engine/renderer/pipeline/pipeline.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
+#include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_material.h"
 #include "vulkan/device/vulkan_physical_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_pipeline.h"
@@ -50,14 +51,34 @@ using namespace renderer;
 
 [[maybe_unused]] static auto logger = Log::get_logger("Renderer");
 
-Renderer::Renderer(Input& input, renderer::vulkan::VulkanContext& context, const Reference<renderer::vulkan::VulkanSwapchain>& swapchain)
+Renderer::Renderer(Input& input, vulkan::VulkanContext& context, const Reference<vulkan::VulkanSwapchain>& swapchain)
     :
     swapchain(swapchain),
+    attachments(
+        {
+            .attachment_images = {
+                // Present Image
+                {
+                    .format = vulkan::to_format(swapchain->get_color_format()),
+                    .blend = false
+                },
+                // Depth Image
+                {
+                    .format = ImageFormat::Depth_32Float,
+                    .blend = true,
+                    .blend_mode = BlendMode::Additive
+                }
+            },
+            .blend = true,
+        }
+    ),
     context(context),
-    renderer_context(context, scene_descriptor_set_layouts, swapchain),
+    renderer_context(context, scene_descriptor_set_layouts, attachments),
     camera(input)
 {
     PORTAL_PROF_ZONE();
+
+    init_render_target();
 
     camera.on_resize(static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height()));
     init_descriptors();
@@ -83,7 +104,7 @@ void Renderer::cleanup()
         }
 
         deletion_queue.flush();
-
+        depth_image.reset();
         frame_data.clear();
         scene_descriptor_set_layouts.clear();
         swapchain.reset();
@@ -104,6 +125,11 @@ size_t Renderer::get_frames_in_flight() const
 const renderer::vulkan::VulkanSwapchain& Renderer::get_swapchain() const
 {
     return *swapchain;
+}
+
+const renderer::DrawContext& Renderer::get_draw_context() const
+{
+    return draw_context;
 }
 
 void Renderer::on_event(Event& event)
@@ -130,6 +156,27 @@ void Renderer::on_event(Event& event)
             return false;
         }
     );
+}
+
+void Renderer::init_render_target()
+{
+    RenderTargetProperties properties{
+        .width = swapchain->get_width(),
+        .height = swapchain->get_height(),
+        .attachments = attachments,
+        .transfer = true,
+        .name = STRING_ID("geometry-render-target"),
+    };
+    render_target = make_reference<vulkan::VulkanRenderTarget>(properties);
+
+    image::Properties image_properties{
+        .format = render_target->get_depth_format(),
+        .usage = ImageUsage::Attachment,
+        .transfer = true,
+        .width = static_cast<size_t>(properties.width * properties.scale),
+        .height = static_cast<size_t>(properties.height * properties.scale)
+    };
+    depth_image = make_reference<vulkan::VulkanImage>(image_properties, context);
 }
 
 void Renderer::update_imgui([[maybe_unused]] float delta_time)
@@ -199,6 +246,11 @@ void Renderer::begin_frame()
     // Resets descriptor pools
     clean_frame();
 
+    draw_context.draw_image = swapchain->get_current_draw_image();
+    draw_context.draw_image_view = swapchain->get_current_draw_image_view();
+    draw_context.depth_image = depth_image->get_image_info().image.get_handle();
+    draw_context.depth_image_view = depth_image->get_image_info().view;
+
     const auto& current_command_buffer = swapchain->get_current_draw_command_buffer();
     // begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
     current_command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
@@ -211,6 +263,11 @@ void Renderer::end_frame()
     // TODO: should we submit to graphics queue here?
 
     swapchain->present();
+
+    draw_context.draw_image = nullptr;
+    draw_context.draw_image_view = nullptr;
+    draw_context.depth_image = nullptr;
+    draw_context.depth_image_view = nullptr;
 }
 
 void Renderer::clean_frame()
@@ -224,14 +281,12 @@ void Renderer::draw_geometry()
 {
     auto& current_command_buffer = swapchain->get_current_draw_command_buffer();
 
-    auto& current_render_target = swapchain->get_current_render_target();
-
-    const auto draw_image = reference_cast<vulkan::VulkanImage>(current_render_target->get_image(0));
-    const auto depth_image = reference_cast<vulkan::VulkanImage>(current_render_target->get_depth_image());
+    const auto draw_image  = draw_context.draw_image;
+    const auto depth_draw_image = draw_context.depth_image;
 
     vulkan::transition_image_layout(
         current_command_buffer,
-        draw_image->get_image_info().image.get_handle(),
+        draw_image,
         1,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -243,7 +298,7 @@ void Renderer::draw_geometry()
     );
     vulkan::transition_image_layout(
         current_command_buffer,
-        depth_image->get_image_info().image.get_handle(),
+        depth_draw_image,
         1,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthAttachmentOptimal,
@@ -259,7 +314,7 @@ void Renderer::draw_geometry()
     // set draw image layout to Present so we can present it
     vulkan::transition_image_layout(
         current_command_buffer,
-        draw_image->get_image_info().image.get_handle(),
+        draw_image,
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,
@@ -283,7 +338,6 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
     auto& current_frame = get_current_frame_data();
 
     auto current_frame_index = swapchain->current_frame_index();
-    auto& render_target = swapchain->get_current_render_target();
 
     std::unordered_map<StringId, std::vector<uint32_t>> render_by_material;
     render_by_material.reserve(draw_context.render_objects.size());
@@ -296,9 +350,9 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
     }
 
     {
-        command_buffer.beginRendering(render_target->get_rendering_info());
+        command_buffer.beginRendering(render_target->make_rendering_info(draw_context));
 
-        current_frame.scene_data_buffer = renderer::vulkan::BufferBuilder(sizeof(vulkan::GPUSceneData))
+        current_frame.scene_data_buffer = vulkan::BufferBuilder(sizeof(vulkan::GPUSceneData))
                                           .with_usage(vk::BufferUsageFlagBits::eUniformBuffer)
                                           .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
                                           .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
@@ -313,15 +367,15 @@ void Renderer::draw_geometry(const vk::raii::CommandBuffer& command_buffer)
         writer.write_buffer(0, current_frame.scene_data_buffer, sizeof(vulkan::GPUSceneData), 0, vk::DescriptorType::eUniformBuffer);
         writer.update_set(context.get_device(), current_frame.global_descriptor_set);
 
-        Reference<renderer::vulkan::VulkanPipeline> last_pipeline = nullptr;
-        Reference<renderer::vulkan::VulkanMaterial> last_material = nullptr;
+        Reference<vulkan::VulkanPipeline> last_pipeline = nullptr;
+        Reference<vulkan::VulkanMaterial> last_material = nullptr;
         // MaterialPipeline* real_p = nullptr;
-        std::shared_ptr<renderer::vulkan::AllocatedBuffer> last_index_buffer = nullptr;
+        std::shared_ptr<vulkan::AllocatedBuffer> last_index_buffer = nullptr;
 
-        auto draw_object = [&](const scene::RenderObject& object)
+        auto draw_object = [&](const RenderObject& object)
         {
             // TracyVkZone(tracy_context, *current_frame.command_buffer, "Draw object");
-            auto material = reference_cast<renderer::vulkan::VulkanMaterial>(object.material);
+            auto material = reference_cast<vulkan::VulkanMaterial>(object.material);
             auto pipeline = material->get_pipeline();
             if (material != last_material)
             {
