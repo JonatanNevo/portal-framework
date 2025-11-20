@@ -7,7 +7,7 @@
 
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
-#include "../draw_context.h"
+#include "../frame_context.h"
 
 namespace portal::renderer::vulkan
 {
@@ -111,10 +111,10 @@ void VulkanRenderTarget::resize(const size_t new_width, const size_t new_height,
     initialize();
 }
 
-vk::RenderingInfo VulkanRenderTarget::make_rendering_info(const DrawContext& draw_context)
+vk::RenderingInfo VulkanRenderTarget::make_rendering_info(const FrameContext& frame_context)
 {
-    llvm::SmallVector<vk::ImageView, 4> color_attachments = {draw_context.draw_image_view};
-    const std::optional depth_attachment = draw_context.depth_image_view;
+    llvm::SmallVector<vk::ImageView, 4> color_attachments = {frame_context.draw_image_view};
+    const std::optional depth_attachment = frame_context.depth_image_view;
 
     return make_rendering_info(color_attachments, depth_attachment);
 }

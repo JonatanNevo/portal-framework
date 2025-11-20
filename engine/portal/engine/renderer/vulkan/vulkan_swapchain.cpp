@@ -187,66 +187,10 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             },
         };
 
-        auto& [image, image_view, command_pool, command_buffer, last_used_frame] = images_data[i];
+        auto& [image, image_view, last_used_frame] = images_data[i];
         image = swap_chain_images[i];
         image_view = device.get_handle().createImageView(view_info);
         device.set_debug_name(image_view, std::format("swapchain_image_view_{}", i).c_str());
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Command buffer
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        const vk::CommandPoolCreateInfo pool_info{
-            .flags = vk::CommandPoolCreateFlagBits::eTransient,
-            .queueFamilyIndex = static_cast<uint32_t>(context.get_device().get_graphics_queue().get_family_index()),
-        };
-        command_pool = device.get_handle().createCommandPool(pool_info);
-        device.set_debug_name(command_pool, std::format("swapchain_command_pool_{}", i).c_str());
-
-        const vk::CommandBufferAllocateInfo alloc_info{
-            .commandPool = command_pool,
-            .level = vk::CommandBufferLevel::ePrimary,
-            .commandBufferCount = 1,
-        };
-        command_buffer = std::move(device.get_handle().allocateCommandBuffers(alloc_info).front());
-        device.set_debug_name(command_buffer, std::format("swapchain_command_buffer_{}", i).c_str());
-
-        image::Properties image_properties{
-            .format = to_format(get_color_format()),
-            .usage = ImageUsage::Attachment,
-            .width = get_width(),
-            .height = get_height(),
-        };
-    }
-
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Frame data
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // TODO: have different amount of frames in flight based on some config?
-    frames_in_flight = swap_chain_images.size();
-
-    frame_data.clear();
-    frame_data.resize(frames_in_flight);
-
-    // create synchronization structures
-    // one fence to control when the gpu has finished rendering the frame,
-    // and 2 semaphores to synchronize rendering with swapchain
-    // we want the fence to start signaled so we can wait on it on the first frame
-    size_t frame_index = 0;
-    for (auto& data : frame_data)
-    {
-        data.image_available_semaphore = device.get_handle().createSemaphore({});
-        device.set_debug_name(data.image_available_semaphore, std::format("swapchain_image_available_semaphore_{}", frame_index).c_str());
-
-        data.render_finished_semaphore = device.get_handle().createSemaphore({});
-        device.set_debug_name(data.render_finished_semaphore, std::format("swapchain_render_finished_semaphore_{}", frame_index).c_str());
-
-        data.wait_fence = device.get_handle().createFence(
-            {
-                .flags = vk::FenceCreateFlagBits::eSignaled
-            }
-        );
-        device.set_debug_name(data.wait_fence, std::format("swapchain_wait_fence_{}", frame_index).c_str());
     }
 }
 
@@ -255,8 +199,6 @@ void VulkanSwapchain::destroy()
     context.get_device().wait_idle();
 
     images_data.clear();
-    frame_data.clear();
-
     swapchain = nullptr;
 
     context.get_device().wait_idle();
@@ -270,38 +212,24 @@ void VulkanSwapchain::on_resize(size_t new_width, size_t new_height)
     context.get_device().wait_idle();
 }
 
-void VulkanSwapchain::begin_frame()
+SwapchainImageData& VulkanSwapchain::begin_frame(const FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
-    auto& frame = frame_data[current_frame];
-    frame.deletion_queue.flush();
 
-    current_image = acquire_next_image();
+    current_image = acquire_next_image(frame);
     auto& image_data = images_data[current_image];
+    image_data.last_used_frame = frame.frame_index;
 
-    // If this image was used before, wait for the fence from the frame that last used it
-    if (image_data.last_used_frame != std::numeric_limits<size_t>::max())
-    {
-        PORTAL_PROF_ZONE("VulkanSwapchain::begin_frame - wait for image fence");
-        const auto& last_frame = frame_data[image_data.last_used_frame];
-        context.get_device().wait_for_fences(std::span{&*last_frame.wait_fence, 1}, true);
-    }
-
-    image_data.command_pool.reset();
-    image_data.last_used_frame = current_frame;
+    return images_data[current_image];
 }
 
-void VulkanSwapchain::present()
+void VulkanSwapchain::present(const FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
-
-    const auto& frame = frame_data[current_frame];
-    const auto& image = images_data[current_image];
-
-    const vk::PipelineStageFlags2 wait_destination_stage_mask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
+    constexpr vk::PipelineStageFlags2 wait_destination_stage_mask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
 
     const vk::SemaphoreSubmitInfo wait_semaphore_info{
-        .semaphore = *frame.image_available_semaphore,
+        .semaphore = *frame.resources.image_available_semaphore,
         .value = 0,
         // Assuming binary semaphores are used (value is ignored/defaulted)
         .stageMask = wait_destination_stage_mask,
@@ -309,7 +237,7 @@ void VulkanSwapchain::present()
     };
 
     const vk::SemaphoreSubmitInfo signal_semaphore_info{
-        .semaphore = *frame.render_finished_semaphore,
+        .semaphore = *frame.resources.render_finished_semaphore,
         .value = 0,
         // Assuming binary semaphores are used
         .stageMask = vk::PipelineStageFlagBits2::eAllCommands,
@@ -318,7 +246,7 @@ void VulkanSwapchain::present()
     };
 
     const vk::CommandBufferSubmitInfo command_buffer_info{
-        .commandBuffer = *image.command_buffer,
+        .commandBuffer = *frame.command_buffer,
         .deviceMask = 0
     };
 
@@ -333,10 +261,10 @@ void VulkanSwapchain::present()
         .pSignalSemaphoreInfos = &signal_semaphore_info,
     };
 
-    context.get_device().get_handle().resetFences({frame.wait_fence});
+    context.get_device().get_handle().resetFences({frame.resources.wait_fence});
 
     // TODO: sync device queues?
-    context.get_device().get_graphics_queue().submit(submit_info, frame.wait_fence);
+    context.get_device().get_graphics_queue().submit(submit_info, frame.resources.wait_fence);
 
     // Present the current buffer to the swap chain
     // Pass the semaphore signaled by the command buffer submission from the submit info as the wait semaphore for swap chain presentation
@@ -347,7 +275,7 @@ void VulkanSwapchain::present()
 
         const vk::PresentInfoKHR present_info{
             .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &*frame.render_finished_semaphore,
+            .pWaitSemaphores = &*frame.resources.render_finished_semaphore,
             .swapchainCount = 1,
             .pSwapchains = &*swapchain,
             .pImageIndices = reinterpret_cast<uint32_t*>(&current_image)
@@ -373,21 +301,19 @@ void VulkanSwapchain::present()
             on_resize(width, height);
         }
     }
-    current_frame = (current_frame + 1) % frames_in_flight;
 }
 
-size_t VulkanSwapchain::acquire_next_image()
+size_t VulkanSwapchain::acquire_next_image(const FrameContext& frame)
 {
-    const auto& frame = frame_data[current_frame];
     // Make sure the frame we're requesting has finished rendering (from previous iterations)
     {
         PORTAL_PROF_ZONE("VulkanSwapchain::acquire_next_image - wait for fences");
-        context.get_device().wait_for_fences(std::span{&*frame.wait_fence, 1}, true);
+        context.get_device().wait_for_fences(std::span{&*frame.resources.wait_fence, 1}, true);
     }
 
     auto [result, index] = swapchain.acquireNextImage(
         std::numeric_limits<uint64_t>::max(),
-        frame.image_available_semaphore,
+        frame.resources.image_available_semaphore,
         nullptr
     );
 
@@ -398,7 +324,7 @@ size_t VulkanSwapchain::acquire_next_image()
             on_resize(width, height);
             auto [new_result, new_index] = swapchain.acquireNextImage(
                 std::numeric_limits<uint64_t>::max(),
-                frame.image_available_semaphore,
+                frame.resources.image_available_semaphore,
                 nullptr
             );
             if (new_result != vk::Result::eSuccess)

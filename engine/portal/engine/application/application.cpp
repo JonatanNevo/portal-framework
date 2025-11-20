@@ -118,14 +118,15 @@ void Application::run()
 
             // Run single iteration of renderer::draw
             {
-                renderer->begin_frame();
+                auto context = renderer->begin_frame();
+                context.delta_time = time_step;
                 imgui_module->begin();
 
                 {
                     // TODO: put in layer
                     imgui_module->on_gui_render();
 
-                    renderer->update_scene(time_step, scene);
+                    renderer->update_scene(context, scene);
 
                     renderer->update_imgui(time_step);
                     ImGui::Begin("Scene");
@@ -200,12 +201,11 @@ void Application::run()
 
                 {
                     // TODO: put in layer ?
-                    renderer->draw_geometry();
-                    imgui_module->end();
+                    renderer->draw_geometry(context);
+                    imgui_module->end(context);
                 }
 
-                renderer->end_frame();
-
+                renderer->end_frame(context);
 
                 current_frame_count = (current_frame_count + 1) % renderer->get_frames_in_flight();
                 PORTAL_FRAME_MARK();
@@ -215,6 +215,8 @@ void Application::run()
             frame_time = time - last_frame_time;
             time_step = glm::min<float>(frame_time, 0.0333f);
             last_frame_time = time;
+
+            renderer->update_frame_time(frame_time);
         }
         LOGGER_INFO("Application stopped");
     }

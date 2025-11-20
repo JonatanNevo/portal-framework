@@ -60,7 +60,7 @@ Used by rendering code that needs access to GPU resources and render targets.
 ### DrawContext
 **Lifetime**: Per-frame (recreated each frame)  
 **Instance Count**: One per frame  
-**Location**: `portal/engine/scene/draw_context.h`
+**Location**: `portal/engine/scene/frame_context.h`
 
 Contains all data needed to render a single frame. Contains:
 - **RenderObjects**: List of visible objects to render with their transforms, materials, and geometry

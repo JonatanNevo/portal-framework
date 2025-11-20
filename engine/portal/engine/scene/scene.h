@@ -14,7 +14,7 @@
 namespace portal
 {
 namespace renderer {
-    struct DrawContext;
+    struct FrameContext;
 }
 
 class Scene final : public Resource
@@ -25,7 +25,7 @@ public:
 
     std::span<Reference<scene::Node>> get_root_nodes();
 
-    void draw(const glm::mat4& top_matrix, renderer::DrawContext& context);
+    void draw(const glm::mat4& top_matrix, renderer::FrameContext& context);
 
 private:
     std::vector<Reference<scene::Node>> root_nodes;

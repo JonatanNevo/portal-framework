@@ -16,7 +16,7 @@ public:
     ~ImGuiModule();
 
     void begin();
-    void end();
+    void end(const renderer::FrameContext& frame);
 
     void on_gui_render();
 
