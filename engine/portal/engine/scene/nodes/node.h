@@ -15,7 +15,7 @@
 
 namespace portal::renderer
 {
-struct DrawContext;
+struct FrameContext;
 }
 
 namespace portal::scene
@@ -37,7 +37,7 @@ public:
     [[nodiscard]] const glm::mat4& get_local_transform() const;
 
     void refresh_transform(const glm::mat4& parent_matrix);
-    virtual void draw(const glm::mat4& top_matrix, renderer::DrawContext& context);
+    virtual void draw(const glm::mat4& top_matrix, renderer::FrameContext& context);
 
 protected:
     StringId id;

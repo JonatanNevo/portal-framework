@@ -114,21 +114,17 @@ void ImGuiModule::begin()
     //ImGuizmo::BeginFrame();
 }
 
-void ImGuiModule::end()
+void ImGuiModule::end(const renderer::FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
 
     const auto& renderer = context->get_renderer();
     auto& swapchain = renderer.get_swapchain();
 
-    const auto draw_image =  renderer.get_draw_context().draw_image;
-
-    const auto& command_buffer = swapchain.get_current_draw_command_buffer();
-
     // set swapchain image layout to Attachment Optimal so we can draw it
     renderer::vulkan::transition_image_layout(
-        command_buffer,
-        draw_image,
+        frame.command_buffer,
+        frame.draw_image,
         1,
         vk::ImageLayout::ePresentSrcKHR,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -145,7 +141,7 @@ void ImGuiModule::end()
     const auto height = static_cast<uint32_t>(swapchain.get_height());
 
     vk::RenderingAttachmentInfo color_attachment = {
-        .imageView = renderer.get_draw_context().draw_image_view,
+        .imageView = frame.draw_image_view,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eLoad,
         .storeOp = vk::AttachmentStoreOp::eStore
@@ -160,9 +156,9 @@ void ImGuiModule::end()
     };
 
     // TODO: have imgui command buffers?
-    command_buffer.beginRendering(rendering_info);
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *command_buffer);
-    command_buffer.endRendering();
+    frame.command_buffer.beginRendering(rendering_info);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *frame.command_buffer);
+    frame.command_buffer.endRendering();
 
     const ImGuiIO& io = ImGui::GetIO();
     // Update and Render additional Platform Windows
@@ -174,8 +170,8 @@ void ImGuiModule::end()
 
     // set draw image layout to Present so we can present it
     renderer::vulkan::transition_image_layout(
-        command_buffer,
-        draw_image,
+        frame.command_buffer,
+        frame.draw_image,
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,

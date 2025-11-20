@@ -6,15 +6,16 @@
 #pragma once
 
 #include <portal/engine/renderer/vulkan/allocated_buffer.h>
+
+#include "portal/engine/renderer/deletion_queue.h"
+#include "portal/engine/renderer/descriptor_allocator.h"
 #include "portal/engine/resources/resources/mesh_geometry.h"
 
 namespace portal::renderer {
-
 }
 
 namespace portal::renderer
 {
-
 class Material;
 
 struct RenderObject
@@ -70,15 +71,66 @@ struct RenderObject
     }
 };
 
-struct DrawContext
+// Per frame resource, owned by the renderer
+struct FrameResources
 {
+    vk::raii::CommandPool command_pool = nullptr;
+    vk::raii::CommandBuffer command_buffer = nullptr;
+
+    // Semaphores to signal that images are available for rendering and that rendering has finished
+    vk::raii::Semaphore image_available_semaphore = nullptr;
+    vk::raii::Semaphore render_finished_semaphore = nullptr;
+    // Fence to signal that command buffers are ready to be reused
+    vk::raii::Fence wait_fence = nullptr;
+
+    DeletionQueue deletion_queue = {};
+
+    vk::raii::DescriptorSet global_descriptor_set = nullptr;
+    vulkan::AllocatedBuffer scene_data_buffer = nullptr;
+    vulkan::DescriptorAllocator frame_descriptors;
+
+    FrameResources(auto&& command_pool, auto&& command_buffer, auto&& image_sema, auto&& render_sema, auto&& wait_fence, auto&& descriptors) :
+        command_pool(std::move(command_pool)),
+        command_buffer(std::move(command_buffer)),
+        image_available_semaphore(std::move(image_sema)),
+        render_finished_semaphore(std::move(render_sema)),
+        wait_fence(std::move(wait_fence)),
+        frame_descriptors(std::move(descriptors))
+    {}
+
+    // Delete copy operations
+    FrameResources(const FrameResources&) = delete;
+    FrameResources& operator=(const FrameResources&) = delete;
+
+    // Default move operations
+    FrameResources(FrameResources&&) = default;
+    FrameResources& operator=(FrameResources&&) = default;
+
+    ~FrameResources()
+    {
+        deletion_queue.flush();
+
+        global_descriptor_set = nullptr;
+        frame_descriptors.clear_pools();
+        frame_descriptors.destroy_pools();
+        scene_data_buffer = nullptr;
+    }
+};
+
+struct FrameContext
+{
+    size_t frame_index;
+    float delta_time;
+
     // TODO: switch with generic `Image` class
     vk::Image draw_image;
     vk::ImageView draw_image_view;
     vk::Image depth_image;
     vk::ImageView depth_image_view;
 
+    vk::raii::CommandBuffer& command_buffer;
+    FrameResources& resources;
+
     llvm::SmallVector<RenderObject> render_objects;
 };
-
 } // portal

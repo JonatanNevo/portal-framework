@@ -19,7 +19,7 @@
 #include "portal/engine/renderer/rendering_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
-#include "draw_context.h"
+#include "frame_context.h"
 #include "portal/engine/scene/scene.h"
 
 namespace portal
@@ -44,15 +44,6 @@ struct EngineStats
     float mesh_draw_time;
 };
 
-struct FrameData
-{
-    DeletionQueue deletion_queue = {};
-
-    vk::raii::DescriptorSet global_descriptor_set = nullptr;
-    renderer::vulkan::AllocatedBuffer scene_data_buffer = nullptr;
-    renderer::vulkan::DescriptorAllocator frame_descriptors;
-};
-
 class Renderer final : public EventHandler
 {
 public:
@@ -61,32 +52,32 @@ public:
 
     void cleanup();
 
-    void begin_frame();
-    void end_frame();
-    void clean_frame();
+    renderer::FrameContext begin_frame();
+    void end_frame(const renderer::FrameContext& frame);
 
     void update_imgui(float delta_time);
-    void update_scene(float delta_time, ResourceReference<Scene>& scene);
+    void update_scene( renderer::FrameContext& frame, ResourceReference<Scene>& scene);
 
-    void draw_geometry();
-    void draw_geometry(const vk::raii::CommandBuffer& command_buffer);
+    void draw_geometry( renderer::FrameContext& frame);
+    void draw_geometry(renderer::FrameContext& frame, const vk::raii::CommandBuffer& command_buffer);
 
     void on_resize(size_t new_width, size_t new_height);
-
-    FrameData& get_current_frame_data();
 
     [[nodiscard]] const RendererContext& get_renderer_context() const;
     [[nodiscard]] size_t get_frames_in_flight() const;
     [[nodiscard]] const renderer::vulkan::VulkanSwapchain& get_swapchain() const;
-    [[nodiscard]] const renderer::DrawContext& get_draw_context() const;
 
     void on_event(Event& event) override;
 
+    void update_frame_time(float frame_time);
+
 private:
     void init_render_target();
-    void init_descriptors();
+    void init_frame_resources();
 
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
+
+    static void clean_frame(const renderer::FrameContext& frame);
 
 private:
     Reference<renderer::vulkan::VulkanSwapchain> swapchain;
@@ -110,12 +101,15 @@ private:
 
     renderer::vulkan::GPUSceneData scene_data{};
     std::vector<vk::raii::DescriptorSetLayout> scene_descriptor_set_layouts;
-    std::vector<FrameData> frame_data;
+    std::vector<renderer::FrameResources> frames;
 
     RendererContext renderer_context;
-    renderer::DrawContext draw_context{};
     bool is_initialized = false;
 
+    size_t frames_in_flight = 0;
+
+    // Index of the frame we are currently working on, up to max frames in flight
+    size_t current_frame = 0;
 
 public:
     // TODO: use input class... and resources....
