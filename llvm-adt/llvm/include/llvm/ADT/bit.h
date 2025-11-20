@@ -225,16 +225,16 @@ template <typename T> [[nodiscard]] int countl_zero(T Val) {
 #endif
   }
 
-  // Fall back to the bisection method.
-  unsigned ZeroBits = 0;
-  for (T Shift = std::numeric_limits<T>::digits >> 1; Shift; Shift >>= 1) {
-    T Tmp = Val >> Shift;
-    if (Tmp)
-      Val = Tmp;
-    else
-      ZeroBits |= Shift;
-  }
-  return ZeroBits;
+  // // Fall back to the bisection method.
+  // unsigned ZeroBits = 0;
+  // for (T Shift = std::numeric_limits<T>::digits >> 1; Shift; Shift >>= 1) {
+  //   T Tmp = Val >> Shift;
+  //   if (Tmp)
+  //     Val = Tmp;
+  //   else
+  //     ZeroBits |= Shift;
+  // }
+  // return ZeroBits;
 }
 
 /// Count the number of ones from the most significant bit to the first
