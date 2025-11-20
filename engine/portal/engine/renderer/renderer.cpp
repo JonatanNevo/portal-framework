@@ -30,6 +30,7 @@
 #include <imgui_impl_glfw.h>
 #include <ranges>
 
+#include "llvm/Support/MemoryBuffer.h"
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/descriptor_writer.h"
 #include "portal/engine/renderer/material/material.h"
@@ -147,9 +148,9 @@ void Renderer::on_event(Event& event)
     );
 }
 
-void Renderer::update_frame_time(const float frame_time)
+void Renderer::update_frame_time(const float frame_time_seconds)
 {
-    stats.frame_time = frame_time;
+    stats.frame_time = frame_time_seconds * 1000.f;
 }
 
 void Renderer::init_render_target()
@@ -246,7 +247,14 @@ void Renderer::init_frame_resources()
 
 void Renderer::update_imgui([[maybe_unused]] float delta_time)
 {
+    static std::array<float, 100> fps_history = {};
+    static int fps_history_index = 0;
+
+    fps_history[fps_history_index] = 1000.f / stats.frame_time;
+    fps_history_index = (fps_history_index + 1) % fps_history.size();
+
     ImGui::Begin("Stats");
+    ImGui::Text("FPS %f", std::ranges::fold_left(fps_history, 0.f, std::plus<float>()) / 100.f);
     ImGui::Text("frametime %f ms", stats.frame_time);
     ImGui::Text("draw time %f ms", stats.mesh_draw_time);
     ImGui::Text("update time %f ms", stats.scene_update_time);
@@ -452,11 +460,6 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
                 if (pipeline != last_pipeline)
                 {
                     last_pipeline = pipeline;
-
-                    // if (pipeline->id == STRING_ID("color_pipeline"))
-                    //     real_p = &metal_rough_material.opaque_pipeline;
-                    // else if (pipeline->id == STRING_ID("transparent_pipeline"))
-                    //     real_p = &metal_rough_material.transparent_pipeline;
 
                     command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline->get_vulkan_pipeline());
                     command_buffer.bindDescriptorSets(

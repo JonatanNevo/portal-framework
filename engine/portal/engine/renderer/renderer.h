@@ -37,7 +37,7 @@ class Window;
 
 struct EngineStats
 {
-    float frame_time;
+    float frame_time = 0.0001f;
     int triangle_count;
     int drawcall_count;
     float scene_update_time;
@@ -69,7 +69,7 @@ public:
 
     void on_event(Event& event) override;
 
-    void update_frame_time(float frame_time);
+    void update_frame_time(float frame_time_seconds);
 
 private:
     void init_render_target();
