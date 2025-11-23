@@ -12,22 +12,16 @@
 
 namespace portal
 {
-
 static auto logger = Log::get_logger("Resources");
 
-ResourceRegistry::ResourceRegistry(
-    ReferenceManager& ref_manager,
-    ResourceDatabase& database,
-    jobs::Scheduler& scheduler,
-    const RendererContext& context
-    )
-    : database(database),
-      reference_manager(ref_manager),
-      scheduler(scheduler),
-      loader_factory(*this, context) // TODO: this might not work :(
-{
 
-}
+ResourceRegistry::ResourceRegistry(ModuleStack& stack, const RendererContext& context)
+    : Module<ReferenceManager, ResourceDatabase, SchedulerModule>(stack, STRING_ID("Resource Registry")),
+      loader_factory(
+          *this,
+          context
+      ) // TODO: this might not work :( {}
+{}
 
 ResourceRegistry::~ResourceRegistry() noexcept
 {
@@ -68,9 +62,9 @@ Job<Reference<Resource>> ResourceRegistry::load_direct(const SourceMetadata& met
     co_return resource;
 }
 
-void ResourceRegistry::wait_all(const std::span<Job<>> jobs) const
+void ResourceRegistry::wait_all(const std::span<Job<>> jobs)
 {
-    scheduler.wait_for_jobs(jobs);
+    get_dependency<SchedulerModule>().get_scheduler().wait_for_jobs(jobs);
 }
 
 std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource(const StringId& id)
@@ -97,7 +91,7 @@ void ResourceRegistry::create_resource(const StringId& resource_id, [[maybe_unus
             return;
     }
 
-    scheduler.dispatch_job(load_resource(resource_id));
+    get_dependency<SchedulerModule>().get_scheduler().dispatch_job(load_resource(resource_id));
 }
 
 void ResourceRegistry::create_resource_immediate(const StringId& resource_id, [[maybe_unused]] ResourceType type)
@@ -108,7 +102,7 @@ void ResourceRegistry::create_resource_immediate(const StringId& resource_id, [[
             return;
     }
 
-    scheduler.wait_for_job(load_resource(resource_id));
+    get_dependency<SchedulerModule>().get_scheduler().wait_for_job(load_resource(resource_id));
 }
 
 Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource_id)
@@ -121,7 +115,7 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
         pending_resources.insert(resource_id);
     }
 
-    const auto meta = database.find(resource_id);
+    const auto meta = get_dependency<ResourceDatabase>().find(resource_id);
     if (!meta)
     {
         std::lock_guard guard(lock);
@@ -131,7 +125,7 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
         co_return nullptr;
     }
 
-    const auto source = database.create_source(*meta);
+    const auto source = get_dependency<ResourceDatabase>().create_source(*meta);
 
     auto job = load_direct(*meta, *source);
     co_await job;
@@ -148,5 +142,4 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
     pending_resources.erase(resource_id);
     co_return resource.value();
 }
-
 } // portal

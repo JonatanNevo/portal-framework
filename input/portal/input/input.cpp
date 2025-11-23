@@ -10,10 +10,9 @@
 
 namespace portal
 {
-
 static auto logger = Log::get_logger("Input");
 
-Input::Input(const std::optional<std::function<void(Event&)>>& event_callback)
+Input::Input(ModuleStack& stack, const std::optional<std::function<void(Event&)>>& event_callback) : Module<>(stack, STRING_ID("Input"))
 {
     if (event_callback)
     {
@@ -61,23 +60,23 @@ void Input::report_key_action(const Key key, const KeyState state, const std::op
     switch (state)
     {
     case KeyState::Pressed:
-    {
-        KeyPressedEvent event(key, active_modifiers);
-        event_callback(event);
-        break;
-    }
+        {
+            KeyPressedEvent event(key, active_modifiers);
+            event_callback(event);
+            break;
+        }
     case KeyState::Released:
-    {
-        KeyReleasedEvent event(key);
-        event_callback(event);
-        break;
-    }
+        {
+            KeyReleasedEvent event(key);
+            event_callback(event);
+            break;
+        }
     case KeyState::Repeat:
-    {
-        KeyRepeatEvent event(key, active_modifiers);
-        event_callback(event);
-        break;
-    }
+        {
+            KeyRepeatEvent event(key, active_modifiers);
+            event_callback(event);
+            break;
+        }
     }
 }
 
@@ -87,19 +86,19 @@ void Input::report_axis_change(Axis axis, glm::vec2 value)
     switch (axis)
     {
     case Axis::Mouse:
-    {
-        mouse_position = value;
-        MouseMovedEvent event(value);
-        event_callback(event);
-        break;
-    }
+        {
+            mouse_position = value;
+            MouseMovedEvent event(value);
+            event_callback(event);
+            break;
+        }
     case Axis::MouseScroll:
-    {
-        mouse_scroll = value;
-        MouseScrolledEvent event(value);
-        event_callback(event);
-        break;
-    }
+        {
+            mouse_scroll = value;
+            MouseScrolledEvent event(value);
+            event_callback(event);
+            break;
+        }
     }
 }
 

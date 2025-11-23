@@ -5,6 +5,7 @@
 
 #include "glfw_window.h"
 
+
 #include <stb_image.h>
 
 #include "portal/core/files/file_system.h"

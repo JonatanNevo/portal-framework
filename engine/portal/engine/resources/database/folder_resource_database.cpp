@@ -14,7 +14,6 @@
 
 namespace portal
 {
-
 constexpr auto RESOURCE_METADATA_EXTENSION = ".pmeta";
 constexpr auto DATABASE_METADATA_EXTENSION = ".podb";
 
@@ -46,7 +45,10 @@ DatabaseMetadata DatabaseMetadata::dearchive(ArchiveObject& archive)
     return metadata;
 }
 
-FolderResourceDatabase::FolderResourceDatabase(const std::filesystem::path& path) : root_path(std::filesystem::absolute(path)), meta_path(root_path / ROOT_DATABASE_METADATA_FILENAME)
+FolderResourceDatabase::FolderResourceDatabase(ModuleStack& stack, const std::filesystem::path& path)
+    : ResourceDatabase(stack, STRING_ID("Folder Resource Databse")),
+      root_path(std::filesystem::absolute(path)),
+      meta_path(root_path / ROOT_DATABASE_METADATA_FILENAME)
 {
     if (!FileSystem::is_directory(root_path) && !FileSystem::create_directory(root_path))
     {
@@ -307,5 +309,4 @@ DatabaseMetadata FolderResourceDatabase::load_meta() const
 
     return DatabaseMetadata::dearchive(json_dearchiver);
 }
-
 } // portal

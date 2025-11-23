@@ -4,19 +4,12 @@
 //
 
 #pragma once
-#include <vulkan/vulkan.hpp>
-#include <vulkan/vulkan_raii.hpp>
 
-#include <tracy/TracyVulkan.hpp>
-#define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
-#include "portal/core/events/event_handler.h"
+#include <vulkan/vulkan_raii.hpp>
 
 #include "portal/engine/renderer/camera.h"
 #include "portal/engine/renderer/deletion_queue.h"
-#include "portal/engine/renderer/descriptor_allocator.h"
 #include "portal/engine/renderer/renderer_context.h"
-#include "portal/engine/renderer/rendering_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 #include "frame_context.h"
@@ -35,41 +28,25 @@ namespace renderer::vulkan {
 
 class Window;
 
-struct EngineStats
-{
-    float frame_time = 0.0001f;
-    int triangle_count;
-    int drawcall_count;
-    float scene_update_time;
-    float mesh_draw_time;
-};
-
-class Renderer final : public EventHandler
+class Renderer final : public TaggedModule<Tag<tags::FrameLifecycle, tags::Update>>
 {
 public:
-    Renderer(Input& input, renderer::vulkan::VulkanContext& context, const Reference<renderer::vulkan::VulkanSwapchain>& swapchain);
+    Renderer(ModuleStack& stack, renderer::vulkan::VulkanContext& context, const Reference<renderer::vulkan::VulkanSwapchain>& swapchain);
     ~Renderer() override;
 
     void cleanup();
 
-    renderer::FrameContext begin_frame();
-    void end_frame(const renderer::FrameContext& frame);
+    void begin_frame(renderer::FrameContext& frame) override;
+    void end_frame(renderer::FrameContext& frame) override;
 
-    void update_imgui(float delta_time);
-    void update_scene( renderer::FrameContext& frame, ResourceReference<Scene>& scene);
-
-    void draw_geometry( renderer::FrameContext& frame);
+    void post_update(renderer::FrameContext& frame) override;
     void draw_geometry(renderer::FrameContext& frame, const vk::raii::CommandBuffer& command_buffer);
 
-    void on_resize(size_t new_width, size_t new_height);
+    void on_resize(size_t new_width, size_t new_height) const;
 
     [[nodiscard]] const RendererContext& get_renderer_context() const;
     [[nodiscard]] size_t get_frames_in_flight() const;
     [[nodiscard]] const renderer::vulkan::VulkanSwapchain& get_swapchain() const;
-
-    void on_event(Event& event) override;
-
-    void update_frame_time(float frame_time_seconds);
 
 private:
     void init_render_target();
@@ -88,18 +65,12 @@ private:
     Reference<renderer::vulkan::VulkanImage> depth_image;
     Reference<renderer::vulkan::VulkanRenderTarget> render_target;
 
-    EngineStats stats = {};
-
     DeletionQueue deletion_queue = {};
-
-    // vk::SampleCountFlagBits msaa_samples = vk::SampleCountFlagBits::e1;
 
     vk::raii::Fence immediate_fence = nullptr;
     vk::raii::CommandPool immediate_command_pool = nullptr;
     vk::raii::CommandBuffer immediate_command_buffer = nullptr;
-    // TracyVkCtx tracy_context = nullptr;
 
-    renderer::vulkan::GPUSceneData scene_data{};
     std::vector<vk::raii::DescriptorSetLayout> scene_descriptor_set_layouts;
     std::vector<renderer::FrameResources> frames;
 
@@ -110,10 +81,6 @@ private:
 
     // Index of the frame we are currently working on, up to max frames in flight
     size_t current_frame = 0;
-
-public:
-    // TODO: use input class... and resources....
-    Camera camera;
 };
 
 } // portal

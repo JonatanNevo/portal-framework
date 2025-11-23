@@ -13,9 +13,9 @@
 #include "reference_manager.h"
 #include "database/resource_database.h"
 #include "loader/loader_factory.h"
-#include "portal/core/concurrency/reentrant_spin_lock.h"
 #include "portal/core/concurrency/spin_lock.h"
 #include "portal/engine/reference.h"
+#include "portal/engine/modules/scheduler_module.h"
 #include "portal/engine/resources/resources/resource.h"
 
 namespace portal::renderer::vulkan
@@ -29,10 +29,10 @@ namespace portal
 template <ResourceConcept T>
 class ResourceReference;
 
-class ResourceRegistry
+class ResourceRegistry final : public Module<ReferenceManager, ResourceDatabase, SchedulerModule>
 {
 public:
-    ResourceRegistry(ReferenceManager& ref_manager, ResourceDatabase& database, jobs::Scheduler& scheduler, const RendererContext& context);
+    ResourceRegistry(ModuleStack& stack, const RendererContext& context);
     ~ResourceRegistry() noexcept;
 
     /**
@@ -52,7 +52,7 @@ public:
         auto type = utils::to_resource_type<T>();
         create_resource(resource_id, type);
 
-        auto reference = ResourceReference<T>(resource_id, *this, reference_manager);
+        auto reference = ResourceReference<T>(resource_id, *this, get_dependency<ReferenceManager>());
         return reference;
     }
 
@@ -69,7 +69,7 @@ public:
         auto type = utils::to_resource_type<T>();
         create_resource_immediate(resource_id, type);
 
-        auto reference = ResourceReference<T>(resource_id, *this, reference_manager);
+        auto reference = ResourceReference<T>(resource_id, *this, get_dependency<ReferenceManager>());
         return reference;
     }
 
@@ -87,13 +87,13 @@ public:
     ResourceReference<T> get(const StringId resource_id)
     {
         if (resources.contains(resource_id))
-            return ResourceReference<T>(resource_id, *this, reference_manager);
+            return ResourceReference<T>(resource_id, *this, get_dependency<ReferenceManager>());
 
-        auto res = database.find(resource_id);
+        auto res = get_dependency<ResourceDatabase>().find(resource_id);
         if (res.has_value())
-            return ResourceReference<T>(res->resource_id, *this, reference_manager);
+            return ResourceReference<T>(res->resource_id, *this, get_dependency<ReferenceManager>());
 
-        return ResourceReference<T>(INVALID_STRING_ID, *this, reference_manager);
+        return ResourceReference<T>(INVALID_STRING_ID, *this, get_dependency<ReferenceManager>());
     }
 
     /**
@@ -126,7 +126,7 @@ public:
     Job<Reference<Resource>> load_direct(const SourceMetadata& meta, const resources::ResourceSource& source);
 
     // TODO: remove from here
-    void wait_all(std::span<Job<>> jobs) const;
+    void wait_all(std::span<Job<>> jobs);
 
 protected:
     /**
@@ -173,10 +173,6 @@ private:
 #endif
     llvm::DenseSet<StringId> pending_resources;
     llvm::DenseSet<StringId> errored_resources;
-
-    ResourceDatabase& database;
-    ReferenceManager& reference_manager;
-    jobs::Scheduler& scheduler;
 
     resources::LoaderFactory loader_factory;
 };

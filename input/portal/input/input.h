@@ -4,18 +4,20 @@
 //
 
 #pragma once
-#include "llvm/ADT/DenseMap.h"
-#include "portal/core/events/event.h"
+#include <llvm/ADT/DenseMap.h>
+#include <portal/core/events/event.h>
+#include <portal/application/modules/module.h>
+
 #include "key_data.h"
 #include "portal/input/input_event_consumer.h"
 
 namespace portal
 {
 
-class Input final : public InputEventConsumer
+class Input final : public Module<>, public InputEventConsumer
 {
 public:
-    explicit Input(const std::optional<std::function<void(Event&)>>& event_callback = std::nullopt);
+    explicit Input(ModuleStack& stack, const std::optional<std::function<void(Event&)>>& event_callback = std::nullopt);
 
     [[nodiscard]] bool is_key_pressed(Key key) const;
     [[nodiscard]] bool is_key_released(Key key) const;

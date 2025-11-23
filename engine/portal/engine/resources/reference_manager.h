@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "portal/application/modules/module.h"
 #include "portal/core/concurrency/reentrant_spin_lock.h"
 #include "portal/core/concurrency/spin_lock.h"
 
@@ -17,9 +18,11 @@
 namespace portal
 {
 
-class ReferenceManager
+class ReferenceManager final: public Module<>
 {
 public:
+    explicit ReferenceManager(ModuleStack& stack);
+
     ~ReferenceManager();
 
     /**

@@ -5,25 +5,37 @@
 
 #pragma once
 
-extern portal::Application* portal::create_application(int arc, char** argv);
-bool g_application_running = true;
+#include <portal/application/application.h>
+
+extern std::unique_ptr<portal::Application> portal::create_application(int arc, char** argv);
 
 namespace portal
 {
 int main(int argc, char** argv)
 {
-    while (g_application_running)
+    // TODO: fetch default log levels from environment?
+    Log::init({.default_log_level = Log::LogLevel::Trace});
+
+    const auto application = create_application(argc, argv);
+    try
     {
-        Application* app = create_application(argc, argv);
-        app->run();
-        delete app;
+        application->run();
+    }
+    catch (std::exception& e)
+    {
+        LOG_FATAL("Unhandled exception: {}", e.what());
+    }
+    catch (...)
+    {
+        LOG_FATAL("Unhandled unknown exception");
     }
 
+    Log::shutdown();
     return 0;
 }
 }
 
-#if defined(PORTAL_PLATFORM_WINDOWS) && defined(PORTAL_GUI) && defined(PORTAL_DIST)
+#if defined(PORTAL_PLATFORM_WINDOWS) && defined(PORTAL_DIST)
 
 #include <Windows.h>
 

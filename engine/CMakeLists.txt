@@ -51,6 +51,7 @@ add_library(portal::engine ALIAS portal-engine)
 target_link_libraries(portal-engine
         PUBLIC
         portal::core
+        portal::application
         portal::input
         portal::networking
         portal::serialization

@@ -28,7 +28,7 @@ struct DatabaseMetadata
 class FolderResourceDatabase final : public ResourceDatabase
 {
 public:
-    explicit FolderResourceDatabase(const std::filesystem::path& path);
+    FolderResourceDatabase(ModuleStack& stack, const std::filesystem::path& path);
     ~FolderResourceDatabase() override;
 
     std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) override;

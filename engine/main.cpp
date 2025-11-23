@@ -3,13 +3,14 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
+#include "../application/portal/application/application.h"
+#include "../application/portal/application/entry_point.h"
 
 #include "portal/core/files/file_system.h"
 #include "portal/engine/settings.h"
-#include "portal/engine/application/application.h"
 #include "glaze/core/reflect.hpp"
-#include "../input/portal/input/input.h"
 #include "portal/core/string_utils.h"
+#include "portal/engine/engine.h"
 
 using namespace portal;
 
@@ -17,8 +18,6 @@ constexpr auto LOG_LEVEL_ENTRY = "log-level";
 
 void initialize_settings()
 {
-    Log::init({.default_log_level = Log::LogLevel::Trace});
-
     // TODO: by default should just be next to the executable
     std::filesystem::path settings_path = R"(C:\Users\thejo\OneDrive\Documents\PortalEngine\test\settings.json)";
 
@@ -42,7 +41,7 @@ ApplicationProperties make_application_spec()
 {
     auto& settings = Settings::get();
 
-    const auto name= settings.get_setting<std::string>("application.name");
+    const auto name = settings.get_setting<std::string>("application.name");
     const auto width = settings.get_setting<size_t>("application.window.width");
     const auto height = settings.get_setting<size_t>("application.window.height");
     const auto resources_path = settings.get_setting<std::filesystem::path>("application.resources-path");
@@ -57,27 +56,15 @@ ApplicationProperties make_application_spec()
     };
 }
 
-int main()
+std::unique_ptr<Application> portal::create_application(int, char**)
 {
-    try
-    {
-        initialize_settings();
-        initialize_logger();
+    initialize_settings();
+    initialize_logger();
 
-        const auto prop = make_application_spec();
+    const auto prop = make_application_spec();
+    auto engine =  std::make_unique<Engine>(prop);
+    // TODO: Should not be here
+    engine->setup_scene();
 
-        Application app{prop};
-        app.run();
-    }
-    catch (std::exception& e)
-    {
-        LOG_FATAL("Unhandled exception: {}", e.what());
-    }
-    catch (...)
-    {
-        LOG_FATAL("Unhandled unknown exception");
-    }
-
-    Settings::shutdown();
-    Log::shutdown();
+    return engine;
 }

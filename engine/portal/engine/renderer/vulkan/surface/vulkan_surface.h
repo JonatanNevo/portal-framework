@@ -23,8 +23,6 @@ public:
     [[nodiscard]] SurfaceType get_type() const override;
 
 private:
-    const VulkanContext& context;
-
     vk::raii::SurfaceKHR surface = nullptr;
     SurfaceCapabilities capabilities;
 };
