@@ -43,40 +43,30 @@ else()
     target_compile_options(portal-application PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
-install(TARGETS portal-application
+install(
+        TARGETS portal-application
         EXPORT portal-application-targets
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        FILE_SET HEADERS DESTINATION include
+        FILE_SET HEADERS
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# Generate and install the export targets
-install(EXPORT portal-application-targets
-        FILE portal-application-targets.cmake
-        NAMESPACE portal::
-        DESTINATION share/portal-application
-)
-
-# Create and install the config file
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-application-config-version.cmake"
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY SameMajorVersion
-)
-# To free it up for other add_subdirectories
-unset(PROJECT_VERSION)
-
-configure_package_config_file(
-        "../cmake/portal-application-config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-application-config.cmake"
-        INSTALL_DESTINATION share/portal-application
+        "${CMAKE_CURRENT_BINARY_DIR}/portal-application-version.cmake"
+        COMPATIBILITY ExactVersion
 )
 
-# Install the config files
-install(FILES
+install(
+        EXPORT portal-application-targets
+        FILE portal-application-config.cmake
+        NAMESPACE portal::
+        DESTINATION share/portal-application
+        EXPORT_PACKAGE_DEPENDENCIES
+)
+
+install(
+        FILES
         "${CMAKE_CURRENT_BINARY_DIR}/portal-application-config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-application-config-version.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/portal-application-version.cmake"
         DESTINATION share/portal-application
 )
