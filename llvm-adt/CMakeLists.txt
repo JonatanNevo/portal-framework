@@ -129,7 +129,7 @@ install(
         EXPORT llvm-adt-targets
         FILE llvm-adt-config.cmake
         NAMESPACE llvm::
-        DESTINATION share/llvm-adt
+        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
         EXPORT_PACKAGE_DEPENDENCIES
 )
 
