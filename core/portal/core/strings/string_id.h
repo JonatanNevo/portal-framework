@@ -26,40 +26,7 @@ struct StringId
     std::string_view string = INVALID_STRING_VIEW;
 
     constexpr StringId() = default;
-
-    constexpr explicit StringId(HashType id): id(id)
-    {
-        if consteval
-        {
-            string = StringRegistry::find_constexpr(id);
-            if (string == INVALID_STRING_VIEW)
-            {
-                throw std::runtime_error("Id not found in constant registry");
-            }
-        }
-        else
-        {
-            string = StringRegistry::find(id);
-            if (string == INVALID_STRING_VIEW)
-            {
-                LOG_ERROR_TAG("StringId", "StringId with id {} not found in registry", id);
-            }
-        }
-    }
-
-    explicit constexpr StringId(const std::string_view string_to_calculate)
-    {
-        if consteval
-        {
-            id = StringRegistry::find_by_string_constexpr(string_to_calculate);
-            string = StringRegistry::find_constexpr(id);
-        }
-        else
-        {
-            id = hash::rapidhash(string_to_calculate.data(), string_to_calculate.size());
-            string = StringRegistry::store(id, string_to_calculate);
-        }
-    }
+    explicit StringId(HashType id);
 
     StringId(HashType id, std::string_view string);
     StringId(HashType id, const std::string& string);
@@ -67,11 +34,10 @@ struct StringId
     bool operator==(const StringId&) const;
 };
 
-#define STRING_ID(string) portal::StringId(std::string_view(string))
+#define STRING_ID(string) portal::StringId(hash::rapidhash(string), std::string_view(string))
 
-constexpr static auto INVALID_STRING_ID = STRING_ID("Invalid");
+const static auto INVALID_STRING_ID = STRING_ID("Invalid");
 const static auto MAX_STRING_ID = StringId{std::numeric_limits<StringId::HashType>::max(), INVALID_STRING_VIEW};
-
 } // portal
 
 template <>
