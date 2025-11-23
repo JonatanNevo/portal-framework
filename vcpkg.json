@@ -44,20 +44,11 @@
     "name" : "shader-slang",
     "version>=" : "2025.14.3"
   }, {
-    "name" : "ktx",
-    "version>=" : "4.3.2#2"
-  }, {
-    "name" : "tinyobjloader",
-    "version>=" : "2.0.0rc13"
-  }, {
     "name" : "fastgltf",
     "version>=" : "0.9.0"
   }, {
     "name" : "spirv-tools",
     "version>=" : "1.4.309.0"
-  }, {
-    "name" : "glslang",
-    "version>=" : "15.1.0"
   }, {
     "name" : "glaze",
     "version>=" : "6.0.1"

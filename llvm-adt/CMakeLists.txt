@@ -10,7 +10,9 @@ include(CheckCCompilerFlag)
 include(CheckCSourceCompiles)
 include(CMakePushCheckState)
 
-project(llvm-adt VERSION 0.0.1 DESCRIPTION "The ADT containers from the llvm project" LANGUAGES CXX)
+file(READ "version.txt" PROJECT_VERSION)
+string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
+project(llvm-adt VERSION ${PROJECT_VERSION} DESCRIPTION "The ADT containers from the llvm project" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -133,12 +135,4 @@ install(
         "${CMAKE_CURRENT_BINARY_DIR}/llvm-adt-config.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/llvm-adt-version.cmake"
         DESTINATION share/llvm-adt
-)
-
-install(TARGETS llvm-adt
-        EXPORT llvm-adt-targets
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        FILE_SET HEADERS DESTINATION include
 )

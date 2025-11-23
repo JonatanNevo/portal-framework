@@ -18,8 +18,6 @@ option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 find_package(Vulkan REQUIRED)
 find_package(concurrentqueue CONFIG REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
-find_package(tinyobjloader CONFIG REQUIRED)
-find_package(Ktx CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
 find_package(SPIRV-Tools CONFIG REQUIRED)
@@ -55,9 +53,7 @@ target_link_libraries(portal-engine
         portal::serialization
         Vulkan::Vulkan
         GPUOpen::VulkanMemoryAllocator
-        tinyobjloader::tinyobjloader
         concurrentqueue::concurrentqueue
-        KTX::ktx
         imgui::imgui
         fastgltf::fastgltf
         slang::slang
@@ -118,3 +114,6 @@ install(
         "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-version.cmake"
         DESTINATION share/portal-engine
 )
+
+add_executable(engine_test main.cpp)
+target_link_libraries(engine_test portal::engine)
