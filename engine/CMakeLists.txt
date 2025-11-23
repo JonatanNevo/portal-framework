@@ -6,8 +6,6 @@ project(portal-engine VERSION ${PROJECT_VERSION})
 
 message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
-include(../cmake/development.cmake)
-
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -66,8 +64,6 @@ target_link_libraries(portal-engine
         SPIRV-Tools-static
         glaze::glaze
 )
-
-prepare_consteval_strings(portal-engine ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/engine_map.inc)
 
 if(MSVC)
     target_compile_options(portal-engine PRIVATE /W4 /WX)

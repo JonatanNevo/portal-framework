@@ -6,8 +6,6 @@ project(portal-input VERSION ${PROJECT_VERSION})
 
 message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
-include(../cmake/development.cmake)
-
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -49,8 +47,6 @@ if(MSVC)
 else()
     target_compile_options(portal-input PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
-
-prepare_consteval_strings(portal-input ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/input_map.inc)
 
 
 install(TARGETS portal-input

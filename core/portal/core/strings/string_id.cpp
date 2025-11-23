@@ -9,6 +9,15 @@
 namespace portal
 {
 
+StringId::StringId(HashType id): id(id)
+{
+    string = StringRegistry::find(id);
+    if (string == INVALID_STRING_VIEW)
+    {
+        LOG_ERROR_TAG("StringId", "StringId with id {} not found in registry", id);
+    }
+}
+
 StringId::StringId(const uint64_t id, const std::string_view string): id(id)
 {
     this->string = StringRegistry::store(id, string);
