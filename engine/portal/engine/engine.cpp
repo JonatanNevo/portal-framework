@@ -10,6 +10,7 @@
 #include "portal/engine/resources/database/folder_resource_database.h"
 #include "portal/engine/resources/resources/composite.h"
 #include "portal/engine/window/glfw_window.h"
+#include "scene/scene_manager.h"
 
 namespace portal
 {
@@ -27,6 +28,7 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     const WindowProperties window_properties{
         .title = properties.name,
         .extent = {properties.width, properties.width},
+        .requested_frames_in_flight = properties.frames_in_flight
     };
     window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, input});
 
@@ -39,23 +41,27 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     auto swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(*vulkan_context, surface);
     auto& renderer = modules.add_module<Renderer>(*vulkan_context, swapchain);
 
+    this->properties.frames_in_flight = swapchain->get_image_count();
+
     modules.add_module<SchedulerModule>(properties.scheduler_worker_num);
     modules.add_module<ReferenceManager>();
     modules.add_module<FolderResourceDatabase>(properties.resources_path);
     auto& registry = modules.add_module<ResourceRegistry>(renderer.get_renderer_context());
 
     modules.add_module<ImGuiModule>(*window);
+    auto& scene_manager = modules.add_module<SceneManager>();
 
     // TODO: find a better way of subscribing to this
     event_handlers.emplace_back(*window);
-    event_handlers.emplace_back(renderer);
+    event_handlers.emplace_back(scene_manager);
 
     // TODO: make a O(1) lookup inside the module stack, will make this class redundant
     engine_context = std::make_unique<EngineContext>(
         renderer,
         registry,
         *window,
-        input
+        input,
+        scene_manager
     );
 
     modules.build_dependency_graph();
@@ -67,7 +73,7 @@ Engine::~Engine()
     vulkan_context->get_device().wait_idle();
     modules.clean();
 
-    vulkan_context.release();
+    std::ignore = vulkan_context.release();
     glfwTerminate();
 }
 
@@ -77,6 +83,8 @@ void Engine::setup_scene() const
     [[maybe_unused]] auto composite = engine_context->get_resource_registry().immediate_load<Composite>(STRING_ID("game/ABeautifulGame"));
     auto scene = engine_context->get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
     PORTAL_ASSERT(scene.get_state() == ResourceState::Loaded, "Failed to load scene");
+
+    engine_context->get_scene_manager().set_active_scene(scene);
 }
 
 void Engine::process_events()

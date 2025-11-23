@@ -106,14 +106,25 @@ void Renderer::cleanup()
     is_initialized = false;
 }
 
-void Renderer::begin_frame(renderer::FrameContext& frame)
+void Renderer::begin_frame(FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
 
+    // TODO: pull the `RenderingContext` from some cache instead of allocating each frame
+    frame.rendering_context = FrameRenderingContext{
+        .depth_image = depth_image->get_image_info().image.get_handle(),
+        .depth_image_view = depth_image->get_image_info().view,
+        .command_buffer = frames[current_frame].command_buffer,
+        .resources = frames[current_frame],
+    };
+
+    auto rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+
     const auto& [image, image_view, last_used_frame] = swapchain->begin_frame(frame);
 
-    frame.draw_image = image;
-    frame.draw_image_view = image_view;
+    rendering_context->draw_image = image;
+    rendering_context->draw_image_view = image_view;
+
 
     // If this image was used before, wait for the fence from the frame that last used it
     if (last_used_frame != std::numeric_limits<size_t>::max())
@@ -127,12 +138,14 @@ void Renderer::begin_frame(renderer::FrameContext& frame)
     clean_frame(frame);
 
     // begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
-    frame.command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+    rendering_context->command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
 }
 
 void Renderer::end_frame(FrameContext& frame)
 {
-    frame.command_buffer.end();
+    const auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+
+    rendering_context->command_buffer.end();
     // TODO: should we submit to graphics queue here?
 
     swapchain->present(frame);
@@ -143,11 +156,6 @@ void Renderer::end_frame(FrameContext& frame)
 const RendererContext& Renderer::get_renderer_context() const
 {
     return renderer_context;
-}
-
-size_t Renderer::get_frames_in_flight() const
-{
-    return frames_in_flight;
 }
 
 const renderer::vulkan::VulkanSwapchain& Renderer::get_swapchain() const
@@ -178,7 +186,7 @@ void Renderer::init_render_target()
 
 void Renderer::init_frame_resources()
 {
-    ZoneScoped;
+    PORTAL_PROF_ZONE();
 
     // TODO: have different amount of frames in flight based on some config?
     frames_in_flight = swapchain->get_image_count();
@@ -249,11 +257,13 @@ void Renderer::init_frame_resources()
 
 void Renderer::post_update(FrameContext& frame)
 {
-    const auto draw_image = frame.draw_image;
-    const auto depth_draw_image = frame.depth_image;
+    const auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+
+    const auto draw_image = rendering_context->draw_image;
+    const auto depth_draw_image = rendering_context->depth_image;
 
     vulkan::transition_image_layout(
-        frame.command_buffer,
+        rendering_context->command_buffer,
         draw_image,
         1,
         vk::ImageLayout::eUndefined,
@@ -265,7 +275,7 @@ void Renderer::post_update(FrameContext& frame)
         vk::ImageAspectFlagBits::eColor
     );
     vulkan::transition_image_layout(
-        frame.command_buffer,
+        rendering_context->command_buffer,
         depth_draw_image,
         1,
         vk::ImageLayout::eUndefined,
@@ -277,11 +287,11 @@ void Renderer::post_update(FrameContext& frame)
         vk::ImageAspectFlagBits::eDepth
     );
 
-    draw_geometry(frame, frame.command_buffer);
+    draw_geometry(frame, rendering_context->command_buffer);
 
     // set draw image layout to Present so we can present it
     vulkan::transition_image_layout(
-        frame.command_buffer,
+        rendering_context->command_buffer,
         draw_image,
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -296,16 +306,21 @@ void Renderer::post_update(FrameContext& frame)
 
 void Renderer::clean_frame(const FrameContext& frame)
 {
-    frame.resources.deletion_queue.flush();
-    frame.resources.global_descriptor_set = nullptr;
-    frame.resources.frame_descriptors.clear_pools();
-    frame.resources.command_pool.reset();
-    frame.resources.scene_data_buffer = nullptr;
+    const auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+
+    rendering_context->resources.deletion_queue.flush();
+    rendering_context->resources.global_descriptor_set = nullptr;
+    rendering_context->resources.frame_descriptors.clear_pools();
+    rendering_context->resources.command_pool.reset();
+    rendering_context->resources.scene_data_buffer = nullptr;
 }
 
 void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer& command_buffer)
 {
-    ZoneScoped;
+    PORTAL_PROF_ZONE();
+
+    const auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+
     //reset counters
     frame.stats.drawcall_count = 0;
     frame.stats.triangle_count = 0;
@@ -313,32 +328,35 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
     auto start = std::chrono::system_clock::now();
 
     std::unordered_map<StringId, std::vector<uint32_t>> render_by_material;
-    render_by_material.reserve(frame.render_objects.size());
+    render_by_material.reserve(rendering_context->render_objects.size());
 
-    for (uint32_t i = 0; i < frame.render_objects.size(); i++)
+    for (uint32_t i = 0; i < rendering_context->render_objects.size(); i++)
     {
-        const auto& object = frame.render_objects[i];
-        if (object.is_visible(frame.scene_data.view_proj))
+        const auto& object = rendering_context->render_objects[i];
+        if (object.is_visible(rendering_context->scene_data.view_proj))
             render_by_material[object.material->get_id()].push_back(i);
     }
 
     {
-        command_buffer.beginRendering(render_target->make_rendering_info(frame));
+        command_buffer.beginRendering(render_target->make_rendering_info(*rendering_context));
 
-        frame.resources.scene_data_buffer = vulkan::BufferBuilder(sizeof(vulkan::GPUSceneData))
-                                            .with_usage(vk::BufferUsageFlagBits::eUniformBuffer)
-                                            .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
-                                            .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
-                                            .build(context.get_device());
-        frame.resources.scene_data_buffer.update_typed<vulkan::GPUSceneData>(frame.scene_data);
+        rendering_context->resources.scene_data_buffer = vulkan::BufferBuilder(sizeof(vulkan::GPUSceneData))
+                                                         .with_usage(vk::BufferUsageFlagBits::eUniformBuffer)
+                                                         .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
+                                                         .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
+                                                         .build(context.get_device());
+
+        rendering_context->resources.scene_data_buffer.update_typed<vulkan::GPUSceneData>(rendering_context->scene_data);
 
         // TODO: support multiple global sets
-        frame.resources.global_descriptor_set = frame.resources.frame_descriptors.allocate(scene_descriptor_set_layouts.front());
+        rendering_context->resources.global_descriptor_set = rendering_context->resources.frame_descriptors.allocate(
+            scene_descriptor_set_layouts.front()
+        );
 
         // TODO: create "global shader library" which will reflect the global changing data to write this
         vulkan::DescriptorWriter writer;
-        writer.write_buffer(0, frame.resources.scene_data_buffer, sizeof(vulkan::GPUSceneData), 0, vk::DescriptorType::eUniformBuffer);
-        writer.update_set(context.get_device(), frame.resources.global_descriptor_set);
+        writer.write_buffer(0, rendering_context->resources.scene_data_buffer, sizeof(vulkan::GPUSceneData), 0, vk::DescriptorType::eUniformBuffer);
+        writer.update_set(context.get_device(), rendering_context->resources.global_descriptor_set);
 
         Reference<vulkan::VulkanPipeline> last_pipeline = nullptr;
         Reference<vulkan::VulkanMaterial> last_material = nullptr;
@@ -347,7 +365,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
 
         auto draw_object = [&](const RenderObject& object)
         {
-            // TracyVkZone(tracy_context, *current_frame.command_buffer, "Draw object");
+            // TracyVkZone(tracy_context, *current_rendering_context->command_buffer, "Draw object");
             auto material = reference_cast<vulkan::VulkanMaterial>(object.material);
             auto pipeline = material->get_pipeline();
             if (material != last_material)
@@ -363,7 +381,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
                         vk::PipelineBindPoint::eGraphics,
                         pipeline->get_vulkan_pipeline_layout(),
                         0,
-                        {frame.resources.global_descriptor_set},
+                        {rendering_context->resources.global_descriptor_set},
                         {}
                     );
 
@@ -430,7 +448,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
         {
             for (const auto& index : indexes)
             {
-                draw_object(frame.render_objects[index]);
+                draw_object(rendering_context->render_objects[index]);
             }
         }
 

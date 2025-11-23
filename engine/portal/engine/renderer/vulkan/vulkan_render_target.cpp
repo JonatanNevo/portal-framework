@@ -5,9 +5,11 @@
 
 #include "vulkan_render_target.h"
 
+#include "llvm/ADT/SmallVector.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
-#include "../frame_context.h"
+#include "portal/application/frame_context.h"
+#include "portal/engine/renderer/rendering_context.h"
 
 namespace portal::renderer::vulkan
 {
@@ -109,7 +111,7 @@ void VulkanRenderTarget::resize(const size_t new_width, const size_t new_height,
     initialize();
 }
 
-vk::RenderingInfo VulkanRenderTarget::make_rendering_info(const FrameContext& frame_context)
+vk::RenderingInfo VulkanRenderTarget::make_rendering_info(const FrameRenderingContext& frame_context)
 {
     llvm::SmallVector<vk::ImageView, 4> color_attachments = {frame_context.draw_image_view};
     const std::optional depth_attachment = frame_context.depth_image_view;

@@ -56,6 +56,8 @@ struct WindowProperties
     bool resizeable = true;
     bool vsync = true;
     bool decorated = true;
+
+    size_t requested_frames_in_flight = 3;
 };
 
 struct CallbackConsumers

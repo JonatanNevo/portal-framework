@@ -12,7 +12,8 @@
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
-#include "frame_context.h"
+#include "portal/engine/renderer/rendering_context.h"
+#include "portal/engine/renderer/vulkan/image/vulkan_image.h"
 #include "portal/engine/scene/scene.h"
 
 namespace portal
@@ -28,7 +29,7 @@ namespace renderer::vulkan {
 
 class Window;
 
-class Renderer final : public TaggedModule<Tag<tags::FrameLifecycle, tags::Update>>
+class Renderer final : public TaggedModule<Tag<ModuleTags::FrameLifecycle, ModuleTags::Update, ModuleTags::PostUpdate>>
 {
 public:
     Renderer(ModuleStack& stack, renderer::vulkan::VulkanContext& context, const Reference<renderer::vulkan::VulkanSwapchain>& swapchain);
@@ -36,16 +37,15 @@ public:
 
     void cleanup();
 
-    void begin_frame(renderer::FrameContext& frame) override;
-    void end_frame(renderer::FrameContext& frame) override;
+    void begin_frame(FrameContext& frame) override;
+    void end_frame(FrameContext& frame) override;
 
-    void post_update(renderer::FrameContext& frame) override;
-    void draw_geometry(renderer::FrameContext& frame, const vk::raii::CommandBuffer& command_buffer);
+    void post_update(FrameContext& frame) override;
+    void draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer& command_buffer);
 
     void on_resize(size_t new_width, size_t new_height) const;
 
     [[nodiscard]] const RendererContext& get_renderer_context() const;
-    [[nodiscard]] size_t get_frames_in_flight() const;
     [[nodiscard]] const renderer::vulkan::VulkanSwapchain& get_swapchain() const;
 
 private:
@@ -54,7 +54,7 @@ private:
 
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
 
-    static void clean_frame(const renderer::FrameContext& frame);
+    static void clean_frame(const FrameContext& frame);
 
 private:
     Reference<renderer::vulkan::VulkanSwapchain> swapchain;

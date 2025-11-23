@@ -7,11 +7,11 @@
 
 #include "portal/engine/renderer/renderer.h"
 #include "portal/engine/resources/resource_registry.h"
+#include "scene/scene_manager.h"
 #include "window/window.h"
 
 namespace portal
 {
-
 class EngineContext
 {
 public:
@@ -19,12 +19,15 @@ public:
         Renderer& renderer,
         ResourceRegistry& registry,
         Window& window,
-        Input& input
-        )
+        Input& input,
+        SceneManager& scene_manager
+    )
         : renderer(renderer),
           resource_registry(registry),
           window(window),
-          input(input)
+          input(input),
+          scene_manager(scene_manager)
+
     {}
 
     [[nodiscard]] const Renderer& get_renderer() const { return renderer.get(); }
@@ -39,11 +42,14 @@ public:
     [[nodiscard]] const Input& get_input() const { return input.get(); }
     [[nodiscard]] Input& get_input() { return input.get(); }
 
+    [[nodiscard]] const SceneManager& get_scene_manager() const { return scene_manager.get(); }
+    [[nodiscard]] SceneManager& get_scene_manager() { return scene_manager.get(); }
+
 protected:
     std::reference_wrapper<Renderer> renderer;
     std::reference_wrapper<ResourceRegistry> resource_registry;
     std::reference_wrapper<Window> window;
     std::reference_wrapper<Input> input;
+    std::reference_wrapper<SceneManager> scene_manager;
 };
-
 }

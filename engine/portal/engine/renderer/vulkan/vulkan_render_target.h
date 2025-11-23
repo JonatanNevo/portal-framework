@@ -12,7 +12,7 @@
 #include "portal/engine/renderer/render_target/render_target.h"
 
 namespace portal::renderer {
-struct FrameContext;
+struct FrameRenderingContext;
 }
 
 namespace portal::renderer::vulkan
@@ -28,7 +28,7 @@ public:
 
     void resize(size_t new_width, size_t new_height, bool force_recreate) override;
 
-    vk::RenderingInfo make_rendering_info(const FrameContext& frame_context);
+    vk::RenderingInfo make_rendering_info(const FrameRenderingContext& frame_context);
     vk::RenderingInfo make_rendering_info(std::span<vk::ImageView> color_images, const std::optional<vk::ImageView>& depth_image);
 
     [[nodiscard]] size_t get_width() const override;

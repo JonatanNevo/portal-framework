@@ -4,6 +4,8 @@
 //
 #include "input_event_consumer.h"
 
+#include <optional>
+
 namespace portal
 {
 

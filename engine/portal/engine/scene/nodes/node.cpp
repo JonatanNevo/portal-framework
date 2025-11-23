@@ -69,11 +69,11 @@ void Node::refresh_transform(const glm::mat4& parent_matrix)
     }
 }
 
-void Node::draw(const glm::mat4& top_matrix, renderer::FrameContext& context)
+void Node::draw(const glm::mat4& top_matrix, FrameContext& frame)
 {
     for (const auto& child : children)
     {
-        child->draw(top_matrix, context);
+        child->draw(top_matrix, frame);
     }
 }
 

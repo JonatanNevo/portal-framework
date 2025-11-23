@@ -8,7 +8,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "portal/engine/resources/resource_types.h"
-#include "../database/resource_database.h"
+#include "portal/engine/resources/database/resource_database.h"
 #include "loader.h"
 
 namespace portal

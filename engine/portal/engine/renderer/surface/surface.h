@@ -21,6 +21,7 @@ struct SurfaceProperties
 {
     StringId debug_name;
 
+    size_t min_frames_in_flight = 3;
     // Passing `std::nullopt` for headless surface
     std::optional<std::reference_wrapper<Window>> window;
 };
@@ -54,6 +55,7 @@ public:
     [[nodiscard]] virtual glm::ivec2 get_extent() const = 0;
 
     [[nodiscard]] virtual SurfaceType get_type() const = 0;
+    [[nodiscard]] virtual size_t get_min_frames_in_flight() const = 0;
 
 protected:
     SurfaceProperties properties;

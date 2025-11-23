@@ -11,7 +11,7 @@
 #include <portal/core/strings/string_id.h>
 #include <portal/core/events/event_handler.h>
 
-#include "portal/application/modules/module_stack.h"
+#include "modules/module_stack.h"
 
 namespace portal
 {
@@ -23,6 +23,7 @@ struct ApplicationProperties
     size_t height = 900;
 
     bool resizeable = true;
+    size_t frames_in_flight = 3;
 
     //TODO: move to settings
     std::filesystem::path resources_path;
@@ -48,7 +49,7 @@ protected:
     ApplicationProperties properties;
     ModuleStack modules;
 
-    size_t current_frame_count = 0;
+    size_t current_frame = 0;
     float last_frame_time = 0;
     float frame_time = 0;
     float time_step = 0;

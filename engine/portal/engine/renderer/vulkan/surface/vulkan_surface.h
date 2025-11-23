@@ -21,6 +21,7 @@ public:
     [[nodiscard]] vk::SurfaceKHR get_vulkan_surface() const;
 
     [[nodiscard]] SurfaceType get_type() const override;
+    [[nodiscard]] size_t get_min_frames_in_flight() const override;
 
 private:
     vk::raii::SurfaceKHR surface = nullptr;

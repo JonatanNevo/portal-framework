@@ -9,11 +9,10 @@
 
 #include "portal/core/buffer.h"
 #include "portal/core/reflection/property_concepts.h"
-#include "../vulkan/image/vulkan_image.h"
+#include "portal/engine/renderer/vulkan/image/vulkan_image.h"
 #include "portal/core/concurrency/spin_lock.h"
 #include "portal/engine/reference.h"
 #include "portal/engine/renderer/shaders/shader_types.h"
-#include "portal/engine/renderer/descriptor_writer.h"
 
 namespace portal
 {

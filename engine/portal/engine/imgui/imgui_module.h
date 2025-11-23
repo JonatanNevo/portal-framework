@@ -10,16 +10,16 @@
 namespace portal
 {
 
-class ImGuiModule: public TaggedModule<Tag<tags::FrameLifecycle, tags::Gui>, Renderer>
+class ImGuiModule: public TaggedModule<Tag<ModuleTags::FrameLifecycle, ModuleTags::GuiUpdate>, Renderer>
 {
 public:
     ImGuiModule(ModuleStack& stack, const Window& window);
     ~ImGuiModule() override;
 
-    void begin_frame(renderer::FrameContext& frame) override;
-    void end_frame(renderer::FrameContext& frame) override;
+    void begin_frame(FrameContext& frame) override;
+    void end_frame(FrameContext& frame) override;
 
-    void gui_update(renderer::FrameContext& frame) override;
+    void gui_update(FrameContext& frame) override;
 
 private:
     vk::raii::DescriptorPool imgui_pool = nullptr;

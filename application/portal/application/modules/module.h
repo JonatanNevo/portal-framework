@@ -8,7 +8,7 @@
 
 #include "portal/application/modules/base_module.h"
 #include "portal/application/modules/module_lookup.h"
-#include "portal/application/modules/module_stack.h"
+#include "module_stack.h"
 
 namespace portal
 {
@@ -35,31 +35,24 @@ public:
         }
     }
 
-    template <typename T>
+    template <ModuleTags T>
     consteval static bool has_tag_static()
     {
         return ModuleTags::has_tag(Tag<T>::ID);
     }
 
-    template <typename... T>
+    template <ModuleTags... T>
     consteval static bool has_tags_static()
     {
-        std::array query = {Tag<T>::ID...};
-
-        bool res = true;
-        for (auto id : query)
-        {
-            res &= has_tag_static(id);
-        }
-        return res;
+        return ModuleTags::template has_tags<T...>();
     }
 
     using BaseModule::has_tag;
     using BaseModule::has_tags;
 
-    [[nodiscard]] bool has_tag(TagID id) const override
+    [[nodiscard]] bool has_tag(TagFlag tag) const override
     {
-        return ModuleTags::has_tag(id);
+        return ModuleTags::has_tag(tag);
     }
 
 protected:

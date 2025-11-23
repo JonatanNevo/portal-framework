@@ -12,6 +12,7 @@
 #include <portal/core/events/event.h>
 
 #include "portal/application/modules/base_module.h"
+#include "portal/core/debug/assert.h"
 
 namespace portal
 {
@@ -25,7 +26,7 @@ void ModuleStack::clean()
     // delete modules in reverse order of dependency
     for (auto& module : modules | std::views::reverse)
     {
-        module.release();
+        std::ignore = module.release();
     }
     modules.clear();
 }
@@ -71,20 +72,20 @@ void ModuleStack::build_dependency_graph()
 
     for (auto& module : modules)
     {
-        if (module->has_tag<tags::Update>())
+        if (module->has_tag<ModuleTags::Update>())
             update_modules.emplace_back(module.get());
-        if (module->has_tag<tags::FrameLifecycle>())
+        if (module->has_tag<ModuleTags::FrameLifecycle>())
             frame_lifecycle_modules.emplace_back(module.get());
-        if (module->has_tag<tags::Event>())
+        if (module->has_tag<ModuleTags::Event>())
             event_modules.emplace_back(module.get());
-        if (module->has_tag<tags::Gui>())
+        if (module->has_tag<ModuleTags::GuiUpdate>())
             gui_update_modules.emplace_back(module.get());
-        if (module->has_tag<tags::PostUpdate>())
+        if (module->has_tag<ModuleTags::PostUpdate>())
             post_update_modules.emplace_back(module.get());
     }
 }
 
-void ModuleStack::begin_frame(renderer::FrameContext& frame) const
+void ModuleStack::begin_frame(FrameContext& frame) const
 {
     for (const auto& module : frame_lifecycle_modules)
     {
@@ -92,7 +93,7 @@ void ModuleStack::begin_frame(renderer::FrameContext& frame) const
     }
 }
 
-void ModuleStack::end_frame(renderer::FrameContext& frame) const
+void ModuleStack::end_frame(FrameContext& frame) const
 {
     // TODO: do we care about the cache misses here in the reverse order?
     for (const auto& module : frame_lifecycle_modules | std::views::reverse)
@@ -101,7 +102,7 @@ void ModuleStack::end_frame(renderer::FrameContext& frame) const
     }
 }
 
-void ModuleStack::update(renderer::FrameContext& frame) const
+void ModuleStack::update(FrameContext& frame) const
 {
     for (const auto& module : update_modules)
     {
@@ -109,7 +110,7 @@ void ModuleStack::update(renderer::FrameContext& frame) const
     }
 }
 
-void ModuleStack::gui_update(renderer::FrameContext& frame) const
+void ModuleStack::gui_update(FrameContext& frame) const
 {
     for (const auto& module : gui_update_modules)
     {
@@ -117,7 +118,7 @@ void ModuleStack::gui_update(renderer::FrameContext& frame) const
     }
 }
 
-void ModuleStack::post_update(renderer::FrameContext& frame) const
+void ModuleStack::post_update(FrameContext& frame) const
 {
     for (const auto& module : post_update_modules)
     {
@@ -135,6 +136,7 @@ void ModuleStack::on_event(Event& event) const
             return;
     }
 }
+
 
 int ModuleStack::compute_module_level(BaseModule* module, std::unordered_map<BaseModule*, int>& levels, std::unordered_set<BaseModule*>& visited)
 {

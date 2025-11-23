@@ -11,21 +11,10 @@
 
 namespace portal
 {
+
+struct FrameContext;
+
 class Event;
-
-namespace renderer
-{
-    struct FrameContext;
-}
-
-namespace tags
-{
-    struct PostUpdate {};
-    struct FrameLifecycle {};
-    struct Update {};
-    struct Event {};
-    struct Gui {};
-}
 
 class BaseModule
 {
@@ -33,31 +22,30 @@ public:
     explicit BaseModule(const StringId& name) : name(name) {}
     virtual ~BaseModule() = default;
 
-    // TODO: add module capabilities (Frame, Gui, Event)
-    virtual void begin_frame(renderer::FrameContext& frame);
+    virtual void begin_frame(FrameContext& frame);
 
-    virtual void update(renderer::FrameContext& frame);
-    virtual void gui_update(renderer::FrameContext& frame);
+    virtual void update(FrameContext& frame);
+    virtual void gui_update(FrameContext& frame);
 
-    virtual void post_update(renderer::FrameContext& frame);
+    virtual void post_update(FrameContext& frame);
 
-    virtual void end_frame(renderer::FrameContext& frame);
+    virtual void end_frame(FrameContext& frame);
 
     virtual void on_event(Event& event);
 
     [[nodiscard]] const StringId& get_name() const { return name; }
     [[nodiscard]] virtual std::vector<BaseModule*> get_dependencies() const { return {}; }
 
-    template <typename T>
+    template <ModuleTags T>
     bool has_tag()
     {
-        return has_tag(Tag<T>::ID);
+        return has_tag(Tag<T>::Tags);
     }
 
-    template <typename... T>
+    template <ModuleTags... T>
     bool has_tags()
     {
-        std::array query = {Tag<T>::ID...};
+        std::array query = {Tag<T>::Tags...};
 
         bool res = true;
         for (auto id : query)
@@ -67,7 +55,7 @@ public:
         return res;
     }
 
-    [[nodiscard]] virtual bool has_tag(TagID id) const = 0;
+    [[nodiscard]] virtual bool has_tag(TagFlag tag) const = 0;
 
 protected:
     StringId name;

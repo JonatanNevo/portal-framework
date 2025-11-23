@@ -118,21 +118,12 @@ struct FrameResources
     }
 };
 
-struct FrameStats
-{
-    float frame_time = 0.0001f;
-    int triangle_count;
-    int drawcall_count;
-    float scene_update_time;
-    float mesh_draw_time;
-};
 
-struct FrameContext
+/**
+ * Per frame rendering context (what to render and where)
+ */
+struct FrameRenderingContext
 {
-    size_t frame_index;
-    float delta_time;
-    FrameStats stats = {};
-
     // TODO: make this more generic? maybe based on active scene?
     vulkan::GPUSceneData scene_data{};
 
