@@ -50,39 +50,30 @@ if (PORTAL_BUILD_TESTS)
 endif ()
 unset(PORTAL_BUILD_TESTS CACHE)
 
-install(TARGETS portal-serialization
+install(
+        TARGETS portal-serialization
         EXPORT portal-serialization-targets
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        FILE_SET HEADERS DESTINATION include
+        FILE_SET HEADERS
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# Generate and install the export targets
-install(EXPORT portal-serialization-targets
-        FILE portal-serialization-targets.cmake
-        NAMESPACE portal::
-        DESTINATION share/portal-serialization
-)
-
-# Create and install the config file
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-config-version.cmake"
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY SameMajorVersion
-)
-unset(PROJECT_VERSION)
-
-configure_package_config_file(
-        "../cmake/portal-serialization-config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-config.cmake"
-        INSTALL_DESTINATION share/portal-serialization
+        "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-version.cmake"
+        COMPATIBILITY ExactVersion
 )
 
-# Install the config files
-install(FILES
+install(
+        EXPORT portal-serialization-targets
+        FILE portal-serialization-config.cmake
+        NAMESPACE portal::
+        DESTINATION share/portal-serialization
+        EXPORT_PACKAGE_DEPENDENCIES
+)
+
+install(
+        FILES
         "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-config-version.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-version.cmake"
         DESTINATION share/portal-serialization
 )

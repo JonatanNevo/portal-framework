@@ -1,8 +1,0 @@
-@PACKAGE_INIT@
-
-include(CMakeFindDependencyMacro)
-find_dependency(llvm-adt)
-
-include("${CMAKE_CURRENT_LIST_DIR}/llvm-adt-targets.cmake")
-
-check_required_components(llvm-adt)

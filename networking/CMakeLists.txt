@@ -44,39 +44,30 @@ else()
     target_compile_options(portal-networking PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
-install(TARGETS portal-networking
+install(
+        TARGETS portal-networking
         EXPORT portal-networking-targets
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        FILE_SET HEADERS DESTINATION include
+        FILE_SET HEADERS
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# Generate and install the export targets
-install(EXPORT portal-networking-targets
-        FILE portal-networking-targets.cmake
-        NAMESPACE portal::
-        DESTINATION share/portal-networking
-)
-
-# Create and install the config file
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-config-version.cmake"
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY SameMajorVersion
-)
-unset(PROJECT_VERSION)
-
-configure_package_config_file(
-        "../cmake/portal-networking-config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-config.cmake"
-        INSTALL_DESTINATION share/portal-networking
+        "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-version.cmake"
+        COMPATIBILITY ExactVersion
 )
 
-# Install the config files
-install(FILES
+install(
+        EXPORT portal-networking-targets
+        FILE portal-networking-config.cmake
+        NAMESPACE portal::
+        DESTINATION share/portal-networking
+        EXPORT_PACKAGE_DEPENDENCIES
+)
+
+install(
+        FILES
         "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-config-version.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-version.cmake"
         DESTINATION share/portal-networking
 )
