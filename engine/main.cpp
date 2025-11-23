@@ -11,6 +11,7 @@
 #include "glaze/core/reflect.hpp"
 #include "portal/core/string_utils.h"
 #include "portal/engine/engine.h"
+#include "portal/engine/resources/resources/composite.h"
 
 using namespace portal;
 
@@ -64,7 +65,13 @@ std::unique_ptr<Application> portal::create_application(int, char**)
     const auto prop = make_application_properties();
     auto engine =  std::make_unique<Engine>(prop);
     // TODO: Should not be here
-    engine->setup_scene();
+
+    auto& engine_context = engine->get_engine_context();
+    [[maybe_unused]] auto composite = engine_context.get_resource_registry().immediate_load<Composite>(STRING_ID("game/ABeautifulGame"));
+    auto scene = engine_context.get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
+    PORTAL_ASSERT(scene.get_state() == ResourceState::Loaded, "Failed to load scene");
+
+    engine->setup_scene(scene);
 
     return engine;
 }
