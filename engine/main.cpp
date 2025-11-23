@@ -3,8 +3,8 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include "../application/portal/application/application.h"
-#include "../application/portal/application/entry_point.h"
+#include "portal/application/application.h"
+#include "portal/application/entry_point.h"
 
 #include "portal/core/files/file_system.h"
 #include "portal/engine/settings.h"

@@ -105,7 +105,7 @@ ImGuiModule::~ImGuiModule()
     imgui_pool = nullptr;
 }
 
-void ImGuiModule::begin_frame(renderer::FrameContext&)
+void ImGuiModule::begin_frame(FrameContext&)
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -113,17 +113,19 @@ void ImGuiModule::begin_frame(renderer::FrameContext&)
     //ImGuizmo::BeginFrame();
 }
 
-void ImGuiModule::end_frame(renderer::FrameContext& frame)
+void ImGuiModule::end_frame(FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
+
+    auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
 
     const auto& renderer = get_dependency<Renderer>();
     auto& swapchain = renderer.get_swapchain();
 
     // set swapchain image layout to Attachment Optimal so we can draw it
     renderer::vulkan::transition_image_layout(
-        frame.command_buffer,
-        frame.draw_image,
+        rendering_context->command_buffer,
+        rendering_context->draw_image,
         1,
         vk::ImageLayout::ePresentSrcKHR,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -140,7 +142,7 @@ void ImGuiModule::end_frame(renderer::FrameContext& frame)
     const auto height = static_cast<uint32_t>(swapchain.get_height());
 
     vk::RenderingAttachmentInfo color_attachment = {
-        .imageView = frame.draw_image_view,
+        .imageView = rendering_context->draw_image_view,
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eLoad,
         .storeOp = vk::AttachmentStoreOp::eStore
@@ -155,9 +157,9 @@ void ImGuiModule::end_frame(renderer::FrameContext& frame)
     };
 
     // TODO: have imgui command buffers?
-    frame.command_buffer.beginRendering(rendering_info);
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *frame.command_buffer);
-    frame.command_buffer.endRendering();
+    rendering_context->command_buffer.beginRendering(rendering_info);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *rendering_context->command_buffer);
+    rendering_context->command_buffer.endRendering();
 
     const ImGuiIO& io = ImGui::GetIO();
     // Update and Render additional Platform Windows
@@ -169,8 +171,8 @@ void ImGuiModule::end_frame(renderer::FrameContext& frame)
 
     // set draw image layout to Present so we can present it
     renderer::vulkan::transition_image_layout(
-        frame.command_buffer,
-        frame.draw_image,
+        rendering_context->command_buffer,
+        rendering_context->draw_image,
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,
@@ -182,7 +184,7 @@ void ImGuiModule::end_frame(renderer::FrameContext& frame)
     );
 }
 
-void ImGuiModule::gui_update(renderer::FrameContext& frame)
+void ImGuiModule::gui_update(FrameContext& frame)
 {
     static std::array<float, 100> fps_history = {};
     static int fps_history_index = 0;

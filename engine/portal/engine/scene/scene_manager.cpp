@@ -27,9 +27,11 @@ void SceneManager::set_active_scene(const ResourceReference<Scene>& new_scene)
     active_scene = new_scene;
 }
 
-void SceneManager::update(renderer::FrameContext& frame)
+void SceneManager::update(FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
+
+    auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
 
     const auto start = std::chrono::system_clock::now();
     camera.update(frame.delta_time);
@@ -39,23 +41,23 @@ void SceneManager::update(renderer::FrameContext& frame)
     // invert the Y direction on projection matrix so that we are more similar to opengl and gltf axis
     projection[1][1] *= -1;
 
-    frame.scene_data.view = view;
-    frame.scene_data.proj = projection;
-    frame.scene_data.view_proj = projection * view;
+    rendering_context->scene_data.view = view;
+    rendering_context->scene_data.proj = projection;
+    rendering_context->scene_data.view_proj = projection * view;
 
     active_scene->draw(glm::mat4{1.f}, frame);
 
     //some default lighting parameters
-    frame.scene_data.ambient_color = glm::vec4(.1f);
-    frame.scene_data.sunlight_color = glm::vec4(1.f);
-    frame.scene_data.sunlight_direction = glm::vec4(0, 1, 0.5, 1.f);
+    rendering_context->scene_data.ambient_color = glm::vec4(.1f);
+    rendering_context->scene_data.sunlight_color = glm::vec4(1.f);
+    rendering_context->scene_data.sunlight_direction = glm::vec4(0, 1, 0.5, 1.f);
 
     const auto end = std::chrono::system_clock::now();
     const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     frame.stats.scene_update_time = elapsed.count() / 1000.f;
 }
 
-void SceneManager::gui_update(renderer::FrameContext& frame)
+void SceneManager::gui_update(FrameContext&)
 {
     ImGui::Begin("Camera");
     ImGui::Text("position %f %f %f", camera.get_position().x, camera.get_position().y, camera.get_position().z);

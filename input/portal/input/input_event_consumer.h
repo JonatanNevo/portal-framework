@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#include <optional>
 #include <portal/core/glm.h>
 #include "portal/input/input_types.h"
 

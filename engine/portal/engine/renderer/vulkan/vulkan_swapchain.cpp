@@ -13,6 +13,7 @@
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "device/vulkan_physical_device.h"
+#include "portal/engine/renderer/rendering_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
@@ -21,7 +22,7 @@ namespace portal::renderer::vulkan
 {
 static auto logger = Log::get_logger("Vulkan");
 
-vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& available_present_modes, bool vsync)
+vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& available_present_modes, const bool vsync)
 {
     // The eFifo mode must always be present as per properties
     // This mode waits for the vertical blank ("v-sync")
@@ -39,7 +40,7 @@ vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& av
                 break;
             }
 
-            if (present_mode == vk::PresentModeKHR::eImmediate)
+            if (mode == vk::PresentModeKHR::eImmediate)
                 present_mode = mode;
         }
     }
@@ -108,7 +109,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
 
     auto present_mode = choose_present_mode(present_modes, vsync);
 
-    const auto min_image_count = std::min(std::max(3u, surface_capabilities.minImageCount), surface_capabilities.maxImageCount);
+    const auto min_image_count = surface->get_min_frames_in_flight();
 
     // Find the transformation of the surface
     vk::SurfaceTransformFlagBitsKHR pre_transform;
@@ -139,7 +140,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
     vk::SwapchainCreateInfoKHR swap_chain_create_info = {
         .flags = vk::SwapchainCreateFlagsKHR(),
         .surface = surface->get_vulkan_surface(),
-        .minImageCount = min_image_count,
+        .minImageCount = static_cast<uint32_t>(min_image_count),
         .imageFormat = color_format,
         .imageColorSpace = color_space,
         .imageExtent = swapchain_extent,
@@ -228,8 +229,10 @@ void VulkanSwapchain::present(const FrameContext& frame)
     PORTAL_PROF_ZONE();
     constexpr vk::PipelineStageFlags2 wait_destination_stage_mask = vk::PipelineStageFlagBits2::eColorAttachmentOutput;
 
+    auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+
     const vk::SemaphoreSubmitInfo wait_semaphore_info{
-        .semaphore = *frame.resources.image_available_semaphore,
+        .semaphore = *rendering_context->resources.image_available_semaphore,
         .value = 0,
         // Assuming binary semaphores are used (value is ignored/defaulted)
         .stageMask = wait_destination_stage_mask,
@@ -237,7 +240,7 @@ void VulkanSwapchain::present(const FrameContext& frame)
     };
 
     const vk::SemaphoreSubmitInfo signal_semaphore_info{
-        .semaphore = *frame.resources.render_finished_semaphore,
+        .semaphore = *rendering_context->resources.render_finished_semaphore,
         .value = 0,
         // Assuming binary semaphores are used
         .stageMask = vk::PipelineStageFlagBits2::eAllCommands,
@@ -246,7 +249,7 @@ void VulkanSwapchain::present(const FrameContext& frame)
     };
 
     const vk::CommandBufferSubmitInfo command_buffer_info{
-        .commandBuffer = *frame.command_buffer,
+        .commandBuffer = *rendering_context->command_buffer,
         .deviceMask = 0
     };
 
@@ -261,10 +264,10 @@ void VulkanSwapchain::present(const FrameContext& frame)
         .pSignalSemaphoreInfos = &signal_semaphore_info,
     };
 
-    context.get_device().get_handle().resetFences({frame.resources.wait_fence});
+    context.get_device().get_handle().resetFences({rendering_context->resources.wait_fence});
 
     // TODO: sync device queues?
-    context.get_device().get_graphics_queue().submit(submit_info, frame.resources.wait_fence);
+    context.get_device().get_graphics_queue().submit(submit_info, rendering_context->resources.wait_fence);
 
     // Present the current buffer to the swap chain
     // Pass the semaphore signaled by the command buffer submission from the submit info as the wait semaphore for swap chain presentation
@@ -275,7 +278,7 @@ void VulkanSwapchain::present(const FrameContext& frame)
 
         const vk::PresentInfoKHR present_info{
             .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &*frame.resources.render_finished_semaphore,
+            .pWaitSemaphores = &*rendering_context->resources.render_finished_semaphore,
             .swapchainCount = 1,
             .pSwapchains = &*swapchain,
             .pImageIndices = reinterpret_cast<uint32_t*>(&current_image)
@@ -305,15 +308,17 @@ void VulkanSwapchain::present(const FrameContext& frame)
 
 size_t VulkanSwapchain::acquire_next_image(const FrameContext& frame)
 {
+    auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+
     // Make sure the frame we're requesting has finished rendering (from previous iterations)
     {
         PORTAL_PROF_ZONE("VulkanSwapchain::acquire_next_image - wait for fences");
-        context.get_device().wait_for_fences(std::span{&*frame.resources.wait_fence, 1}, true);
+        context.get_device().wait_for_fences(std::span{&*rendering_context->resources.wait_fence, 1}, true);
     }
 
     auto [result, index] = swapchain.acquireNextImage(
         std::numeric_limits<uint64_t>::max(),
-        frame.resources.image_available_semaphore,
+        rendering_context->resources.image_available_semaphore,
         nullptr
     );
 
@@ -324,7 +329,7 @@ size_t VulkanSwapchain::acquire_next_image(const FrameContext& frame)
             on_resize(width, height);
             auto [new_result, new_index] = swapchain.acquireNextImage(
                 std::numeric_limits<uint64_t>::max(),
-                frame.resources.image_available_semaphore,
+                rendering_context->resources.image_available_semaphore,
                 nullptr
             );
             if (new_result != vk::Result::eSuccess)

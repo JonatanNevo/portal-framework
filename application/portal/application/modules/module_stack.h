@@ -10,17 +10,15 @@
 #include <unordered_set>
 #include <vector>
 
+#include "portal/application/frame_context.h"
+
 namespace portal
 {
 class Event;
 
-namespace renderer
-{
-    struct FrameContext;
-}
-
 class BaseModule;
 
+// TODO: Move to application module
 // TODO: find a better name?
 // TODO: differentiate between using modules for dependency graph and memory allocation to using modules for polymorphisem flow control
 class ModuleStack
@@ -46,16 +44,17 @@ public:
     void build_dependency_graph();
 
     /// Module Facade
-    void begin_frame(renderer::FrameContext& frame) const;
-    void end_frame(renderer::FrameContext& frame) const;
+    void begin_frame(FrameContext& frame) const;
+    void end_frame(FrameContext& frame) const;
 
-    void update(renderer::FrameContext& frame) const;
+    void update(FrameContext& frame) const;
 
-    void gui_update(renderer::FrameContext& frame) const;
+    void gui_update(FrameContext& frame) const;
 
-    void post_update(renderer::FrameContext& frame) const;
+    void post_update(FrameContext& frame) const;
 
     void on_event(Event& event) const;
+
 
     [[nodiscard]] const std::vector<std::vector<BaseModule*>>& get_dependency_graph() const { return dependency_graph; }
 
@@ -72,6 +71,7 @@ private:
     bool dependency_graph_dirty = false;
 
     // Tagged modules
+    // TODO: Split into multiple subclasses instead of having everything inside base_module
     std::vector<BaseModule*> frame_lifecycle_modules;
     std::vector<BaseModule*> update_modules;
     std::vector<BaseModule*> gui_update_modules;

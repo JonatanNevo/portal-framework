@@ -6,7 +6,7 @@
 #pragma once
 #include <algorithm>
 
-#include "portal/application/modules/module_stack.h"
+#include "module_stack.h"
 
 namespace portal
 {
@@ -30,11 +30,11 @@ public:
 
         if (std::ranges::all_of(found_modules, [](auto* m) { return m != nullptr; }))
         {
-            modules = [&]<size_t... Is>(std::index_sequence<Is...>)
+            [&]<size_t... Is>(std::index_sequence<Is...>)
             {
-                return ModulesTuple{
+                modules.emplace(
                     *static_cast<std::tuple_element_t<Is, std::tuple<Modules...>>*>(found_modules[Is])...
-                };
+                );
             }(std::index_sequence_for<Modules...>{});
         }
     }

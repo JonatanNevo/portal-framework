@@ -7,15 +7,15 @@
 
 namespace portal
 {
-void BaseModule::begin_frame(renderer::FrameContext&) {}
+void BaseModule::begin_frame(FrameContext&) {}
 
-void BaseModule::gui_update(renderer::FrameContext&) {}
+void BaseModule::gui_update(FrameContext&) {}
 
-void BaseModule::post_update(renderer::FrameContext&) {}
+void BaseModule::post_update(FrameContext&) {}
 
-void BaseModule::end_frame(renderer::FrameContext&) {}
+void BaseModule::end_frame(FrameContext&) {}
 
 void BaseModule::on_event(Event&) {}
 
-void BaseModule::update(renderer::FrameContext&) {}
+void BaseModule::update(FrameContext&) {}
 }

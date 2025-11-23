@@ -13,8 +13,7 @@
 #include "portal/engine/reference.h"
 #include "portal/core/strings/string_id.h"
 
-namespace portal::renderer
-{
+namespace portal {
 struct FrameContext;
 }
 
@@ -37,7 +36,7 @@ public:
     [[nodiscard]] const glm::mat4& get_local_transform() const;
 
     void refresh_transform(const glm::mat4& parent_matrix);
-    virtual void draw(const glm::mat4& top_matrix, renderer::FrameContext& context);
+    virtual void draw(const glm::mat4& top_matrix, FrameContext& frame);
 
 protected:
     StringId id;

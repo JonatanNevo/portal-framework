@@ -24,11 +24,11 @@ std::span<Reference<scene::Node>> Scene::get_root_nodes()
     return root_nodes;
 }
 
-void Scene::draw(const glm::mat4& top_matrix, renderer::FrameContext& context)
+void Scene::draw(const glm::mat4& top_matrix, FrameContext& frame)
 {
     for (auto& n : root_nodes)
     {
-        n->draw(top_matrix, context);
+        n->draw(top_matrix, frame);
     }
 }
 } // portal

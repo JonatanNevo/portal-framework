@@ -8,7 +8,7 @@
 #include <portal/core/log.h>
 #include <portal/core/reflection/property.h>
 
-#include "../../../core/portal/core/reflection/property_concepts.h"
+#include "portal/core/reflection/property_concepts.h"
 #include "portal/core/strings/string_id.h"
 
 namespace portal

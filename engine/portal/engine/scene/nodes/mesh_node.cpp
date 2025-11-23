@@ -5,8 +5,7 @@
 
 #include "mesh_node.h"
 
-#include "portal/engine/renderer/frame_context.h"
-
+#include "portal/engine/renderer/rendering_context.h"
 
 namespace portal::scene
 {
@@ -23,7 +22,7 @@ MeshNode::MeshNode(
     PORTAL_ASSERT(materials.size() == mesh->get_submeshes().size(), "Invalid number of materials");
 }
 
-void MeshNode::draw(const glm::mat4& top_matrix, renderer::FrameContext& context)
+void MeshNode::draw(const glm::mat4& top_matrix, FrameContext& frame)
 {
     const glm::mat4 node_matrix = top_matrix * world_transform;
 
@@ -40,10 +39,10 @@ void MeshNode::draw(const glm::mat4& top_matrix, renderer::FrameContext& context
             .vertex_buffer_address = mesh->get_vertex_buffer_address(),
         };
 
-        context.render_objects.push_back(object);
+        std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context)->render_objects.emplace_back(object);
     }
 
-    Node::draw(top_matrix, context);
+    Node::draw(top_matrix, frame);
 }
 
 }

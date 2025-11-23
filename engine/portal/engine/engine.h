@@ -8,7 +8,6 @@
 
 #include "portal/engine/engine_context.h"
 #include "portal/engine/renderer/renderer.h"
-#include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/window/window_event_consumer.h"
 
 namespace portal

@@ -11,7 +11,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 static auto logger = Log::get_logger("Vulkan");
 
 SurfaceTransform to_surface_transform(const vk::SurfaceTransformFlagsKHR transform)
@@ -106,4 +105,8 @@ SurfaceType VulkanSurface::get_type() const
     return SurfaceType::Normal;
 }
 
+size_t VulkanSurface::get_min_frames_in_flight() const
+{
+    return std::min(std::max(properties.min_frames_in_flight, capabilities.min_swapchain_images), capabilities.max_swapchain_images);
+}
 }

@@ -4,7 +4,7 @@
 //
 
 #include <benchmark/benchmark.h>
-#include "../portal/core/random/random.h"
+#include "portal/core/random/random.h"
 #include "portal/core/random/mesmer_twisted_random.h"
 
 static void random_uint(benchmark::State& state)
