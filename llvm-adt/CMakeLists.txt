@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.30)
 
+# Experimental packaging tools
+set(CMAKE_EXPERIMENTAL_EXPORT_PACKAGE_DEPENDENCIES 1942b4fa-b2c5-4546-9385-83f254070067)
+
 include(CheckIncludeFile)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
