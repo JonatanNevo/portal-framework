@@ -27,17 +27,17 @@ ResourceRegistry::~ResourceRegistry() noexcept
 {
     std::unordered_map<StringId, WeakReference<Resource>> weak_resources;
     weak_resources.reserve(resources.size());
-    for (auto& [name, ref] : resources)
-        weak_resources[name] = ref;
+    for (auto& [resource_name, ref] : resources)
+        weak_resources[resource_name] = ref;
 
     resources.clear();
 
-    for (auto& [name, ref] : weak_resources)
+    for (auto& [resource_name, ref] : weak_resources)
     {
         auto resource = ref.lock();
         if (resource)
         {
-            LOGGER_ERROR("Dangling resource: {} of type: {}", name, resource->static_type());
+            LOGGER_ERROR("Dangling resource: {} of type: {}", resource_name, resource->static_type());
         }
     }
 }

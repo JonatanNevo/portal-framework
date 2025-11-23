@@ -64,6 +64,7 @@ void Application::run()
             }
 
             current_frame = (current_frame + 1) % properties.frames_in_flight;
+            // TODO: in headless application I wont have `glfwGetTime` use counter instead?
             const auto time = static_cast<float>(glfwGetTime());
             frame_time = time - last_frame_time;
             time_step = glm::min<float>(frame_time, 0.0333f);

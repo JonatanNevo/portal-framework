@@ -37,7 +37,7 @@ void initialize_logger()
     Settings::get().debug_print();
 }
 
-ApplicationProperties make_application_spec()
+ApplicationProperties make_application_properties()
 {
     auto& settings = Settings::get();
 
@@ -61,7 +61,7 @@ std::unique_ptr<Application> portal::create_application(int, char**)
     initialize_settings();
     initialize_logger();
 
-    const auto prop = make_application_spec();
+    const auto prop = make_application_properties();
     auto engine =  std::make_unique<Engine>(prop);
     // TODO: Should not be here
     engine->setup_scene();

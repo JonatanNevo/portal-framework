@@ -11,12 +11,12 @@ namespace portal
 {
 enum class ModuleTags: uint8_t
 {
-    None                 = 0b00000000,
-    FrameLifecycle       = 0b00000001,
-    Update               = 0b00000010,
-    GuiUpdate            = 0b00000100,
-    PostUpdate           = 0b00001000,
-    Event                = 0b00010000
+    None           = 0b00000000,
+    FrameLifecycle = 0b00000001,
+    Update         = 0b00000010,
+    GuiUpdate      = 0b00000100,
+    PostUpdate     = 0b00001000,
+    Event          = 0b00010000
 };
 
 using TagFlag = Flags<ModuleTags>;
@@ -34,7 +34,8 @@ template <ModuleTags... TagBits>
 class Tag
 {
 public:
-    constexpr static auto Tags = (ModuleTags::None | ... | TagBits);
+    // MSVC fails to automatically deduce `operator|` on the enum... :(
+    constexpr static auto Tags = (TagFlag{ModuleTags::None} | ... | TagFlag{TagBits});
 
     constexpr static bool has_tag(const TagFlag& tag)
     {
