@@ -52,34 +52,33 @@ using namespace renderer;
 
 [[maybe_unused]] static auto logger = Log::get_logger("Renderer");
 
-Renderer::Renderer(Input& input, vulkan::VulkanContext& context, const Reference<vulkan::VulkanSwapchain>& swapchain)
-    :
-    swapchain(swapchain),
-    attachments(
-        {
-            .attachment_images = {
-                // Present Image
-                {
-                    .format = vulkan::to_format(swapchain->get_color_format()),
-                    .blend = false
-                },
-                // Depth Image
-                {
-                    .format = ImageFormat::Depth_32Float,
-                    .blend = true,
-                    .blend_mode = BlendMode::Additive
-                }
-            },
-            .blend = true,
-        }
-    ),
-    context(context),
-    renderer_context(context, scene_descriptor_set_layouts, attachments),
-    camera(input)
+Renderer::Renderer(ModuleStack& stack, vulkan::VulkanContext& context, const Reference<vulkan::VulkanSwapchain>& swapchain)
+    : TaggedModule(stack, STRING_ID("Renderer")),
+
+      swapchain(swapchain),
+      attachments(
+          {
+              .attachment_images = {
+                  // Present Image
+                  {
+                      .format = vulkan::to_format(swapchain->get_color_format()),
+                      .blend = false
+                  },
+                  // Depth Image
+                  {
+                      .format = ImageFormat::Depth_32Float,
+                      .blend = true,
+                      .blend_mode = BlendMode::Additive
+                  }
+              },
+              .blend = true,
+          }
+      ),
+      context(context),
+      renderer_context(context, scene_descriptor_set_layouts, attachments)
 {
     PORTAL_PROF_ZONE();
 
-    camera.on_resize(static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height()));
     init_render_target();
     init_frame_resources();
 
@@ -107,6 +106,40 @@ void Renderer::cleanup()
     is_initialized = false;
 }
 
+void Renderer::begin_frame(renderer::FrameContext& frame)
+{
+    PORTAL_PROF_ZONE();
+
+    const auto& [image, image_view, last_used_frame] = swapchain->begin_frame(frame);
+
+    frame.draw_image = image;
+    frame.draw_image_view = image_view;
+
+    // If this image was used before, wait for the fence from the frame that last used it
+    if (last_used_frame != std::numeric_limits<size_t>::max())
+    {
+        PORTAL_PROF_ZONE("VulkanSwapchain::begin_frame - wait for image fence");
+        const auto& last_frame = frames[last_used_frame];
+        context.get_device().wait_for_fences(std::span{&*last_frame.wait_fence, 1}, true);
+    }
+
+    // Resets descriptor pools
+    clean_frame(frame);
+
+    // begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
+    frame.command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+}
+
+void Renderer::end_frame(FrameContext& frame)
+{
+    frame.command_buffer.end();
+    // TODO: should we submit to graphics queue here?
+
+    swapchain->present(frame);
+
+    current_frame = (current_frame + 1) % frames_in_flight;
+}
+
 const RendererContext& Renderer::get_renderer_context() const
 {
     return renderer_context;
@@ -120,37 +153,6 @@ size_t Renderer::get_frames_in_flight() const
 const renderer::vulkan::VulkanSwapchain& Renderer::get_swapchain() const
 {
     return *swapchain;
-}
-
-void Renderer::on_event(Event& event)
-{
-    EventRunner runner(event);
-    runner.run_on<KeyPressedEvent>(
-        [&](const auto& e)
-        {
-            camera.on_key_down(e.get_key());
-            return false;
-        }
-    );
-    runner.run_on<KeyReleasedEvent>(
-        [&](const auto& e)
-        {
-            camera.on_key_up(e.get_key());
-            return false;
-        }
-    );
-    runner.run_on<MouseMovedEvent>(
-        [&](const auto& e)
-        {
-            camera.on_mouse_move(e.get_position());
-            return false;
-        }
-    );
-}
-
-void Renderer::update_frame_time(const float frame_time_seconds)
-{
-    stats.frame_time = frame_time_seconds * 1000.f;
 }
 
 void Renderer::init_render_target()
@@ -245,120 +247,7 @@ void Renderer::init_frame_resources()
     }
 }
 
-void Renderer::update_imgui([[maybe_unused]] float delta_time)
-{
-    static std::array<float, 100> fps_history = {};
-    static int fps_history_index = 0;
-
-    fps_history[fps_history_index] = 1000.f / stats.frame_time;
-    fps_history_index = (fps_history_index + 1) % fps_history.size();
-
-    ImGui::Begin("Stats");
-    ImGui::Text("FPS %f", std::ranges::fold_left(fps_history, 0.f, std::plus<float>()) / 100.f);
-    ImGui::Text("frametime %f ms", stats.frame_time);
-    ImGui::Text("draw time %f ms", stats.mesh_draw_time);
-    ImGui::Text("update time %f ms", stats.scene_update_time);
-    ImGui::Text("triangles %i", stats.triangle_count);
-    ImGui::Text("draws %i", stats.drawcall_count);
-    ImGui::End();
-
-    ImGui::Begin("Camera");
-    ImGui::Text("position %f %f %f", camera.get_position().x, camera.get_position().y, camera.get_position().z);
-    ImGui::Text("direction %f %f %f", camera.get_direction().x, camera.get_direction().y, camera.get_direction().z);
-
-    // Input to control camera speed
-    float camera_speed = camera.get_speed();
-    if (ImGui::SliderFloat("Camera Speed", &camera_speed, 0.1f, 10.0f))
-    {
-        camera.set_speed(camera_speed);
-    }
-    ImGui::End();
-}
-
-void Renderer::update_scene(FrameContext& frame, ResourceReference<Scene>& scene)
-{
-    ZoneScoped;
-    auto start = std::chrono::system_clock::now();
-    camera.update(frame.delta_time);
-
-    const glm::mat4 view = camera.get_view();
-    glm::mat4 projection = camera.get_projection();
-    // invert the Y direction on projection matrix so that we are more similar to opengl and gltf axis
-    projection[1][1] *= -1;
-
-    scene_data.view = view;
-    scene_data.proj = projection;
-    scene_data.view_proj = projection * view;
-
-    scene->draw(glm::mat4{1.f}, frame);
-
-    //some default lighting parameters
-    scene_data.ambient_color = glm::vec4(.1f);
-    scene_data.sunlight_color = glm::vec4(1.f);
-    scene_data.sunlight_direction = glm::vec4(0, 1, 0.5, 1.f);
-
-    auto end = std::chrono::system_clock::now();
-
-    //convert to microseconds (integer), and then come back to miliseconds
-    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    stats.scene_update_time = elapsed.count() / 1000.f;
-}
-
-FrameContext Renderer::begin_frame()
-{
-    PORTAL_PROF_ZONE();
-
-    // TODO: this allocates a new vector for each frame, use some cache instead
-    FrameContext frame{
-        .frame_index = current_frame,
-        .depth_image = depth_image->get_image_info().image.get_handle(),
-        .depth_image_view = depth_image->get_image_info().view,
-        .command_buffer = frames[current_frame].command_buffer,
-        .resources = frames[current_frame],
-    };
-
-    const auto& [image, image_view, last_used_frame] = swapchain->begin_frame(frame);
-
-    frame.draw_image = image;
-    frame.draw_image_view = image_view;
-
-    // If this image was used before, wait for the fence from the frame that last used it
-    if (last_used_frame != std::numeric_limits<size_t>::max())
-    {
-        PORTAL_PROF_ZONE("VulkanSwapchain::begin_frame - wait for image fence");
-        const auto& last_frame = frames[last_used_frame];
-        context.get_device().wait_for_fences(std::span{&*last_frame.wait_fence, 1}, true);
-    }
-
-    // Resets descriptor pools
-    clean_frame(frame);
-
-    // begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
-    frame.command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
-
-    return std::move(frame);
-}
-
-void Renderer::end_frame(const FrameContext& frame)
-{
-    frame.command_buffer.end();
-    // TODO: should we submit to graphics queue here?
-
-    swapchain->present(frame);
-
-    current_frame = (current_frame + 1) % frames_in_flight;
-}
-
-void Renderer::clean_frame(const FrameContext& frame)
-{
-    frame.resources.deletion_queue.flush();
-    frame.resources.global_descriptor_set = nullptr;
-    frame.resources.frame_descriptors.clear_pools();
-    frame.resources.command_pool.reset();
-    frame.resources.scene_data_buffer = nullptr;
-}
-
-void Renderer::draw_geometry(FrameContext& frame)
+void Renderer::post_update(FrameContext& frame)
 {
     const auto draw_image = frame.draw_image;
     const auto depth_draw_image = frame.depth_image;
@@ -405,13 +294,21 @@ void Renderer::draw_geometry(FrameContext& frame)
     );
 }
 
+void Renderer::clean_frame(const FrameContext& frame)
+{
+    frame.resources.deletion_queue.flush();
+    frame.resources.global_descriptor_set = nullptr;
+    frame.resources.frame_descriptors.clear_pools();
+    frame.resources.command_pool.reset();
+    frame.resources.scene_data_buffer = nullptr;
+}
 
 void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer& command_buffer)
 {
     ZoneScoped;
     //reset counters
-    stats.drawcall_count = 0;
-    stats.triangle_count = 0;
+    frame.stats.drawcall_count = 0;
+    frame.stats.triangle_count = 0;
     //begin clock
     auto start = std::chrono::system_clock::now();
 
@@ -421,7 +318,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
     for (uint32_t i = 0; i < frame.render_objects.size(); i++)
     {
         const auto& object = frame.render_objects[i];
-        if (object.is_visible(scene_data.view_proj))
+        if (object.is_visible(frame.scene_data.view_proj))
             render_by_material[object.material->get_id()].push_back(i);
     }
 
@@ -433,7 +330,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
                                             .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
                                             .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
                                             .build(context.get_device());
-        frame.resources.scene_data_buffer.update_typed<vulkan::GPUSceneData>(scene_data);
+        frame.resources.scene_data_buffer.update_typed<vulkan::GPUSceneData>(frame.scene_data);
 
         // TODO: support multiple global sets
         frame.resources.global_descriptor_set = frame.resources.frame_descriptors.allocate(scene_descriptor_set_layouts.front());
@@ -525,8 +422,8 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
             command_buffer.drawIndexed(object.index_count, 1, object.first_index, 0, 0);
 
             //add counters for triangles and draws
-            stats.drawcall_count++;
-            stats.triangle_count += static_cast<uint32_t>(object.index_count / 3);
+            frame.stats.drawcall_count++;
+            frame.stats.triangle_count += static_cast<uint32_t>(object.index_count / 3);
         };
 
         for (const auto& indexes : render_by_material | std::views::values)
@@ -542,15 +439,14 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
 
     auto end = std::chrono::system_clock::now();
 
-    //convert to microseconds (integer), and then come back to miliseconds
+    //convert to microseconds (integer), and then come back to milliseconds
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    stats.mesh_draw_time = elapsed.count() / 1000.f;
+    frame.stats.mesh_draw_time = elapsed.count() / 1000.f;
 }
 
-void Renderer::on_resize(const size_t new_width, const size_t new_height)
+void Renderer::on_resize(const size_t new_width, const size_t new_height) const
 {
     swapchain->on_resize(new_width, new_height);
-    camera.on_resize(static_cast<uint32_t>(new_width), static_cast<uint32_t>(new_height));
 }
 
 void Renderer::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function)

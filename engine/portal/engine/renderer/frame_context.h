@@ -9,6 +9,7 @@
 
 #include "portal/engine/renderer/deletion_queue.h"
 #include "portal/engine/renderer/descriptor_allocator.h"
+#include "portal/engine/renderer/rendering_types.h"
 #include "portal/engine/resources/resources/mesh_geometry.h"
 
 namespace portal::renderer {
@@ -117,10 +118,23 @@ struct FrameResources
     }
 };
 
+struct FrameStats
+{
+    float frame_time = 0.0001f;
+    int triangle_count;
+    int drawcall_count;
+    float scene_update_time;
+    float mesh_draw_time;
+};
+
 struct FrameContext
 {
     size_t frame_index;
     float delta_time;
+    FrameStats stats = {};
+
+    // TODO: make this more generic? maybe based on active scene?
+    vulkan::GPUSceneData scene_data{};
 
     // TODO: switch with generic `Image` class
     vk::Image draw_image;

@@ -5,59 +5,57 @@
 
 #pragma once
 #include <filesystem>
-#include <memory>
-#include <string>
-#include <type_traits>
-#include <vector>
 
-#include "portal/application/layer.h"
+#include <llvm/ADT/SmallVector.h>
+#include <portal/core/events/event.h>
+#include <portal/core/strings/string_id.h>
+#include <portal/core/events/event_handler.h>
+
+#include "portal/application/modules/module_stack.h"
 
 namespace portal
 {
-    struct ApplicationSpecs
-    {
-        std::string name = "Portal Application";
-        size_t width = 1920;
-        size_t height = 1080;
-        uint64_t sleep_duration = 0;
-        std::filesystem::path icon_path;
 
-        bool resizeable = true;
-        bool custom_titlebar = false;
-        bool use_dock_space = true;
-        bool center_window = false;
-    };
+struct ApplicationProperties
+{
+    StringId name = STRING_ID("Portal Engine");
+    size_t width = 1600;
+    size_t height = 900;
 
+    bool resizeable = true;
 
-    class Application
-    {
-    public:
-        virtual ~Application() = default;
+    //TODO: move to settings
+    std::filesystem::path resources_path;
+    int32_t scheduler_worker_num = 1;
+};
 
-        virtual void run() = 0;
+class Application
+{
+public:
+    explicit Application(const ApplicationProperties& properties);
+    virtual ~Application();
 
-        template <typename T>
-            requires std::is_base_of_v<Layer, T>
-        void push_layer()
-        {
-            layer_stack.emplace_back(std::make_shared<T>())->on_attach();
-        }
+    void run();
+    void stop();
 
-        void push_layer(const std::shared_ptr<Layer>& layer)
-        {
-            layer_stack.emplace_back(layer);
-            layer->on_attach();
-        }
+    virtual void process_events() {};
 
-        std::vector<std::shared_ptr<Layer>>& get_layer_stack() { return layer_stack; }
+    void on_event(Event& event);
 
-        virtual void close() = 0;
-        virtual float get_time() = 0;
+    [[nodiscard]] virtual bool should_run() const;
 
-    protected:
-        std::vector<std::shared_ptr<Layer>> layer_stack;
-    };
+protected:
+    ApplicationProperties properties;
+    ModuleStack modules;
 
-    Application* create_application(int argc, char** argv);
+    size_t current_frame_count = 0;
+    float last_frame_time = 0;
+    float frame_time = 0;
+    float time_step = 0;
 
-} // namespace portal
+    std::atomic_flag should_stop;
+    llvm::SmallVector<std::reference_wrapper<EventHandler>> event_handlers;
+};
+
+std::unique_ptr<Application> create_application(int arc, char** argv);
+} // portal

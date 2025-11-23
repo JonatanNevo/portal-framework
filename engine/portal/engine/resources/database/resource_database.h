@@ -7,6 +7,7 @@
 #include <expected>
 #include <llvm/ADT/SmallVector.h>
 
+#include "portal/application/modules/module.h"
 #include "portal/engine/renderer/image/image_types.h"
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/serialization/archive.h"
@@ -86,10 +87,10 @@ enum class DatabaseErrorBit: uint8_t
 
 using DatabaseError = Flags<DatabaseErrorBit>;
 
-class ResourceDatabase
+class ResourceDatabase : public Module<>
 {
 public:
-    virtual ~ResourceDatabase() = default;
+    explicit ResourceDatabase(ModuleStack& stack, const StringId& name) : Module<>(stack, name) {}
 
     virtual std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) = 0;
     virtual DatabaseError add(SourceMetadata meta) = 0;
@@ -97,5 +98,4 @@ public:
 
     virtual std::unique_ptr<resources::ResourceSource> create_source(SourceMetadata meta) = 0;
 };
-
 } // portal

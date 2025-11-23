@@ -3,14 +3,13 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include "im_gui_module.h"
+#include "imgui_module.h"
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_vulkan.h>
 
 #include "portal/core/debug/profile.h"
-#include "portal/engine/engine_context.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/vulkan_utils.h"
@@ -18,7 +17,7 @@
 
 namespace portal
 {
-ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context) : context(context)
+ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window) : TaggedModule(stack, STRING_ID("ImGUI Module"))
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -41,7 +40,7 @@ ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context) : contex
     }
     style.Colors[ImGuiCol_WindowBg] = ImVec4(0.15f, 0.15f, 0.15f, style.Colors[ImGuiCol_WindowBg].w);
 
-    auto& renderer = context->get_renderer();
+    auto& renderer = get_dependency<Renderer>();
 
     //  create descriptor pool for IMGUI
     //  the size of the pool is very oversize, but it's copied from imgui demo itself.
@@ -69,8 +68,8 @@ ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context) : contex
     auto& vulkan_context = renderer.get_renderer_context().get_gpu_context();
     imgui_pool = (vulkan_context.get_device().get_handle()).createDescriptorPool(pool_info);
 
-    const auto& window = dynamic_cast<GlfwWindow&>(context->get_window());
-    ImGui_ImplGlfw_InitForVulkan(window.get_handle(), true);
+    const auto& vulkan_window = dynamic_cast<const GlfwWindow&>(window);
+    ImGui_ImplGlfw_InitForVulkan(vulkan_window.get_handle(), true);
 
     const auto& swapchain_format = renderer.get_swapchain().get_color_format();
 
@@ -96,7 +95,7 @@ ImGuiModule::ImGuiModule(const std::shared_ptr<EngineContext>& context) : contex
 
 ImGuiModule::~ImGuiModule()
 {
-    auto& vulkan_context = context->get_renderer().get_renderer_context().get_gpu_context();
+    auto& vulkan_context = get_dependency<Renderer>().get_renderer_context().get_gpu_context();
     vulkan_context.get_device().wait_idle();
 
     ImGui_ImplVulkan_Shutdown();
@@ -106,7 +105,7 @@ ImGuiModule::~ImGuiModule()
     imgui_pool = nullptr;
 }
 
-void ImGuiModule::begin()
+void ImGuiModule::begin_frame(renderer::FrameContext&)
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -114,11 +113,11 @@ void ImGuiModule::begin()
     //ImGuizmo::BeginFrame();
 }
 
-void ImGuiModule::end(const renderer::FrameContext& frame)
+void ImGuiModule::end_frame(renderer::FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
 
-    const auto& renderer = context->get_renderer();
+    const auto& renderer = get_dependency<Renderer>();
     auto& swapchain = renderer.get_swapchain();
 
     // set swapchain image layout to Attachment Optimal so we can draw it
@@ -183,6 +182,21 @@ void ImGuiModule::end(const renderer::FrameContext& frame)
     );
 }
 
-void ImGuiModule::on_gui_render() {
+void ImGuiModule::gui_update(renderer::FrameContext& frame)
+{
+    static std::array<float, 100> fps_history = {};
+    static int fps_history_index = 0;
+
+    fps_history[fps_history_index] = 1000.f / frame.stats.frame_time;
+    fps_history_index = (fps_history_index + 1) % fps_history.size();
+
+    ImGui::Begin("Stats");
+    ImGui::Text("FPS %f", std::ranges::fold_left(fps_history, 0.f, std::plus<float>()) / 100.f);
+    ImGui::Text("frametime %f ms", frame.stats.frame_time);
+    ImGui::Text("draw time %f ms", frame.stats.mesh_draw_time);
+    ImGui::Text("update time %f ms", frame.stats.scene_update_time);
+    ImGui::Text("triangles %i", frame.stats.triangle_count);
+    ImGui::Text("draws %i", frame.stats.drawcall_count);
+    ImGui::End();
 }
 } // portal

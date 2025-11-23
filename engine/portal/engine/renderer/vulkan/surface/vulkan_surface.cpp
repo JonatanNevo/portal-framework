@@ -48,7 +48,7 @@ SurfaceTransform to_surface_transform(const vk::SurfaceTransformFlagsKHR transfo
     return output;
 }
 
-VulkanSurface::VulkanSurface(const VulkanContext& context, const SurfaceProperties& properties) : Surface(properties), context(context)
+VulkanSurface::VulkanSurface(const VulkanContext& context, const SurfaceProperties& properties) : Surface(properties)
 {
     if (properties.window.has_value())
     {

@@ -60,7 +60,6 @@ void VulkanRenderTarget::initialize()
     // Using vulkan 1.4, no need to create frame buffer object
     rendering_attachments.reserve(prop.attachments.attachment_images.size());
 
-    size_t index = 0;
     for (auto& attachment_prop : prop.attachments.attachment_images)
     {
         if (utils::is_depth_format(attachment_prop.format))
@@ -83,7 +82,6 @@ void VulkanRenderTarget::initialize()
                 }
             );
         }
-        index++;
     }
 
     rendering_info = {

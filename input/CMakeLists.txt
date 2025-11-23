@@ -21,6 +21,7 @@ find_package(glaze CONFIG REQUIRED)
 option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACAKGE)
     find_package(portal-core CONFIG REQUIRED)
+    find_package(portal-application CONFIGS REQUIRED)
 endif ()
 unset(PORTAL_FIND_PACAKGE CACHE)
 
@@ -38,6 +39,7 @@ set_target_properties(portal-input PROPERTIES EXPORT_NAME input)
 target_link_libraries(portal-input
         PUBLIC
         portal::core
+        portal::application
         glaze::glaze
         glfw
 )
