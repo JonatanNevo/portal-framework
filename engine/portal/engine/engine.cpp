@@ -77,13 +77,8 @@ Engine::~Engine()
     glfwTerminate();
 }
 
-void Engine::setup_scene() const
+void Engine::setup_scene(const ResourceReference<Scene>& scene) const
 {
-    // TODO: Remove from here
-    [[maybe_unused]] auto composite = engine_context->get_resource_registry().immediate_load<Composite>(STRING_ID("game/ABeautifulGame"));
-    auto scene = engine_context->get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
-    PORTAL_ASSERT(scene.get_state() == ResourceState::Loaded, "Failed to load scene");
-
     engine_context->get_scene_manager().set_active_scene(scene);
 }
 

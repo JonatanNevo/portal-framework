@@ -19,7 +19,7 @@ public:
     explicit Engine(const ApplicationProperties& properties);
     ~Engine() override;
 
-    void setup_scene() const;
+    void setup_scene(const ResourceReference<Scene>& scene) const;
 
     void process_events() override;
 
@@ -27,7 +27,7 @@ public:
     void on_focus(bool) override {};
     void on_close() override;
 
-    static std::unique_ptr<Engine> create(const ApplicationProperties& properties);
+    [[nodiscard]] EngineContext& get_engine_context() const { return *engine_context; }
 
 private:
     std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;
