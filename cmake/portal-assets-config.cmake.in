@@ -1,9 +1,0 @@
-@PACKAGE_INIT@
-
-include(CMakeFindDependencyMacro)
-find_dependency(portal-serialization)
-find_dependency(portal-core)
-
-include("${CMAKE_CURRENT_LIST_DIR}/portal-assets-targets.cmake")
-
-check_required_components(portal-assets)

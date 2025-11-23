@@ -107,39 +107,38 @@ elseif(APPLE)
     target_compile_options(llvm-adt PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fexperimental-library> $<$<COMPILE_LANGUAGE:CXX>:-stdlib=libc++>)
 endif()
 
-install(TARGETS llvm-adt
-    EXPORT llvm-adt-targets
-    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-    FILE_SET HEADERS DESTINATION include
+install(
+        TARGETS llvm-adt
+        EXPORT llvm-adt-targets
+        FILE_SET HEADERS
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# Generate and install the export targets
-install(EXPORT llvm-adt-targets
-        FILE llvm-adt-targets.cmake
-        NAMESPACE llvm::
-        DESTINATION share/llvm-adt
-)
-
-# Create and install the config file
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/llvm-adt-config-version.cmake"
-        VERSION ${PROJECT_VERSION}
-        COMPATIBILITY SameMajorVersion
-)
-unset(PROJECT_VERSION)
-
-configure_package_config_file(
-        "../cmake/llvm-adt-config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/llvm-adt-config.cmake"
-        INSTALL_DESTINATION share/llvm-adt
+        "${CMAKE_CURRENT_BINARY_DIR}/llvm-adt-version.cmake"
+        COMPATIBILITY ExactVersion
 )
 
-# Install the config files
-install(FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/llvm-adt-config.cmake"
-        "${CMAKE_CURRENT_BINARY_DIR}/llvm-adt-config-version.cmake"
+install(
+        EXPORT llvm-adt-targets
+        FILE llvm-adt-config.cmake
+        NAMESPACE llvm::
         DESTINATION share/llvm-adt
+        EXPORT_PACKAGE_DEPENDENCIES
+)
+
+install(
+        FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/llvm-adt-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/llvm-adt-version.cmake"
+        DESTINATION share/llvm-adt
+)
+
+install(TARGETS llvm-adt
+        EXPORT llvm-adt-targets
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        FILE_SET HEADERS DESTINATION include
 )
