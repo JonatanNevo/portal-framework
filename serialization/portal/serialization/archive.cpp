@@ -6,8 +6,6 @@
 
 #include "archive.h"
 
-#include <fastgltf/math.hpp>
-
 namespace portal
 {
 
