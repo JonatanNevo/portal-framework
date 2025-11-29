@@ -94,6 +94,7 @@ endif()
 
 configure_file("llvm/include/llvm/Config/llvm-config.h.cmake" "llvm/include/llvm/Config/llvm-config.h")
 
+file(GLOB_RECURSE LLVM_HEADER CONFIGURE_DEPENDS "llvm/include/*.h")
 file(GLOB_RECURSE LLVM_SOURCES CONFIGURE_DEPENDS "llvm/lib/*.cpp" "llvm/lib/*.c")
 add_library(llvm-adt STATIC ${LLVM_SOURCES})
 add_library(llvm::adt ALIAS llvm-adt)
