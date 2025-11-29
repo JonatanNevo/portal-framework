@@ -97,6 +97,7 @@ configure_file("llvm/include/llvm/Config/llvm-config.h.cmake" "llvm/include/llvm
 file(GLOB_RECURSE LLVM_SOURCES CONFIGURE_DEPENDS "llvm/lib/*.cpp" "llvm/lib/*.c")
 add_library(llvm-adt STATIC ${LLVM_SOURCES})
 add_library(llvm::adt ALIAS llvm-adt)
+set_target_properties(llvm-adt PROPERTIES EXPORT_NAME adt)
 
 target_sources(llvm-adt PUBLIC
         FILE_SET HEADERS
