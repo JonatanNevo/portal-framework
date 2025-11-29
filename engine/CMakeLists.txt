@@ -26,13 +26,13 @@ find_package(SPIRV-Tools CONFIG REQUIRED)
 find_package(slang CONFIG REQUIRED)
 find_package(glaze CONFIG REQUIRED)
 
-option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
-if(PORTAL_FIND_PACAKGE)
+option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
+if(PORTAL_FIND_PACKAGE)
     find_package(portal-input CONFIG REQUIRED)
     find_package(portal-networking CONFIG REQUIRED)
     find_package(portal-serialization CONFIG REQUIRED)
 endif ()
-unset(PORTAL_FIND_PACAKGE CACHE)
+unset(PORTAL_FIND_PACKAGE CACHE)
 
 
 add_library(portal-engine STATIC ${ENGINE_SOURCES})
@@ -70,6 +70,9 @@ endif()
 
 if(PORTAL_BUILD_TESTS)
     add_subdirectory(tests)
+
+    add_executable(engine_test main.cpp)
+    target_link_libraries(engine_test portal::engine)
 endif ()
 unset(PORTAL_BUILD_TESTS CACHE)
 
@@ -114,6 +117,3 @@ install(
         "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-version.cmake"
         DESTINATION share/portal-engine
 )
-
-add_executable(engine_test main.cpp)
-target_link_libraries(engine_test portal::engine)

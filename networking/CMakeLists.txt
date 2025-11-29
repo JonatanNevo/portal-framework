@@ -18,11 +18,11 @@ file(GLOB_RECURSE NETWORKING_HEADERS CONFIGURE_DEPENDS "portal/networking/*.h")
 
 find_package(GameNetworkingSockets CONFIG REQUIRED)
 
-option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
-if(PORTAL_FIND_PACAKGE)
+option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
+if(PORTAL_FIND_PACKAGE)
     find_package(portal-core CONFIG REQUIRED)
 endif ()
-unset(PORTAL_FIND_PACAKGE CACHE)
+unset(PORTAL_FIND_PACKAGE CACHE)
 
 add_library(portal-networking STATIC ${NETWORKING_SOURCES})
 add_library(portal::networking ALIAS portal-networking)

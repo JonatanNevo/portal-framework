@@ -19,12 +19,12 @@ file(GLOB_RECURSE INPUT_HEADERS CONFIGURE_DEPENDS "portal/input/*.h")
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glaze CONFIG REQUIRED)
 
-option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
-if(PORTAL_FIND_PACAKGE)
+option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
+if(PORTAL_FIND_PACKAGE)
     find_package(portal-core CONFIG REQUIRED)
     find_package(portal-application CONFIGS REQUIRED)
 endif ()
-unset(PORTAL_FIND_PACAKGE CACHE)
+unset(PORTAL_FIND_PACKAGE CACHE)
 
 add_library(portal-input STATIC ${INPUT_SOURCES})
 add_library(portal::input ALIAS portal-input)

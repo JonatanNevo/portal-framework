@@ -32,11 +32,11 @@ file(GLOB_RECURSE CORE_MACOS_HEADERS CONFIGURE_DEPENDS "portal/platform/core/mac
 file(GLOB_RECURSE CORE_LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/core/linux/*.cpp")
 file(GLOB_RECURSE CORE_LINUX_HEADERS CONFIGURE_DEPENDS "portal/platform/core/linux/*.h")
 
-option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
-if (PORTAL_FIND_PACAKGE)
+option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
+if (PORTAL_FIND_PACKAGE)
     find_package(llvm-adt CONFIG REQUIRED)
 endif ()
-unset(PORTAL_FIND_PACAKGE CACHE)
+unset(PORTAL_FIND_PACKAGE CACHE)
 
 find_package(glm CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
