@@ -63,13 +63,12 @@ install(
         EXPORT portal-application-targets
         FILE portal-application-config.cmake
         NAMESPACE portal::
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        DESTINATION share/portal-application
         EXPORT_PACKAGE_DEPENDENCIES
 )
 
 install(
         FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-application-config.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/portal-application-version.cmake"
         DESTINATION share/portal-application
 )

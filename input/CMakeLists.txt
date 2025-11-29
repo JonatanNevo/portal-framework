@@ -68,13 +68,12 @@ install(
         EXPORT portal-input-targets
         FILE portal-input-config.cmake
         NAMESPACE portal::
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        DESTINATION share/portal-input
         EXPORT_PACKAGE_DEPENDENCIES
 )
 
 install(
         FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-input-config.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/portal-input-version.cmake"
         DESTINATION share/portal-input
 )

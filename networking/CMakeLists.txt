@@ -64,13 +64,12 @@ install(
         EXPORT portal-networking-targets
         FILE portal-networking-config.cmake
         NAMESPACE portal::
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        DESTINATION share/portal-networking
         EXPORT_PACKAGE_DEPENDENCIES
 )
 
 install(
         FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-config.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-version.cmake"
         DESTINATION share/portal-networking
 )

@@ -70,13 +70,12 @@ install(
         EXPORT portal-serialization-targets
         FILE portal-serialization-config.cmake
         NAMESPACE portal::
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        DESTINATION share/portal-serialization
         EXPORT_PACKAGE_DEPENDENCIES
 )
 
 install(
         FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-config.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-version.cmake"
         DESTINATION share/portal-serialization
 )

@@ -192,13 +192,12 @@ install(
     EXPORT portal-core-targets
     FILE portal-core-config.cmake
     NAMESPACE portal::
-    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+    DESTINATION share/portal-core
     EXPORT_PACKAGE_DEPENDENCIES
 )
 
 install(
     FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-core-config.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/portal-core-version.cmake"
     DESTINATION share/portal-core
 )

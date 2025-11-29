@@ -107,13 +107,12 @@ install(
         EXPORT portal-engine-targets
         FILE portal-engine-config.cmake
         NAMESPACE portal::
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+        DESTINATION share/portal-engine
         EXPORT_PACKAGE_DEPENDENCIES
 )
 
 install(
         FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-config.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-version.cmake"
         DESTINATION share/portal-engine
 )
