@@ -42,6 +42,7 @@ find_package(glm CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(enchantum CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
+find_package(frozen CONFIG REQUIRED)
 
 if (PORTAL_PROFILE)
     set(CACHE TRACY_ENABLE TYPE BOOL FORCE ON)
@@ -67,6 +68,7 @@ target_link_libraries(portal-core
         spdlog::spdlog
         enchantum::enchantum
         mimalloc-static
+        frozen::frozen
 )
 
 target_compile_definitions(portal-core PUBLIC
