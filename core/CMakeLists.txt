@@ -19,7 +19,7 @@ option(PORTAL_PROFILE "Enable profiling with Tracy" OFF)
 option(PORTAL_BUILD_DIST "Build the distribution package" OFF)
 
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
-file(GLOB_RECURSE CORE_HEADER CONFIGURE_DEPENDS "portal/core/*.h")
+file(GLOB_RECURSE CORE_HEADERS CONFIGURE_DEPENDS "portal/core/*.h")
 
 file(GLOB_RECURSE CORE_HAL_HEADERS CONFIGURE_DEPENDS "portal/platform/core/hal/*.h")
 
