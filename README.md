@@ -6,10 +6,11 @@ A modular cross-platform framework for creating C++ applications, with focus on 
 > MSVC builds would have a slower start time due to my string hash implementation not being constexpr on MSVC
 - Windows 11
   - Clang 19 or later [recommended]
-  - MSVC 19.44 or later
+  - MSVC 17 or later
 - macOS 15 (Sequoia) or later
 - Linux
-  - TODO
+  - Clang 19 or later [recommended]
+  - gcc 15 or later
 
 # Installation
 TODO
