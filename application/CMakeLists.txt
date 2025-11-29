@@ -16,11 +16,11 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS "portal/application/*.cpp")
 file(GLOB_RECURSE APP_HEADERS CONFIGURE_DEPENDS "portal/application/*.h")
 
-option(PORTAL_FIND_PACAKGE "Whether or not to look for portal components" OFF) #OFF by default
-if(PORTAL_FIND_PACAKGE)
+option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
+if(PORTAL_FIND_PACKAGE)
     find_package(portal-core CONFIG REQUIRED)
 endif ()
-unset(PORTAL_FIND_PACAKGE CACHE)
+unset(PORTAL_FIND_PACKAGE CACHE)
 
 add_library(portal-application STATIC ${APP_SOURCES})
 target_sources(portal-application PUBLIC
