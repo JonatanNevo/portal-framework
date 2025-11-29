@@ -68,7 +68,7 @@ target_link_libraries(portal-core
         glm::glm
         spdlog::spdlog
         enchantum::enchantum
-        mimalloc-static
+        $<IF:$<TARGET_EXISTS:mimalloc-static>,mimalloc-static,mimalloc>
         frozen::frozen
         concurrentqueue::concurrentqueue
 )
