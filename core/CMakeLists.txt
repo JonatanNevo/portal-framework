@@ -80,6 +80,7 @@ target_compile_definitions(portal-core PUBLIC
         GLM_ENABLE_EXPERIMENTAL
         GLM_FORCE_CXX20
         GLM_FORCE_DEPTH_ZERO_TO_ONE
+        SPDLOG_USE_STD_FORMAT
 )
 
 if (WIN32)
