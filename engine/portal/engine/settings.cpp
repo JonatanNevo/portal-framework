@@ -270,7 +270,7 @@ void Settings::debug_print(std::string base_name, const ArchiveObject& object) c
         if (base_name.empty())
             name = key;
         else
-            name = std::format("{}.{}", base_name, key);
+            name = std::format("{}.{}", base_name, std::string_view(key));
 
         switch (prop.container_type)
         {
