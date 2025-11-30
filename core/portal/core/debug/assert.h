@@ -7,6 +7,7 @@
 
 #include "portal/core/log.h"
 
+// TODO: check compilers instead of platforms
 #ifdef PORTAL_PLATFORM_WINDOWS
 #define PORTAL_DEBUG_BREAK __debugbreak
 #elif defined(PORTAL_COMPILER_CLANG)
@@ -26,7 +27,7 @@
 #endif
 
 #else
-#define PORTAL_DEBUG_BREAK __debugbreak
+#define PORTAL_DEBUG_BREAK __builtin_trap()
 #endif
 
 #ifdef PORTAL_PLATFORM_WINDOWS

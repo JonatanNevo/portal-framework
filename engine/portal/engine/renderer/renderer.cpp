@@ -10,9 +10,6 @@
 
 #include "renderer.h"
 
-#include <tracy/Tracy.hpp>
-#include <tracy/TracyVulkan.hpp>
-
 #include "portal/core/log.h"
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -92,7 +89,7 @@ Renderer::~Renderer()
 
 void Renderer::cleanup()
 {
-    ZoneScoped;
+    PORTAL_PROF_ZONE();
     if (is_initialized)
     {
         context.get_device().wait_idle();
@@ -469,16 +466,16 @@ void Renderer::on_resize(const size_t new_width, const size_t new_height) const
 
 void Renderer::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function)
 {
-    ZoneScoped;
+    PORTAL_PROF_ZONE();
     context.get_device().get_handle().resetFences({immediate_fence});
     immediate_command_buffer.reset();
 
     immediate_command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
     {
-        TracyVkZone(tracy_context, *immediate_command_buffer, "Immediate Command Buffer");
+        // TracyVkZone(tracy_context, *immediate_command_buffer, "Immediate Command Buffer");
         function(immediate_command_buffer);
     }
-    TracyVkCollect(tracy_context, *immediate_command_buffer);
+    // TracyVkCollect(tracy_context, *immediate_command_buffer);
     immediate_command_buffer.end();
 
     vk::CommandBufferSubmitInfo cmd_submit_info{

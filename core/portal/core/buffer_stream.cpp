@@ -76,7 +76,7 @@ BufferStreamWriter::BufferStreamWriter(Buffer& buffer): std::ostream(this), buff
 
 std::streambuf::int_type BufferStreamWriter::overflow(std::streambuf::int_type)
 {
-    return traits_type::eof();
+    return std::streambuf::traits_type::eof();
 }
 
 std::streamsize BufferStreamWriter::xsputn(const char* s, std::streamsize n)

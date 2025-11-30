@@ -47,10 +47,10 @@ find_package(concurrentqueue CONFIG REQUIRED)
 
 if (PORTAL_PROFILE)
     set(CACHE TRACY_ENABLE TYPE BOOL FORCE ON)
+    find_package(Tracy CONFIG REQUIRED)
 else ()
     set(CACHE TRACY_ENABLE TYPE BOOL FORCE OFF)
 endif ()
-find_package(Tracy CONFIG REQUIRED)
 
 add_library(portal-core STATIC ${CORE_SOURCES})
 add_library(portal::core ALIAS portal-core)
@@ -100,6 +100,7 @@ elseif (APPLE)
             FILES ${CORE_MACOS_HEADERS}
     )
 elseif (UNIX)
+    message(STATUS ${CORE_LINUX_SOURCES})
     target_sources(portal-core
             PRIVATE ${CORE_LINUX_SOURCES}
             PUBLIC

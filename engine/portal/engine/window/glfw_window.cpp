@@ -129,7 +129,6 @@ constexpr static frozen::unordered_map<int, Key, 108> KEY_MAPPING{
     {GLFW_KEY_RIGHT_BRACKET, Key::RightBracket},
     {GLFW_KEY_BACKSLASH, Key::Backslash},
     {GLFW_KEY_APOSTROPHE, Key::Apostrophe},
-    {GLFW_KEY_SEMICOLON, Key::Colon},
     // TODO: there is only semicolon in glfw
     // TODO: missing special characters that require shift to print
     // {GLFW_KEY_, Key::Underscore},

@@ -31,9 +31,6 @@
     "name" : "vulkan-memory-allocator",
     "version>=" : "3.1.0"
   }, {
-    "name" : "benchmark",
-    "version>=" : "1.9.1"
-  }, {
     "name" : "concurrentqueue",
     "version>=" : "1.0.4"
   }, {

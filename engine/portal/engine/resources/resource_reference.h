@@ -18,7 +18,7 @@ class ResourceReference
 {
 public:
     ResourceReference() = default;
-    explicit ResourceReference(nullptr_t) : ResourceReference() {};
+    explicit ResourceReference(std::nullptr_t) : ResourceReference() {};
 
     ~ResourceReference()
     {

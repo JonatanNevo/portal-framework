@@ -4,13 +4,10 @@ if(NOT GTest_FOUND)
     find_package(GTest REQUIRED)
 endif()
 
-find_package(benchmark CONFIG REQUIRED)
-
 enable_testing()
 
 file(GLOB_RECURSE TEST_SOURCES "*tests.cpp")
 file(GLOB_RECURSE TEST_HEADERS "*.h")
-file(GLOB_RECURSE BENCHMARK_SOURCES "*benchmark.cpp")
 
 
 add_executable(portal-engine-test ${TEST_SOURCES} ${TEST_HEADERS} test_main.cpp)

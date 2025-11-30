@@ -8,9 +8,10 @@ A modular cross-platform framework for creating C++ applications, with focus on 
   - Clang 19 or later [recommended]
   - MSVC 17 or later
 - macOS 15 (Sequoia) or later
+> Linux build still have some issues with vcpkg
 - Linux
-  - Clang 19 or later [recommended]
-  - gcc 15 or later
+  - Clang 19 or later
+  - GCC 15 or later 
 
 # Installation
 TODO

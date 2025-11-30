@@ -110,6 +110,7 @@ FileStat FileSystem::stat_file(const std::filesystem::path& path)
         return FileStat(
             false,
             false,
+            0,
             0
         );
     }

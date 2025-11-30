@@ -6,6 +6,7 @@
 #pragma once
 
 #include <memory>
+#include <cstring>
 
 #include "common.h"
 #include "debug/assert.h"
@@ -23,7 +24,7 @@ struct Buffer
         size(0),
         allocated(false) {}
 
-    Buffer(nullptr_t):
+    Buffer(std::nullptr_t):
         data(nullptr),
         size(0),
         allocated(false) {}
@@ -98,14 +99,14 @@ struct Buffer
     [[nodiscard]] static Buffer copy(const Buffer& other)
     {
         Buffer&& buffer = allocate(other.size);
-        memcpy(const_cast<void*>(buffer.data), other.data, other.size);
+        std::memcpy(const_cast<void*>(buffer.data), other.data, other.size);
         return std::move(buffer);
     }
 
     [[nodiscard]] static Buffer copy(const void* data, const size_t size)
     {
         Buffer&& buffer = allocate(size);
-        memcpy(const_cast<void*>(buffer.data), data, size);
+        std::memcpy(const_cast<void*>(buffer.data), data, size);
         return std::move(buffer);
     }
 

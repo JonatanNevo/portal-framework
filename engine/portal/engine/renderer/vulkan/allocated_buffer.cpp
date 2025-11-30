@@ -66,7 +66,7 @@ AllocatedBuffer& AllocatedBuffer::operator=(AllocatedBuffer&& other) noexcept
     return *this;
 }
 
-AllocatedBuffer& AllocatedBuffer::operator=(nullptr_t) noexcept
+AllocatedBuffer& AllocatedBuffer::operator=(std::nullptr_t) noexcept
 {
     destroy_buffer(get_handle());
     Allocated::operator=(nullptr);

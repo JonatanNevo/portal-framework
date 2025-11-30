@@ -392,18 +392,6 @@ public:
         return t;
     }
 
-    template<>
-    StringId get_value<StringId>()
-    {
-        std::string string;
-        uint64_t id;
-
-        get_value(string);
-        get_value(id);
-
-        return StringId{id, string};
-    }
-
     void get_value(char*& t, const size_t length)
     {
         const auto property = get_property();
@@ -417,6 +405,17 @@ public:
 protected:
     virtual reflection::Property get_property() = 0;
 };
+
+template <>
+inline StringId Deserializer::get_value<StringId>() {
+    std::string string;
+    uint64_t id;
+
+    get_value(string);
+    get_value(id);
+
+    return StringId{id, string};
+}
 } // namespace portal
 
 template <portal::Serializable T>

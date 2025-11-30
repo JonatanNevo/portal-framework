@@ -54,7 +54,7 @@ public:
     Allocated(Allocated&& other) noexcept;
     Allocated& operator=(Allocated const& other) = delete;
     Allocated& operator=(Allocated&& other) = default;
-    virtual Allocated& operator=(nullptr_t);
+    virtual Allocated& operator=(std::nullptr_t);
 
 protected:
     /**
@@ -309,7 +309,7 @@ Allocated<HandleType>::Allocated(Allocated&& other) noexcept
 {}
 
 template <typename HandleType>
-Allocated<HandleType>& Allocated<HandleType>::operator=(nullptr_t) {
+Allocated<HandleType>& Allocated<HandleType>::operator=(std::nullptr_t) {
     allocation_create_info = {};
     allocation = nullptr;
     mapped_data = nullptr;

@@ -97,7 +97,7 @@ ImageAllocation ImageBuilder::build(const VulkanDevice& device) const
 
 ImageAllocation::ImageAllocation() : Allocated({}, nullptr, nullptr) {}
 
-ImageAllocation::ImageAllocation(nullptr_t) : ImageAllocation() {}
+ImageAllocation::ImageAllocation(std::nullptr_t) : ImageAllocation() {}
 
 ImageAllocation::ImageAllocation(vk::Image image): Allocated({}, image, nullptr)
 {}
@@ -115,7 +115,7 @@ ImageAllocation& ImageAllocation::operator=(ImageAllocation&& other) noexcept
     return *this;
 }
 
-ImageAllocation& ImageAllocation::operator=(const nullptr_t nullptr_) noexcept
+ImageAllocation& ImageAllocation::operator=(const std::nullptr_t nullptr_) noexcept
 {
     destroy_image(get_handle());
     Allocated::operator=(nullptr_);

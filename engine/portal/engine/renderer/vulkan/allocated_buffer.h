@@ -39,11 +39,11 @@ public:
     static AllocatedBuffer create_staging_buffer(const VulkanDevice& device, const T& data);
 
     AllocatedBuffer();
-    AllocatedBuffer(nullptr_t) : AllocatedBuffer() {}
+    AllocatedBuffer(std::nullptr_t) : AllocatedBuffer() {}
 
     AllocatedBuffer(AllocatedBuffer&& other) noexcept;
     AllocatedBuffer& operator=(AllocatedBuffer&& other) noexcept;
-    AllocatedBuffer& operator=(nullptr_t) noexcept override;
+    AllocatedBuffer& operator=(std::nullptr_t) noexcept override;
 
 
     AllocatedBuffer(const AllocatedBuffer&) = delete;
