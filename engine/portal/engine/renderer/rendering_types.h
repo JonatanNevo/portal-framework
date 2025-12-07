@@ -28,6 +28,16 @@ struct GPUMeshBuffers
     vk::DeviceAddress vertex_buffer_address{};
 };
 
+struct GPUCameraData
+{
+    glm::mat4 view;
+    glm::mat4 proj;
+    glm::mat4 view_proj;
+    glm::mat4 inverse_view;
+    glm::mat4 inverse_proj;
+    glm::mat4 inverse_view_proj;
+};
+
 struct GPUSceneData
 {
     glm::mat4 view;

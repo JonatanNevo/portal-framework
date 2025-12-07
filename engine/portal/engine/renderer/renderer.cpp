@@ -109,6 +109,7 @@ void Renderer::begin_frame(FrameContext& frame)
 
     // TODO: pull the `RenderingContext` from some cache instead of allocating each frame
     frame.rendering_context = FrameRenderingContext{
+        .viewport_bounds = {0, 0, swapchain->get_width(), swapchain->get_height()},
         .depth_image = depth_image->get_image_info().image.get_handle(),
         .depth_image_view = depth_image->get_image_info().view,
         .command_buffer = frames[current_frame].command_buffer,

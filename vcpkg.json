@@ -59,5 +59,8 @@
   }, {
     "name" : "enchantum",
     "version>=" : "0.3.0"
+  }, {
+    "name" : "entt",
+    "version>=" : "3.16.0"
   } ]
 }

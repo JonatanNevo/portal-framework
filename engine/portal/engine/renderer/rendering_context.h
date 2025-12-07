@@ -126,6 +126,8 @@ struct FrameRenderingContext
 {
     // TODO: make this more generic? maybe based on active scene?
     vulkan::GPUSceneData scene_data{};
+    vulkan::GPUCameraData camera_data{};
+    glm::uvec4 viewport_bounds;
 
     // TODO: switch with generic `Image` class
     vk::Image draw_image;
