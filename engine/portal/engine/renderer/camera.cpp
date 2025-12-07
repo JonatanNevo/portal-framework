@@ -11,8 +11,49 @@
 
 namespace portal
 {
+ng::Camera::Camera(const glm::mat4& projection, const glm::mat4& reversed_projection)
+    : projection(projection),
+      reversed_projection(reversed_projection) {}
 
-Camera::Camera(Input& input): input(input)
+ng::Camera::Camera(const float fov, const float width, const float height, const float near_clip, const float far_clip)
+    : projection(glm::perspectiveFov(glm::radians(fov), width, height, near_clip, far_clip)),
+      reversed_projection(glm::perspectiveFov(glm::radians(fov), width, height, far_clip, near_clip))
+{}
+
+
+void ng::Camera::set_perspective_projection(const float fov, const float width, const float height, const float near_clip, const float far_clip)
+{
+    projection = glm::perspectiveFov(glm::radians(fov), width, height, near_clip, far_clip);
+    reversed_projection = glm::perspectiveFov(glm::radians(fov), width, height, far_clip, near_clip);
+}
+
+void ng::Camera::set_orthographic_projection(const float width, const float height, const float near_clip, const float far_clip)
+{
+    projection = glm::ortho(-width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f, near_clip, far_clip);
+    reversed_projection = glm::ortho(-width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f, far_clip, near_clip);
+}
+
+void ng::Camera::set_exposure(const float new_exposure)
+{
+    exposure = new_exposure;
+}
+
+const glm::mat4& ng::Camera::get_projection() const
+{
+    return projection;
+}
+
+const glm::mat4& ng::Camera::get_reversed_projection() const
+{
+    return reversed_projection;
+}
+
+float ng::Camera::get_exposure() const
+{
+    return exposure;
+}
+
+Camera::Camera(Input& input) : input(input)
 {
     forward_direction = glm::vec3{0.54, -0.42, -0.72};
     position = glm::vec3{-0.51f, 0.4f, 0.74f};
@@ -26,7 +67,7 @@ void Camera::update(const float delta_time)
     constexpr glm::vec3 up_direction(0.0f, 1.0f, 0.0f);
     const glm::vec3 right_direction = glm::cross(forward_direction, up_direction);
 
-    if (should_move && (moved || std::ranges::any_of(directions, [](auto& d){ return d != 0;})))
+    if (should_move && (moved || std::ranges::any_of(directions, [](auto& d) { return d != 0; })))
     {
         glm::vec3 pos_delta{};
         pos_delta += directions[0] * forward_direction;
@@ -42,8 +83,8 @@ void Camera::update(const float delta_time)
             glm::cross(
                 glm::angleAxis(-pitch_delta, right_direction),
                 glm::angleAxis(-yaw_delta, glm::vec3(0.f, 1.0f, 0.0f))
-                )
-            );
+            )
+        );
         forward_direction = glm::rotate(q, forward_direction);
 
         recalculate_view();
@@ -199,7 +240,8 @@ float Camera::get_rotation_speed()
     return 0.3f;
 }
 
-void Camera::set_position(const glm::vec3& new_position) {
+void Camera::set_position(const glm::vec3& new_position)
+{
     position = new_position;
 }
 
@@ -214,5 +256,4 @@ void Camera::recalculate_view()
     view = glm::lookAt(position, position + forward_direction, glm::vec3(0, 1, 0));
     inverse_view = glm::inverse(view);
 }
-
 } // portal

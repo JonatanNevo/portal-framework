@@ -11,6 +11,31 @@
 
 namespace portal
 {
+namespace ng
+{
+    class Camera
+    {
+    public:
+        Camera() = default;
+        Camera(const glm::mat4& projection, const glm::mat4& reversed_projection);
+        Camera(float fov, float width, float height, float near_clip, float far_clip);
+
+        void set_perspective_projection(float fov, float width, float height, float near_clip, float far_clip);
+        void set_orthographic_projection(float width, float height, float near_clip, float far_clip);
+        void set_exposure(float new_exposure);
+
+        [[nodiscard]] const glm::mat4& get_projection() const;
+        [[nodiscard]] const glm::mat4& get_reversed_projection() const;
+        [[nodiscard]] float get_exposure() const;
+
+    private:
+        float exposure = 0.8f;
+
+        glm::mat4 projection = glm::mat4(1.0f);
+        // A matrix where the near and far planes are switched (near is small and large is far)
+        glm::mat4 reversed_projection = glm::mat4(1.0f);
+    };
+}
 
 class Camera
 {

@@ -25,6 +25,7 @@ find_package(fastgltf CONFIG REQUIRED)
 find_package(SPIRV-Tools CONFIG REQUIRED)
 find_package(slang CONFIG REQUIRED)
 find_package(glaze CONFIG REQUIRED)
+find_package(EnTT CONFIG REQUIRED)
 
 option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACKAGE)
@@ -60,6 +61,7 @@ target_link_libraries(portal-engine
         slang::slang
         SPIRV-Tools-static
         glaze::glaze
+        EnTT::EnTT
 )
 
 if(MSVC)
