@@ -4,8 +4,6 @@
 //
 
 #pragma once
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
 #include "portal/core/uuid.h"
 #include "portal/core/strings/string_id.h"
 
@@ -15,4 +13,6 @@ struct TagComponent
 {
     StringId tag;
 };
+
+struct Dirty {};
 }

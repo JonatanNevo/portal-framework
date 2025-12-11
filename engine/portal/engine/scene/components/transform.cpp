@@ -91,9 +91,18 @@ void TransformComponent::set_scale(const glm::vec3& new_scale)
     scale = new_scale;
 }
 
-glm::mat4 TransformComponent::get_matrix() const
+void TransformComponent::calculate_world_matrix(const glm::mat4& root)
 {
-    return glm::translate(glm::mat4(1.0f), translation) * glm::toMat4(rotation) * glm::scale(glm::mat4(1.0f), scale);
+    const auto local_matrix = glm::translate(glm::mat4(1.0f), translation)
+        * glm::toMat4(rotation)
+        * glm::scale(glm::mat4(1.0f), scale);
+
+    world_matrix = root * local_matrix;
+}
+
+const glm::mat4& TransformComponent::get_world_matrix() const
+{
+    return world_matrix;
 }
 
 const glm::vec3& TransformComponent::get_translation() const

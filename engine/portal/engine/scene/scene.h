@@ -6,10 +6,8 @@
 #pragma once
 
 #include <span>
-#include <entt/entt.hpp>
 
 #include "entity.h"
-#include "llvm/ADT/SmallVector.h"
 #include "portal/engine/reference.h"
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/engine/scene/nodes/node.h"
@@ -20,13 +18,6 @@ namespace ng
 {
     class Scene
     {
-        struct PerformanceTimers
-        {
-            float script_update = 0.0f;
-            float script_last_update = 0.0f;
-            float physics_update = 0.0f;
-        };
-
     public:
         explicit Scene(StringId name);
         ~Scene();
@@ -41,7 +32,7 @@ namespace ng
 
         [[nodiscard]] Entity get_main_camera_entity() const;
 
-        [[nodiscard]] glm::mat4 get_world_transform(Entity entity) const;
+        [[nodiscard]] static glm::mat4 get_world_transform(Entity entity);
 
         template <typename... T>
         auto get_all_entities_with()
