@@ -23,7 +23,9 @@ public:
     void set_rotation_euler(const glm::vec3& new_rotation_euler);
     void set_scale(const glm::vec3& new_scale);
 
-    [[nodiscard]] glm::mat4 get_matrix() const;
+    void calculate_world_matrix(const glm::mat4& root);
+
+    [[nodiscard]] const glm::mat4& get_world_matrix() const;
     [[nodiscard]] const glm::vec3& get_translation() const;
     [[nodiscard]] const glm::quat& get_rotation() const;
     [[nodiscard]] const glm::vec3& get_rotation_euler() const;
@@ -37,5 +39,7 @@ private:
     // TODO: we need the euler rotation only for "human readable rotations" meaning the editor and the likes.
     // TODO: Find a way to exclude the euler rotation from runtime, maybe as a different component
     glm::vec3 rotation_euler = glm::vec3(0.0f);
+
+    glm::mat4 world_matrix = glm::mat4(1.0f);
 };
 } // portal

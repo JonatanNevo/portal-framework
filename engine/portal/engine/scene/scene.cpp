@@ -22,6 +22,15 @@ ng::Scene::Scene(StringId name)
 {
     scene_entity = registry.create();
     registry.emplace<TagComponent>(scene_entity, name);
+
+    entt::sigh_helper{registry}
+        .with<TransformComponent>()
+        .on_construct<&entt::registry::emplace_or_replace<Dirty>>()
+        .on_update<&entt::registry::emplace_or_replace<Dirty>>()
+        .on_destroy<&entt::registry::emplace_or_replace<Dirty>>();
+
+    // Creating ground initially for performance considerations
+    registry.group<Dirty, TransformComponent>();
 }
 
 ng::Scene::~Scene()
@@ -40,6 +49,36 @@ void ng::Scene::update(float dt)
 
     dt = dt * time_scale;
 
+    // Update dirty Transforms
+    const auto transforms_to_update = registry.group<Dirty, TransformComponent>();
+    transforms_to_update.sort(
+        [this](const entt::entity lhs, const entt::entity rhs)
+        {
+            const auto& left_rel = registry.get<RelationshipComponent>(lhs);
+            const auto& right_rel = registry.get<RelationshipComponent>(rhs);
+
+            return right_rel.parent == lhs
+                || left_rel.next == rhs
+                || (!(left_rel.parent == rhs || right_rel.next == lhs)
+                    && (left_rel.parent < right_rel.parent || (left_rel.parent == right_rel.parent && &left_rel < &right_rel)));
+        }
+    );
+
+    for (auto&& [entity, transform] : transforms_to_update.each())
+    {
+        const auto& relationship = registry.get<RelationshipComponent>(entity);
+
+        auto parent_matrix = glm::mat4(1.0f);
+        if (relationship.parent != entt::null)
+        {
+            auto& parent_transform = registry.get<TransformComponent>(relationship.parent);
+            parent_matrix = parent_transform.get_world_matrix();
+        }
+        transform.calculate_world_matrix(parent_matrix);
+    }
+
+    registry.clear<Dirty>();
+
     // TODO: call all relevant systems, maybe as jobs on the scheduler?
 }
 
@@ -54,6 +93,7 @@ void ng::Scene::render(FrameContext& frame)
     }
 
     auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
+
 
     glm::mat4 camera_view_matrix = glm::inverse(get_world_transform(camera_entity));
     auto camera = camera_entity.get_component<CameraComponent>();
@@ -184,17 +224,10 @@ Entity ng::Scene::get_main_camera_entity() const
     return Entity{entt::null, const_cast<entt::registry&>(registry)};
 }
 
-glm::mat4 ng::Scene::get_world_transform(Entity entity) const
+glm::mat4 ng::Scene::get_world_transform(Entity entity)
 {
-    PORTAL_PROF_ZONE();
-
-    // TODO: is this the best approach? isn't it better to just iterate on all "dirty" entities each frame and recalculate their world matrix?
-    auto transform = glm::mat4(1.0f);
-    const auto parent = entity.get_parent();
-    if (parent)
-        transform = get_world_transform(parent);
-
-    return transform * entity.get_component<TransformComponent>().get_matrix();
+    const auto& transform = entity.get_component<TransformComponent>();
+    return transform.get_world_matrix();
 }
 
 void ng::Scene::populate_entity(Entity& entity, StringId name, bool should_sort)
