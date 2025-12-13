@@ -77,7 +77,7 @@ private:
 
     glm::uvec4 viewport_bounds;
 
-    constexpr static float MIN_SPEED = 0.000005;
+    constexpr static float MIN_SPEED = 0.000005f;
     constexpr static float MAX_SPEED = 100.f;
 
 };

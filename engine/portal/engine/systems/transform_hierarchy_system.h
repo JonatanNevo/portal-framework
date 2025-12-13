@@ -5,23 +5,20 @@
 
 #pragma once
 
-#include "system.h"
+#include "portal/engine/ecs/system.h"
 
-#include "portal/engine/scene/components/base.h"
-#include "portal/engine/scene/components/transform.h"
+#include "portal/engine/components/transform.h"
 
 namespace portal
 {
-class TransformHierarchySystem : public System<TransformHierarchySystem, Dirty, TransformComponent>
+class TransformHierarchySystem final : public ecs::System<TransformHierarchySystem, ecs::Owns<TransformDirtyTag>, ecs::Owns<TransformComponent>>
 {
 public:
-    TransformHierarchySystem(entt::registry& registry, jobs::Scheduler& scheduler);
+    static void execute(ecs::Registry& registry);
 
-    void execute() const;
-
-    void on_component_added(entt::entity entity, TransformComponent& transform) const;
-    void on_component_removed(entt::entity entity, TransformComponent& transform) const;
-    void on_component_changed(entt::entity entity, TransformComponent& transform) const;
+    static void on_component_added(ecs::Registry& registry, Entity entity, TransformComponent& transform);
+    static void on_component_removed(ecs::Registry& registry, Entity entity, TransformComponent& transform);
+    static void on_component_changed(ecs::Registry& registry, Entity entity, TransformComponent& transform);
 
     [[nodiscard]] static StringId get_name() { return STRING_ID("Transform Hierarchy"); };
 };

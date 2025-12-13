@@ -5,7 +5,7 @@
 
 #include "entity_iterators.h"
 #include "entity.h"
-#include "components/relationship.h"
+#include "portal/engine/components/relationship.h"
 
 namespace portal
 {
@@ -28,7 +28,7 @@ ChildIterator& ChildIterator::operator++()
     if (current != entt::null)
     {
         const auto& rel = registry->get<RelationshipComponent>(current);
-        current = rel.next;
+        current = rel.next.get_id();
     }
     return *this;
 }
@@ -58,18 +58,18 @@ RecursiveChildIterator::RecursiveChildIterator(const entt::entity start, entt::r
         const auto& rel = registry->get<RelationshipComponent>(start);
         if (rel.children > 0)
         {
-            llvm::SmallVector<entt::entity, 8> temp;
+            llvm::SmallVector<Entity, 8> temp;
             auto child = rel.first;
-            while (child != entt::null)
+            while (child.get_id() != entt::null)
             {
                 temp.push_back(child);
-                const auto& child_rel = registry->get<RelationshipComponent>(child);
+                const auto& child_rel = child.get_component<RelationshipComponent>();
                 child = child_rel.next;
             }
 
             for (auto it = temp.rbegin(); it != temp.rend(); ++it)
             {
-                stack.push_back(*it);
+                stack.push_back(it->get_id());
             }
         }
 
@@ -91,18 +91,18 @@ void RecursiveChildIterator::advance_to_next()
     const auto& rel = registry->get<RelationshipComponent>(current);
     if (rel.children > 0)
     {
-        llvm::SmallVector<entt::entity, 8> temp;
+        llvm::SmallVector<Entity, 8> temp;
         auto child = rel.first;
-        while (child != entt::null)
+        while (child.get_id() != entt::null)
         {
             temp.push_back(child);
-            const auto& child_rel = registry->get<RelationshipComponent>(child);
+            const auto& child_rel = child.get_component<RelationshipComponent>();
             child = child_rel.next;
         }
 
         for (auto it = temp.rbegin(); it != temp.rend(); ++it)
         {
-            stack.push_back(*it);
+            stack.push_back(it->get_id());
         }
     }
 }
@@ -148,7 +148,7 @@ ChildRange::ChildRange(const Entity& entity) : entity(entity)
 ChildIterator ChildRange::begin() const
 {
     const auto& rel = entity.get_component<RelationshipComponent>();
-    return ChildIterator(rel.first, &entity.get_registry());
+    return ChildIterator(rel.first.get_id(), &entity.get_registry());
 }
 
 ChildIterator ChildRange::end() const

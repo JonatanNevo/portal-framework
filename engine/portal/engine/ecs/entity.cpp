@@ -4,10 +4,10 @@
 //
 
 #include "entity.h"
-
-#include "components/base.h"
-#include "components/relationship.h"
 #include "entity_iterators.h"
+
+#include "portal/engine/components/base.h"
+#include "portal/engine/components/relationship.h"
 
 namespace portal
 {
@@ -15,7 +15,7 @@ Entity::Entity(const entt::entity entity, entt::registry& reg) : handle(reg, ent
 
 Entity::Entity(const entt::handle handle) : handle(handle) {}
 
-void Entity::set_parent(const Entity parent)
+void Entity::set_parent(Entity parent)
 {
     auto current_parent = get_parent();
     if (current_parent == parent)
@@ -25,56 +25,55 @@ void Entity::set_parent(const Entity parent)
         current_parent.remove_child(*this);
 
     auto& relationship = get_component<RelationshipComponent>();
-    relationship.parent = parent.get_id();
+    relationship.parent = parent;
 
     if (parent)
     {
-        auto& parent_rel = handle.registry()->get<RelationshipComponent>(parent.get_id());
+        auto& parent_rel = parent.get_component<RelationshipComponent>();
 
         if (parent_rel.children == 0)
         {
-            parent_rel.first = get_id();
+            parent_rel.first = *this;
         }
         else
         {
             auto last_child = parent_rel.first;
             for (size_t i = 1; i < parent_rel.children; ++i)
             {
-                last_child = handle.registry()->get<RelationshipComponent>(last_child).next;
+                last_child = last_child.get_component<RelationshipComponent>().next;
             }
-            handle.registry()->get<RelationshipComponent>(last_child).next = get_id();
+            last_child.get_component<RelationshipComponent>().next = *this;
             relationship.prev = last_child;
         }
         parent_rel.children += 1;
-        relationship.next = entt::null;
+        relationship.next = null_entity;
     }
     else
     {
-        relationship.prev = entt::null;
-        relationship.next = entt::null;
+        relationship.prev = null_entity;
+        relationship.next = null_entity;
     }
 }
 
-bool Entity::remove_child(const Entity child)
+bool Entity::remove_child(Entity child)
 {
-    const auto child_id = child.get_id();
-    auto& child_rel = handle.registry()->get<RelationshipComponent>(child_id);
+    auto& child_rel = child.get_component<RelationshipComponent>();
     auto& parent_rel = get_component<RelationshipComponent>();
 
-    if (child_rel.parent != get_id())
+    if (child_rel.parent != *this)
         return false;
 
-    if (child_rel.prev != entt::null)
-        handle.registry()->get<RelationshipComponent>(child_rel.prev).next = child_rel.next;
+    if (child_rel.prev != null_entity)
+        child_rel.prev.get_component<RelationshipComponent>().next = child_rel.next;
     else
         parent_rel.first = child_rel.next;
 
-    if (child_rel.next != entt::null)
-        handle.registry()->get<RelationshipComponent>(child_rel.next).prev = child_rel.prev;
+    if (child_rel.next != null_entity)
+        child_rel.next.get_component<RelationshipComponent>().prev = child_rel.prev;
 
-    child_rel.prev = entt::null;
-    child_rel.next = entt::null;
-    child_rel.parent = entt::null;
+    child_rel.prev = null_entity;
+    child_rel.next = null_entity;
+    child_rel.parent = null_entity;
 
     parent_rel.children -= 1;
     return true;
@@ -92,7 +91,7 @@ entt::entity Entity::get_id() const
 
 StringId Entity::get_name() const
 {
-    return has_component<TagComponent>() ? get_component<TagComponent>().tag : no_name;
+    return has_component<NameComponent>() ? get_component<NameComponent>().name : no_name;
 }
 
 Entity::operator uint32_t() const
