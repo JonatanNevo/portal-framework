@@ -30,6 +30,7 @@ return vk::Format::TO
     CASE(RG16_Float, eR16G16Sfloat);
     CASE(RG32_Float, eR32G32Sfloat);
     CASE(RGB8_UNorm, eR8G8B8Unorm);
+    CASE(BGRA8_UNorm, eB8G8R8A8Unorm);
     CASE(RGB8_UInt, eR8G8B8Uint);
     CASE(RGB16_UInt, eR16G16B16Uint);
     CASE(RGB32_UInt, eR32G32B32Uint);
@@ -48,8 +49,6 @@ return vk::Format::TO
     CASE(Depth_24UNorm_Stencil_8UInt, eD24UnormS8Uint);
     CASE(Depth_16UNorm_Stencil_8UInt, eD16UnormS8Uint);
     CASE(Depth_16UNorm, eD16UnormS8Uint);
-    default:
-        break;
     }
 
     PORTAL_ASSERT(false, "Unknown image format stage");
@@ -79,6 +78,7 @@ return portal::renderer::ImageFormat::TO
         CASE(RG16_Float, eR16G16Sfloat);
         CASE(RG32_Float, eR32G32Sfloat);
         CASE(RGB8_UNorm, eR8G8B8Unorm);
+        CASE(BGRA8_UNorm, eB8G8R8A8Unorm);
         CASE(RGB8_UInt, eR8G8B8Uint);
         CASE(RGB16_UInt, eR16G16B16Uint);
         CASE(RGB32_UInt, eR32G32B32Uint);
@@ -99,7 +99,7 @@ return portal::renderer::ImageFormat::TO
     default:
         break;
     }
-    PORTAL_ASSERT(false, "Unknown vulkan format");
+    PORTAL_ASSERT(false, "Unknown vulkan format - {}", vk::to_string(format));
     return portal::renderer::ImageFormat::None;
 #undef CASE
 }

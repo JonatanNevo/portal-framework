@@ -29,9 +29,10 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& physical_device, const Vu
     if (physical_device.is_extension_supported(vk::NVDeviceDiagnosticsConfigExtensionName))
         device_extensions.push_back(vk::NVDeviceDiagnosticsConfigExtensionName);
 
-    if (physical_device.is_extension_supported(vk::EXTDebugMarkerExtensionName))
+    if (physical_device.is_extension_supported(vk::EXTDebugMarkerExtensionName) && physical_device.is_extension_supported("VK_EXT_debug_report"))
     {
         device_extensions.push_back(vk::EXTDebugMarkerExtensionName);
+        device_extensions.push_back("VK_EXT_debug_report"); // Required for moltenvk
         debug_marker_enabled = true;
     }
 

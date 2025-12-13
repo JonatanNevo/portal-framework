@@ -17,7 +17,7 @@ enum class CameraMode
 class EditorCamera final : public ng::Camera
 {
 public:
-    EditorCamera(float fov, float width, float height, float near_clip, float far_clip);
+    EditorCamera(Input& input, float fov, float width, float height, float near_clip, float far_clip);
 
     void update(float dt);
 
@@ -48,13 +48,13 @@ private:
     glm::vec3 position, direction, focal_point;
 
     float vertical_fov = 70.f;
-    float near_clip = 10000.f;
-    float far_clip = 0.1f;
+    [[maybe_unused]] float near_clip = 10000.f;
+    [[maybe_unused]] float far_clip = 0.1f;
 
-    float aspect_ratio;
+    [[maybe_unused]] float aspect_ratio;
     bool active = false;
-    bool panning = false;
-    bool rotating = false;
+    [[maybe_unused]] bool panning = false;
+    [[maybe_unused]] bool rotating = false;
 
     glm::vec2 initial_mouse_position;
     glm::vec3 initial_focal_point;
@@ -73,7 +73,7 @@ private:
 
     CameraMode mode = CameraMode::Arcball;
 
-    float min_focus_distance = 100.f;
+    [[maybe_unused]] float min_focus_distance = 100.f;
 
     glm::uvec4 viewport_bounds;
 

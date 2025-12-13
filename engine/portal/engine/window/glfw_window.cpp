@@ -313,15 +313,15 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
     }
 
     // Setup icon
-    if (FileSystem::exists(properties.icon_path))
+    if (properties.icon_path && FileSystem::exists(properties.icon_path.value()))
     {
         GLFWimage icon;
-        icon.pixels = stbi_load(properties.icon_path.string().c_str(), &icon.width, &icon.height, 0, 4);
+        icon.pixels = stbi_load(properties.icon_path.value().c_str(), &icon.width, &icon.height, 0, 4);
         glfwSetWindowIcon(handle, 1, &icon);
     }
     else
     {
-        LOGGER_WARN("Icon file {} does not exist", properties.icon_path.generic_string());
+        LOGGER_WARN("Icon file does not exist");
     }
 
     glfwSetWindowUserPointer(handle, &this->consumers);

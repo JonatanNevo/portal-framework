@@ -5,6 +5,7 @@
 
 #include "engine.h"
 
+#include "settings.h"
 #include "portal/engine/imgui/imgui_module.h"
 #include "portal/engine/modules/scheduler_module.h"
 #include "portal/engine/resources/database/folder_resource_database.h"
@@ -27,8 +28,9 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
 
     const WindowProperties window_properties{
         .title = properties.name,
+        .icon_path = Settings::get().get_setting<std::filesystem::path>("application.icon-path"),
         .extent = {properties.width, properties.width},
-        .requested_frames_in_flight = properties.frames_in_flight
+        .requested_frames_in_flight = properties.frames_in_flight,
     };
     window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, input});
 

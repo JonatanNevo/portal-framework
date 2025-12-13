@@ -13,7 +13,6 @@ class TransformComponent
 {
 public:
     TransformComponent() = default;
-    TransformComponent(const TransformComponent& other) = default;
     explicit TransformComponent(const glm::vec3& translation);
     TransformComponent(const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale);
 

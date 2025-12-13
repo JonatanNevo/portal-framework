@@ -7,11 +7,12 @@
 
 namespace portal
 {
-EditorCamera::EditorCamera(const float fov, const float width, const float height, const float near_clip, const float far_clip)
+EditorCamera::EditorCamera(Input& input, const float fov, const float width, const float height, const float near_clip, const float far_clip)
     : Camera(
           glm::perspectiveFov(glm::radians(fov), width, height, near_clip, far_clip),
           glm::perspectiveFov(glm::radians(fov), width, height, far_clip, near_clip)
       ),
+      input(input),
       focal_point(0.f),
       vertical_fov(glm::radians(fov)),
       near_clip(near_clip),
@@ -158,7 +159,6 @@ void EditorCamera::mouse_pan(const glm::vec2& delta)
     auto panning_speed = pan_speed();
     focal_point -= get_right_direction() * delta.x * panning_speed.x * distance;
     focal_point += get_up_direction() * delta.y * panning_speed.y * distance;
-
 }
 
 void EditorCamera::mouse_rotate(const glm::vec2& delta)
@@ -169,9 +169,9 @@ void EditorCamera::mouse_rotate(const glm::vec2& delta)
     pitch_delta += delta.y * rotation_speed;
 }
 
-void EditorCamera::mouse_zoom(float delta)
+void EditorCamera::mouse_zoom(float)
 {
-    distance -= delta * zoom_speed()
+    // distance -= delta * zoom_speed();
 }
 
 glm::vec3 EditorCamera::calculate_position() const
