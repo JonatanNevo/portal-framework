@@ -11,7 +11,10 @@
 #include "glaze/core/reflect.hpp"
 #include "portal/core/string_utils.h"
 #include "portal/engine/engine.h"
+#include "portal/engine/ecs/registry.h"
 #include "portal/engine/resources/resources/composite.h"
+#include "portal/engine/systems/scene_rendering_system.h"
+#include "portal/engine/systems/transform_hierarchy_system.h"
 
 using namespace portal;
 

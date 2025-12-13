@@ -13,11 +13,11 @@ struct RelationshipComponent
 {
     // Children
     size_t children;
-    entt::entity first = entt::null;
-    entt::entity prev = entt::null;
-    entt::entity next = entt::null;
+    Entity first = null_entity;
+    Entity prev = null_entity;
+    Entity next = null_entity;
 
     // Parent
-    entt::entity parent = entt::null;
+    Entity parent = null_entity;
 };
 }

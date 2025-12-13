@@ -9,10 +9,14 @@
 
 namespace portal
 {
-struct TagComponent
+struct NameComponent
 {
-    StringId tag;
+    StringId name;
 };
 
-struct Dirty {};
+struct PlayerTag
+{
+    const int id = 0;
+};
+
 }

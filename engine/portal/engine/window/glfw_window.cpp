@@ -316,7 +316,7 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
     if (properties.icon_path && FileSystem::exists(properties.icon_path.value()))
     {
         GLFWimage icon;
-        icon.pixels = stbi_load(properties.icon_path.value().c_str(), &icon.width, &icon.height, 0, 4);
+        icon.pixels = stbi_load(properties.icon_path.value().generic_string().c_str(), &icon.width, &icon.height, 0, 4);
         glfwSetWindowIcon(handle, 1, &icon);
     }
     else

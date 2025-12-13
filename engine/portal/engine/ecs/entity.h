@@ -4,7 +4,6 @@
 //
 
 #pragma once
-#include <entt/entt.hpp>
 
 #include "llvm/ADT/SmallVector.h"
 #include "portal/core/uuid.h"
@@ -16,17 +15,13 @@
 namespace portal
 {
 
-namespace ng
-{
-    class Scene;
-}
-
 /**
  * A wrapper around entt::handle with relationship management
  */
 class Entity
 {
 public:
+    Entity() = default;
     Entity(entt::entity entity, entt::registry& reg);
     Entity(entt::handle handle);
 
@@ -116,4 +111,6 @@ private:
 
     inline const static auto no_name = STRING_ID("Unnamed");
 };
+
+static const Entity null_entity{};
 } // portal

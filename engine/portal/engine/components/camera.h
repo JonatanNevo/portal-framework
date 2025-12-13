@@ -17,6 +17,8 @@ enum class ProjectionType
     Orthographic
 };
 
+struct MainCameraTag {};
+
 // TODO: split into structs based on projection type?
 struct CameraComponent
 {
@@ -32,7 +34,6 @@ struct CameraComponent
     glm::uvec4 viewport_bounds = {0, 0, 0, 0};
 
     ng::Camera camera{};
-    bool primary = true;
 
     void set_perspective(float fov, float near_clip, float far_clip);
     void set_orthographic(float size, float near_clip, float far_clip);
