@@ -48,8 +48,7 @@ enum class WindowMode
 struct WindowProperties
 {
     StringId title = STRING_ID("Portal");
-    // TODO: change it from here :(
-    std::filesystem::path icon_path = R"(C:\Code\portal-framework\engine\resources\portal_icon_64x64.png)";
+    std::optional<std::filesystem::path> icon_path = R"(C:\Code\portal-framework\engine\resources\portal_icon_64x64.png)";
     WindowExtent extent{1280, 720};
 
     WindowMode mode = WindowMode::Default;

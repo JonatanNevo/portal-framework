@@ -77,6 +77,7 @@ ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window) : TaggedModul
         .Instance = *vulkan_context.get_instance(),
         .PhysicalDevice = *vulkan_context.get_physical_device().get_handle(),
         .Device = *vulkan_context.get_device().get_handle(),
+        .QueueFamily = static_cast<uint32_t>(vulkan_context.get_device().get_graphics_queue().get_family_index()),
         .Queue = vulkan_context.get_device().get_graphics_queue().get_handle(),
         .DescriptorPool = *imgui_pool,
         .MinImageCount = 3,

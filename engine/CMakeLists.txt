@@ -73,8 +73,17 @@ endif()
 if(PORTAL_BUILD_TESTS)
     add_subdirectory(tests)
 
-    add_executable(engine_test main.cpp)
+    add_executable(engine_test MACOSX_BUNDLE main.cpp)
     target_link_libraries(engine_test portal::engine)
+
+    set_target_properties(engine_test PROPERTIES
+            MACOSX_BUNDLE TRUE
+            MACOSX_BUNDLE_IDENTIFIER com.portal.engine_test
+            MACOSX_BUNDLE_BUNDLE_NAME "Engine Test"
+            MACOSX_BUNDLE_ICON_FILE resources/portal_icon_64x64.icns
+            MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+            MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+    )
 endif ()
 unset(PORTAL_BUILD_TESTS CACHE)
 

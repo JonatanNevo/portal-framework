@@ -23,14 +23,8 @@ ng::Scene::Scene(StringId name)
     scene_entity = registry.create();
     registry.emplace<TagComponent>(scene_entity, name);
 
-    entt::sigh_helper{registry}
-        .with<TransformComponent>()
-        .on_construct<&entt::registry::emplace_or_replace<Dirty>>()
-        .on_update<&entt::registry::emplace_or_replace<Dirty>>()
-        .on_destroy<&entt::registry::emplace_or_replace<Dirty>>();
-
-    // Creating ground initially for performance considerations
-    registry.group<Dirty, TransformComponent>();
+    // All entities should have a relationship component, except the `scene` which is used as a global state
+    registry.on_construct<entt::entity>().connect<&entt::registry::emplace_or_replace<RelationshipComponent>>();
 }
 
 ng::Scene::~Scene()
@@ -48,36 +42,6 @@ void ng::Scene::update(float dt)
     PORTAL_PROF_ZONE();
 
     dt = dt * time_scale;
-
-    // Update dirty Transforms
-    const auto transforms_to_update = registry.group<Dirty, TransformComponent>();
-    transforms_to_update.sort(
-        [this](const entt::entity lhs, const entt::entity rhs)
-        {
-            const auto& left_rel = registry.get<RelationshipComponent>(lhs);
-            const auto& right_rel = registry.get<RelationshipComponent>(rhs);
-
-            return right_rel.parent == lhs
-                || left_rel.next == rhs
-                || (!(left_rel.parent == rhs || right_rel.next == lhs)
-                    && (left_rel.parent < right_rel.parent || (left_rel.parent == right_rel.parent && &left_rel < &right_rel)));
-        }
-    );
-
-    for (auto&& [entity, transform] : transforms_to_update.each())
-    {
-        const auto& relationship = registry.get<RelationshipComponent>(entity);
-
-        auto parent_matrix = glm::mat4(1.0f);
-        if (relationship.parent != entt::null)
-        {
-            auto& parent_transform = registry.get<TransformComponent>(relationship.parent);
-            parent_matrix = parent_transform.get_world_matrix();
-        }
-        transform.calculate_world_matrix(parent_matrix);
-    }
-
-    registry.clear<Dirty>();
 
     // TODO: call all relevant systems, maybe as jobs on the scheduler?
 }
@@ -235,8 +199,6 @@ void ng::Scene::populate_entity(Entity& entity, StringId name, bool should_sort)
     entity.add_component<TransformComponent>();
     if (name != INVALID_STRING_ID)
         entity.add_component<TagComponent>(name);
-
-    entity.add_component<RelationshipComponent>();
 
     if (should_sort)
         sort_entities();
