@@ -11,49 +11,8 @@
 
 namespace portal
 {
-ng::Camera::Camera(const glm::mat4& projection, const glm::mat4& reversed_projection)
-    : projection(projection),
-      reversed_projection(reversed_projection) {}
 
-ng::Camera::Camera(const float fov, const float width, const float height, const float near_clip, const float far_clip)
-    : projection(glm::perspectiveFov(glm::radians(fov), width, height, near_clip, far_clip)),
-      reversed_projection(glm::perspectiveFov(glm::radians(fov), width, height, far_clip, near_clip))
-{}
-
-
-void ng::Camera::set_perspective_projection(const float fov, const float width, const float height, const float near_clip, const float far_clip)
-{
-    projection = glm::perspectiveFov(glm::radians(fov), width, height, near_clip, far_clip);
-    reversed_projection = glm::perspectiveFov(glm::radians(fov), width, height, far_clip, near_clip);
-}
-
-void ng::Camera::set_orthographic_projection(const float width, const float height, const float near_clip, const float far_clip)
-{
-    projection = glm::ortho(-width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f, near_clip, far_clip);
-    reversed_projection = glm::ortho(-width * 0.5f, width * 0.5f, -height * 0.5f, height * 0.5f, far_clip, near_clip);
-}
-
-void ng::Camera::set_exposure(const float new_exposure)
-{
-    exposure = new_exposure;
-}
-
-const glm::mat4& ng::Camera::get_projection() const
-{
-    return projection;
-}
-
-const glm::mat4& ng::Camera::get_reversed_projection() const
-{
-    return reversed_projection;
-}
-
-float ng::Camera::get_exposure() const
-{
-    return exposure;
-}
-
-Camera::Camera(Input& input) : input(input)
+Camera::Camera(InputManager& input) : input(input)
 {
     forward_direction = glm::vec3{0.54, -0.42, -0.72};
     position = glm::vec3{-0.51f, 0.4f, 0.74f};

@@ -16,7 +16,7 @@ class WindowResizeEvent;
 class Renderer;
 
 // TODO: consolidate with some "Script Manager"?
-class SceneManager final : public TaggedModule<Tag<ModuleTags::Update, ModuleTags::Event, ModuleTags::GuiUpdate>, Renderer, ResourceRegistry, Input>,
+class SceneManager final : public TaggedModule<Tag<ModuleTags::Update, ModuleTags::Event, ModuleTags::GuiUpdate>, Renderer, ResourceRegistry, InputManager>,
                            public EventHandler
 {
 public:

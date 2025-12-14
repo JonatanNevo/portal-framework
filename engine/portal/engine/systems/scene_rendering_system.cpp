@@ -26,27 +26,26 @@ void SceneRenderingSystem::update_global_descriptors(FrameContext& frame, ecs::R
         PORTAL_ASSERT(main_camera_group.size() == 1, "There should be exactly one camera tagged with MainCameraTag");
 
         auto camera_entity = registry.entity_from_id(main_camera_group.front());
-        const auto& camera_transform = camera_entity.get_component<TransformComponent>();
-        auto camera = camera_entity.get_component<CameraComponent>();
 
-        const glm::mat4 camera_view_matrix = glm::inverse(camera_transform.get_world_matrix());
+        auto camera = camera_entity.get_component<CameraComponent>();
         camera.set_viewport_bounds(rendering_context->viewport_bounds);
-        auto projection = camera.camera.get_projection();
+
+        const glm::mat4 view = camera.view;
+        glm::mat4 projection = camera.projection;
+
         // invert the Y direction on projection matrix so that we are more similar to opengl and gltf axis
         projection[1][1] *= -1;
 
-        const auto view_projection = projection * camera_view_matrix;
-        const auto inverse_view = glm::inverse(camera_view_matrix);
-        const auto inverse_projection = glm::inverse(projection);
+        const auto view_projection = projection * view;
 
-        rendering_context->camera_data.view = camera_view_matrix;
+        rendering_context->camera_data.view = view;
         rendering_context->camera_data.proj = projection;
         rendering_context->camera_data.view_proj = view_projection;
-        rendering_context->camera_data.inverse_view = inverse_view;
-        rendering_context->camera_data.inverse_proj = inverse_projection;
-        rendering_context->camera_data.inverse_view_proj = inverse_view * inverse_projection;
+        rendering_context->camera_data.inverse_view = camera.inverse_view;
+        rendering_context->camera_data.inverse_proj = camera.inverse_projection;
+        rendering_context->camera_data.inverse_view_proj = camera.inverse_view * camera.inverse_projection;
 
-        rendering_context->scene_data.view = camera_view_matrix;
+        rendering_context->scene_data.view = view;
         rendering_context->scene_data.proj = projection;
         rendering_context->scene_data.view_proj = view_projection;
         rendering_context->scene_data.ambient_color = glm::vec4(.1f);

@@ -4,11 +4,13 @@
 //
 
 #pragma once
-#include "portal/core/uuid.h"
+
 #include "portal/core/strings/string_id.h"
 
 namespace portal
 {
+class InputManager;
+
 struct NameComponent
 {
     StringId name;
@@ -17,6 +19,11 @@ struct NameComponent
 struct PlayerTag
 {
     const int id = 0;
+};
+
+struct InputComponent
+{
+    InputManager* input_manager = nullptr;
 };
 
 }

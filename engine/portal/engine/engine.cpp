@@ -6,6 +6,7 @@
 #include "engine.h"
 
 #include "settings.h"
+#include "modules/system_orchestrator.h"
 #include "portal/engine/imgui/imgui_module.h"
 #include "portal/engine/modules/scheduler_module.h"
 #include "portal/engine/resources/database/folder_resource_database.h"
@@ -19,7 +20,7 @@ static auto logger = Log::get_logger("Engine");
 
 Engine::Engine(const ApplicationProperties& properties) : Application(properties)
 {
-    auto& input = modules.add_module<Input>(
+    auto& input = modules.add_module<InputManager>(
         [this](auto& event)
         {
             on_event(event);
@@ -51,19 +52,17 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     auto& registry = modules.add_module<ResourceRegistry>(renderer.get_renderer_context());
 
     modules.add_module<ImGuiModule>(*window);
-    auto& scene_manager = modules.add_module<SceneManager>();
+    modules.add_module<SystemOrchestrator>(ecs_registry );
 
     // TODO: find a better way of subscribing to this
     event_handlers.emplace_back(*window);
-    event_handlers.emplace_back(scene_manager);
 
     // TODO: make a O(1) lookup inside the module stack, will make this class redundant
     engine_context = std::make_unique<EngineContext>(
         renderer,
         registry,
         *window,
-        input,
-        scene_manager
+        input
     );
 
     modules.build_dependency_graph();
@@ -77,11 +76,6 @@ Engine::~Engine()
 
     std::ignore = vulkan_context.release();
     glfwTerminate();
-}
-
-void Engine::setup_scene(const ResourceReference<Scene>& scene) const
-{
-    engine_context->get_scene_manager().set_active_scene(scene);
 }
 
 void Engine::process_events()

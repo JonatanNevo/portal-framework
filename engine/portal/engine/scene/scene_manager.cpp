@@ -15,7 +15,7 @@
 
 namespace portal
 {
-SceneManager::SceneManager(ModuleStack& stack) : TaggedModule(stack, STRING_ID("Scene Manager")), camera(get_dependency<Input>())
+SceneManager::SceneManager(ModuleStack& stack) : TaggedModule(stack, STRING_ID("Scene Manager")), camera(get_dependency<InputManager>())
 {
     const auto& renderer = get_dependency<Renderer>();
     auto& swapchain = renderer.get_swapchain();

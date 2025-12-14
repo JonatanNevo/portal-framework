@@ -22,21 +22,19 @@ struct MainCameraTag {};
 // TODO: split into structs based on projection type?
 struct CameraComponent
 {
-    ProjectionType projection_type = ProjectionType::Perspective;
+    glm::mat4 projection{1.f};
+    glm::mat4 view{1.f};
+    glm::mat4 inverse_projection{1.f};
+    glm::mat4 inverse_view{1.f};
 
-    float perspective_vertical_fov = 70.f;
-    float perspective_near_clip = 10000.f;
-    float perspective_far_clip = 0.1f;
+    float vertical_fov = 70.f;
+    float near_clip = 10000.f;
+    float far_clip = 0.1f;
 
-    float orthographic_size = 10.f;
-    float orthographic_near_clip = 1.f;
-    float orthographic_far_clip = -1.f;
-    glm::uvec4 viewport_bounds = {0, 0, 0, 0};
+    uint32_t width = 1, height = 1;
 
-    ng::Camera camera{};
-
-    void set_perspective(float fov, float near_clip, float far_clip);
-    void set_orthographic(float size, float near_clip, float far_clip);
+    void calculate_projection();
+    void calculate_view(glm::vec3 position, glm::vec3 forward_direction);
     void set_viewport_bounds(glm::uvec4 bounds);
 };
 

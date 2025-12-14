@@ -46,18 +46,18 @@ void TransformHierarchySystem::execute(ecs::Registry& registry)
     registry.clear<TransformDirtyTag>();
 }
 
-void TransformHierarchySystem::on_component_added(ecs::Registry& registry, const Entity entity, TransformComponent&)
+void TransformHierarchySystem::on_component_added(const Entity entity, TransformComponent&)
 {
-    registry.get_raw_registry().emplace_or_replace<TransformDirtyTag>(entity);
+    entity.get_registry().emplace_or_replace<TransformDirtyTag>(entity);
 }
 
-void TransformHierarchySystem::on_component_removed(ecs::Registry& registry, const Entity entity, TransformComponent&)
+void TransformHierarchySystem::on_component_removed(const Entity entity, TransformComponent&)
 {
-    registry.get_raw_registry().emplace_or_replace<TransformDirtyTag>(entity);
+    entity.get_registry().emplace_or_replace<TransformDirtyTag>(entity);
 }
 
-void TransformHierarchySystem::on_component_changed(ecs::Registry& registry, const Entity entity, TransformComponent&)
+void TransformHierarchySystem::on_component_changed(const Entity entity, TransformComponent&)
 {
-    registry.get_raw_registry().emplace_or_replace<TransformDirtyTag>(entity);
+    entity.get_registry().emplace_or_replace<TransformDirtyTag>(entity);
 }
 } // portal

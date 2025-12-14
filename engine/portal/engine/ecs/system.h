@@ -28,8 +28,6 @@ namespace jobs
 
 namespace portal::ecs
 {
-
-
 template <typename Derived, ComponentOwnership... Components>
 class System : public SystemBase
 {
@@ -89,9 +87,10 @@ public:
                                         derived().execute_single(registry, entity);
 
                                     co_return;
-                                };
+                                }();
                             }
                         ),
+                        JobPriority::Normal,
                         counter
                     );
                 }
@@ -106,7 +105,8 @@ public:
                                 derived().execute(registry);
 
                             co_return;
-                        },
+                        }(),
+                        JobPriority::Normal,
                         counter
                     );
                 }
@@ -144,7 +144,7 @@ private:
         static auto call(Registry& registry)
         {
             if constexpr (sizeof...(Viewed) > 0)
-                return registry.get_raw_registry().group<typename Owned::comp...>(Viewed::comp_view...);
+                return registry.get_raw_registry().group<typename Owned::comp...>(entt::get<typename Viewed::comp...>);
             else
                 return registry.get_raw_registry().group<typename Owned::comp...>();
         }
@@ -154,27 +154,27 @@ private:
     const Derived& derived() const { return static_cast<const Derived&>(*this); }
 
     template <typename Component>
-    void on_construct(Registry& registry, const entt::entity entity_raw)
+    void on_construct(entt::registry& registry, const entt::entity entity_raw)
     {
-        auto entity = registry.entity_from_id(entity_raw);
+        auto entity = Entity(entity_raw, registry);
         auto& component = entity.get_component<Component>();
-        derived().on_component_added(registry, entity, component);
+        derived().on_component_added(entity, component);
     }
 
     template <typename Component>
-    void on_destroy(Registry& registry, const entt::entity entity_raw)
+    void on_destroy(entt::registry& registry, const entt::entity entity_raw)
     {
-        auto entity = registry.entity_from_id(entity_raw);
+        auto entity = Entity(entity_raw, registry);
         auto& component = entity.get_component<Component>();
-        derived().on_component_removed(registry, entity, component);
+        derived().on_component_removed(entity, component);
     }
 
     template <typename Component>
-    void on_update(Registry& registry, const entt::entity entity_raw)
+    void on_update(entt::registry& registry, const entt::entity entity_raw)
     {
-        auto entity = registry.entity_from_id(entity_raw);
+        auto entity = Entity(entity_raw, registry);
         auto& component = entity.get_component<Component>();
-        derived().on_component_changed(registry, entity, component);
+        derived().on_component_changed(entity, component);
     }
 
     template <typename Component>
@@ -183,17 +183,17 @@ private:
         auto& raw_registry = registry.get_raw_registry();
         if constexpr (ecs::OnComponentAdded<Derived, Component>)
         {
-            raw_registry.on_construct<Component>().template connect<&System::on_construct<Component>>(this, registry);
+            raw_registry.on_construct<Component>().connect<&System::on_construct<Component>>(this);
         }
 
         if constexpr (ecs::OnComponentRemoved<Derived, Component>)
         {
-            raw_registry.on_construct<Component>().template connect<&System::on_destroy<Component>>(this, registry);
+            raw_registry.on_destroy<Component>().connect<&System::on_destroy<Component>>(this);
         }
 
         if constexpr (ecs::OnComponentChanged<Derived, Component>)
         {
-            raw_registry.on_construct<Component>().template connect<&System::on_update<Component>>(this, registry);
+            raw_registry.on_update<Component>().connect<&System::on_update<Component>>(this);
         }
     }
 
