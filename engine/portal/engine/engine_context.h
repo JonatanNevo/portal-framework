@@ -5,9 +5,9 @@
 
 #pragma once
 
+#include "modules/system_orchestrator.h"
 #include "portal/engine/renderer/renderer.h"
 #include "portal/engine/resources/resource_registry.h"
-#include "scene/scene_manager.h"
 #include "window/window.h"
 
 namespace portal
@@ -19,13 +19,14 @@ public:
         Renderer& renderer,
         ResourceRegistry& registry,
         Window& window,
-        InputManager& input
+        InputManager& input,
+        SystemOrchestrator& system_orchestrator
     )
         : renderer(renderer),
           resource_registry(registry),
           window(window),
-          input(input)
-
+          input(input),
+          system_orchestrator(system_orchestrator)
     {}
 
     [[nodiscard]] const Renderer& get_renderer() const { return renderer.get(); }
@@ -40,10 +41,14 @@ public:
     [[nodiscard]] const InputManager& get_input() const { return input.get(); }
     [[nodiscard]] InputManager& get_input() { return input.get(); }
 
+    [[nodiscard]] const SystemOrchestrator& get_system_orchestrator() const { return system_orchestrator.get(); }
+    [[nodiscard]] SystemOrchestrator& get_system_orchestrator() { return system_orchestrator.get(); }
+
 protected:
     std::reference_wrapper<Renderer> renderer;
     std::reference_wrapper<ResourceRegistry> resource_registry;
     std::reference_wrapper<Window> window;
     std::reference_wrapper<InputManager> input;
+    std::reference_wrapper<SystemOrchestrator> system_orchestrator;
 };
 }

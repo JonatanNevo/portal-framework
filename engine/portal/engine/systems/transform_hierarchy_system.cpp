@@ -7,25 +7,36 @@
 
 #include "portal/engine/components/base.h"
 #include "portal/engine/components/relationship.h"
+#include "portal/core/log.h"
 
 namespace portal
 {
 void TransformHierarchySystem::execute(ecs::Registry& registry)
 {
     const auto transforms_to_update = group(registry);
-    transforms_to_update.sort(
-        [&registry](const entt::entity lhs_raw, const entt::entity rhs_raw)
+
+    auto get_depth = [&registry](entt::entity e) -> int
+    {
+        int depth = 0;
+        auto entity = registry.entity_from_id(e);
+        while (entity.get_component<RelationshipComponent>().parent != null_entity)
         {
-            auto lhs = registry.entity_from_id(lhs_raw);
-            auto rhs = registry.entity_from_id(rhs_raw);
+            entity = entity.get_component<RelationshipComponent>().parent;
+            ++depth;
+        }
+        return depth;
+    };
 
-            const auto& left_rel = lhs.get_component<RelationshipComponent>();
-            const auto& right_rel = rhs.get_component<RelationshipComponent>();
+    transforms_to_update.sort(
+        [&get_depth](const entt::entity lhs_raw, const entt::entity rhs_raw)
+        {
+            const int left_depth = get_depth(lhs_raw);
+            const int right_depth = get_depth(rhs_raw);
 
-            return right_rel.parent == lhs
-                || left_rel.next == rhs
-                || (!(left_rel.parent == rhs || right_rel.next == lhs)
-                    && (left_rel.parent.get_id() < right_rel.parent.get_id() || (left_rel.parent == right_rel.parent && &left_rel < &right_rel)));
+            if (left_depth != right_depth)
+                return left_depth < right_depth;
+
+            return lhs_raw < rhs_raw;
         }
     );
 

@@ -29,7 +29,7 @@ struct CameraComponent
 
     float vertical_fov = 70.f;
     float near_clip = 10000.f;
-    float far_clip = 0.1f;
+    float far_clip = 0.0175f;
 
     uint32_t width = 1, height = 1;
 

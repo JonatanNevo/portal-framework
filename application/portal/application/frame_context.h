@@ -10,6 +10,11 @@
 namespace portal
 {
 
+namespace ecs
+{
+    class Registry;
+}
+
 struct FrameStats
 {
     float frame_time = 0.0001f;
@@ -25,6 +30,8 @@ struct FrameContext
     size_t frame_index;
     float delta_time;
     FrameStats stats = {};
+    // TODO: have in `ecs_context` instead of in global context?
+    ecs::Registry* ecs_registry = nullptr;
 
     // When rendering_context is set, it should be a `renderer::RenderingContext`
     // TODO: this might cause performance issues, especially since any can use dynamic allocations without custom allocators, investigate

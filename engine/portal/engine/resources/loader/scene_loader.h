@@ -10,13 +10,10 @@
 #include "portal/core/glm.h"
 #include "portal/engine/resources/loader/loader.h"
 #include "portal/core/strings/string_id.h"
+#include "portal/engine/ecs/registry.h"
 
 namespace portal
 {
-namespace scene
-{
-    class Node;
-}
 
 class RendererContext;
 }
@@ -24,12 +21,12 @@ class RendererContext;
 namespace portal::resources
 {
 
-struct TransformComponent
+struct TransformSceneComponent
 {
     glm::mat4 transform = glm::identity<glm::mat4>();
 };
 
-struct MeshComponent
+struct MeshSceneComponent
 {
     StringId mesh_id;
     std::vector<StringId> materials;
@@ -41,7 +38,7 @@ struct NodeDescription
     std::vector<StringId> children{};
     std::optional<StringId> parent = std::nullopt;
 
-    std::vector<std::variant<TransformComponent, MeshComponent>> components{};
+    std::vector<std::variant<TransformSceneComponent, MeshSceneComponent>> components{};
 };
 
 struct SceneDescription
@@ -57,9 +54,9 @@ public:
     Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
 
 protected:
-    [[nodiscard]] std::unordered_map<StringId, Reference<scene::Node>> load_scene_nodes(SceneDescription description) const;
+    void load_scene_nodes(Entity scene_entity, ecs::Registry& ecs_registry, SceneDescription description) const;
 
-    SceneDescription load_scene_description(const SourceMetadata& meta, const ResourceSource& source);
+    static SceneDescription load_scene_description(const SourceMetadata& meta, const ResourceSource& source);
 };
 
 }

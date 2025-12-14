@@ -4,35 +4,44 @@
 //
 
 #pragma once
+
+#include <memory>
+
+#include "scheduler_module.h"
 #include "portal/application/modules/module.h"
-#include "portal/engine/renderer/renderer.h"
-#include "portal/engine/systems/base_camera_system.h"
-#include "portal/engine/systems/base_player_input_system.h"
-#include "portal/engine/systems/scene_rendering_system.h"
-#include "portal/engine/systems/transform_hierarchy_system.h"
+#include "portal/input/input_manager.h"
+#include "portal/engine/ecs/registry.h"
 
 namespace portal
 {
-
+class BasePlayerInputSystem;
+class BaseCameraSystem;
+class TransformHierarchySystem;
+class SceneRenderingSystem;
 
 // TODO: support dependencies between systems and parallel system execution
 // TODO: support dynamic system declaration
 // TODO: support creating system stack from file
-// TODO: have the registry as a module as well?
-class SystemOrchestrator final: public TaggedModule<Tag<ModuleTags::Update>, SchedulerModule, Renderer, ResourceRegistry>
+class SystemOrchestrator final: public TaggedModule<Tag<ModuleTags::Update, ModuleTags::FrameLifecycle>, SchedulerModule, InputManager>
 {
 public:
-    explicit SystemOrchestrator(ModuleStack& stack, ecs::Registry& registry);
+    explicit SystemOrchestrator(ModuleStack& stack);
+    ~SystemOrchestrator() override;
 
+    void register_systems(ecs::Registry& registry);
+    void set_registry(ecs::Registry& registry);
+
+    void begin_frame(FrameContext& frame) override;
     void update(FrameContext& frame) override;
 
 private:
-    ecs::Registry& registry;
+    // TODO: support multiple registries in parallel?
+    ecs::Registry* active_registry = nullptr;
 
-    BasePlayerInputSystem player_input_system;
-    BaseCameraSystem camera_system;
-    TransformHierarchySystem transform_system;
-    SceneRenderingSystem scene_rendering_system;
+    std::unique_ptr<BasePlayerInputSystem> player_input_system;
+    std::unique_ptr<BaseCameraSystem> camera_system;
+    std::unique_ptr<TransformHierarchySystem> transform_system;
+    std::unique_ptr<SceneRenderingSystem> scene_rendering_system;
 };
 
 } // portal

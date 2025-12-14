@@ -661,7 +661,7 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
             auto& mesh = asset.meshes[node.meshIndex.value()];
 
             node_description.components.emplace_back(
-                MeshComponent{
+                MeshSceneComponent{
                     STRING_ID(create_name(mesh.name, ResourceType::Mesh)),
                     mesh.primitives | std::views::transform(
                         [&asset, &create_name](const auto& primitive)
@@ -677,7 +677,7 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
         std::visit(
             fastgltf::visitor{[&node_description](fastgltf::math::fmat4x4 matrix) mutable
                               {
-                                  TransformComponent transform_component;
+                                  TransformSceneComponent transform_component;
                                   // Copy data as is
                                   std::memcpy(&transform_component.transform, matrix.data(), sizeof(matrix));
                                   node_description.components.emplace_back(transform_component);
@@ -702,7 +702,7 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
                                   glm::mat4 rm = glm::toMat4(rot);
                                   glm::mat4 sm = glm::scale(glm::mat4(1.f), sc);
 
-                                  node_description.components.emplace_back(TransformComponent{.transform = tm * rm * sm});
+                                  node_description.components.emplace_back(TransformSceneComponent{.transform = tm * rm * sm});
                               }},
             node.transform
             );

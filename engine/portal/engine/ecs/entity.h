@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 /**
  * A wrapper around entt::handle with relationship management
  */
@@ -36,6 +35,13 @@ public:
     {
         PORTAL_ASSERT(!has_component<T>(), "Entity already has component of type T");
         handle.emplace<T>();
+    }
+
+    template <typename T, typename... Func>
+    T& patch_component(Func&&... func)
+    {
+        PORTAL_ASSERT(has_component<T>(), "Entity does not have component of type T");
+        return handle.patch<T>(std::forward<Func>(func)...);
     }
 
     template <typename T>

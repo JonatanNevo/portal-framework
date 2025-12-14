@@ -6,13 +6,13 @@
 #include "engine.h"
 
 #include "settings.h"
+#include "editor/editor_module.h"
 #include "modules/system_orchestrator.h"
 #include "portal/engine/imgui/imgui_module.h"
 #include "portal/engine/modules/scheduler_module.h"
 #include "portal/engine/resources/database/folder_resource_database.h"
 #include "portal/engine/resources/resources/composite.h"
 #include "portal/engine/window/glfw_window.h"
-#include "scene/scene_manager.h"
 
 namespace portal
 {
@@ -47,12 +47,14 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     this->properties.frames_in_flight = swapchain->get_image_count();
 
     modules.add_module<SchedulerModule>(properties.scheduler_worker_num);
+    auto& system_orchestrator = modules.add_module<SystemOrchestrator>();
+
     modules.add_module<ReferenceManager>();
     modules.add_module<FolderResourceDatabase>(properties.resources_path);
     auto& registry = modules.add_module<ResourceRegistry>(renderer.get_renderer_context());
 
     modules.add_module<ImGuiModule>(*window);
-    modules.add_module<SystemOrchestrator>(ecs_registry );
+    modules.add_module<EditorModule>();
 
     // TODO: find a better way of subscribing to this
     event_handlers.emplace_back(*window);
@@ -62,7 +64,8 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
         renderer,
         registry,
         *window,
-        input
+        input,
+        system_orchestrator
     );
 
     modules.build_dependency_graph();
@@ -76,6 +79,11 @@ Engine::~Engine()
 
     std::ignore = vulkan_context.release();
     glfwTerminate();
+}
+
+void Engine::setup_scene(const ResourceReference<Scene>& scene) const
+{
+    engine_context->get_system_orchestrator().set_registry(scene->get_registry());
 }
 
 void Engine::process_events()
