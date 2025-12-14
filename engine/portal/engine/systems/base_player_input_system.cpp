@@ -20,7 +20,7 @@ void BasePlayerInputSystem::execute(ecs::Registry& registry)
         auto* input = input_component.input_manager;
         PORTAL_ASSERT(input != nullptr, "Invalid input component state");
 
-        if (input && input->is_key_pressed(Key::RightMouseButton) && !input->is_key_pressed(Key::LeftAlt))
+        if (input && input->is_key_pressed(Key::RightMouseButton))
         {
             disable_mouse(input);
             controller.mark_as_moving();
@@ -48,17 +48,16 @@ void BasePlayerInputSystem::execute(ecs::Registry& registry)
             controller.mark_as_stopped_moving();
         }
     }
-
 }
 
 void BasePlayerInputSystem::enable_mouse(const InputManager* input)
 {
-    input->set_cursor_mode(CursorMode::Locked);
+    input->set_cursor_mode(CursorMode::Normal);
 }
 
 void BasePlayerInputSystem::disable_mouse(const InputManager* input)
 {
-    input->set_cursor_mode(CursorMode::Normal);
+    input->set_cursor_mode(CursorMode::Locked);
 }
 
 } // portal

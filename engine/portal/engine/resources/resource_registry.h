@@ -15,7 +15,9 @@
 #include "loader/loader_factory.h"
 #include "portal/core/concurrency/spin_lock.h"
 #include "portal/engine/reference.h"
+#include "portal/engine/ecs/registry.h"
 #include "portal/engine/modules/scheduler_module.h"
+#include "portal/engine/modules/system_orchestrator.h"
 #include "portal/engine/resources/resources/resource.h"
 
 namespace portal::renderer::vulkan
@@ -29,11 +31,11 @@ namespace portal
 template <ResourceConcept T>
 class ResourceReference;
 
-class ResourceRegistry final : public Module<ReferenceManager, ResourceDatabase, SchedulerModule>
+class ResourceRegistry final : public Module<ReferenceManager, ResourceDatabase, SchedulerModule, SystemOrchestrator>
 {
 public:
     ResourceRegistry(ModuleStack& stack, const RendererContext& context);
-    ~ResourceRegistry() noexcept;
+    ~ResourceRegistry() noexcept override;
 
     /**
      * Request an asynchronous load for a resource based on its unique id and returns a reference.
@@ -128,6 +130,7 @@ public:
     // TODO: remove from here
     void wait_all(std::span<Job<>> jobs);
 
+    void configure_ecs_registry(ecs::Registry& ecs_registry);
 protected:
     /**
      * Gets a pointer to the resource from a handle, if the resource is invalid, returns the invalid state instead

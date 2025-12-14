@@ -19,6 +19,7 @@ Registry::Registry()
     // Entity that holds global values
     env_entity = registry.create();
     registry.emplace<NameComponent>(env_entity, STRING_ID("env"));
+    registry.emplace<RelationshipComponent>(env_entity);
 
     // All entities should have a relationship component, except the `scene` which is used as a global state
     add_default_component<RelationshipComponent>();
@@ -42,9 +43,31 @@ Entity Registry::entity_from_id(const entt::entity id)
     return Entity{id, registry};
 }
 
+Entity Registry::find_or_create(const StringId& name)
+{
+    for (auto&& [entity, tag] : view_raw<NameComponent>().each())
+    {
+        if (tag.name == name)
+            return entity_from_id(entity);
+    }
+
+    return create_entity(name);
+}
+
 Entity Registry::create_entity(const StringId& name)
 {
     return create_child_entity({entt::handle{}}, name);
+}
+
+Entity Registry::find_or_create_child(const Entity parent, const StringId& name)
+{
+    for (auto&& [entity, tag] : view_raw<NameComponent>().each())
+    {
+        if (tag.name == name)
+            return entity_from_id(entity);
+    }
+
+    return create_child_entity(parent, name);
 }
 
 Entity Registry::create_child_entity(const Entity parent, const StringId& name)

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <entt/entt.hpp>
+#include <portal/engine/ecs/entity.h>
 
 namespace portal
 {

@@ -37,6 +37,9 @@ void ReferenceManager::register_reference(const StringId& id, void* reference)
 
 void ReferenceManager::unregister_reference(const StringId& id, void* reference)
 {
+    if (id == INVALID_STRING_ID)
+        return;
+
     std::lock_guard guard(lock);
     if (!references.contains(id))
     {

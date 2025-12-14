@@ -7,6 +7,7 @@
 
 #include <ranges>
 
+#include "portal/engine/modules/system_orchestrator.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/resources/source/file_source.h"
 
@@ -16,7 +17,7 @@ static auto logger = Log::get_logger("Resources");
 
 
 ResourceRegistry::ResourceRegistry(ModuleStack& stack, const RendererContext& context)
-    : Module<ReferenceManager, ResourceDatabase, SchedulerModule>(stack, STRING_ID("Resource Registry")),
+    : Module<ReferenceManager, ResourceDatabase, SchedulerModule, SystemOrchestrator>(stack, STRING_ID("Resource Registry")),
       loader_factory(
           *this,
           context
@@ -65,6 +66,11 @@ Job<Reference<Resource>> ResourceRegistry::load_direct(const SourceMetadata& met
 void ResourceRegistry::wait_all(const std::span<Job<>> jobs)
 {
     get_dependency<SchedulerModule>().get_scheduler().wait_for_jobs(jobs);
+}
+
+void ResourceRegistry::configure_ecs_registry(ecs::Registry& ecs_registry)
+{
+    get_dependency<SystemOrchestrator>().register_systems(ecs_registry);
 }
 
 std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource(const StringId& id)

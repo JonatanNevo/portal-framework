@@ -18,7 +18,9 @@ public:
     ~Registry();
 
     Entity entity_from_id(entt::entity id);
+    Entity find_or_create(const StringId& name);
     Entity create_entity(const StringId& name = INVALID_STRING_ID);
+    Entity find_or_create_child(Entity parent, const StringId& name);
     Entity create_child_entity(Entity parent, const StringId& name = INVALID_STRING_ID);
 
     [[nodiscard]] Entity get_env_entity() const;
