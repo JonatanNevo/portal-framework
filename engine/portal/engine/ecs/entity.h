@@ -6,7 +6,6 @@
 #pragma once
 
 #include "llvm/ADT/SmallVector.h"
-#include "portal/core/uuid.h"
 #include "portal/core/debug/assert.h"
 #include "portal/core/strings/string_id.h"
 
@@ -30,6 +29,13 @@ public:
     {
         PORTAL_ASSERT(!has_component<T>(), "Entity already has component of type T");
         return handle.emplace<T>(std::forward<Args>(args)...);
+    }
+
+    template <typename T> requires std::is_empty_v<T>
+    void add_component()
+    {
+        PORTAL_ASSERT(!has_component<T>(), "Entity already has component of type T");
+        handle.emplace<T>();
     }
 
     template <typename T>
@@ -107,7 +113,7 @@ public:
     [[nodiscard]] entt::registry& get_registry() const;
 
 private:
-    entt::handle handle;
+    entt::handle handle{};
 
     inline const static auto no_name = STRING_ID("Unnamed");
 };

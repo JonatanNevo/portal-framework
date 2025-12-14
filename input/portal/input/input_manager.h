@@ -14,10 +14,10 @@
 namespace portal
 {
 
-class Input final : public Module<>, public InputEventConsumer
+class InputManager final : public Module<>, public InputEventConsumer
 {
 public:
-    explicit Input(ModuleStack& stack, const std::optional<std::function<void(Event&)>>& event_callback = std::nullopt);
+    explicit InputManager(ModuleStack& stack, const std::optional<std::function<void(Event&)>>& event_callback = std::nullopt);
 
     [[nodiscard]] bool is_key_pressed(Key key) const;
     [[nodiscard]] bool is_key_released(Key key) const;

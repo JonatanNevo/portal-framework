@@ -3,7 +3,7 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include "input.h"
+#include "input_manager.h"
 
 #include "portal/core/log.h"
 #include "input_events.h"
@@ -12,7 +12,7 @@ namespace portal
 {
 static auto logger = Log::get_logger("Input");
 
-Input::Input(ModuleStack& stack, const std::optional<std::function<void(Event&)>>& event_callback) : Module<>(stack, STRING_ID("Input"))
+InputManager::InputManager(ModuleStack& stack, const std::optional<std::function<void(Event&)>>& event_callback) : Module<>(stack, STRING_ID("Input"))
 {
     if (event_callback)
     {
@@ -20,7 +20,7 @@ Input::Input(ModuleStack& stack, const std::optional<std::function<void(Event&)>
     }
     else
     {
-        this->event_callback = [](Event& e)
+        this->event_callback = [](const Event& e)
         {
             LOGGER_ERROR("Unprocessed event: {}", e.to_string());
         };
@@ -33,22 +33,22 @@ Input::Input(ModuleStack& stack, const std::optional<std::function<void(Event&)>
     }
 }
 
-bool Input::is_key_pressed(const Key key) const
+bool InputManager::is_key_pressed(const Key key) const
 {
     return key_states.at(key).state == KeyState::Pressed || key_states.at(key).state == KeyState::Repeat;
 }
 
-bool Input::is_key_released(const Key key) const
+bool InputManager::is_key_released(const Key key) const
 {
     return key_states.at(key).state == KeyState::Released;
 }
 
-bool Input::is_key_repeating(const Key key) const
+bool InputManager::is_key_repeating(const Key key) const
 {
     return key_states.at(key).state == KeyState::Repeat;
 }
 
-void Input::report_key_action(const Key key, const KeyState state, const std::optional<KeyModifierFlag> modifiers)
+void InputManager::report_key_action(const Key key, const KeyState state, const std::optional<KeyModifierFlag> modifiers)
 {
     active_modifiers = modifiers.value_or(active_modifiers);
 
@@ -80,7 +80,7 @@ void Input::report_key_action(const Key key, const KeyState state, const std::op
     }
 }
 
-void Input::report_axis_change(Axis axis, glm::vec2 value)
+void InputManager::report_axis_change(Axis axis, glm::vec2 value)
 {
     // TODO: accumulate changes between process calls and make all events in one location
     switch (axis)
@@ -102,13 +102,13 @@ void Input::report_axis_change(Axis axis, glm::vec2 value)
     }
 }
 
-void Input::set_cursor_mode(const CursorMode mode) const
+void InputManager::set_cursor_mode(const CursorMode mode) const
 {
     SetMouseCursorEvent event(mode);
     event_callback(event);
 }
 
-void Input::transition_key_states()
+void InputManager::transition_key_states()
 {
     for (const auto& [key, data] : key_states)
     {

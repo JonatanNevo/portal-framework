@@ -6,6 +6,7 @@
 #pragma once
 #include <portal/application/application.h>
 
+#include "ecs/registry.h"
 #include "portal/engine/engine_context.h"
 #include "portal/engine/renderer/renderer.h"
 #include "portal/engine/window/window_event_consumer.h"
@@ -30,6 +31,7 @@ public:
     [[nodiscard]] EngineContext& get_engine_context() const { return *engine_context; }
 
 private:
+    ecs::Registry ecs_registry{};
     std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;
     Reference<Window> window = nullptr;
     std::unique_ptr<EngineContext> engine_context = nullptr;

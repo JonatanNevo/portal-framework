@@ -19,14 +19,12 @@ public:
         Renderer& renderer,
         ResourceRegistry& registry,
         Window& window,
-        Input& input,
-        SceneManager& scene_manager
+        InputManager& input
     )
         : renderer(renderer),
           resource_registry(registry),
           window(window),
-          input(input),
-          scene_manager(scene_manager)
+          input(input)
 
     {}
 
@@ -39,17 +37,13 @@ public:
     [[nodiscard]] const Window& get_window() const { return window.get(); }
     [[nodiscard]] Window& get_window() { return window.get(); }
 
-    [[nodiscard]] const Input& get_input() const { return input.get(); }
-    [[nodiscard]] Input& get_input() { return input.get(); }
-
-    [[nodiscard]] const SceneManager& get_scene_manager() const { return scene_manager.get(); }
-    [[nodiscard]] SceneManager& get_scene_manager() { return scene_manager.get(); }
+    [[nodiscard]] const InputManager& get_input() const { return input.get(); }
+    [[nodiscard]] InputManager& get_input() { return input.get(); }
 
 protected:
     std::reference_wrapper<Renderer> renderer;
     std::reference_wrapper<ResourceRegistry> resource_registry;
     std::reference_wrapper<Window> window;
-    std::reference_wrapper<Input> input;
-    std::reference_wrapper<SceneManager> scene_manager;
+    std::reference_wrapper<InputManager> input;
 };
 }

@@ -24,18 +24,18 @@ enum class ExecutionPolicy
 };
 
 template <typename System, typename Component>
-concept OnComponentAdded = requires(System& system, Registry& registry, Entity entity, Component& component) {
-    { system.on_component_added(registry, entity, component) } -> std::same_as<void>;
+concept OnComponentAdded = requires(System& system, Entity entity, Component& component) {
+    { system.on_component_added(entity, component) } -> std::same_as<void>;
 };
 
 template <typename System, typename Component>
-concept OnComponentRemoved = requires(System& system, Registry& registry, Entity entity, Component& component) {
-    { system.on_component_removed(registry, entity, component) } -> std::same_as<void>;
+concept OnComponentRemoved = requires(System& system, Entity entity, Component& component) {
+    { system.on_component_removed(entity, component) } -> std::same_as<void>;
 };
 
 template <typename System, typename Component>
-concept OnComponentChanged = requires(System& system, Registry& registry, Entity entity, Component& component) {
-    { system.on_component_changed(registry, entity, component) } -> std::same_as<void>;
+concept OnComponentChanged = requires(System& system, Entity entity, Component& component) {
+    { system.on_component_changed(entity, component) } -> std::same_as<void>;
 };
 
 template <typename System>
@@ -89,7 +89,10 @@ template <typename C>
 concept ComponentView = is_specialization_of_v<C, Views>;
 
 template <typename C>
-concept ComponentOwnership = is_specialization_of_v<C, Owns> || is_specialization_of_v<C, Views>;
+concept ComponentOwned = is_specialization_of_v<C, Owns>;
+
+template <typename C>
+concept ComponentOwnership = ComponentView<C> || ComponentOwned<C>;
 
 class SystemBase
 {

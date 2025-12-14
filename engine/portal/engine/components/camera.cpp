@@ -7,39 +7,29 @@
 
 namespace portal
 {
-void CameraComponent::set_perspective(const float fov, const float near_clip, const float far_clip)
+void CameraComponent::calculate_projection()
 {
-    projection_type = ProjectionType::Perspective;
-    perspective_vertical_fov = fov;
-    perspective_near_clip = near_clip;
-    perspective_far_clip = far_clip;
+    projection = glm::perspectiveFov(glm::radians(vertical_fov), static_cast<float>(width), static_cast<float>(height), near_clip, far_clip);
+    inverse_projection = glm::inverse(projection);
 }
 
-void CameraComponent::set_orthographic(const float size, const float near_clip, const float far_clip)
+void CameraComponent::calculate_view(glm::vec3 position, glm::vec3 forward_direction)
 {
-    projection_type = ProjectionType::Orthographic;
-    orthographic_size = size;
-    orthographic_near_clip = near_clip;
-    orthographic_far_clip = far_clip;
+    view = glm::lookAt(position, position + forward_direction, glm::vec3(0, 1, 0));
+    inverse_view = glm::inverse(view);
 }
 
 void CameraComponent::set_viewport_bounds(glm::uvec4 bounds)
 {
-    viewport_bounds = {bounds.x, bounds.y, bounds.z, bounds.w};
-    const float width = static_cast<float>(bounds.z - bounds.x);
-    const float height = static_cast<float>(bounds.w - bounds.y);
+    const float new_width = static_cast<float>(bounds.z - bounds.x);
+    const float new_height = static_cast<float>(bounds.w - bounds.y);
 
-    switch (projection_type)
+    if (new_width != width || new_height != height)
     {
-    case ProjectionType::Perspective:
-        camera.set_perspective_projection(glm::radians(perspective_vertical_fov), width, height, perspective_near_clip, perspective_far_clip);
-        break;
-    case ProjectionType::Orthographic:
-        const float aspect = width / height;
-        const float orto_width = aspect * orthographic_size;
-        const float orto_height = orthographic_size;
-        camera.set_orthographic_projection(orto_width, orto_height, orthographic_near_clip, orthographic_far_clip);
-        break;
+        width = static_cast<uint32_t>(new_width);
+        height = static_cast<uint32_t>(new_height);
+
+        calculate_projection();
     }
 }
 } // portal

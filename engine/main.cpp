@@ -74,7 +74,7 @@ std::unique_ptr<Application> portal::create_application(int, char**)
     auto scene = engine_context.get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
     PORTAL_ASSERT(scene.get_state() == ResourceState::Loaded, "Failed to load scene");
 
-    engine->setup_scene(scene);
+    // engine->setup_scene(scene);
 
     return engine;
 }
