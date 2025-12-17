@@ -35,5 +35,4 @@ private:
     vk::QueueFamilyProperties properties;
     bool presentable;
 };
-
 } // portal

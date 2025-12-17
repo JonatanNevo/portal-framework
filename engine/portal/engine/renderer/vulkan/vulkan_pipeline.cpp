@@ -15,7 +15,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 VulkanPipeline::VulkanPipeline(const PipelineProperties& prop, const VulkanContext& context) : context(context), prop(prop)
 {
     PORTAL_ASSERT(prop.shader, "Invalid pipeline shader");
@@ -93,8 +92,8 @@ void VulkanPipeline::initialize()
         color_formats.push_back(attachment_prop.format);
 
         const auto blend_mode = prop.attachments.blend_mode == BlendMode::None
-            ? attachment_prop.blend_mode
-            : prop.attachments.blend_mode;
+                                    ? attachment_prop.blend_mode
+                                    : prop.attachments.blend_mode;
         builder.set_blend(color_index, prop.attachments.blend, blend_mode);
         color_index++;
     }
@@ -136,5 +135,4 @@ vk::PipelineLayout VulkanPipeline::get_vulkan_pipeline_layout()
 {
     return pipeline_layout;
 }
-
 }

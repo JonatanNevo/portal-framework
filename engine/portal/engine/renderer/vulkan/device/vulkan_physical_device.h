@@ -12,7 +12,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 class VulkanDevice;
 
 class VulkanPhysicalDevice final : public PhysicalDevice
@@ -63,5 +62,4 @@ private:
 
     std::unordered_set<std::string> supported_extensions;
 };
-
 }

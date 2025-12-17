@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 class KeyPressedEvent final : public Event
 {
 public:
@@ -89,10 +88,10 @@ private:
     glm::vec2 offset;
 };
 
-class SetMouseCursorEvent final: public Event
+class SetMouseCursorEvent final : public Event
 {
 public:
-    explicit SetMouseCursorEvent(const CursorMode mode): mode(mode) {}
+    explicit SetMouseCursorEvent(const CursorMode mode) : mode(mode) {}
     [[nodiscard]] CursorMode get_mode() const { return mode; }
 
     EVENT_CLASS_TYPE(SetMouseCursor)
@@ -101,6 +100,4 @@ public:
 private:
     CursorMode mode;
 };
-
-
 }

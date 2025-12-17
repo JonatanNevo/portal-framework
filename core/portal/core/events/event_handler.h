@@ -8,7 +8,6 @@
 
 namespace portal
 {
-
 // TODO: use concept instead?
 
 /**
@@ -21,5 +20,4 @@ public:
 
     virtual void on_event(Event& event) = 0;
 };
-
 }

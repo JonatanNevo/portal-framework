@@ -13,10 +13,8 @@
 
 namespace portal
 {
-
 class InputEventConsumer;
 class WindowEventConsumer;
-
 }
 
 namespace portal
@@ -139,5 +137,4 @@ protected:
     WindowProperties properties;
     CallbackConsumers consumers;
 };
-
 } // portal

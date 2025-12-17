@@ -7,7 +7,6 @@
 
 namespace portal
 {
-
 static auto logger = Log::get_logger("Core");
 
 JobStats::JobStats(const size_t num_threads) : thread_stats(num_threads), start_time(std::chrono::steady_clock::now())
@@ -54,7 +53,11 @@ void JobStats::record_work_executed([[maybe_unused]] const size_t worker_id, [[m
 #endif
 }
 
-void JobStats::record_steal_attempt([[maybe_unused]] const size_t worker_id,[[maybe_unused]] const bool success,[[maybe_unused]] const size_t jobs_stolen)
+void JobStats::record_steal_attempt(
+    [[maybe_unused]] const size_t worker_id,
+    [[maybe_unused]] const bool success,
+    [[maybe_unused]] const size_t jobs_stolen
+)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -84,7 +87,11 @@ void JobStats::record_work_stolen_from_me([[maybe_unused]] const size_t worker_i
 #endif
 }
 
-void JobStats::record_queue_depth([[maybe_unused]] const size_t worker_id,[[maybe_unused]]  const size_t local_depth, [[maybe_unused]] const size_t stealable_depth)
+void JobStats::record_queue_depth(
+    [[maybe_unused]] const size_t worker_id,
+    [[maybe_unused]] const size_t local_depth,
+    [[maybe_unused]] const size_t stealable_depth
+)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -139,7 +146,7 @@ void JobStats::record_idle_time([[maybe_unused]] const size_t worker_id, [[maybe
 #endif
 }
 
-void JobStats::record_queue_hit([[maybe_unused]] size_t worker_id,[[maybe_unused]]  QueueType type)
+void JobStats::record_queue_hit([[maybe_unused]] size_t worker_id, [[maybe_unused]] QueueType type)
 {
 #if ENABLE_JOB_STATS
     ThreadStats* stats = nullptr;
@@ -204,10 +211,12 @@ JobStats::GlobalStats JobStats::aggregate()
             global_stats.average_stealable_queue_depth += static_cast<double>(thread.sum_stealable_queue_depth) / thread.total_queue_depth_samples;
         }
         stats.max_queue_depth = std::max(
-            {stats.max_queue_depth,
-             thread.max_local_queue_depth,
-             thread.max_stealable_queue_depth}
-            );
+            {
+                stats.max_queue_depth,
+                thread.max_local_queue_depth,
+                thread.max_stealable_queue_depth
+            }
+        );
 
         stats.total_idle_spins += thread.idle_spins;
         stats.total_idle_time_ns += thread.total_idle_time_ns;
@@ -354,5 +363,4 @@ const JobStats::GlobalStats& JobStats::get_global_stats() const
 {
     return global_stats;
 }
-
 } // portal

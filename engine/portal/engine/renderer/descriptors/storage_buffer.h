@@ -10,7 +10,6 @@
 
 namespace portal::renderer
 {
-
 struct StorageBufferProperties
 {
     size_t size;
@@ -18,22 +17,21 @@ struct StorageBufferProperties
     StringId debug_name;
 };
 
-class StorageBuffer: public BufferDescriptor
+class StorageBuffer : public BufferDescriptor
 {
 public:
-    explicit StorageBuffer(const StringId& id): BufferDescriptor(id, DescriptorResourceType::StorageBuffer) {};
+    explicit StorageBuffer(const StringId& id) : BufferDescriptor(id, DescriptorResourceType::StorageBuffer) {};
 
     virtual void resize(size_t new_size) = 0;
 };
 
-class StorageBufferSet: public BufferDescriptor
+class StorageBufferSet : public BufferDescriptor
 {
 public:
-    explicit StorageBufferSet(const StringId& id): BufferDescriptor(id, DescriptorResourceType::StorageBufferSet) {};
+    explicit StorageBufferSet(const StringId& id) : BufferDescriptor(id, DescriptorResourceType::StorageBufferSet) {};
 
     virtual Reference<StorageBuffer> get(size_t index) = 0;
 
     virtual void set(const Reference<StorageBuffer>& buffer, size_t index) = 0;
 };
-
 }

@@ -20,7 +20,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 static auto logger = Log::get_logger("Renderer");
 
 DescriptorType to_descriptor_type(const vk::DescriptorType type)
@@ -118,7 +117,7 @@ VulkanDescriptorSetManager VulkanDescriptorSetManager::create(const DescriptorSe
 std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_unique(
     const DescriptorSetManagerProperties& properties,
     const VulkanDevice& device
-    )
+)
 {
     // TODO: use raios generated from shader
     std::vector<portal::renderer::vulkan::DescriptorAllocator::PoolSizeRatio> pool_sizes =
@@ -141,8 +140,8 @@ std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_u
             properties,
             device,
             portal::renderer::vulkan::DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes)
-            )
-        );
+        )
+    );
 }
 
 
@@ -150,7 +149,7 @@ VulkanDescriptorSetManager::VulkanDescriptorSetManager(
     const DescriptorSetManagerProperties& properties,
     const VulkanDevice& device,
     portal::renderer::vulkan::DescriptorAllocator&& descriptor_allocator
-    ) : properties(properties), device(device), descriptor_allocator(std::move(descriptor_allocator))
+) : properties(properties), device(device), descriptor_allocator(std::move(descriptor_allocator))
 {
     init();
 }
@@ -284,7 +283,7 @@ bool VulkanDescriptorSetManager::validate()
                     properties.debug_name,
                     portal::to_string(resource.type),
                     vk::to_string(write_descriptor.descriptorType)
-                    );
+                );
                 return false;
             }
 
@@ -338,99 +337,99 @@ void VulkanDescriptorSetManager::bake()
                 switch (input.type)
                 {
                 case DescriptorResourceType::UniformBuffer:
-                {
-                    auto buffer = reference_cast<VulkanUniformBuffer>(input.input[0]);
-                    write_descriptor.pBufferInfo = &buffer->get_descriptor_buffer_info();
-                    stored_write_descriptor.resource_handles[0] = write_descriptor.pBufferInfo->buffer;
-
-                    // Defer if the resource doesn't exist
-                    if (write_descriptor.pBufferInfo->buffer == nullptr)
-                        invalid_input_resources[set][binding] = input;
-                    break;
-                }
-                case DescriptorResourceType::UniformBufferSet:
-                {
-                    auto buffer = reference_cast<VulkanUniformBufferSet>(input.input[0]);
-                    write_descriptor.pBufferInfo = &reference_cast<VulkanUniformBuffer>(buffer->get(frame_index))->get_descriptor_buffer_info();
-                    stored_write_descriptor.resource_handles[0] = write_descriptor.pBufferInfo->buffer;
-
-                    // Defer if the resource doesn't exist
-                    if (write_descriptor.pBufferInfo->buffer == nullptr)
-                        invalid_input_resources[set][binding] = input;
-                    break;
-                }
-                case DescriptorResourceType::StorageBuffer:
-                {
-                    auto buffer = reference_cast<VulkanStorageBuffer>(input.input[0]);
-                    write_descriptor.pBufferInfo = &buffer->get_descriptor_buffer_info();
-                    stored_write_descriptor.resource_handles[0] = write_descriptor.pBufferInfo->buffer;
-
-                    // Defer if the resource doesn't exist
-                    if (write_descriptor.pBufferInfo->buffer == nullptr)
-                        invalid_input_resources[set][binding] = input;
-                    break;
-                }
-                case DescriptorResourceType::StorageBufferSet:
-                {
-                    auto buffer = reference_cast<VulkanStorageBufferSet>(input.input[0]);
-                    write_descriptor.pBufferInfo = &reference_cast<VulkanStorageBuffer>(buffer->get(frame_index))->get_descriptor_buffer_info();
-                    stored_write_descriptor.resource_handles[0] = write_descriptor.pBufferInfo->buffer;
-
-                    // Defer if the resource doesn't exist
-                    if (write_descriptor.pBufferInfo->buffer == nullptr)
-                        invalid_input_resources[set][binding] = input;
-                    break;
-                }
-                case DescriptorResourceType::Texture:
-                {
-                    if (input.input.size() > 1)
                     {
-                        image_info_storage.emplace_back(input.input.size());
-                        for (size_t i = 0; i < input.input.size(); ++i)
-                        {
-                            auto texture = reference_cast<VulkanTexture>(input.input[i]);
-                            image_info_storage[image_info_index][i] = texture->get_descriptor_image_info();
-                        }
-                        write_descriptor.pImageInfo = image_info_storage[image_info_index].data();
-                        image_info_index++;
+                        auto buffer = reference_cast<VulkanUniformBuffer>(input.input[0]);
+                        write_descriptor.pBufferInfo = &buffer->get_descriptor_buffer_info();
+                        stored_write_descriptor.resource_handles[0] = write_descriptor.pBufferInfo->buffer;
+
+                        // Defer if the resource doesn't exist
+                        if (write_descriptor.pBufferInfo->buffer == nullptr)
+                            invalid_input_resources[set][binding] = input;
+                        break;
                     }
-                    else
+                case DescriptorResourceType::UniformBufferSet:
+                    {
+                        auto buffer = reference_cast<VulkanUniformBufferSet>(input.input[0]);
+                        write_descriptor.pBufferInfo = &reference_cast<VulkanUniformBuffer>(buffer->get(frame_index))->get_descriptor_buffer_info();
+                        stored_write_descriptor.resource_handles[0] = write_descriptor.pBufferInfo->buffer;
+
+                        // Defer if the resource doesn't exist
+                        if (write_descriptor.pBufferInfo->buffer == nullptr)
+                            invalid_input_resources[set][binding] = input;
+                        break;
+                    }
+                case DescriptorResourceType::StorageBuffer:
+                    {
+                        auto buffer = reference_cast<VulkanStorageBuffer>(input.input[0]);
+                        write_descriptor.pBufferInfo = &buffer->get_descriptor_buffer_info();
+                        stored_write_descriptor.resource_handles[0] = write_descriptor.pBufferInfo->buffer;
+
+                        // Defer if the resource doesn't exist
+                        if (write_descriptor.pBufferInfo->buffer == nullptr)
+                            invalid_input_resources[set][binding] = input;
+                        break;
+                    }
+                case DescriptorResourceType::StorageBufferSet:
+                    {
+                        auto buffer = reference_cast<VulkanStorageBufferSet>(input.input[0]);
+                        write_descriptor.pBufferInfo = &reference_cast<VulkanStorageBuffer>(buffer->get(frame_index))->get_descriptor_buffer_info();
+                        stored_write_descriptor.resource_handles[0] = write_descriptor.pBufferInfo->buffer;
+
+                        // Defer if the resource doesn't exist
+                        if (write_descriptor.pBufferInfo->buffer == nullptr)
+                            invalid_input_resources[set][binding] = input;
+                        break;
+                    }
+                case DescriptorResourceType::Texture:
+                    {
+                        if (input.input.size() > 1)
+                        {
+                            image_info_storage.emplace_back(input.input.size());
+                            for (size_t i = 0; i < input.input.size(); ++i)
+                            {
+                                auto texture = reference_cast<VulkanTexture>(input.input[i]);
+                                image_info_storage[image_info_index][i] = texture->get_descriptor_image_info();
+                            }
+                            write_descriptor.pImageInfo = image_info_storage[image_info_index].data();
+                            image_info_index++;
+                        }
+                        else
+                        {
+                            auto texture = reference_cast<VulkanTexture>(input.input[0]);
+                            write_descriptor.pImageInfo = &texture->get_descriptor_image_info();
+                        }
+                        stored_write_descriptor.resource_handles[0] = write_descriptor.pImageInfo->imageView;
+
+                        // Defer if the resource doesn't exist
+                        if (write_descriptor.pImageInfo->imageView == nullptr)
+                            invalid_input_resources[set][binding] = input;
+
+                        break;
+                    }
+                case DescriptorResourceType::TextureCube:
                     {
                         auto texture = reference_cast<VulkanTexture>(input.input[0]);
                         write_descriptor.pImageInfo = &texture->get_descriptor_image_info();
-                    }
-                    stored_write_descriptor.resource_handles[0] = write_descriptor.pImageInfo->imageView;
+                        stored_write_descriptor.resource_handles[0] = write_descriptor.pImageInfo->imageView;
 
-                    // Defer if the resource doesn't exist
-                    if (write_descriptor.pImageInfo->imageView == nullptr)
-                        invalid_input_resources[set][binding] = input;
+                        // Defer if the resource doesn't exist
+                        if (write_descriptor.pImageInfo->imageView == nullptr)
+                            invalid_input_resources[set][binding] = input;
 
-                    break;
-                }
-                case DescriptorResourceType::TextureCube:
-                {
-                    auto texture = reference_cast<VulkanTexture>(input.input[0]);
-                    write_descriptor.pImageInfo = &texture->get_descriptor_image_info();
-                    stored_write_descriptor.resource_handles[0] = write_descriptor.pImageInfo->imageView;
-
-                    // Defer if the resource doesn't exist
-                    if (write_descriptor.pImageInfo->imageView == nullptr)
-                        invalid_input_resources[set][binding] = input;
-
-                    break;
-                }
-                case DescriptorResourceType::Image:
-                {
-                    auto image = reference_cast<VulkanImage>(input.input[0]);
-                    if (image == nullptr)
-                    {
-                        invalid_input_resources[set][binding] = input;
                         break;
                     }
+                case DescriptorResourceType::Image:
+                    {
+                        auto image = reference_cast<VulkanImage>(input.input[0]);
+                        if (image == nullptr)
+                        {
+                            invalid_input_resources[set][binding] = input;
+                            break;
+                        }
 
-                    write_descriptor.pImageInfo = &image->get_descriptor_image_info();
-                    stored_write_descriptor.resource_handles[0] = write_descriptor.pImageInfo->imageView;
-                }
+                        write_descriptor.pImageInfo = &image->get_descriptor_image_info();
+                        stored_write_descriptor.resource_handles[0] = write_descriptor.pImageInfo->imageView;
+                    }
                 default:
                     LOGGER_ERROR("Invalid input type");
                 }
@@ -472,37 +471,37 @@ void VulkanDescriptorSetManager::invalidate_and_update(const size_t frame_index)
             switch (input.type)
             {
             case DescriptorResourceType::UniformBuffer:
-            {
-                const auto& buffer_info = reference_cast<VulkanUniformBuffer>(input.input[0])->get_descriptor_buffer_info();
-                if (buffer_info.buffer != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
-                    invalid_input_resources[set][binding] = input;
-                break;
-            }
+                {
+                    const auto& buffer_info = reference_cast<VulkanUniformBuffer>(input.input[0])->get_descriptor_buffer_info();
+                    if (buffer_info.buffer != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
+                        invalid_input_resources[set][binding] = input;
+                    break;
+                }
             case DescriptorResourceType::UniformBufferSet:
-            {
-                const auto& buffer_info = reference_cast<VulkanUniformBuffer>(
-                    reference_cast<VulkanUniformBufferSet>(input.input[0])->get(frame_index)
+                {
+                    const auto& buffer_info = reference_cast<VulkanUniformBuffer>(
+                        reference_cast<VulkanUniformBufferSet>(input.input[0])->get(frame_index)
                     )->get_descriptor_buffer_info();
-                if (buffer_info.buffer != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
-                    invalid_input_resources[set][binding] = input;
-                break;
-            }
+                    if (buffer_info.buffer != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
+                        invalid_input_resources[set][binding] = input;
+                    break;
+                }
             case DescriptorResourceType::StorageBuffer:
-            {
-                const auto& buffer_info = reference_cast<VulkanStorageBuffer>(input.input[0])->get_descriptor_buffer_info();
-                if (buffer_info.buffer != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
-                    invalid_input_resources[set][binding] = input;
-                break;
-            }
+                {
+                    const auto& buffer_info = reference_cast<VulkanStorageBuffer>(input.input[0])->get_descriptor_buffer_info();
+                    if (buffer_info.buffer != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
+                        invalid_input_resources[set][binding] = input;
+                    break;
+                }
             case DescriptorResourceType::StorageBufferSet:
-            {
-                const auto& buffer_info = reference_cast<VulkanStorageBuffer>(
-                    reference_cast<VulkanStorageBufferSet>(input.input[0])->get(frame_index)
+                {
+                    const auto& buffer_info = reference_cast<VulkanStorageBuffer>(
+                        reference_cast<VulkanStorageBufferSet>(input.input[0])->get(frame_index)
                     )->get_descriptor_buffer_info();
-                if (buffer_info.buffer != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
-                    invalid_input_resources[set][binding] = input;
-                break;
-            }
+                    if (buffer_info.buffer != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
+                        invalid_input_resources[set][binding] = input;
+                    break;
+                }
             case DescriptorResourceType::Texture:
                 for (size_t i = 0; i < input.input.size(); i++)
                 {
@@ -518,19 +517,19 @@ void VulkanDescriptorSetManager::invalidate_and_update(const size_t frame_index)
                 }
                 break;
             case DescriptorResourceType::TextureCube:
-            {
-                const auto& image_info = reference_cast<VulkanTexture>(input.input[0])->get_descriptor_image_info();
-                if (image_info.imageView != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
-                    invalid_input_resources[set][binding] = input;
-                break;
-            }
+                {
+                    const auto& image_info = reference_cast<VulkanTexture>(input.input[0])->get_descriptor_image_info();
+                    if (image_info.imageView != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
+                        invalid_input_resources[set][binding] = input;
+                    break;
+                }
             case DescriptorResourceType::Image:
-            {
-                const auto& image_info = reference_cast<VulkanImage>(input.input[0])->get_descriptor_image_info();
-                if (image_info.imageView != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
-                    invalid_input_resources[set][binding] = input;
-                break;
-            }
+                {
+                    const auto& image_info = reference_cast<VulkanImage>(input.input[0])->get_descriptor_image_info();
+                    if (image_info.imageView != write_descriptors_map[frame_index].at(set).at(binding).resource_handles[0])
+                        invalid_input_resources[set][binding] = input;
+                    break;
+                }
             default:
                 LOGGER_ERROR("Invalid input type");
                 break;
@@ -558,68 +557,68 @@ void VulkanDescriptorSetManager::invalidate_and_update(const size_t frame_index)
             switch (input.type)
             {
             case DescriptorResourceType::UniformBuffer:
-            {
-                auto buffer = reference_cast<VulkanUniformBuffer>(input.input[0]);
-                write_descriptor_set.pBufferInfo = &buffer->get_descriptor_buffer_info();
-                resource_handles[0] = write_descriptor_set.pBufferInfo->buffer;
-            }
-            case DescriptorResourceType::UniformBufferSet:
-            {
-                auto buffer = reference_cast<VulkanUniformBufferSet>(input.input[0]);
-                write_descriptor_set.pBufferInfo = &reference_cast<VulkanUniformBuffer>(buffer->get(frame_index))->get_descriptor_buffer_info();
-                resource_handles[0] = write_descriptor_set.pBufferInfo->buffer;
-                break;
-            }
-            case DescriptorResourceType::StorageBuffer:
-            {
-                auto buffer = reference_cast<VulkanStorageBuffer>(input.input[0]);
-                write_descriptor_set.pBufferInfo = &buffer->get_descriptor_buffer_info();
-                resource_handles[0] = write_descriptor_set.pBufferInfo->buffer;
-                break;
-            }
-            case DescriptorResourceType::StorageBufferSet:
-            {
-                auto buffer = reference_cast<VulkanStorageBufferSet>(input.input[0]);
-                write_descriptor_set.pBufferInfo = &reference_cast<VulkanStorageBuffer>(buffer->get(frame_index))->get_descriptor_buffer_info();
-                resource_handles[0] = write_descriptor_set.pBufferInfo->buffer;
-                break;
-            }
-            case DescriptorResourceType::Texture:
-            {
-                if (input.input.size() > 1)
                 {
-                    image_info_storage.emplace_back(input.input.size());
-                    for (size_t i = 0; i < input.input.size(); ++i)
-                    {
-                        auto texture = reference_cast<VulkanTexture>(input.input[i]);
-                        image_info_storage[image_info_index][i] = texture->get_descriptor_image_info();
-                        resource_handles[i] = image_info_storage[image_info_index][i].imageView;
-                    }
-                    write_descriptor_set.pImageInfo = image_info_storage[image_info_index].data();
-                    image_info_index++;
+                    auto buffer = reference_cast<VulkanUniformBuffer>(input.input[0]);
+                    write_descriptor_set.pBufferInfo = &buffer->get_descriptor_buffer_info();
+                    resource_handles[0] = write_descriptor_set.pBufferInfo->buffer;
                 }
-                else
+            case DescriptorResourceType::UniformBufferSet:
+                {
+                    auto buffer = reference_cast<VulkanUniformBufferSet>(input.input[0]);
+                    write_descriptor_set.pBufferInfo = &reference_cast<VulkanUniformBuffer>(buffer->get(frame_index))->get_descriptor_buffer_info();
+                    resource_handles[0] = write_descriptor_set.pBufferInfo->buffer;
+                    break;
+                }
+            case DescriptorResourceType::StorageBuffer:
+                {
+                    auto buffer = reference_cast<VulkanStorageBuffer>(input.input[0]);
+                    write_descriptor_set.pBufferInfo = &buffer->get_descriptor_buffer_info();
+                    resource_handles[0] = write_descriptor_set.pBufferInfo->buffer;
+                    break;
+                }
+            case DescriptorResourceType::StorageBufferSet:
+                {
+                    auto buffer = reference_cast<VulkanStorageBufferSet>(input.input[0]);
+                    write_descriptor_set.pBufferInfo = &reference_cast<VulkanStorageBuffer>(buffer->get(frame_index))->get_descriptor_buffer_info();
+                    resource_handles[0] = write_descriptor_set.pBufferInfo->buffer;
+                    break;
+                }
+            case DescriptorResourceType::Texture:
+                {
+                    if (input.input.size() > 1)
+                    {
+                        image_info_storage.emplace_back(input.input.size());
+                        for (size_t i = 0; i < input.input.size(); ++i)
+                        {
+                            auto texture = reference_cast<VulkanTexture>(input.input[i]);
+                            image_info_storage[image_info_index][i] = texture->get_descriptor_image_info();
+                            resource_handles[i] = image_info_storage[image_info_index][i].imageView;
+                        }
+                        write_descriptor_set.pImageInfo = image_info_storage[image_info_index].data();
+                        image_info_index++;
+                    }
+                    else
+                    {
+                        auto texture = reference_cast<VulkanTexture>(input.input[0]);
+                        write_descriptor_set.pImageInfo = &texture->get_descriptor_image_info();
+                        resource_handles[0] = write_descriptor_set.pImageInfo->imageView;
+                    }
+                    break;
+                }
+            case DescriptorResourceType::TextureCube:
                 {
                     auto texture = reference_cast<VulkanTexture>(input.input[0]);
                     write_descriptor_set.pImageInfo = &texture->get_descriptor_image_info();
                     resource_handles[0] = write_descriptor_set.pImageInfo->imageView;
+                    break;
                 }
-                break;
-            }
-            case DescriptorResourceType::TextureCube:
-            {
-                auto texture = reference_cast<VulkanTexture>(input.input[0]);
-                write_descriptor_set.pImageInfo = &texture->get_descriptor_image_info();
-                resource_handles[0] = write_descriptor_set.pImageInfo->imageView;
-                break;
-            }
             case DescriptorResourceType::Image:
-            {
-                auto image = reference_cast<VulkanImage>(input.input[0]);
-                write_descriptor_set.pImageInfo = &image->get_descriptor_image_info();
-                resource_handles[0] = write_descriptor_set.pImageInfo->imageView;
-                break;
-            }
+                {
+                    auto image = reference_cast<VulkanImage>(input.input[0]);
+                    write_descriptor_set.pImageInfo = &image->get_descriptor_image_info();
+                    resource_handles[0] = write_descriptor_set.pImageInfo->imageView;
+                    break;
+                }
             case DescriptorResourceType::Unknown:
                 LOGGER_ERROR("Invalid input type");
                 break;
@@ -634,7 +633,7 @@ void VulkanDescriptorSetManager::invalidate_and_update(const size_t frame_index)
             write_descriptor_to_update.size(),
             set,
             frame_index
-            );
+        );
         device.get_handle().updateDescriptorSets(write_descriptor_to_update, {});
     }
 
@@ -700,8 +699,10 @@ VulkanDescriptorSetManager& VulkanDescriptorSetManager::init()
             //     }
 
             for (size_t frame_index = 0; frame_index < frames_in_flight; ++frame_index)
-                write_descriptors_map[frame_index][set][binding] = {.write_descriptor_set = write_descriptor,
-                                                                    .resource_handles = std::vector<void*>(write_descriptor.descriptorCount)};
+                write_descriptors_map[frame_index][set][binding] = {
+                    .write_descriptor_set = write_descriptor,
+                    .resource_handles = std::vector<void*>(write_descriptor.descriptorCount)
+                };
         }
     }
 
@@ -727,5 +728,4 @@ std::set<size_t> VulkanDescriptorSetManager::get_buffer_sets()
 
     return sets_with_buffers;
 }
-
 }

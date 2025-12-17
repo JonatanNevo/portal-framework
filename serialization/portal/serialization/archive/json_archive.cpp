@@ -12,7 +12,6 @@
 
 namespace portal
 {
-
 void JsonArchive::dump(const std::filesystem::path& output_path)
 {
     if (!FileSystem::exists(output_path.parent_path()))
@@ -147,20 +146,20 @@ nlohmann::json JsonArchive::prepare_object(ArchiveObject* object)
                 extract_array_elements<std::string>(archive_object, prop, key, 1);
                 break;
             case reflection::PropertyType::string:
-            {
-                extract_array_elements<std::string>(archive_object, prop, key, 0);
-                break;
-            }
-            case reflection::PropertyType::object:
-            {
-                std::vector<nlohmann::json> array_elements;
-                for (size_t i = 0; i < prop.elements_number; i++)
                 {
-                    array_elements.emplace_back(prepare_object(prop.value.as<ArchiveObject*>() + i));
+                    extract_array_elements<std::string>(archive_object, prop, key, 0);
+                    break;
                 }
-                archive_object[key] = array_elements;
-                break;
-            }
+            case reflection::PropertyType::object:
+                {
+                    std::vector<nlohmann::json> array_elements;
+                    for (size_t i = 0; i < prop.elements_number; i++)
+                    {
+                        array_elements.emplace_back(prepare_object(prop.value.as<ArchiveObject*>() + i));
+                    }
+                    archive_object[key] = array_elements;
+                    break;
+                }
             case reflection::PropertyType::integer128:
             case reflection::PropertyType::invalid:
                 LOG_ERROR_TAG("Json Archiver", "Invalid property type for array in property {}", std::string_view(key));
@@ -200,11 +199,11 @@ void JsonArchive::deserialize_object(ArchiveObject* root, const nlohmann::json& 
         case nlohmann::detail::value_t::null:
             break;
         case nlohmann::detail::value_t::object:
-        {
-            auto* child = root->create_child(key);
-            deserialize_object(child, value);
-            break;
-        }
+            {
+                auto* child = root->create_child(key);
+                deserialize_object(child, value);
+                break;
+            }
         case nlohmann::detail::value_t::number_integer:
             root->add_property<nlohmann::json::number_integer_t>(key, value);
             break;
@@ -244,7 +243,7 @@ void JsonArchive::deserialize_array(ArchiveObject* root, const std::string& key,
                 reflection::PropertyContainerType::array,
                 0
             }
-            );
+        );
         return;
     }
 
@@ -252,81 +251,81 @@ void JsonArchive::deserialize_array(ArchiveObject* root, const std::string& key,
     switch (array_value_type)
     {
     case nlohmann::detail::value_t::object:
-    {
-        std::vector<ArchiveObject> objects;
-        for (auto& value : array)
         {
-            auto& child = objects.emplace_back();
-            deserialize_object(&child, value);
-        }
-
-        const auto buffer = Buffer::allocate(objects.size() * sizeof(ArchiveObject));
-        for (size_t i = 0; i < objects.size(); ++i)
-        {
-            new(buffer.as<ArchiveObject*>() + i) ArchiveObject(objects[i]);
-        }
-
-        root->add_property_to_map(
-            key,
+            std::vector<ArchiveObject> objects;
+            for (auto& value : array)
             {
-                buffer,
-                reflection::PropertyType::object,
-                reflection::PropertyContainerType::array,
-                objects.size()
+                auto& child = objects.emplace_back();
+                deserialize_object(&child, value);
             }
+
+            const auto buffer = Buffer::allocate(objects.size() * sizeof(ArchiveObject));
+            for (size_t i = 0; i < objects.size(); ++i)
+            {
+                new(buffer.as<ArchiveObject*>() + i) ArchiveObject(objects[i]);
+            }
+
+            root->add_property_to_map(
+                key,
+                {
+                    buffer,
+                    reflection::PropertyType::object,
+                    reflection::PropertyContainerType::array,
+                    objects.size()
+                }
             );
-        break;
-    }
+            break;
+        }
     case nlohmann::detail::value_t::string:
-    {
-        std::vector<std::string> string_array;
-        for (const auto& value : array)
         {
-            string_array.emplace_back(value.get<std::string>());
+            std::vector<std::string> string_array;
+            for (const auto& value : array)
+            {
+                string_array.emplace_back(value.get<std::string>());
+            }
+            root->add_property(key, string_array);
+            break;
         }
-        root->add_property(key, string_array);
-        break;
-    }
     case nlohmann::detail::value_t::boolean:
-    {
-        std::vector<typename nlohmann::json::number_integer_t> int_array;
-        for (const auto& value : array)
         {
-            int_array.emplace_back(value.get<nlohmann::json::number_integer_t>());
+            std::vector<typename nlohmann::json::number_integer_t> int_array;
+            for (const auto& value : array)
+            {
+                int_array.emplace_back(value.get<nlohmann::json::number_integer_t>());
+            }
+            root->add_property(key, int_array);
+            break;
         }
-        root->add_property(key, int_array);
-        break;
-    }
     case nlohmann::detail::value_t::number_integer:
-    {
-        std::vector<typename nlohmann::json::number_integer_t> int_array;
-        for (const auto& value : array)
         {
-            int_array.emplace_back(value.get<nlohmann::json::number_integer_t>());
+            std::vector<typename nlohmann::json::number_integer_t> int_array;
+            for (const auto& value : array)
+            {
+                int_array.emplace_back(value.get<nlohmann::json::number_integer_t>());
+            }
+            root->add_property(key, int_array);
+            break;
         }
-        root->add_property(key, int_array);
-        break;
-    }
     case nlohmann::detail::value_t::number_unsigned:
-    {
-        std::vector<typename nlohmann::json::number_unsigned_t> uint_array;
-        for (const auto& value : array)
         {
-            uint_array.emplace_back(value.get<nlohmann::json::number_unsigned_t>());
+            std::vector<typename nlohmann::json::number_unsigned_t> uint_array;
+            for (const auto& value : array)
+            {
+                uint_array.emplace_back(value.get<nlohmann::json::number_unsigned_t>());
+            }
+            root->add_property(key, uint_array);
+            break;
         }
-        root->add_property(key, uint_array);
-        break;
-    }
     case nlohmann::detail::value_t::number_float:
-    {
-        std::vector<typename nlohmann::json::number_float_t> float_array;
-        for (const auto& value : array)
         {
-            float_array.emplace_back(value.get<nlohmann::json::number_float_t>());
+            std::vector<typename nlohmann::json::number_float_t> float_array;
+            for (const auto& value : array)
+            {
+                float_array.emplace_back(value.get<nlohmann::json::number_float_t>());
+            }
+            root->add_property(key, float_array);
+            break;
         }
-        root->add_property(key, float_array);
-        break;
-    }
     case nlohmann::detail::value_t::array:
         LOG_ERROR_TAG("Json Archiver", "Cannot deserialize array of arrays from json");
         break;

@@ -10,7 +10,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 VulkanStorageBuffer::VulkanStorageBuffer(const StorageBufferProperties& properties, const VulkanDevice& device)
     : StorageBuffer(properties.debug_name),
       device(device),
@@ -87,14 +86,14 @@ void VulkanStorageBuffer::init()
 
 VulkanStorageBufferSet::VulkanStorageBufferSet(const size_t buffer_size, const size_t size, const VulkanDevice& device) : StorageBufferSet(
     INVALID_STRING_ID
-    )
+)
 {
     for (size_t i = 0; i < size; i++)
     {
         buffers[i] = make_reference<VulkanStorageBuffer>(
             StorageBufferProperties{buffer_size, true, STRING_ID(std::format("sub_storage_{}", i))},
             device
-            );
+        );
     }
 }
 

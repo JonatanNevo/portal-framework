@@ -16,7 +16,6 @@
 
 namespace portal::platform
 {
-
 const std::vector<spdlog::sink_ptr>& get_platform_sinks()
 {
     static std::vector<spdlog::sink_ptr> sinks;
@@ -24,12 +23,12 @@ const std::vector<spdlog::sink_ptr>& get_platform_sinks()
     {
         sinks = {
             std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/portal.log", true),
-    #if defined(PORTAL_DEBUG) || defined(PORTAL_DEVELOPMENT)
+#if defined(PORTAL_DEBUG) || defined(PORTAL_DEVELOPMENT)
             std::make_shared<spdlog::sinks::msvc_sink_mt>(),
-    #endif
-    #if PORTAL_HAS_CONSOLE
+#endif
+#if PORTAL_HAS_CONSOLE
             std::make_shared<spdlog::sinks::stdout_color_sink_mt>()
-    #endif
+#endif
         };
     }
 
@@ -63,23 +62,22 @@ bool print_assert_dialog(std::string_view file, int line, std::string_view funct
                             line,
                             function,
                             message
-                            ).c_str(),
+                        ).c_str(),
                         "ASSERTION",
                         MB_CANCELTRYCONTINUE | MB_ICONERROR | MB_TOPMOST
-                        );
+                    );
                 }
-                );
+            );
             assert_dialog.join();
         }
 
         if (res == IDCANCEL)
             // ignore this assert in the future
-                assertion_map[assert_location] = true;
+            assertion_map[assert_location] = true;
         else if (res == IDTRYAGAIN)
             return true; // break at outer context only if got option to select IDCANCEL
     }
 
     return false;
 }
-
 }

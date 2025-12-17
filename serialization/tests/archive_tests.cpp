@@ -98,7 +98,7 @@ TEST_F(ArchiveObjectTest, AddAndGetUint128Property)
 TEST_F(ArchiveObjectTest, AddAndGetVectorProperty)
 {
     const std::vector<int> int_values = {1, 2, 3, 4, 5};
-    const std::vector<float> float_values = {1.1,  2.2, 3.3, 4.4, 5.5};
+    const std::vector<float> float_values = {1.1, 2.2, 3.3, 4.4, 5.5};
     const std::vector<std::string> string_values = {"first", "second", "third"};
     archive.add_property("int_vector", int_values);
     archive.add_property("float_vector", float_values);
@@ -320,7 +320,7 @@ TEST_F(ArchiveObjectTest, LargeDataSet)
 TEST_F(ArchiveObjectTest, PropertyNameConflicts)
 {
     archive.add_property("duplicate", 10);
-    archive.add_property("duplicate", 20);  // Should overwrite
+    archive.add_property("duplicate", 20); // Should overwrite
 
     int retrieved;
     ASSERT_TRUE(archive.get_property("duplicate", retrieved));

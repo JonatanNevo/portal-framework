@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 void BasePlayerInputSystem::execute(ecs::Registry& registry)
 {
     const auto player_group = group(registry);
@@ -59,5 +58,4 @@ void BasePlayerInputSystem::disable_mouse(const InputManager* input)
 {
     input->set_cursor_mode(CursorMode::Locked);
 }
-
 } // portal

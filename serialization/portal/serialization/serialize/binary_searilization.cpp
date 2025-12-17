@@ -130,7 +130,8 @@ BinarySerializer::BinarySerializer(std::ostream& output) :
 }
 
 BinarySerializer::BinarySerializer(std::ostream& output, const BinarySerializationParams params) :
-    params(params), output(output)
+    params(params),
+    output(output)
 {
     if (params.encode_header)
     {
@@ -143,7 +144,8 @@ void BinarySerializer::add_property(const reflection::Property property)
 {
     output.write(reinterpret_cast<const char*>(&property.container_type), 1);
     output.write(reinterpret_cast<const char*>(&property.type), 1);
-    if (property.container_type != reflection::PropertyContainerType::scalar && !(property.container_type == reflection::PropertyContainerType::vector && params.pack_elements))
+    if (property.container_type != reflection::PropertyContainerType::scalar && !(property.container_type == reflection::PropertyContainerType::vector
+        && params.pack_elements))
     {
         output.write(reinterpret_cast<const char*>(&property.elements_number), element_number_size(params));
     }
@@ -170,8 +172,9 @@ BinaryDeserializer::BinaryDeserializer(std::istream& input, const bool read_head
         params = BinarySerializationParams{};
 }
 
-BinaryDeserializer::BinaryDeserializer(std::istream& input, const BinarySerializationParams params):
-    input(input), params(params)
+BinaryDeserializer::BinaryDeserializer(std::istream& input, const BinarySerializationParams params) :
+    input(input),
+    params(params)
 {
     const auto size = input.seekg(0, std::ios::end).tellg();
     input.seekg(0, std::ios::beg);
@@ -207,6 +210,4 @@ reflection::Property BinaryDeserializer::get_property()
         .elements_number = elements_number
     };
 }
-
 } // namespace portal
-

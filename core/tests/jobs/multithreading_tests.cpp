@@ -12,7 +12,6 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 6: Multi-Threading Tests
 // ============================================================================
@@ -80,7 +79,7 @@ TEST_F(JobTest, LoadBalancingAcrossWorkerThreads)
             std::format("{}", tid),
             count,
             (count * 100.0) / jobs.size()
-            );
+        );
     }
 
     // Verify multiple threads participated

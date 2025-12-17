@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 4: WorkerQueue & QueueSet
 // ============================================================================
@@ -387,7 +386,8 @@ TEST_F(JobTest, StolenJobsExecutedOnStealingWorker)
     // Create many jobs to encourage work stealing
     for (int i = 0; i < 100; ++i)
     {
-        auto job = [&executed_count]() -> Job<> {
+        auto job = [&executed_count]() -> Job<>
+        {
             executed_count.fetch_add(1, std::memory_order_relaxed);
             co_return;
         };
@@ -413,7 +413,8 @@ TEST_F(JobTest, WorkerDoesNotStealFromItself)
 
     for (int i = 0; i < 50; ++i)
     {
-        auto job = [&count]() -> Job<> {
+        auto job = [&count]() -> Job<>
+        {
             count.fetch_add(1, std::memory_order_relaxed);
             co_return;
         };
@@ -424,5 +425,4 @@ TEST_F(JobTest, WorkerDoesNotStealFromItself)
 
     EXPECT_EQ(count.load(), 50) << "All jobs should complete without stealing from self";
 }
-
 } // namespace portal

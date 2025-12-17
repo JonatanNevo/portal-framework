@@ -31,7 +31,6 @@ struct SwapchainImageData
 };
 
 
-
 class VulkanSwapchain
 {
 public:
@@ -74,6 +73,5 @@ private:
 
     // Index of the current swapchain image. can be different from the frame index
     size_t current_image = 0;
-
 };
 } // portal

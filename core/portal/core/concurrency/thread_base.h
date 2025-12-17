@@ -7,7 +7,6 @@
 
 namespace portal
 {
-
 enum class ThreadPriority
 {
     Low,
@@ -76,7 +75,7 @@ protected:
                         return std::invoke(func, st, (std::get<0>(t))...);
                     },
                     std::forward_as_tuple(bound...)
-                    );
+                );
             };
         }
         else
@@ -92,7 +91,7 @@ protected:
                         return std::invoke(func, (std::get<0>(t))...);
                     },
                     std::forward_as_tuple(bound...)
-                    );
+                );
             };
         }
     }

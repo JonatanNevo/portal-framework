@@ -9,8 +9,7 @@
 
 namespace portal
 {
-
-class ImGuiModule: public TaggedModule<Tag<ModuleTags::FrameLifecycle, ModuleTags::GuiUpdate>, Renderer>
+class ImGuiModule : public TaggedModule<Tag<ModuleTags::FrameLifecycle, ModuleTags::GuiUpdate>, Renderer>
 {
 public:
     ImGuiModule(ModuleStack& stack, const Window& window);

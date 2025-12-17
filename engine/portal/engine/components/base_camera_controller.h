@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 class BaseCameraController
 {
 public:
@@ -40,5 +39,4 @@ private:
     bool should_move = false;
     bool reset_mouse_on_next_move = false;
 };
-
 } // portal

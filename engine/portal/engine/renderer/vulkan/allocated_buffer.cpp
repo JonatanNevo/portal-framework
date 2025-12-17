@@ -92,11 +92,11 @@ vk::DeviceSize AllocatedBuffer::get_size() const
 }
 
 AllocatedBuffer::AllocatedBuffer(const VulkanDevice& device, const BufferBuilder& builder) : Allocated(
-                                                                                               builder.get_allocation_create_info(),
-                                                                                               nullptr,
-                                                                                               &device
-                                                                                               ),
-                                                                                           size(builder.get_create_info().size)
+                                                                                                 builder.get_allocation_create_info(),
+                                                                                                 nullptr,
+                                                                                                 &device
+                                                                                             ),
+                                                                                             size(builder.get_create_info().size)
 {
     this->set_handle(create_buffer(builder.get_create_info()));
 
@@ -104,7 +104,5 @@ AllocatedBuffer::AllocatedBuffer(const VulkanDevice& device, const BufferBuilder
     {
         set_debug_name(builder.get_debug_name());
     }
-
 }
-
 } // portal

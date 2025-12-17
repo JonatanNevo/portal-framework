@@ -15,4 +15,3 @@
 
 // Creates a string that can be used to include a header in the form "Platform/PlatformHeader.h", like "Windows/WindowsPlatformFile.h"
 #define COMPILED_PLATFORM_HEADER(prefix, suffix) PORTAL_STRINGIZE(PORTAL_JOIN(PORTAL_JOIN(portal/platform/prefix/PORTAL_PLATFORM/PORTAL_PLATFORM, _), suffix))
-

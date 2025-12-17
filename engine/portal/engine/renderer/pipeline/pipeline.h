@@ -11,7 +11,6 @@
 
 namespace portal::renderer
 {
-
 struct PipelineProperties
 {
     Reference<ShaderVariant> shader;

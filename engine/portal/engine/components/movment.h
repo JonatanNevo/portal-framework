@@ -8,10 +8,8 @@
 
 namespace portal
 {
-
 struct SpeedComponent
 {
     glm::vec3 speed = glm::vec3(0.0f);
 };
-
 }

@@ -12,7 +12,6 @@
 
 namespace portal::renderer
 {
-
 struct ShaderDefine
 {
     std::string name;
@@ -37,7 +36,6 @@ enum class ShaderStage: uint8_t
 
 namespace shader_reflection
 {
-
     struct ShaderResourceDeclaration
     {
         StringId name;
@@ -100,7 +98,6 @@ namespace shader_reflection
             return !(uniform_buffers.empty() && storage_buffers.empty() && image_samplers.empty() && storage_images.empty() && images.
                 empty() && samplers.empty());
         }
-
     };
 
     struct StageInfo
@@ -117,5 +114,4 @@ struct ShaderReflection
     std::vector<shader_reflection::PushConstantsRange> push_constants;
     std::vector<shader_reflection::StageInfo> stages;
 };
-
 }

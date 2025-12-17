@@ -9,11 +9,10 @@
 
 namespace portal
 {
-
 class WindowResizeEvent final : public Event
 {
 public:
-    WindowResizeEvent(const size_t width, const size_t height): width(width), height(height) {}
+    WindowResizeEvent(const size_t width, const size_t height) : width(width), height(height) {}
 
     [[nodiscard]] size_t get_width() const { return width; }
     [[nodiscard]] size_t get_height() const { return height; }
@@ -37,5 +36,4 @@ public:
     EVENT_CLASS_TYPE(WindowClose)
     EVENT_CLASS_CATEGORY(Window)
 };
-
 }

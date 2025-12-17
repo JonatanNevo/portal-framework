@@ -109,14 +109,14 @@ public:
         std::string_view tag,
         spdlog::format_string_t<Args...> format,
         Args&&... args
-        );
+    );
 
     static void print_message_tag(
         const spdlog::source_loc& loc,
         LogLevel level,
         std::string_view tag,
         std::string_view message
-        );
+    );
 
     template <typename... Args>
     static void print_message(
@@ -125,14 +125,14 @@ public:
         LogLevel level,
         spdlog::format_string_t<Args...> format,
         Args&&... args
-        );
+    );
 
     static void print_message(
         const std::shared_ptr<spdlog::logger>& logger,
         const spdlog::source_loc& loc,
         LogLevel level,
         std::string_view message
-        );
+    );
 
     template <typename... Args>
     static bool print_assert_message(
@@ -141,9 +141,10 @@ public:
         std::string_view function,
         spdlog::format_string_t<Args...> format,
         Args&&... args
-        );
+    );
 
     static bool print_assert_message(std::string_view file, int line, std::string_view function, std::string_view message);
+
 private:
     static std::unordered_map<std::string, std::shared_ptr<spdlog::logger>>& get_loggers();
 };
@@ -195,7 +196,7 @@ void Log::print_message_tag(
     const std::string_view tag,
     spdlog::format_string_t<Args...> format,
     Args&&... args
-    )
+)
 {
 #if defined(PORTAL_COMPILER_MSVC)
 #pragma warning(push)
@@ -218,7 +219,7 @@ void Log::print_message(
     LogLevel level,
     spdlog::format_string_t<Args...> format,
     Args&&... args
-    )
+)
 {
     logger->log(loc, static_cast<spdlog::level::level_enum>(level), format, std::forward<Args>(args)...);
 }
@@ -231,7 +232,7 @@ bool Log::print_assert_message(
     const std::string_view function,
     const spdlog::format_string_t<Args...> format,
     Args&&... args
-    )
+)
 {
     const std::string formatted = std::format(format, std::forward<Args>(args)...);
     return print_assert_message(file, line, function, formatted);

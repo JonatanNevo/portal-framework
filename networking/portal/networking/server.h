@@ -106,5 +106,4 @@ private:
     HSteamListenSocket listen_socket = k_HSteamListenSocket_Invalid;
     HSteamNetPollGroup poll_group = k_HSteamNetPollGroup_Invalid;
 };
-
 } // namespace portal::network

@@ -12,7 +12,6 @@
 
 namespace portal
 {
-
 /**
  * A stack allocator that allows for allocations in a stack-like manner.
  */
@@ -115,7 +114,6 @@ private:
     std::vector<uint8_t> buffer;
     marker top;
     std::unordered_map<void*, size_t> allocations;
-
 };
 
 
@@ -247,5 +245,4 @@ private:
 };
 
 using DoubleBufferedAllocator = BufferedAllocator<2>;
-
 } // portal

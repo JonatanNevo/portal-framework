@@ -9,7 +9,6 @@
 
 namespace portal::resources
 {
-
 MeshLoader::MeshLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
 {}
 
@@ -32,14 +31,14 @@ Reference<Resource> MeshLoader::load(const SourceMetadata& meta, const ResourceS
                   .with_usage(
                       vk::BufferUsageFlagBits::eStorageBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eShaderDeviceAddress
                       | vk::BufferUsageFlagBits::eTransferSrc
-                      )
+                  )
                   .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
 
     renderer::vulkan::BufferBuilder index_builder{index_buffer_size};
     index_builder.with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
                  .with_usage(
                      vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eTransferSrc
-                     )
+                 )
                  .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
 
     geometry.index_buffer = context.get_gpu_context().get_device().create_buffer_shared(index_builder);
@@ -67,7 +66,7 @@ Reference<Resource> MeshLoader::load(const SourceMetadata& meta, const ResourceS
                 staging_buffer.get_handle(),
                 geometry.vertex_buffer->get_handle(),
                 {vertex_copy}
-                );
+            );
 
             vk::BufferCopy index_copy{
                 .srcOffset = vertex_buffer_size,
@@ -78,9 +77,9 @@ Reference<Resource> MeshLoader::load(const SourceMetadata& meta, const ResourceS
                 staging_buffer.get_handle(),
                 geometry.index_buffer->get_handle(),
                 {index_copy}
-                );
+            );
         }
-        );
+    );
 
     return make_reference<MeshGeometry>(meta.resource_id, std::move(geometry));
 }
@@ -92,5 +91,4 @@ MeshData MeshLoader::load_mesh_data(const SourceMetadata& meta, const ResourceSo
 
     throw std::runtime_error("Unsupported mesh format");
 }
-
 } // portal

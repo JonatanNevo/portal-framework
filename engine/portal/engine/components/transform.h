@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 struct TransformDirtyTag {};
 
 class TransformComponent

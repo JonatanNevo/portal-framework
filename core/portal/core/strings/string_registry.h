@@ -15,7 +15,6 @@
 
 namespace portal
 {
-
 constexpr auto INVALID_STRING_VIEW = std::string_view("Invalid");
 
 // TODO: have this not as global?

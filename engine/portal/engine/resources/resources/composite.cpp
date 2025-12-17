@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 std::optional<ResourceReference<renderer::Texture>> Composite::get_texture(const StringId& resource_id) const
 {
     if (!resources.contains(ResourceType::Texture))

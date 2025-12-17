@@ -13,13 +13,13 @@
 
 namespace portal::renderer::vulkan
 {
-
 namespace utils
 {
     bool validate_prop(const TextureProperties& properties)
     {
         bool result = true;
-        result = properties.width > 0 && properties.height > 0 && properties.depth > 0 && properties.width < std::numeric_limits<uint32_t>::max() && properties.height <
+        result = properties.width > 0 && properties.height > 0 && properties.depth > 0 && properties.width < std::numeric_limits<uint32_t>::max() &&
+            properties.height <
             std::numeric_limits<uint32_t>::max() && properties.depth < std::numeric_limits<uint32_t>::max();
         PORTAL_ASSERT(result, "Invalid texture specification");
 
@@ -86,7 +86,7 @@ VulkanTexture::VulkanTexture(
     const TextureProperties& properties,
     const Buffer& data,
     const VulkanContext& context
-    ) : Texture(id), properties(properties), context(context), device(context.get_device())
+) : Texture(id), properties(properties), context(context), device(context.get_device())
 {
     utils::validate_prop(properties);
 
@@ -247,9 +247,9 @@ void VulkanTexture::recreate()
                     vk::AccessFlagBits2::eShaderRead,
                     vk::PipelineStageFlagBits2::eAllCommands,
                     vk::PipelineStageFlagBits2::eAllCommands
-                    );
+                );
             }
-            );
+        );
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -319,7 +319,7 @@ void VulkanTexture::set_data(const Buffer& data)
                 vk::AccessFlagBits2::eTransferWrite,
                 vk::PipelineStageFlagBits2::eHost,
                 vk::PipelineStageFlagBits2::eTransfer
-                );
+            );
 
             vk::BufferImageCopy copy_region{
                 .bufferOffset = 0,
@@ -342,7 +342,7 @@ void VulkanTexture::set_data(const Buffer& data)
                 info.image.get_handle(),
                 vk::ImageLayout::eTransferDstOptimal,
                 {copy_region}
-                );
+            );
 
             const size_t mip_count = properties.generate_mipmaps ? get_mip_level_count() : 1;
             if (mip_count > 1)
@@ -358,7 +358,7 @@ void VulkanTexture::set_data(const Buffer& data)
                     vk::AccessFlagBits2::eTransferRead,
                     vk::PipelineStageFlagBits2::eTransfer,
                     vk::PipelineStageFlagBits2::eTransfer
-                    );
+                );
             }
             else
             {
@@ -373,10 +373,10 @@ void VulkanTexture::set_data(const Buffer& data)
                     vk::AccessFlagBits2::eShaderRead,
                     vk::PipelineStageFlagBits2::eTransfer,
                     vk::PipelineStageFlagBits2::eFragmentShader
-                    );
+                );
             }
         }
-        );
+    );
 
     const size_t mip_count = properties.generate_mipmaps ? get_mip_level_count() : 1;
     if (mip_count > 1 && properties.generate_mipmaps)
@@ -404,10 +404,14 @@ void VulkanTexture::generate_mipmaps() const
                             .baseArrayLayer = face,
                             .layerCount = 1
                         },
-                        .srcOffsets = std::array{vk::Offset3D{},
-                                                 vk::Offset3D{static_cast<int32_t>(properties.width) >> (i - 1),
-                                                              static_cast<int32_t>(properties.height) >> (i - 1),
-                                                              static_cast<int32_t>(properties.depth) >> (i - 1)}},
+                        .srcOffsets = std::array{
+                            vk::Offset3D{},
+                            vk::Offset3D{
+                                static_cast<int32_t>(properties.width) >> (i - 1),
+                                static_cast<int32_t>(properties.height) >> (i - 1),
+                                static_cast<int32_t>(properties.depth) >> (i - 1)
+                            }
+                        },
 
                         .dstSubresource = {
                             .aspectMask = vk::ImageAspectFlagBits::eColor,
@@ -415,10 +419,14 @@ void VulkanTexture::generate_mipmaps() const
                             .baseArrayLayer = face,
                             .layerCount = 1
                         },
-                        .dstOffsets = std::array{vk::Offset3D{},
-                                                 vk::Offset3D{static_cast<int32_t>(properties.width) >> i,
-                                                              static_cast<int32_t>(properties.height) >> i,
-                                                              static_cast<int32_t>(properties.depth) >> i}},
+                        .dstOffsets = std::array{
+                            vk::Offset3D{},
+                            vk::Offset3D{
+                                static_cast<int32_t>(properties.width) >> i,
+                                static_cast<int32_t>(properties.height) >> i,
+                                static_cast<int32_t>(properties.depth) >> i
+                            }
+                        },
                     };
 
                     vk::ImageSubresourceRange range{
@@ -439,7 +447,7 @@ void VulkanTexture::generate_mipmaps() const
                         vk::AccessFlagBits2::eTransferWrite,
                         vk::PipelineStageFlagBits2::eTransfer,
                         vk::PipelineStageFlagBits2::eTransfer
-                        );
+                    );
 
                     vk::BlitImageInfo2 blit_info{
                         .srcImage = info.image.get_handle(),
@@ -462,7 +470,7 @@ void VulkanTexture::generate_mipmaps() const
                         vk::AccessFlagBits2::eTransferRead,
                         vk::PipelineStageFlagBits2::eTransfer,
                         vk::PipelineStageFlagBits2::eTransfer
-                        );
+                    );
                 }
             }
 
@@ -485,9 +493,9 @@ void VulkanTexture::generate_mipmaps() const
                 vk::AccessFlagBits2::eShaderRead,
                 vk::PipelineStageFlagBits2::eTransfer,
                 vk::PipelineStageFlagBits2::eFragmentShader
-                );
+            );
         }
-        );
+    );
 }
 
 uint32_t VulkanTexture::get_array_layer_count() const
@@ -496,5 +504,4 @@ uint32_t VulkanTexture::get_array_layer_count() const
         return 6;
     return 1;
 }
-
 } // portal

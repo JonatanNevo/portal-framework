@@ -14,14 +14,17 @@
 
 namespace portal::renderer::vulkan
 {
-
 static auto logger = Log::get_logger("Vulkan");
 
-VulkanImage::VulkanImage(const vk::Image image, const image::Properties& properties, const VulkanContext& context): Image(properties.name), device(context.get_device()), properties(properties)
+VulkanImage::VulkanImage(const vk::Image image, const image::Properties& properties, const VulkanContext& context) : Image(properties.name),
+    device(context.get_device()),
+    properties(properties)
 {
     // TODO: move this to the `reallocate` somehow?
     image_info.image = ImageAllocation(image);
-    const vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+    const vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format)
+                                                 ? vk::ImageAspectFlagBits::eDepth
+                                                 : vk::ImageAspectFlagBits::eColor;
 
     const vk::ImageViewCreateInfo view_info{
         .image = image_info.image.get_handle(),
@@ -38,7 +41,9 @@ VulkanImage::VulkanImage(const vk::Image image, const image::Properties& propert
     image_info.view = device.create_image_view(view_info);
 }
 
-VulkanImage::VulkanImage(const image::Properties& properties, const VulkanContext& context) : Image(properties.name), device(context.get_device()), properties(properties)
+VulkanImage::VulkanImage(const image::Properties& properties, const VulkanContext& context) : Image(properties.name),
+                                                                                              device(context.get_device()),
+                                                                                              properties(properties)
 {
     PORTAL_ASSERT(properties.width > 0 && properties.height > 0, "Invalid image size");
     reallocate();
@@ -135,7 +140,11 @@ void VulkanImage::reallocate()
             sampler_prop.mipmap_mode = SamplerMipmapMode::Linear;
         }
 
-        image_info.sampler = make_reference<VulkanSampler>(STRING_ID(std::format("default_sampler_{}", properties.name.string)), sampler_prop, device);
+        image_info.sampler = make_reference<VulkanSampler>(
+            STRING_ID(std::format("default_sampler_{}", properties.name.string)),
+            sampler_prop,
+            device
+        );
     }
 
     if (properties.usage == ImageUsage::Storage)
@@ -161,9 +170,9 @@ void VulkanImage::reallocate()
                     vk::AccessFlagBits2::eNone,
                     vk::PipelineStageFlagBits2::eAllCommands,
                     vk::PipelineStageFlagBits2::eAllCommands
-                    );
+                );
             }
-            );
+        );
     }
 
     if (properties.usage == ImageUsage::HostRead)
@@ -189,9 +198,9 @@ void VulkanImage::reallocate()
                     vk::AccessFlagBits2::eNone,
                     vk::PipelineStageFlagBits2::eAllCommands,
                     vk::PipelineStageFlagBits2::eAllCommands
-                    );
+                );
             }
-            );
+        );
     }
 }
 
@@ -303,7 +312,9 @@ vk::ImageView VulkanImage::get_mip_image_view(size_t mip_level)
 {
     if (!per_mip_image_views.contains(mip_level))
     {
-        vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format) ? vk::ImageAspectFlagBits::eDepth : vk::ImageAspectFlagBits::eColor;
+        vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format)
+                                               ? vk::ImageAspectFlagBits::eDepth
+                                               : vk::ImageAspectFlagBits::eColor;
         if (utils::is_stencil_format(properties.format))
             aspect_mask |= vk::ImageAspectFlagBits::eStencil;
 
@@ -401,7 +412,7 @@ void VulkanImage::set_data(const Buffer buffer)
                 vk::AccessFlagBits2::eTransferWrite,
                 vk::PipelineStageFlagBits2::eHost,
                 vk::PipelineStageFlagBits2::eTransfer
-                );
+            );
 
             vk::BufferImageCopy copy_region{
                 .bufferOffset = 0,
@@ -423,7 +434,7 @@ void VulkanImage::set_data(const Buffer buffer)
                 image_info.image.get_handle(),
                 vk::ImageLayout::eTransferDstOptimal,
                 {copy_region}
-                );
+            );
 
             portal::renderer::vulkan::transition_image_layout(
                 command_buffer,
@@ -435,9 +446,9 @@ void VulkanImage::set_data(const Buffer buffer)
                 vk::AccessFlagBits2::eShaderRead,
                 vk::PipelineStageFlagBits2::eTransfer,
                 vk::PipelineStageFlagBits2::eFragmentShader
-                );
+            );
         }
-        );
+    );
 
     update_descriptor();
 }
@@ -481,7 +492,7 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
                 vk::AccessFlagBits2::eTransferRead,
                 vk::PipelineStageFlagBits2::eAllCommands,
                 vk::PipelineStageFlagBits2::eTransfer
-                );
+            );
 
             size_t mip_data_offset = 0;
             for (uint32_t mip = 0; mip < mip_count; mip++)
@@ -506,7 +517,7 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
                     vk::ImageLayout::eTransferSrcOptimal,
                     staging_buffer.get_handle(),
                     {copy_region}
-                    );
+                );
 
                 mip_data_offset += utils::get_image_memory_size(properties.format, mip_width, mip_height);
                 mip_width = std::max(1u, mip_width / 2);
@@ -523,9 +534,9 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
                 vk::AccessFlagBits2::eNone,
                 vk::PipelineStageFlagBits2::eTransfer,
                 vk::PipelineStageFlagBits2::eTopOfPipe
-                );
+            );
         }
-        );
+    );
 
     const auto mapped_memory = staging_buffer.map();
 
@@ -547,5 +558,4 @@ void VulkanImage::update_descriptor()
     if (image_info.sampler)
         descriptor_image_info.sampler = image_info.sampler->get_vk_sampler();
 }
-
 }

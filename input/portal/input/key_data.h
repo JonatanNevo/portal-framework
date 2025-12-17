@@ -8,12 +8,10 @@
 
 namespace portal
 {
-
 struct KeyData
 {
     Key key = Key::Invalid;
     KeyState state = KeyState::Released;
     KeyState previous_state = KeyState::Released;
 };
-
 }

@@ -33,4 +33,3 @@ const std::vector<resources::MeshGeometryData::Submesh>& MeshGeometry::get_subme
     return geometry.submeshes;
 }
 } // portal
-

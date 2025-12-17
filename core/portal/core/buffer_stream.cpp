@@ -7,14 +7,14 @@
 
 namespace portal
 {
-BufferStreamReader::BufferStreamReader(const Buffer& buffer): std::istream(this), buffer(buffer), _position(0)
+BufferStreamReader::BufferStreamReader(const Buffer& buffer) : std::istream(this), buffer(buffer), _position(0)
 {
     if (buffer.data)
         setg(
             buffer.as<char*>(),
             buffer.as<char*>(),
             buffer.as<char*>() + buffer.size
-            );
+        );
 }
 
 std::streamsize BufferStreamReader::xsgetn(char* s, std::streamsize n)
@@ -61,17 +61,17 @@ std::streampos BufferStreamReader::seekoff(const std::streamoff off, const seekd
         buffer.as<char*>(),
         buffer.as<char*>() + _position,
         buffer.as<char*>() + buffer.size
-        );
+    );
     return new_pos;
 }
 
-BufferStreamWriter::BufferStreamWriter(Buffer& buffer): std::ostream(this), buffer(buffer), position(0)
+BufferStreamWriter::BufferStreamWriter(Buffer& buffer) : std::ostream(this), buffer(buffer), position(0)
 {
     if (buffer.data)
         setp(
             buffer.as<char*>(),
             buffer.as<char*>() + buffer.size
-            );
+        );
 }
 
 std::streambuf::int_type BufferStreamWriter::overflow(std::streambuf::int_type)

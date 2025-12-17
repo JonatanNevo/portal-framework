@@ -12,7 +12,6 @@
 
 namespace portal::renderer
 {
-
 DescriptorInput::DescriptorInput(const Reference<UniformBuffer>& buffer) : type(DescriptorResourceType::UniformBuffer), input({1, buffer})
 {}
 

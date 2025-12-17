@@ -7,5 +7,4 @@
 
 namespace portal::renderer
 {
-
 } // portal

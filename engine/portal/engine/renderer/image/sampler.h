@@ -7,7 +7,6 @@
 
 namespace portal::renderer
 {
-
 class Sampler
 {
 public:
@@ -15,5 +14,4 @@ public:
 
     [[nodiscard]] virtual const SamplerProperties& get_prop() const = 0;
 };
-
 }

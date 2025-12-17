@@ -13,14 +13,13 @@
 // TODO: find a constexpr hash implementation :(
 // MSVC consteval does not support constexpr mul128 correctly, therefore the hash cannot be constexpr
 # if !defined(PORTAL_COMPILER_MSVC)
- #   define PORTAL_HASH_CONSTEXPR PORTAL_FORCE_INLINE constexpr
- # else
- #   define PORTAL_HASH_CONSTEXPR PORTAL_FORCE_INLINE
- # endif
+#   define PORTAL_HASH_CONSTEXPR PORTAL_FORCE_INLINE constexpr
+# else
+#   define PORTAL_HASH_CONSTEXPR PORTAL_FORCE_INLINE
+# endif
 
 namespace portal::hash
 {
-
 PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* data, const size_t length)
 {
     return ::rapidhash(data, length);
@@ -37,5 +36,4 @@ PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char (&data)[n])
     // Exclude null terminator
     return ::rapidhash(data, n - 1);
 }
-
 }

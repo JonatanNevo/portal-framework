@@ -11,7 +11,6 @@
 
 namespace portal
 {
-
 constexpr auto CURRENT_DATABASE_VERSION = 1;
 
 struct DatabaseMetadata
@@ -59,7 +58,5 @@ private:
 #else
     llvm::DenseMap<StringId, SourceMetadata> resources;
 #endif
-
 };
-
 } // portal

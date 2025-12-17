@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 namespace ecs
 {
     class Registry;
@@ -39,5 +38,4 @@ struct FrameContext
 
     // TODO: add a custom stack allocator that will handle all of the frame's allocations
 };
-
 }

@@ -10,11 +10,9 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 9: Task<T> System
 // ============================================================================
 
 // TODO: Implement Task<T> tests according to JOB_SYSTEM_TEST_PLAN.md
-
 } // namespace portal

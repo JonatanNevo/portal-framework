@@ -10,7 +10,6 @@
 
 namespace portal
 {
-
 class EditorModule final : public TaggedModule<Tag<ModuleTags::GuiUpdate>, Renderer, SystemOrchestrator>
 {
 public:
@@ -21,5 +20,4 @@ public:
 private:
     EditorGuiSystem gui_system;
 };
-
 } // portal

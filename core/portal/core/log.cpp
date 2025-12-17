@@ -19,7 +19,6 @@
 
 namespace portal
 {
-
 Log::Settings g_settings;
 
 // Format: [date] [#thread_id] [file:line function] [name] colored{[level] message} extra
@@ -192,7 +191,7 @@ void Log::print_message_tag(
     LogLevel level,
     const std::string_view tag,
     const std::string_view message
-    )
+)
 {
     if (const auto& logger = get_logger(tag.data()))
     {
@@ -205,7 +204,7 @@ void Log::print_message(
     const spdlog::source_loc& loc,
     LogLevel level,
     const std::string_view message
-    )
+)
 {
     logger->log(loc, static_cast<spdlog::level::level_enum>(level), message);
 }
@@ -215,14 +214,14 @@ bool Log::print_assert_message(
     const int line,
     const std::string_view function,
     const std::string_view message
-    )
+)
 {
     print_message_tag(
         spdlog::source_loc{file.data(), line, function.data()},
         LogLevel::Error,
         "assertion",
         std::format("assert ({}) failed", message)
-        );
+    );
 
     return platform::print_assert_dialog(file, line, function, message);
 }

@@ -84,6 +84,4 @@ void ConnectionManager::remove_connection(const HSteamNetConnection connection)
         return;
     connections.erase(connection);
 }
-
-
 } // namespace portal::network

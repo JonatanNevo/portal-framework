@@ -7,8 +7,7 @@
 
 namespace portal
 {
-
-EditorModule::EditorModule(ModuleStack& stack): TaggedModule(stack, STRING_ID("Editor Module")) {}
+EditorModule::EditorModule(ModuleStack& stack) : TaggedModule(stack, STRING_ID("Editor Module")) {}
 
 void EditorModule::gui_update(FrameContext& frame)
 {

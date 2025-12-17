@@ -11,7 +11,8 @@
 #include "portal/engine/reference.h"
 #include "portal/engine/renderer/render_target/render_target.h"
 
-namespace portal::renderer {
+namespace portal::renderer
+{
 struct FrameRenderingContext;
 }
 
@@ -20,7 +21,7 @@ namespace portal::renderer::vulkan
 class VulkanContext;
 class VulkanImage;
 
-class VulkanRenderTarget final: public RenderTarget
+class VulkanRenderTarget final : public RenderTarget
 {
 public:
     VulkanRenderTarget(const RenderTargetProperties& prop);

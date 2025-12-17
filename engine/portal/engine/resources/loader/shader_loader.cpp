@@ -17,7 +17,6 @@
 
 namespace portal::resources
 {
-
 static auto logger = Log::get_logger("Resources");
 
 ShaderLoader::ShaderLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
@@ -73,5 +72,4 @@ Reference<Resource> ShaderLoader::load_precompiled_shader(const SourceMetadata&,
 
     return nullptr;
 }
-
 } // portal

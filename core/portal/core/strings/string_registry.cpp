@@ -11,7 +11,6 @@
 
 namespace portal
 {
-
 std::string_view StringRegistry::store(uint64_t id, const std::string_view string)
 {
     auto& entries = get_entries();
@@ -51,5 +50,4 @@ std::pmr::unordered_map<uint64_t, std::pmr::string>& StringRegistry::get_entries
     static std::pmr::unordered_map<uint64_t, std::pmr::string> entries{get_allocator()};
     return entries;
 }
-
 } // portal

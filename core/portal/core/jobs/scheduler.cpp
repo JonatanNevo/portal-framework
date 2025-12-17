@@ -7,7 +7,6 @@
 
 namespace portal::jobs
 {
-
 static auto logger = Log::get_logger("Scheduler");
 thread_local size_t Scheduler::tls_worker_id = std::numeric_limits<size_t>::max();
 
@@ -47,7 +46,7 @@ Scheduler::Scheduler(const int32_t num_worker_threads, const size_t job_cache_si
             {
                 worker_thread_loop(stop_token, index);
             }
-            );
+        );
     }
 }
 

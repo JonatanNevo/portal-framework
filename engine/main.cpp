@@ -69,7 +69,7 @@ std::unique_ptr<Application> portal::create_application(int, char**)
     initialize_logger();
 
     const auto prop = make_application_properties();
-    auto engine =  std::make_unique<Engine>(prop);
+    auto engine = std::make_unique<Engine>(prop);
     // TODO: Should not be here
 
     auto& engine_context = engine->get_engine_context();

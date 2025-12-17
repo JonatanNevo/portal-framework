@@ -7,7 +7,6 @@
 
 namespace portal
 {
-
 void DeletionQueue::push_deleter(std::function<void()>&& deleter)
 {
     deletion_queue.push_back(deleter);
@@ -23,5 +22,4 @@ void DeletionQueue::flush()
 
     deletion_queue.clear();
 }
-
 } // portal

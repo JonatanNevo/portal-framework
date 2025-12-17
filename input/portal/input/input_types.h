@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 enum class Key: uint16_t
 {
     Invalid = 0,
@@ -200,7 +199,3 @@ struct FlagTraits<KeyModifierBits>
     static constexpr Flags<KeyModifierBits> all_flags = Shift | Ctrl | Alt | System | CapsLock | NumLock;
 };
 }
-
-
-
-

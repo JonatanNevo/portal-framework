@@ -9,7 +9,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 inline vk::ImageType find_image_type(const vk::Extent3D& extent)
 {
     const uint32_t dim_num = !!extent.width + !!extent.height + (1 < extent.depth);
@@ -34,13 +33,13 @@ ImageBuilder::ImageBuilder(const vk::Extent3D& extent) : BuilderBase(
         .mipLevels = 1,
         .arrayLayers = 1
     }
-    ) {}
+) {}
 
 ImageBuilder::ImageBuilder(const vk::Extent2D& extent) : ImageBuilder(vk::Extent3D{extent.width, extent.height, 1}) {}
 
 ImageBuilder::ImageBuilder(const size_t width, const size_t height, const size_t depth) : ImageBuilder(
     vk::Extent3D{static_cast<uint32_t>(width), static_cast<uint32_t>(height), static_cast<uint32_t>(depth)}
-    ) {}
+) {}
 
 ImageBuilder& ImageBuilder::with_format(const vk::Format format)
 {
@@ -99,7 +98,7 @@ ImageAllocation::ImageAllocation() : Allocated({}, nullptr, nullptr) {}
 
 ImageAllocation::ImageAllocation(std::nullptr_t) : ImageAllocation() {}
 
-ImageAllocation::ImageAllocation(vk::Image image): Allocated({}, image, nullptr)
+ImageAllocation::ImageAllocation(vk::Image image) : Allocated({}, image, nullptr)
 {}
 
 ImageAllocation::ImageAllocation(ImageAllocation&& other) noexcept : Allocated(std::move(other))

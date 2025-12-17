@@ -10,7 +10,6 @@
 
 namespace portal
 {
-
 /**
  * A performant spin lock, for use in places where each thread is expected to hold the lock for a very short time.
  * This lock meets the `BasicLockable` and `Lockable` requirements, and can be used with `std::lock_guard`, `std::scoped_lock` or `std::unique_lock`.
@@ -73,5 +72,4 @@ public:
 private:
     std::atomic_flag locked = ATOMIC_FLAG_INIT;
 };
-
 }

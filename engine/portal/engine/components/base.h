@@ -27,5 +27,4 @@ struct InputComponent
 {
     InputManager* input_manager = nullptr;
 };
-
 }

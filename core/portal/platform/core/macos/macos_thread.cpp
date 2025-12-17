@@ -15,7 +15,6 @@
 
 namespace portal
 {
-
 static auto logger = Log::get_logger("Core");
 
 
@@ -45,7 +44,7 @@ void MacOSThread::set_priority(const ThreadPriority priority)
         LOGGER_ERROR(
             "Failed to get thread scheduling parameters with error: {}",
             std::generic_category().message(result_get)
-            );
+        );
         return;
     }
 
@@ -72,9 +71,6 @@ void MacOSThread::set_priority(const ThreadPriority priority)
         LOGGER_ERROR(
         "Failed to set thread priority with error: {}",
         std::generic_category().message(result_set)
-        );
-
-
+    );
 }
-
 } // portal

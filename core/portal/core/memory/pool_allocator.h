@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 /**
  * A pool allocator that allows quick allocations of multiple same size objects
  * @tparam T The object to pool
@@ -33,7 +32,7 @@ public:
      * @param args Constructor arguments
      * @return Pointer to the new object
      */
-    template<typename... Args>
+    template <typename... Args>
     T* alloc(Args&&... args)
     {
         std::lock_guard<L> lock(lock_object);
@@ -178,5 +177,4 @@ private:
     bool full = false;
     L lock_object{};
 };
-
 } // portal

@@ -11,14 +11,13 @@
 
 namespace portal
 {
-
 class DeletionQueue
 {
 public:
     void push_deleter(std::function<void()>&& deleter);
     void flush();
+
 private:
     std::deque<std::function<void()>> deletion_queue;
 };
-
 } // portal

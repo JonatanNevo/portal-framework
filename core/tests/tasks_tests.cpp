@@ -10,24 +10,26 @@
 
 namespace portal
 {
-
-TEST(TaskTests, BasicExecution)  // Rename from 'sanity'
+TEST(TaskTests, BasicExecution) // Rename from 'sanity'
 {
     std::vector<std::string> log;
 
-    auto task = [&]() -> Task<std::string> {
+    auto task = [&]() -> Task<std::string>
+    {
         log.push_back("task_start");
         co_return "result";
     };
 
-    auto wrapper = [&](Task<std::string> inner) -> Task<> {
+    auto wrapper = [&](Task<std::string> inner) -> Task<>
+    {
         log.push_back("wrapper_start");
         std::string result = co_await inner;
         log.push_back(result);
         log.push_back("wrapper_end");
     };
 
-    auto main_coro = [&]() -> Task<> {
+    auto main_coro = [&]() -> Task<>
+    {
         log.push_back("main_start");
         co_await wrapper(task());
         log.push_back("main_end");
@@ -45,5 +47,4 @@ TEST(TaskTests, BasicExecution)  // Rename from 'sanity'
     EXPECT_EQ(log[4], "wrapper_end");
     EXPECT_EQ(log[5], "main_end");
 }
-
 }

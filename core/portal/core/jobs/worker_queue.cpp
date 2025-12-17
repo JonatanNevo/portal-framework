@@ -8,8 +8,6 @@
 
 namespace portal
 {
-
-
 void WorkerQueue::submit_job(JobBase::handle_type& job, JobPriority priority)
 {
     const auto priority_num = static_cast<uint8_t>(priority);
@@ -91,7 +89,7 @@ void WorkerQueue::migrate_jobs_to_stealable()
         QueueSet<>& stealable_queue,
         std::atomic<size_t>& local_cnt,
         std::atomic<size_t>& stealable_cnt
-        )
+    )
     {
         if (local_cnt.load(std::memory_order_relaxed) > THRESHOLD)
         {
@@ -104,12 +102,11 @@ void WorkerQueue::migrate_jobs_to_stealable()
                     priority,
                     jobs.begin(),
                     count
-                    );
+                );
 
                 local_cnt.fetch_sub(count, std::memory_order_relaxed);
                 if (res)
                     stealable_cnt.fetch_add(count, std::memory_order_release);
-
             }
         }
     };
@@ -120,7 +117,7 @@ void WorkerQueue::migrate_jobs_to_stealable()
         stealable_set,
         local_count[static_cast<uint8_t>(JobPriority::High)],
         stealable_count[static_cast<uint8_t>(JobPriority::High)]
-        );
+    );
 
     move_to_stealable(
         JobPriority::Normal,
@@ -128,7 +125,7 @@ void WorkerQueue::migrate_jobs_to_stealable()
         stealable_set,
         local_count[static_cast<uint8_t>(JobPriority::Normal)],
         stealable_count[static_cast<uint8_t>(JobPriority::Normal)]
-        );
+    );
 
     move_to_stealable(
         JobPriority::Low,
@@ -136,7 +133,7 @@ void WorkerQueue::migrate_jobs_to_stealable()
         stealable_set,
         local_count[static_cast<uint8_t>(JobPriority::Low)],
         stealable_count[static_cast<uint8_t>(JobPriority::Low)]
-        );
+    );
 }
 
 size_t WorkerQueue::attempt_steal(JobBase::handle_type* jobs, const size_t max_count)
@@ -182,6 +179,4 @@ size_t WorkerQueue::attempt_steal(JobBase::handle_type* jobs, const size_t max_c
 
     return total_stolen;
 }
-
-
 } // portal

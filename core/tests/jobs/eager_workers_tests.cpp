@@ -12,11 +12,9 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 7: Eager Workers
 // ============================================================================
 
 // TODO: Implement Eager Workers tests according to JOB_SYSTEM_TEST_PLAN.md
-
 } // namespace portal

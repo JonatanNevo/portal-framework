@@ -10,7 +10,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 const std::vector g_validation_layers = {
     "VK_LAYER_KHRONOS_validation"
 };
@@ -45,7 +44,7 @@ void transition_image_layout(
     uint32_t mip_level,
     vk::ImageLayout old_layout,
     vk::ImageLayout new_layout
-    );
+);
 
 void transition_image_layout(
     const vk::raii::CommandBuffer& command_buffer,
@@ -58,7 +57,7 @@ void transition_image_layout(
     vk::PipelineStageFlags2 src_stage_mask,
     vk::PipelineStageFlags2 dst_stage_mask,
     vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor
-    );
+);
 
 void transition_image_layout(
     const vk::raii::CommandBuffer& command_buffer,
@@ -70,7 +69,7 @@ void transition_image_layout(
     vk::AccessFlags2 dst_access_mask,
     vk::PipelineStageFlags2 src_stage_mask,
     vk::PipelineStageFlags2 dst_stage_mask
-    );
+);
 
 void copy_image_to_image(
     const vk::raii::CommandBuffer& command_buffer,
@@ -78,5 +77,5 @@ void copy_image_to_image(
     const vk::Image& dest,
     vk::Extent2D src_size,
     vk::Extent2D dst_size
-    );
+);
 }

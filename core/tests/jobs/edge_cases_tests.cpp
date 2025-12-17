@@ -12,11 +12,9 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 8: Edge Cases & Error Handling
 // ============================================================================
 
 // TODO: Implement Edge Cases tests according to JOB_SYSTEM_TEST_PLAN.md
-
 } // namespace portal

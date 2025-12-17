@@ -12,7 +12,6 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 2: Counter (Job Completion Tracking)
 // ============================================================================
@@ -387,5 +386,4 @@ TEST_F(JobTest, CounterMemoryOrderingIntegrationTest)
     EXPECT_EQ(counter.count.load(std::memory_order_acquire), 0)
         << "All memory orderings should work together correctly";
 }
-
 } // namespace portal

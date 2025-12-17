@@ -11,7 +11,6 @@
 
 namespace portal::resources
 {
-
 class FileSource final : public ResourceSource
 {
 public:
@@ -24,5 +23,4 @@ public:
 protected:
     std::filesystem::path file_path;
 };
-
 } // portal

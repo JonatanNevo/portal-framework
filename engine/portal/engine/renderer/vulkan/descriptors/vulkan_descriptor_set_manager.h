@@ -33,7 +33,7 @@ public:
     void set_input(StringId name, const Reference<Image>& image) override;
     void set_input(StringId name, const Reference<ImageView>& image) override;
 
-    template<typename T>
+    template <typename T>
     Reference<T> get_input(const StringId name)
     {
         return DescriptorSetManager::get_input<T>(name);
@@ -54,7 +54,11 @@ public:
     const std::vector<vk::raii::DescriptorSet>& get_descriptor_sets(size_t frame_index) const;
 
 private:
-    VulkanDescriptorSetManager(const DescriptorSetManagerProperties& properties, const VulkanDevice& device, portal::renderer::vulkan::DescriptorAllocator&& descriptor_allocator);
+    VulkanDescriptorSetManager(
+        const DescriptorSetManagerProperties& properties,
+        const VulkanDevice& device,
+        portal::renderer::vulkan::DescriptorAllocator&& descriptor_allocator
+    );
 
     VulkanDescriptorSetManager& init();
     std::set<size_t> get_buffer_sets();
@@ -72,6 +76,7 @@ public:
         vk::WriteDescriptorSet write_descriptor_set;
         std::vector<void*> resource_handles;
     };
+
     std::vector<std::unordered_map<size_t, std::unordered_map<size_t, WriteDescriptor>>> write_descriptors_map;
 
 private:
@@ -80,5 +85,4 @@ private:
 
     portal::renderer::vulkan::DescriptorAllocator descriptor_allocator;
 };
-
 }

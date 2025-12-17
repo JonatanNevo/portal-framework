@@ -67,7 +67,10 @@ void VulkanUniformBuffer::init()
     };
 }
 
-VulkanUniformBufferSet::VulkanUniformBufferSet(size_t buffer_size, const size_t size, const VulkanDevice& device) : UniformBufferSet(INVALID_STRING_ID), device(device)
+VulkanUniformBufferSet::VulkanUniformBufferSet(size_t buffer_size, const size_t size, const VulkanDevice& device) : UniformBufferSet(
+        INVALID_STRING_ID
+    ),
+    device(device)
 {
     for (size_t i = 0; i < size; i++)
     {
@@ -88,12 +91,10 @@ void VulkanUniformBufferSet::set(const Reference<UniformBuffer>& buffer, const s
 
 void VulkanUniformBufferSet::set_data([[maybe_unused]] Buffer data, [[maybe_unused]] size_t offset)
 {
-
 }
 
 const Buffer& VulkanUniformBufferSet::get_data() const
 {
     return buffers.at(0)->get_data();
 }
-
 } // portal

@@ -27,7 +27,6 @@ class VulkanTexture;
 
 namespace portal
 {
-
 template <ResourceConcept T>
 class ResourceReference;
 
@@ -131,6 +130,7 @@ public:
     void wait_all(std::span<Job<>> jobs);
 
     void configure_ecs_registry(ecs::Registry& ecs_registry);
+
 protected:
     /**
      * Gets a pointer to the resource from a handle, if the resource is invalid, returns the invalid state instead

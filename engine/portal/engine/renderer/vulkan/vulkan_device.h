@@ -153,6 +153,5 @@ private:
     vk::raii::PipelineCache pipeline_cache = nullptr;
 
     bool debug_marker_enabled = false;
-
 };
 } // portal

@@ -11,12 +11,11 @@
 
 namespace portal
 {
-
 enum class FileStatus
 {
-    Success = 0,
-    Invalid = 1,
-    Locked = 2,
+    Success    = 0,
+    Invalid    = 1,
+    Locked     = 2,
     OtherError = 3
 };
 
@@ -36,7 +35,6 @@ public:
         const char* name;
         const char* spec;
     };
-
 
 public:
     static std::filesystem::path get_working_directory();

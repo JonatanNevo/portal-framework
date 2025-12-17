@@ -112,4 +112,3 @@ SceneDescription SceneLoader::load_scene_description(const SourceMetadata& meta,
     throw std::runtime_error("Unknown scene format");
 }
 }
-

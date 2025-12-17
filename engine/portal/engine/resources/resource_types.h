@@ -14,7 +14,6 @@
 
 namespace portal
 {
-
 enum class ResourceState: uint8_t
 {
     Unknown = 0,

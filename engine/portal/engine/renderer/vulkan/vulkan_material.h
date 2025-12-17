@@ -11,7 +11,8 @@
 #include "portal/engine/renderer/vulkan/descriptors/vulkan_uniform_buffer.h"
 
 
-namespace portal::renderer::vulkan {
+namespace portal::renderer::vulkan
+{
 class VulkanShaderVariant;
 }
 
@@ -70,5 +71,4 @@ private:
     std::unordered_map<StringId, Reference<BufferDescriptor>> buffers;
     std::unique_ptr<VulkanDescriptorSetManager> descriptor_manager;
 };
-
 }

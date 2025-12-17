@@ -40,5 +40,4 @@ public:
 protected:
     ResourceRegistry& registry;
 };
-
 }

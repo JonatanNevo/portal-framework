@@ -10,12 +10,10 @@
 
 namespace portal
 {
-
 struct StaticMeshComponent
 {
     ResourceReference<MeshGeometry> mesh;
     std::vector<ResourceReference<renderer::Material>> materials;
     bool visible = true;
 };
-
 } // portal

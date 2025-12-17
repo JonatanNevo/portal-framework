@@ -71,8 +71,6 @@ public:
 
     void update_descriptor();
 
-
-
 private:
     const VulkanDevice& device;
     image::Properties properties;
@@ -85,5 +83,4 @@ private:
     std::unordered_map<size_t, vk::raii::ImageView> per_mip_image_views;
     vk::DescriptorImageInfo descriptor_image_info;
 };
-
 } // vulkan

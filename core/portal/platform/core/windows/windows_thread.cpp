@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 static auto logger = Log::get_logger("Core");
 
 void WindowsThread::set_name(const std::string& name, const std::wstring& wide_name)
@@ -71,5 +70,4 @@ void WindowsThread::set_priority(const ThreadPriority priority)
         LOGGER_ERROR("Failed to set thread priority with result: {}", std::system_category().message(error));
     }
 }
-
 } // portal

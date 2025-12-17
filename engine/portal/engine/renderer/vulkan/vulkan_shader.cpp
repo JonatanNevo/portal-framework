@@ -15,7 +15,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 static auto logger = Log::get_logger("Vulkan");
 
 VulkanShader::VulkanShader(const StringId& id, const VulkanContext& context) : Shader(id), context(context)
@@ -125,7 +124,7 @@ void VulkanShaderVariant::load(CompiledShader&& compiled_shader)
                 .module = shader_module,
                 .pName = entry_point.c_str()
             }
-            );
+        );
     }
 
     create_descriptors();
@@ -138,7 +137,7 @@ void VulkanShaderVariant::load(CompiledShader&& compiled_shader)
                 .offset = static_cast<uint32_t>(offset),
                 .size = static_cast<uint32_t>(size)
             }
-            );
+        );
     }
 }
 
@@ -156,7 +155,7 @@ void VulkanShaderVariant::create_descriptors()
                     .type = vk::DescriptorType::eUniformBuffer,
                     .descriptorCount = static_cast<uint32_t>(shader_descriptor_set.uniform_buffers.size())
                 }
-                );
+            );
         }
 
         if (!shader_descriptor_set.storage_buffers.empty())
@@ -166,7 +165,7 @@ void VulkanShaderVariant::create_descriptors()
                     .type = vk::DescriptorType::eStorageBuffer,
                     .descriptorCount = static_cast<uint32_t>(shader_descriptor_set.storage_buffers.size())
                 }
-                );
+            );
         }
 
         if (!shader_descriptor_set.image_samplers.empty())
@@ -176,7 +175,7 @@ void VulkanShaderVariant::create_descriptors()
                     .type = vk::DescriptorType::eCombinedImageSampler,
                     .descriptorCount = static_cast<uint32_t>(shader_descriptor_set.image_samplers.size())
                 }
-                );
+            );
         }
 
         if (!shader_descriptor_set.images.empty())
@@ -186,7 +185,7 @@ void VulkanShaderVariant::create_descriptors()
                     .type = vk::DescriptorType::eSampledImage,
                     .descriptorCount = static_cast<uint32_t>(shader_descriptor_set.images.size())
                 }
-                );
+            );
         }
 
         if (!shader_descriptor_set.samplers.empty())
@@ -196,7 +195,7 @@ void VulkanShaderVariant::create_descriptors()
                     .type = vk::DescriptorType::eSampler,
                     .descriptorCount = static_cast<uint32_t>(shader_descriptor_set.samplers.size())
                 }
-                );
+            );
         }
 
         if (!shader_descriptor_set.storage_images.empty())
@@ -206,7 +205,7 @@ void VulkanShaderVariant::create_descriptors()
                     .type = vk::DescriptorType::eStorageImage,
                     .descriptorCount = static_cast<uint32_t>(shader_descriptor_set.storage_images.size())
                 }
-                );
+            );
         }
 
         //////////////////////////////////////////////////////////////////////
@@ -245,7 +244,7 @@ void VulkanShaderVariant::create_descriptors()
                 vk::DescriptorType::eCombinedImageSampler,
                 to_shader_stage(image_sampler.stage),
                 static_cast<uint32_t>(image_sampler.array_size)
-                );
+            );
             PORTAL_ASSERT(!shader_descriptor_set.uniform_buffers.contains(binding_index), "Binding is already present!");
             PORTAL_ASSERT(!shader_descriptor_set.storage_buffers.contains(binding_index), "Binding is already present!");
 
@@ -263,7 +262,7 @@ void VulkanShaderVariant::create_descriptors()
                 vk::DescriptorType::eSampledImage,
                 to_shader_stage(image.stage),
                 static_cast<uint32_t>(image.array_size)
-                );
+            );
             PORTAL_ASSERT(!shader_descriptor_set.uniform_buffers.contains(binding_index), "Binding is already present!");
             PORTAL_ASSERT(!shader_descriptor_set.storage_buffers.contains(binding_index), "Binding is already present!");
             PORTAL_ASSERT(!shader_descriptor_set.image_samplers.contains(binding_index), "Binding is already present!");
@@ -282,7 +281,7 @@ void VulkanShaderVariant::create_descriptors()
                 vk::DescriptorType::eSampler,
                 to_shader_stage(sampler.stage),
                 static_cast<uint32_t>(sampler.array_size)
-                );
+            );
             PORTAL_ASSERT(!shader_descriptor_set.uniform_buffers.contains(binding_index), "Binding is already present!");
             PORTAL_ASSERT(!shader_descriptor_set.storage_buffers.contains(binding_index), "Binding is already present!");
             PORTAL_ASSERT(!shader_descriptor_set.image_samplers.contains(binding_index), "Binding is already present!");
@@ -302,7 +301,7 @@ void VulkanShaderVariant::create_descriptors()
                 vk::DescriptorType::eStorageImage,
                 to_shader_stage(storage_image.stage),
                 static_cast<uint32_t>(storage_image.array_size)
-                );
+            );
             PORTAL_ASSERT(!shader_descriptor_set.uniform_buffers.contains(binding_index), "Binding is already present!");
             PORTAL_ASSERT(!shader_descriptor_set.storage_buffers.contains(binding_index), "Binding is already present!");
             PORTAL_ASSERT(!shader_descriptor_set.image_samplers.contains(binding_index), "Binding is already present!");
@@ -325,12 +324,10 @@ void VulkanShaderVariant::create_descriptors()
             shader_descriptor_set.images.size(),
             shader_descriptor_set.samplers.size(),
             shader_descriptor_set.storage_images.size()
-            );
+        );
 
         builder.set_name(STRING_ID(std::format("{}_layout_{}", name.string, set)));
         descriptor_layouts.emplace_back(device.create_descriptor_set_layout(builder));
     }
 }
-
-
 } // portal

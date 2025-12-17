@@ -7,7 +7,6 @@
 
 namespace portal::renderer
 {
-
 size_t get_format_bytes_per_pixel(ImageFormat format)
 {
     switch (format)

@@ -41,5 +41,4 @@ public:
 
     // TODO: should I add a api agnostic feature get/set?
 };
-
 } // portal

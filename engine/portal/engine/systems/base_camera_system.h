@@ -11,8 +11,7 @@
 
 namespace portal
 {
-
-class BaseCameraSystem: public ecs::System<
+class BaseCameraSystem : public ecs::System<
         BaseCameraSystem,
         ecs::Owns<BaseCameraController>,
         ecs::Views<CameraComponent>,
@@ -27,5 +26,4 @@ public:
 
     [[nodiscard]] static StringId get_name() { return STRING_ID("Base Camera System"); };
 };
-
 } // portal

@@ -24,10 +24,10 @@ protected:
 
     void deserialize(const nlohmann::json& input);
     void deserialize_object(ArchiveObject* root, const nlohmann::json& input);
-    void deserialize_array(ArchiveObject* root, const std::string& key,const nlohmann::json& array);
+    void deserialize_array(ArchiveObject* root, const std::string& key, const nlohmann::json& array);
 
 private:
-    template<typename T>
+    template <typename T>
     static void extract_array_elements(nlohmann::json& archive, const reflection::Property& prop, const auto& key, int element_number_skew = 1)
     {
         std::vector<T> array_elements;

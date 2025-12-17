@@ -7,7 +7,5 @@
 
 namespace portal::renderer
 {
-
-Surface::Surface(SurfaceProperties properties): properties(properties) {}
-
+Surface::Surface(SurfaceProperties properties) : properties(properties) {}
 } // portal

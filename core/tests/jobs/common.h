@@ -11,8 +11,7 @@
 
 namespace portal
 {
-
-class JobTest: public testing::Test
+class JobTest : public testing::Test
 {
 protected:
     void SetUp() override
@@ -75,5 +74,4 @@ struct ExecutionTracker
         return it_a != execution_order.end() && it_b != execution_order.end() && it_a < it_b;
     }
 };
-
 }

@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 static std::unique_ptr<Settings> g_settings;
 
 void Settings::init(SettingsArchiveType type, const std::filesystem::path& path)
@@ -63,12 +62,12 @@ void Settings::load()
     switch (type)
     {
     case SettingsArchiveType::Json:
-    {
-        auto& archive = dynamic_cast<JsonArchive&>(*root);
-        archive.read(settings_path);
-        update(archive);
-        break;
-    }
+        {
+            auto& archive = dynamic_cast<JsonArchive&>(*root);
+            archive.read(settings_path);
+            update(archive);
+            break;
+        }
     }
 }
 
@@ -77,12 +76,12 @@ void Settings::dump() const
     switch (type)
     {
     case SettingsArchiveType::Json:
-    {
-        auto& archive = dynamic_cast<JsonArchive&>(*root);
-        archive.update(*this);
-        archive.dump(settings_path);
-        break;
-    }
+        {
+            auto& archive = dynamic_cast<JsonArchive&>(*root);
+            archive.update(*this);
+            archive.dump(settings_path);
+            break;
+        }
     }
 }
 
@@ -96,65 +95,65 @@ void Settings::debug_print_scalar(const std::string& name, const reflection::Pro
     switch (prop.type)
     {
     case reflection::PropertyType::binary:
-    {
-        std::byte data = *prop.value.as<std::byte*>();
-        LOG_DEBUG("{}: {}", name, static_cast<uint8_t>(data));
-        break;
-    }
+        {
+            std::byte data = *prop.value.as<std::byte*>();
+            LOG_DEBUG("{}: {}", name, static_cast<uint8_t>(data));
+            break;
+        }
     case reflection::PropertyType::integer8:
-    {
-        uint8_t data = *prop.value.as<uint8_t*>();
-        LOG_DEBUG("{}: {}", name, data);
-        break;;
-    }
+        {
+            uint8_t data = *prop.value.as<uint8_t*>();
+            LOG_DEBUG("{}: {}", name, data);
+            break;;
+        }
     case reflection::PropertyType::integer16:
-    {
-        uint16_t data = *prop.value.as<uint16_t*>();
-        LOG_DEBUG("{}: {}", name, data);
-        break;;
-    }
+        {
+            uint16_t data = *prop.value.as<uint16_t*>();
+            LOG_DEBUG("{}: {}", name, data);
+            break;;
+        }
     case reflection::PropertyType::integer32:
-    {
-        uint32_t data = *prop.value.as<uint32_t*>();
-        LOG_DEBUG("{}: {}", name, data);
-        break;;
-    }
+        {
+            uint32_t data = *prop.value.as<uint32_t*>();
+            LOG_DEBUG("{}: {}", name, data);
+            break;;
+        }
     case reflection::PropertyType::integer64:
-    {
-        uint64_t data = *prop.value.as<uint64_t*>();
-        LOG_DEBUG("{}: {}", name, data);
-        break;;
-    }
+        {
+            uint64_t data = *prop.value.as<uint64_t*>();
+            LOG_DEBUG("{}: {}", name, data);
+            break;;
+        }
     case reflection::PropertyType::integer128:
-    {
-        uint128_t data = *prop.value.as<uint128_t*>();
-        LOG_DEBUG("{}: {}", name, data);
-        break;;
-    }
+        {
+            uint128_t data = *prop.value.as<uint128_t*>();
+            LOG_DEBUG("{}: {}", name, data);
+            break;;
+        }
     case reflection::PropertyType::floating32:
-    {
-        float data = *prop.value.as<float*>();
-        LOG_DEBUG("{}: {}", name, data);
-        break;;
-    }
+        {
+            float data = *prop.value.as<float*>();
+            LOG_DEBUG("{}: {}", name, data);
+            break;;
+        }
     case reflection::PropertyType::floating64:
-    {
-        double data = *prop.value.as<double*>();
-        LOG_DEBUG("{}: {}", name, data);
-        break;;
-    }
+        {
+            double data = *prop.value.as<double*>();
+            LOG_DEBUG("{}: {}", name, data);
+            break;;
+        }
     case reflection::PropertyType::character:
-    {
-        double data = *prop.value.as<double*>();
-        LOG_DEBUG("{}: {}", name, data);
-        break;;
-    }
+        {
+            double data = *prop.value.as<double*>();
+            LOG_DEBUG("{}: {}", name, data);
+            break;;
+        }
     case reflection::PropertyType::boolean:
-    {
-        bool data = *prop.value.as<bool*>();
-        LOG_DEBUG("{}: {}", name, data);
-        break;;
-    }
+        {
+            bool data = *prop.value.as<bool*>();
+            LOG_DEBUG("{}: {}", name, data);
+            break;;
+        }
     case reflection::PropertyType::invalid:
         LOG_DEBUG("{}: null", name);
         break;
@@ -259,7 +258,6 @@ void Settings::debug_print_array(const std::string&, const reflection::Property&
     // case reflection::PropertyType::invalid:
     //     break;
     // }
-
 }
 
 void Settings::debug_print(std::string base_name, const ArchiveObject& object) const
@@ -281,29 +279,29 @@ void Settings::debug_print(std::string base_name, const ArchiveObject& object) c
             debug_print_scalar(name, prop);
             break;
         case reflection::PropertyContainerType::null_term_string:
-        {
-            const size_t string_length = prop.elements_number - 1;;
-            const auto* data = prop.value.as<const char*>();
-            LOG_DEBUG("{}: {}", name, std::string(data, string_length));
-            break;
-        }
+            {
+                const size_t string_length = prop.elements_number - 1;;
+                const auto* data = prop.value.as<const char*>();
+                LOG_DEBUG("{}: {}", name, std::string(data, string_length));
+                break;
+            }
         case reflection::PropertyContainerType::string:
-        {
-            const size_t string_length = prop.elements_number;
-            const auto* data = prop.value.as<const char*>();
-            LOG_DEBUG("{}: {}", name, std::string(data, string_length));
-            break;
-        }
+            {
+                const size_t string_length = prop.elements_number;
+                const auto* data = prop.value.as<const char*>();
+                LOG_DEBUG("{}: {}", name, std::string(data, string_length));
+                break;
+            }
         case reflection::PropertyContainerType::object:
-        {
-            debug_print(name, *prop.value.as<ArchiveObject*>());
-            break;
-        }
+            {
+                debug_print(name, *prop.value.as<ArchiveObject*>());
+                break;
+            }
         case reflection::PropertyContainerType::array:
-        {
-            debug_print_array(name, prop);
-            break;
-        }
+            {
+                debug_print_array(name, prop);
+                break;
+            }
         case reflection::PropertyContainerType::vector:
             break;
         case reflection::PropertyContainerType::matrix:
@@ -323,5 +321,4 @@ reflection::Property& Settings::add_property_to_map(const PropertyName name, ref
     std::lock_guard lock_guard(lock);
     return ArchiveObject::add_property_to_map(name, std::move(property));
 }
-
 } // portal

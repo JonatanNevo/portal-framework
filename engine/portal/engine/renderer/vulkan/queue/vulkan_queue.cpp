@@ -9,14 +9,13 @@
 
 namespace portal::renderer::vulkan
 {
-
 VulkanQueue::VulkanQueue(
     const VulkanDevice& device,
     const size_t family_index,
     const vk::QueueFamilyProperties& properties,
     const size_t index,
     const bool presentable
-    )
+)
     : queue(device.get_handle().getQueue(static_cast<uint32_t>(family_index), static_cast<uint32_t>(index))),
       family_index(family_index),
       index(index),

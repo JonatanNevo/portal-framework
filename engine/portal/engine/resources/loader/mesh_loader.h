@@ -10,7 +10,6 @@
 
 namespace portal::resources
 {
-
 struct MeshData
 {
     std::vector<Vertex> vertices;
@@ -31,6 +30,5 @@ protected:
 
 private:
     const RendererContext& context;
-
 };
 } // portal

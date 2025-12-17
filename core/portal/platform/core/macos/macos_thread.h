@@ -8,7 +8,6 @@
 
 namespace portal
 {
-
 class MacOSThread final : public ThreadBase
 {
 public:
@@ -33,7 +32,7 @@ public:
 
                 callable(st);
             }
-            );
+        );
     }
 
 protected:

@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 class InputManager final : public Module<>, public InputEventConsumer
 {
 public:
@@ -46,5 +45,4 @@ private:
     glm::vec2 mouse_position = glm::vec2(0.0f);
     glm::vec2 mouse_scroll = glm::vec2(0.0f);
 };
-
 } // portal

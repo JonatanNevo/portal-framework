@@ -13,8 +13,7 @@
 
 namespace portal
 {
-
-class Engine: public Application, public WindowEventConsumer
+class Engine : public Application, public WindowEventConsumer
 {
 public:
     explicit Engine(const ApplicationProperties& properties);
@@ -35,7 +34,5 @@ private:
     std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;
     Reference<Window> window = nullptr;
     std::unique_ptr<EngineContext> engine_context = nullptr;
-
 };
-
 } // portal

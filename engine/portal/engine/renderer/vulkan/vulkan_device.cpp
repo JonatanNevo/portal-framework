@@ -14,7 +14,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 static auto logger = Log::get_logger("Vulkan");
 
 VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& physical_device, const VulkanPhysicalDevice::Features& device_features)
@@ -58,7 +57,7 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& physical_device, const Vu
                 .queueCount = 1,
                 .pQueuePriorities = &default_queue_priority,
             }
-            );
+        );
     }
 
     if (requested_queue_types & vk::QueueFlagBits::eCompute)
@@ -71,7 +70,7 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& physical_device, const Vu
                     .queueCount = 1,
                     .pQueuePriorities = &default_queue_priority,
                 }
-                );
+            );
         }
     }
 
@@ -85,7 +84,7 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& physical_device, const Vu
                     .queueCount = 1,
                     .pQueuePriorities = &default_queue_priority,
                 }
-                );
+            );
         }
     }
 
@@ -218,7 +217,7 @@ vk::raii::ShaderModule VulkanDevice::create_shader_module(const Buffer& code) co
             .codeSize = code.size * sizeof(char),
             .pCode = code.as<uint32_t*>()
         }
-        );
+    );
 }
 
 vk::raii::Pipeline VulkanDevice::create_pipeline(PipelineBuilder& builder) const
@@ -293,14 +292,13 @@ const VulkanQueue& VulkanDevice::get_present_queue() const
 
 void VulkanDevice::set_debug_name(const vk::ObjectType type, const uint64_t handle, const char* name) const
 {
-
     get_handle().setDebugUtilsObjectNameEXT(
         vk::DebugUtilsObjectNameInfoEXT{
             .objectType = type,
             .objectHandle = handle,
             .pObjectName = name
         }
-        );
+    );
 }
 
 void VulkanDevice::initialize_immediate_commands()

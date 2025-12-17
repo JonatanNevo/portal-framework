@@ -34,7 +34,7 @@ class Material : public Resource
 public:
     DECLARE_RESOURCE(ResourceType::Material);
 
-    explicit Material(const StringId& id): Resource(id) {}
+    explicit Material(const StringId& id) : Resource(id) {}
 
     template <typename T> requires std::integral<std::remove_const_t<T>> || std::floating_point<std::remove_const_t<T>>
     void set(const StringId bind_point, const T& t)
@@ -47,7 +47,7 @@ public:
                 reflection::PropertyContainerType::scalar,
                 1
             }
-            );
+        );
     }
 
     template <reflection::IsVec T>
@@ -61,7 +61,7 @@ public:
                 reflection::PropertyContainerType::vector,
                 T::length()
             }
-            );
+        );
     }
 
     template <reflection::IsMatrix T>
@@ -75,7 +75,7 @@ public:
                 reflection::PropertyContainerType::matrix,
                 T::length() * T::length()
             }
-            );
+        );
     }
 
     virtual void set(StringId bind_point, const ResourceReference<Texture>& texture) = 0;
@@ -129,5 +129,4 @@ protected:
     virtual void set_property(StringId bind_point, const reflection::Property& property) = 0;
     virtual bool get_property(StringId bind_point, reflection::Property& property) const = 0;
 };
-
 }

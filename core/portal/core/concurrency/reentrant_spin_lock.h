@@ -24,7 +24,7 @@ template <typename T = uint32_t> requires std::is_integral_v<T>
 class ReentrantSpinLock
 {
 public:
-    ReentrantSpinLock(): locked_thread(0), ref_count(0) {}
+    ReentrantSpinLock() : locked_thread(0), ref_count(0) {}
 
     /**
     * Attempts to acquire the lock for the current thread without blocking.

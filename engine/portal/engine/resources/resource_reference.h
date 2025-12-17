@@ -12,7 +12,6 @@
 
 namespace portal
 {
-
 template <ResourceConcept T>
 class ResourceReference
 {
@@ -226,10 +225,10 @@ private:
         const StringId& resource_id,
         ResourceRegistry& registry,
         ReferenceManager& reference_manager
-        ) : reference_manager(reference_manager),
-            registry(registry),
-            resource_id(resource_id),
-            state(ResourceState::Unknown)
+    ) : reference_manager(reference_manager),
+        registry(registry),
+        resource_id(resource_id),
+        state(ResourceState::Unknown)
     {
         if (resource_id != INVALID_STRING_ID)
         {

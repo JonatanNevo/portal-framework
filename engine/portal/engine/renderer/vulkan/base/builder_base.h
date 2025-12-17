@@ -63,6 +63,7 @@ public:
     {
         return alloc_create_info;
     }
+
     const CreateInfoType& get_create_info() const
     {
         return create_info;
@@ -145,16 +146,14 @@ public:
     }
 
 protected:
-    explicit BuilderBase(const CreateInfoType& create_info): create_info(create_info)
+    explicit BuilderBase(const CreateInfoType& create_info) : create_info(create_info)
     {
         alloc_create_info.usage = VMA_MEMORY_USAGE_AUTO;
     }
-
 
 protected:
     VmaAllocationCreateInfo alloc_create_info = {};
     CreateInfoType create_info = {};
     std::string debug_name = {};
 };
-
 }

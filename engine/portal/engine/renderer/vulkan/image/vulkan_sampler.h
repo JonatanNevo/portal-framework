@@ -26,5 +26,4 @@ private:
     SamplerProperties properties;
     vk::raii::Sampler sampler = nullptr;
 };
-
 } // portal

@@ -11,7 +11,7 @@
 
 namespace portal::utils
 {
-template<class T>
+template <class T>
 ResourceType to_resource_type()
 {
     return T::static_type();

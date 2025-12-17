@@ -12,7 +12,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 class VulkanShaderVariant;
 
 class PipelineBuilder
@@ -91,5 +90,4 @@ protected:
 
     StringId name;
 };
-
 } // portal

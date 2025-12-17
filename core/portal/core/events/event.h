@@ -16,7 +16,6 @@ StringId get_name() const override { return STRING_ID(#type); }
 
 namespace portal
 {
-
 class EventRunner;
 
 class Event

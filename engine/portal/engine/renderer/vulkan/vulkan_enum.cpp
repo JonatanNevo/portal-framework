@@ -7,7 +7,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 vk::Format to_format(ImageFormat format)
 {
 #define CASE(FROM, TO)                       \
@@ -64,38 +63,38 @@ case vk::Format::FROM:                       \
 return portal::renderer::ImageFormat::TO
     switch (format)
     {
-        CASE(None, eUndefined);
-        CASE(R8_UNorm, eR8Unorm);
-        CASE(R8_UInt, eR8Uint);
-        CASE(R16_UInt, eR16Uint);
-        CASE(R32_UInt, eR32Uint);
-        CASE(R16_Float, eR16Sfloat);
-        CASE(R32_Float, eR32Sfloat);
-        CASE(RG8_UNorm, eR8G8Unorm);
-        CASE(RG8_UInt, eR8G8Uint);
-        CASE(RG16_UInt, eR16G16Uint);
-        CASE(RG32_UInt, eR32G32Uint);
-        CASE(RG16_Float, eR16G16Sfloat);
-        CASE(RG32_Float, eR32G32Sfloat);
-        CASE(RGB8_UNorm, eR8G8B8Unorm);
-        CASE(BGRA8_UNorm, eB8G8R8A8Unorm);
-        CASE(RGB8_UInt, eR8G8B8Uint);
-        CASE(RGB16_UInt, eR16G16B16Uint);
-        CASE(RGB32_UInt, eR32G32B32Uint);
-        CASE(RGB16_Float, eR16G16B16Sfloat);
-        CASE(RGB32_Float, eR32G32B32Sfloat);
-        CASE(RGBA8_UNorm, eR8G8B8A8Unorm);
-        CASE(RGBA8_UInt, eR8G8B8A8Uint);
-        CASE(RGBA16_UInt, eR16G16B16A16Uint);
-        CASE(RGBA32_UInt, eR32G32B32A32Uint);
-        CASE(RGBA16_Float, eR16G16B16A16Sfloat);
-        CASE(RGBA32_Float, eR32G32B32A32Sfloat);
-        CASE(SRGB, eR8G8B8Srgb);
-        CASE(SRGBA, eR8G8B8A8Srgb);
-        CASE(Depth_32Float_Stencil_8UInt, eD32SfloatS8Uint);
-        CASE(Depth_32Float, eD32Sfloat);
-        CASE(Depth_24UNorm_Stencil_8UInt, eD24UnormS8Uint);
-        CASE(Depth_16UNorm_Stencil_8UInt, eD16UnormS8Uint);
+    CASE(None, eUndefined);
+    CASE(R8_UNorm, eR8Unorm);
+    CASE(R8_UInt, eR8Uint);
+    CASE(R16_UInt, eR16Uint);
+    CASE(R32_UInt, eR32Uint);
+    CASE(R16_Float, eR16Sfloat);
+    CASE(R32_Float, eR32Sfloat);
+    CASE(RG8_UNorm, eR8G8Unorm);
+    CASE(RG8_UInt, eR8G8Uint);
+    CASE(RG16_UInt, eR16G16Uint);
+    CASE(RG32_UInt, eR32G32Uint);
+    CASE(RG16_Float, eR16G16Sfloat);
+    CASE(RG32_Float, eR32G32Sfloat);
+    CASE(RGB8_UNorm, eR8G8B8Unorm);
+    CASE(BGRA8_UNorm, eB8G8R8A8Unorm);
+    CASE(RGB8_UInt, eR8G8B8Uint);
+    CASE(RGB16_UInt, eR16G16B16Uint);
+    CASE(RGB32_UInt, eR32G32B32Uint);
+    CASE(RGB16_Float, eR16G16B16Sfloat);
+    CASE(RGB32_Float, eR32G32B32Sfloat);
+    CASE(RGBA8_UNorm, eR8G8B8A8Unorm);
+    CASE(RGBA8_UInt, eR8G8B8A8Uint);
+    CASE(RGBA16_UInt, eR16G16B16A16Uint);
+    CASE(RGBA32_UInt, eR32G32B32A32Uint);
+    CASE(RGBA16_Float, eR16G16B16A16Sfloat);
+    CASE(RGBA32_Float, eR32G32B32A32Sfloat);
+    CASE(SRGB, eR8G8B8Srgb);
+    CASE(SRGBA, eR8G8B8A8Srgb);
+    CASE(Depth_32Float_Stencil_8UInt, eD32SfloatS8Uint);
+    CASE(Depth_32Float, eD32Sfloat);
+    CASE(Depth_24UNorm_Stencil_8UInt, eD24UnormS8Uint);
+    CASE(Depth_16UNorm_Stencil_8UInt, eD16UnormS8Uint);
     default:
         break;
     }
@@ -263,106 +262,106 @@ vk::Format to_format(const reflection::Property& prop)
     switch (prop.container_type)
     {
     case reflection::PropertyContainerType::scalar:
-    {
-        switch (prop.type)
         {
-        case reflection::PropertyType::boolean:
-        case reflection::PropertyType::character:
-        case reflection::PropertyType::integer8:
-            return vk::Format::eR8Sint;
-        case reflection::PropertyType::integer16:
-            return vk::Format::eR16Sint;
-        case reflection::PropertyType::integer32:
-            return vk::Format::eR32Sint;
-        case reflection::PropertyType::integer64:
-            return vk::Format::eR64Sint;
-        case reflection::PropertyType::floating32:
-            return vk::Format::eR32Sfloat;
-        case reflection::PropertyType::floating64:
-            return vk::Format::eR64Sfloat;
-        default:
-            PORTAL_ASSERT(false, "Unsupported container type");
-            return vk::Format::eUndefined;
+            switch (prop.type)
+            {
+            case reflection::PropertyType::boolean:
+            case reflection::PropertyType::character:
+            case reflection::PropertyType::integer8:
+                return vk::Format::eR8Sint;
+            case reflection::PropertyType::integer16:
+                return vk::Format::eR16Sint;
+            case reflection::PropertyType::integer32:
+                return vk::Format::eR32Sint;
+            case reflection::PropertyType::integer64:
+                return vk::Format::eR64Sint;
+            case reflection::PropertyType::floating32:
+                return vk::Format::eR32Sfloat;
+            case reflection::PropertyType::floating64:
+                return vk::Format::eR64Sfloat;
+            default:
+                PORTAL_ASSERT(false, "Unsupported container type");
+                return vk::Format::eUndefined;
+            }
         }
-    }
     case reflection::PropertyContainerType::vector:
-    {
-        switch (prop.elements_number)
         {
-        case 2:
-        {
-            switch (prop.type)
+            switch (prop.elements_number)
             {
-            case reflection::PropertyType::boolean:
-            case reflection::PropertyType::character:
-            case reflection::PropertyType::integer8:
-                return vk::Format::eR8G8Sint;
-            case reflection::PropertyType::integer16:
-                return vk::Format::eR16G16Sint;
-            case reflection::PropertyType::integer32:
-                return vk::Format::eR32G32Sint;
-            case reflection::PropertyType::integer64:
-                return vk::Format::eR64G64Sint;
-            case reflection::PropertyType::floating32:
-                return vk::Format::eR32G32Sfloat;
-            case reflection::PropertyType::floating64:
-                return vk::Format::eR64G64Sfloat;
+            case 2:
+                {
+                    switch (prop.type)
+                    {
+                    case reflection::PropertyType::boolean:
+                    case reflection::PropertyType::character:
+                    case reflection::PropertyType::integer8:
+                        return vk::Format::eR8G8Sint;
+                    case reflection::PropertyType::integer16:
+                        return vk::Format::eR16G16Sint;
+                    case reflection::PropertyType::integer32:
+                        return vk::Format::eR32G32Sint;
+                    case reflection::PropertyType::integer64:
+                        return vk::Format::eR64G64Sint;
+                    case reflection::PropertyType::floating32:
+                        return vk::Format::eR32G32Sfloat;
+                    case reflection::PropertyType::floating64:
+                        return vk::Format::eR64G64Sfloat;
+                    default:
+                        PORTAL_ASSERT(false, "Unsupported container type");
+                        return vk::Format::eUndefined;
+                    }
+                }
+            case 3:
+                {
+                    switch (prop.type)
+                    {
+                    case reflection::PropertyType::boolean:
+                    case reflection::PropertyType::character:
+                    case reflection::PropertyType::integer8:
+                        return vk::Format::eR8G8B8Sint;
+                    case reflection::PropertyType::integer16:
+                        return vk::Format::eR16G16B16Sint;
+                    case reflection::PropertyType::integer32:
+                        return vk::Format::eR32G32B32Sint;
+                    case reflection::PropertyType::integer64:
+                        return vk::Format::eR64G64B64Sint;
+                    case reflection::PropertyType::floating32:
+                        return vk::Format::eR32G32B32Sfloat;
+                    case reflection::PropertyType::floating64:
+                        return vk::Format::eR64G64B64Sfloat;
+                    default:
+                        PORTAL_ASSERT(false, "Unsupported container type");
+                        return vk::Format::eUndefined;
+                    }
+                }
+            case 4:
+                {
+                    switch (prop.type)
+                    {
+                    case reflection::PropertyType::boolean:
+                    case reflection::PropertyType::character:
+                    case reflection::PropertyType::integer8:
+                        return vk::Format::eR8G8B8A8Sint;
+                    case reflection::PropertyType::integer16:
+                        return vk::Format::eR16G16B16A16Sint;
+                    case reflection::PropertyType::integer32:
+                        return vk::Format::eR32G32B32A32Sint;
+                    case reflection::PropertyType::integer64:
+                        return vk::Format::eR64G64B64A64Sint;
+                    case reflection::PropertyType::floating32:
+                        return vk::Format::eR32G32B32A32Sfloat;
+                    case reflection::PropertyType::floating64:
+                        return vk::Format::eR64G64B64A64Sfloat;
+                    default:
+                        PORTAL_ASSERT(false, "Unsupported container type");
+                        return vk::Format::eUndefined;
+                    }
+                }
             default:
                 PORTAL_ASSERT(false, "Unsupported container type");
                 return vk::Format::eUndefined;
             }
         }
-        case 3:
-        {
-            switch (prop.type)
-            {
-            case reflection::PropertyType::boolean:
-            case reflection::PropertyType::character:
-            case reflection::PropertyType::integer8:
-                return vk::Format::eR8G8B8Sint;
-            case reflection::PropertyType::integer16:
-                return vk::Format::eR16G16B16Sint;
-            case reflection::PropertyType::integer32:
-                return vk::Format::eR32G32B32Sint;
-            case reflection::PropertyType::integer64:
-                return vk::Format::eR64G64B64Sint;
-            case reflection::PropertyType::floating32:
-                return vk::Format::eR32G32B32Sfloat;
-            case reflection::PropertyType::floating64:
-                return vk::Format::eR64G64B64Sfloat;
-            default:
-                PORTAL_ASSERT(false, "Unsupported container type");
-                return vk::Format::eUndefined;
-            }
-        }
-        case 4:
-        {
-            switch (prop.type)
-            {
-            case reflection::PropertyType::boolean:
-            case reflection::PropertyType::character:
-            case reflection::PropertyType::integer8:
-                return vk::Format::eR8G8B8A8Sint;
-            case reflection::PropertyType::integer16:
-                return vk::Format::eR16G16B16A16Sint;
-            case reflection::PropertyType::integer32:
-                return vk::Format::eR32G32B32A32Sint;
-            case reflection::PropertyType::integer64:
-                return vk::Format::eR64G64B64A64Sint;
-            case reflection::PropertyType::floating32:
-                return vk::Format::eR32G32B32A32Sfloat;
-            case reflection::PropertyType::floating64:
-                return vk::Format::eR64G64B64A64Sfloat;
-            default:
-                PORTAL_ASSERT(false, "Unsupported container type");
-                return vk::Format::eUndefined;
-            }
-        }
-        default:
-            PORTAL_ASSERT(false, "Unsupported container type");
-            return vk::Format::eUndefined;
-        }
-    }
     default:
         break;
     }

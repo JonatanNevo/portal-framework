@@ -10,7 +10,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 class VulkanUniformBuffer final : public UniformBuffer
 {
 public:
@@ -52,5 +51,4 @@ private:
 
     [[maybe_unused]] const VulkanDevice& device;
 };
-
 } // portal

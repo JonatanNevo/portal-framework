@@ -8,7 +8,6 @@
 
 namespace portal::renderer
 {
-
 enum class DescriptorType : uint8_t
 {
     Unknown,
@@ -39,4 +38,3 @@ enum class DescriptorResourceType: uint8_t
     Image
 };
 }
-

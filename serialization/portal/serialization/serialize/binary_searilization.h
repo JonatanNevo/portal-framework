@@ -8,7 +8,6 @@
 
 namespace portal
 {
-
 constexpr std::string_view MAGIC = "PS";
 constexpr uint8_t VERSION = 1;
 
@@ -40,7 +39,6 @@ public:
     explicit BinaryDeserializer(std::istream& input, bool read_header = true);
     BinaryDeserializer(std::istream& input, BinarySerializationParams params);
 
-
 protected:
     reflection::Property get_property() override;
 
@@ -51,5 +49,4 @@ private:
     std::vector<char> buffer;
     size_t cursor = 0;
 };
-
 } // namespace portal

@@ -17,10 +17,14 @@
 namespace portal::network
 {
 Server::Server(const int port) :
-    manager(ConnectionManager::get_instance()), sockets(manager->get_sockets()), port(port) {}
+    manager(ConnectionManager::get_instance()),
+    sockets(manager->get_sockets()),
+    port(port) {}
 
 Server::Server(ConnectionManager* manager, const int port) :
-    manager(manager), sockets(manager->get_sockets()), port(port) {}
+    manager(manager),
+    sockets(manager->get_sockets()),
+    port(port) {}
 
 Server::~Server()
 {
@@ -132,43 +136,43 @@ void Server::on_status_changed(SteamNetConnectionStatusChangedCallback_t* info)
         break;
 
     case k_ESteamNetworkingConnectionState_Connecting:
-    {
-        // This must be a new connection
-        PORTAL_ASSERT(!connections.contains(info->m_hConn), "Client already exists in server");
-
-        if (sockets->AcceptConnection(info->m_hConn) != k_EResultOK)
         {
-            LOG_ERROR_TAG("Networking", "Server {} - Failed to accept connection: {}", port, info->m_info.m_szConnectionDescription);
-            sockets->CloseConnection(info->m_hConn, static_cast<int>(ConnectionEnd::AppExceptionGeneric), "Failed to accept connection", false);
-            break;
-        }
+            // This must be a new connection
+            PORTAL_ASSERT(!connections.contains(info->m_hConn), "Client already exists in server");
 
-        if (!sockets->SetConnectionPollGroup(info->m_hConn, poll_group))
-        {
-            LOG_ERROR_TAG(
-                "Networking",
-                "Server {} - Failed to set poll group for connection: {}",
-                port,
-                info->m_info.m_szConnectionDescription
+            if (sockets->AcceptConnection(info->m_hConn) != k_EResultOK)
+            {
+                LOG_ERROR_TAG("Networking", "Server {} - Failed to accept connection: {}", port, info->m_info.m_szConnectionDescription);
+                sockets->CloseConnection(info->m_hConn, static_cast<int>(ConnectionEnd::AppExceptionGeneric), "Failed to accept connection", false);
+                break;
+            }
+
+            if (!sockets->SetConnectionPollGroup(info->m_hConn, poll_group))
+            {
+                LOG_ERROR_TAG(
+                    "Networking",
+                    "Server {} - Failed to set poll group for connection: {}",
+                    port,
+                    info->m_info.m_szConnectionDescription
                 );
-            sockets->CloseConnection(info->m_hConn, static_cast<int>(ConnectionEnd::AppExceptionGeneric), "Failed to set poll group", false);
+                sockets->CloseConnection(info->m_hConn, static_cast<int>(ConnectionEnd::AppExceptionGeneric), "Failed to set poll group", false);
+                break;
+            }
+
+            SteamNetConnectionInfo_t connection_info;
+            sockets->GetConnectionInfo(info->m_hConn, &connection_info);
+
+            ConnectionInfo connection{
+                .id = info->m_hConn,
+                .connection_description = connection_info.m_szConnectionDescription
+            };
+            connections[info->m_hConn] = connection;
+
+            LOG_INFO_TAG("Networking", "Server {} - New connection: {}", port, connection.connection_description);
+            for (const auto& callback : on_connection_connect_callbacks)
+                callback(connection);
             break;
         }
-
-        SteamNetConnectionInfo_t connection_info;
-        sockets->GetConnectionInfo(info->m_hConn, &connection_info);
-
-        ConnectionInfo connection{
-            .id = info->m_hConn,
-            .connection_description = connection_info.m_szConnectionDescription
-        };
-        connections[info->m_hConn] = connection;
-
-        LOG_INFO_TAG("Networking", "Server {} - New connection: {}", port, connection.connection_description);
-        for (const auto& callback : on_connection_connect_callbacks)
-            callback(connection);
-        break;
-    }
     default:
         break;
     }
@@ -275,5 +279,4 @@ void Server::poll_incoming_messages()
 void Server::poll_connection_state_changes() const { sockets->RunCallbacks(); }
 void Server::set_client_nick(const HSteamNetConnection id, const char* nick) const { sockets->SetConnectionName(id, nick); }
 void Server::on_fatal_error(const std::string& /*message*/) {}
-
 } // namespace portal::network

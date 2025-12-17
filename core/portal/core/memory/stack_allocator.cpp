@@ -9,18 +9,19 @@
 
 namespace portal
 {
-
 constexpr size_t DEFAULT_SIZE = 1024;
 
-StackAllocator::StackAllocator(): StackAllocator(DEFAULT_SIZE)
+StackAllocator::StackAllocator() : StackAllocator(DEFAULT_SIZE)
 {}
 
 StackAllocator::StackAllocator(const size_t total_size) :
-    buffer(total_size), top(0) {}
+    buffer(total_size),
+    top(0) {}
 
 void* StackAllocator::alloc(const size_t size)
 {
-    if (top + size > buffer.size()) {
+    if (top + size > buffer.size())
+    {
         throw std::bad_alloc(); // Not enough space
     }
 
@@ -33,7 +34,8 @@ void* StackAllocator::alloc(const size_t size)
 
 void StackAllocator::free(void* p)
 {
-    if (!allocations.contains(p)) {
+    if (!allocations.contains(p))
+    {
         throw std::invalid_argument("Pointer not allocated by this stack allocator");
     }
 
@@ -47,7 +49,8 @@ StackAllocator::marker StackAllocator::get_marker() const
     return top;
 }
 
-size_t StackAllocator::get_size() const {
+size_t StackAllocator::get_size() const
+{
     return buffer.size();
 }
 

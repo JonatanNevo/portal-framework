@@ -21,7 +21,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 const auto logger = Log::get_logger("Vulkan");
 
 
@@ -35,7 +34,6 @@ VulkanContext::VulkanContext() :
 
 VulkanContext::~VulkanContext()
 {
-
     allocation::shutdown();
 }
 

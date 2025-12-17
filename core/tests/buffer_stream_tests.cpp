@@ -67,7 +67,8 @@ TEST(BufferStreamTests, SeekInReader)
 
 TEST(BufferStreamTests, ReadComplexType)
 {
-    struct TestStruct {
+    struct TestStruct
+    {
         int a;
         float b;
         char c;
@@ -86,7 +87,8 @@ TEST(BufferStreamTests, ReadComplexType)
     EXPECT_EQ(result.c, 'X');
 }
 
-TEST(BufferStreamTests, ReaderZeroBytesTest) {
+TEST(BufferStreamTests, ReaderZeroBytesTest)
+{
     std::vector<uint8_t> data{1, 2, 3};
     const portal::Buffer buffer(data.data(), data.size());
     portal::BufferStreamReader reader(buffer);
@@ -134,7 +136,8 @@ TEST(BufferStreamTests, WriteMultipleBytes)
 
 TEST(BufferStreamTests, WriteComplexType)
 {
-    struct TestStruct {
+    struct TestStruct
+    {
         int a;
         float b;
         char c;
@@ -197,12 +200,14 @@ TEST(BufferStreamTests, GetBufferFromWriter)
     const portal::Buffer result_buffer = writer.get_buffer();
     EXPECT_EQ(result_buffer.size, 4);
 
-    for (size_t i = 0; i < data.size(); ++i) {
+    for (size_t i = 0; i < data.size(); ++i)
+    {
         EXPECT_EQ(result_buffer[i], data[i]);
     }
 }
 
-TEST(BufferStreamTests, ReadBeyondEnd) {
+TEST(BufferStreamTests, ReadBeyondEnd)
+{
     std::vector<uint8_t> data{1, 2, 3};
     const portal::Buffer buffer(data.data(), data.size());
 
@@ -217,7 +222,8 @@ TEST(BufferStreamTests, ReadBeyondEnd) {
     EXPECT_TRUE(reader.eof());
 }
 
-TEST(BufferStreamTests, InvalidSeekOperations) {
+TEST(BufferStreamTests, InvalidSeekOperations)
+{
     std::vector<uint8_t> data{1, 2, 3, 4};
     const portal::Buffer buffer(data.data(), data.size());
 
@@ -235,7 +241,8 @@ TEST(BufferStreamTests, InvalidSeekOperations) {
     EXPECT_EQ(reader.position(), 2);
 }
 
-TEST(BufferStreamTests, WriteAndReadIntegration) {
+TEST(BufferStreamTests, WriteAndReadIntegration)
+{
     portal::Buffer buffer = portal::Buffer::allocate(10);
 
     {

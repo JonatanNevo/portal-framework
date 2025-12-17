@@ -12,7 +12,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 class VulkanShaderVariant;
 
 class VulkanShader final : public Shader
@@ -42,7 +41,7 @@ public:
     std::unordered_map<StringId, vk::WriteDescriptorSet>& get_write_descriptor_sets(size_t set_index);
     vk::DescriptorSetLayout get_descriptor_layout(size_t set_index) const;
 
-    std::vector<vk::DescriptorSetLayout> get_descriptor_layouts() const ;
+    std::vector<vk::DescriptorSetLayout> get_descriptor_layouts() const;
     const std::vector<vk::PushConstantRange>& get_push_constant_ranges() const;
 
     const std::unordered_map<StringId, shader_reflection::ShaderResourceDeclaration>& get_shader_resources() const override;
@@ -53,7 +52,6 @@ public:
 protected:
     void load(CompiledShader&& compiled_shader);
     void create_descriptors();
-
 
 private:
     friend class VulkanShader;
@@ -73,5 +71,4 @@ private:
 
     std::vector<vk::PushConstantRange> push_constant_ranges;
 };
-
 }

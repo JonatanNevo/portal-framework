@@ -10,7 +10,6 @@
 
 namespace portal
 {
-
 /**
  * A "good enough" low cost lock that should be used for critical section, and stripped out in production.
  * Used *only* for development
@@ -18,7 +17,7 @@ namespace portal
 class AssertionLock
 {
 public:
-    AssertionLock(): locked(false) {}
+    AssertionLock() : locked(false) {}
 
     void lock()
     {
@@ -47,6 +46,4 @@ private:
 #define ASSERT_UNLOCK(L)
 #define ASSERT_LOCK_GUARD(L)
 #endif
-
 }
-

@@ -11,7 +11,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 struct Vertex
 {
     glm::vec3 position;
@@ -60,5 +59,4 @@ struct Bounds
     float sphere_radius{};
     glm::vec3 extents{};
 };
-
 }

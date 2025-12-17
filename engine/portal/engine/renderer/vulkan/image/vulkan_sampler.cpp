@@ -11,7 +11,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 VulkanSampler::VulkanSampler(const StringId& id, const SamplerProperties& properties, const VulkanDevice& device) : id(id), properties(properties)
 {
     const vk::SamplerCreateInfo sampler_info{
@@ -41,5 +40,4 @@ const SamplerProperties& VulkanSampler::get_prop() const
 {
     return properties;
 }
-
 } // portal

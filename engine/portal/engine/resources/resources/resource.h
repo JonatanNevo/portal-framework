@@ -23,11 +23,12 @@ enum class ResourceDirtyBits : uint8_t
 
 using ResourceDirtyFlags = Flags<ResourceDirtyBits>;
 
-template<>
+template <>
 struct FlagTraits<ResourceDirtyBits>
 {
     static constexpr bool is_bitmask = true;
-    static constexpr Flags<ResourceDirtyBits> all_flags = ResourceDirtyBits::StateChange | ResourceDirtyBits::DataChange | ResourceDirtyBits::ConfigChange;
+    static constexpr Flags<ResourceDirtyBits> all_flags = ResourceDirtyBits::StateChange | ResourceDirtyBits::DataChange |
+        ResourceDirtyBits::ConfigChange;
 };
 
 class Resource
@@ -54,5 +55,4 @@ concept ResourceConcept = requires {
     { T::static_type() } -> std::same_as<ResourceType>;
     std::is_base_of_v<Resource, T>;
 };
-
 } // portal

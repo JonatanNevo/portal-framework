@@ -14,7 +14,7 @@ DescriptorLayoutBuilder& DescriptorLayoutBuilder::add_binding(
     const vk::DescriptorType type,
     const vk::ShaderStageFlags shader_stages,
     const size_t count
-    )
+)
 {
     auto shader_stages_mask = shader_stages;
     if (shader_stages_mask == vk::ShaderStageFlagBits::eAll)
@@ -27,7 +27,7 @@ DescriptorLayoutBuilder& DescriptorLayoutBuilder::add_binding(
             .descriptorCount = static_cast<uint32_t>(count),
             .stageFlags = shader_stages_mask
         }
-        );
+    );
     return *this;
 }
 
@@ -61,7 +61,7 @@ vk::raii::DescriptorSetLayout DescriptorLayoutBuilder::build(const vk::raii::Dev
                 .objectHandle = VK_HANDLE_CAST(set),
                 .pObjectName = name.string.data()
             }
-            );
+        );
     }
     return set;
 }
