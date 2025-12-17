@@ -7,7 +7,6 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
-#include "portal/engine/renderer/camera.h"
 #include "portal/engine/renderer/deletion_queue.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
