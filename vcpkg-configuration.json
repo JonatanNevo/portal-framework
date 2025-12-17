@@ -1,9 +1,8 @@
 {
-  "overlay-ports": ["cmake/vcpkg-overlay-ports"],
   "registries": [
     {
       "kind": "git",
-      "baseline": "73b6d1102a5557cef7b7b17923ba8fcbefa08ded",
+      "baseline": "490e9bd8e48b15d7bffd5c70cd9a53497eff7dc6",
       "reference": "main",
       "repository": "https://github.com/JonatanNevo/portal-vcpkg-registry",
       "packages": [
@@ -15,5 +14,8 @@
         "portal-serialization"
       ]
     }
+  ],
+  "overlay-ports": [
+    "cmake/vcpkg-overlay-ports"
   ]
 }
