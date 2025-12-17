@@ -60,7 +60,7 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
-      - name: Install Clang 19
+      - name: Install Clang
         if: runner.os == 'Linux'
         run: |
           wget https://apt.llvm.org/llvm.sh
@@ -74,7 +74,7 @@ jobs:
           clang++ --version
 
       - run: pip install portal_tool
-      - run: python -m portal_tool install --only-dependencies
+      - run: python -m portal_tool install -y --only-dependencies
 
       - uses: lukka/run-vcpkg@v11.5
         with:
