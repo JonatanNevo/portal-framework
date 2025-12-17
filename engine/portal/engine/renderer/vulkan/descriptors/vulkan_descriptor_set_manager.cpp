@@ -7,7 +7,7 @@
 
 #include <ranges>
 
-#include "portal/core/string_utils.h"
+#include "portal/core/strings/string_utils.h"
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/shaders/shader.h"
 #include "portal/engine/renderer/vulkan/vulkan_shader.h"

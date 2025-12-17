@@ -9,7 +9,7 @@
 #include "portal/core/files/file_system.h"
 #include "portal/engine/settings.h"
 #include "glaze/core/reflect.hpp"
-#include "portal/core/string_utils.h"
+#include "portal/core/strings/string_utils.h"
 #include "portal/engine/engine.h"
 #include "portal/engine/components/base.h"
 #include "portal/engine/components/base_camera_controller.h"

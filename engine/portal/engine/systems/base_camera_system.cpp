@@ -18,7 +18,7 @@ void BaseCameraSystem::execute(FrameContext& frame, ecs::Registry& registry)
         constexpr glm::vec3 up_direction(0.0f, 1.0f, 0.0f);
         const glm::vec3 right_direction = glm::cross(controller.forward_direction, up_direction);
 
-        transform.set_translation(transform.get_translation() + (controller.position_delta * frame.delta_time));
+        transform.set_translation(transform.get_translation() + (controller.position_delta * controller.speed * frame.delta_time));
 
         const float pitch_delta = controller.mouse_delta.y * controller.rotation_speed;
         const float yaw_delta = controller.mouse_delta.x * controller.rotation_speed;

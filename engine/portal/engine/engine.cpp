@@ -30,7 +30,7 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     const WindowProperties window_properties{
         .title = properties.name,
         .icon_path = Settings::get().get_setting<std::filesystem::path>("application.icon-path"),
-        .extent = {properties.width, properties.width},
+        .extent = {properties.width, properties.height},
         .requested_frames_in_flight = properties.frames_in_flight,
     };
     window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, input});

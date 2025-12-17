@@ -7,7 +7,7 @@
 
 #include <ranges>
 
-#include "portal/core/string_utils.h"
+#include "portal/core/strings/string_utils.h"
 
 #ifdef _WIN32
 #include <winsock2.h>
