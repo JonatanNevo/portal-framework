@@ -60,6 +60,11 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
+      - uses: jidicula/clang-format-action@v4.16.0
+        if: runner.os == 'Linux'
+        with:
+          clang-format-version: 19
+
       - run: pip install portal_tool
       - run: python -m portal_tool install --only-dependencies
 
