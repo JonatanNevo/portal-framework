@@ -7,7 +7,7 @@
 
 #include <numeric>
 
-#include <portal/core/string_utils.h>
+#include <portal/core/strings/string_utils.h>
 
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/resources/resource_registry.h"

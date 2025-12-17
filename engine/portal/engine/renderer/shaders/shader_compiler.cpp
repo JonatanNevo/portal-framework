@@ -6,7 +6,7 @@
 #include "shader_compiler.h"
 
 #include "shader_types.h"
-#include "portal/core/string_utils.h"
+#include "portal/core/strings/string_utils.h"
 
 namespace portal::renderer
 {

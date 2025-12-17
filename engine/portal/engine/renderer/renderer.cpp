@@ -336,7 +336,8 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
     }
 
     {
-        command_buffer.beginRendering(render_target->make_rendering_info(*rendering_context));
+        auto info = render_target->make_rendering_info(*rendering_context);
+        command_buffer.beginRendering(info);
 
         rendering_context->resources.scene_data_buffer = vulkan::BufferBuilder(sizeof(vulkan::GPUSceneData))
                                                          .with_usage(vk::BufferUsageFlagBits::eUniformBuffer)
@@ -463,6 +464,8 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
 void Renderer::on_resize(const size_t new_width, const size_t new_height) const
 {
     swapchain->on_resize(new_width, new_height);
+    depth_image->resize(new_width, new_height);
+    render_target->resize(new_width, new_height, false);
 }
 
 void Renderer::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function)

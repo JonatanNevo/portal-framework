@@ -4,7 +4,7 @@
 //
 
 #pragma once
-#include "portal/core/thread_base.h"
+#include "portal/core/concurrency/thread_base.h"
 
 namespace portal
 {

@@ -9,7 +9,7 @@
 
 #include <ranges>
 
-#include "portal/core/string_utils.h"
+#include "portal/core/strings/string_utils.h"
 #include "portal/engine/resources/loader/gltf_loader.h"
 
 namespace portal

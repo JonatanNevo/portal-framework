@@ -6,7 +6,6 @@
 #include "vulkan_image.h"
 #include <vulkan/vulkan_format_traits.hpp>
 
-#include "portal/core/delegates/inline_allocator.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"

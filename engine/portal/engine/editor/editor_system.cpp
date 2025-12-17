@@ -36,23 +36,9 @@ void EditorGuiSystem::print_cameras(ecs::Registry& registry)
         ImGui::Text("position %f %f %f", transform.get_translation().x, transform.get_translation().y, transform.get_translation().z);
         ImGui::Text("direction %f %f %f", controller.forward_direction.x, controller.forward_direction.y, controller.forward_direction.z);
 
-        float camera_speed = controller.speed;
-        if (ImGui::SliderFloat("Camera Speed", &camera_speed, 0.1f, 10.0f))
-        {
-            controller.speed = camera_speed;
-        }
-
-        float near_clip = camera.near_clip;
-        if (ImGui::InputFloat("Near Clip", &near_clip))
-        {
-            camera.near_clip = near_clip;
-        }
-
-        float far_clip = camera.far_clip;
-        if (ImGui::InputFloat("Far Clip", &far_clip))
-        {
-            camera.far_clip = far_clip;
-        }
+        ImGui::SliderFloat("Camera Speed", &controller.speed, 0.1f, 10.0f);
+        ImGui::InputFloat("Near Clip", &camera.near_clip);
+        ImGui::InputFloat("Far Clip", &camera.far_clip);
     }
     ImGui::End();
 }
