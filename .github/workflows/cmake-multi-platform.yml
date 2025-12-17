@@ -60,10 +60,18 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
-      - uses: jidicula/clang-format-action@v4.16.0
+      - name: Install Clang 19
         if: runner.os == 'Linux'
-        with:
-          clang-format-version: 19
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 19 all
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+          sudo update-alternatives --set clang /usr/bin/clang-19
+          sudo update-alternatives --set clang++ /usr/bin/clang++-19
+          clang --version
+          clang++ --version
 
       - run: pip install portal_tool
       - run: python -m portal_tool install --only-dependencies
