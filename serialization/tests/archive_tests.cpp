@@ -219,8 +219,10 @@ TEST_F(ArchiveObjectTest, AddAndGetBinaryBlockWithVector)
 TEST_F(ArchiveObjectTest, BinaryDataIntegrity)
 {
     std::vector<std::byte> original_data(1024);
-    std::iota(original_data.begin(), original_data.end(), 0);
-
+    for (size_t i = 0; i < original_data.size(); ++i)
+    {
+        original_data[i] = static_cast<std::byte>(i % 256);
+    }
     archive.add_binary_block("large_binary", original_data);
 
     std::vector<std::byte> retrieved_data;

@@ -12,8 +12,8 @@ namespace portal
 class JsonArchive final : public ArchiveObject
 {
 public:
-    void dump(const std::filesystem::path& output_path);
-    void dump(std::ostream& output);
+    void dump(const std::filesystem::path& output_path, size_t indent = 4);
+    void dump(std::ostream& output, size_t indent = 4);
 
     void read(const std::filesystem::path& input_path);
     void read(std::istream& input);

@@ -75,7 +75,7 @@ TEST_F(JsonArchiveTest, SerializeBasicTypes)
     archive.add_property("string_value", std::string("hello world"));
 
     std::stringstream ss;
-    archive.dump(ss);
+    archive.dump(ss, 0);
 
     std::string json_output = ss.str();
     EXPECT_FALSE(json_output.empty());
@@ -98,7 +98,7 @@ TEST_F(JsonArchiveTest, SerializeArrayTypes)
     archive.add_property("string_array", string_array);
 
     std::stringstream ss;
-    archive.dump(ss);
+    archive.dump(ss, 0);
 
     std::string json_output = ss.str();
     EXPECT_NE(json_output.find("[1,2,3,4,5]"), std::string::npos);
@@ -132,7 +132,7 @@ TEST_F(JsonArchiveTest, WriteToFile)
     archive.add_property("test_string", std::string("file test"));
 
     auto output_path = test_dir / "test_output.json";
-    archive.dump(output_path);
+    archive.dump(output_path, 0);
 
     EXPECT_TRUE(std::filesystem::exists(output_path));
 

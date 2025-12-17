@@ -100,9 +100,16 @@ public:
                         [this, &registry, &context]() -> Job<>
                         {
                             if constexpr (ecs::HasExecuteWithContext<Derived>)
+                            {
                                 derived().execute(context, registry);
+                            }
                             else
+                            {
+                                // Cannot mark [[maybe_unused]] on lambda capture :(
+                                std::ignore = context;
                                 derived().execute(registry);
+                            }
+
 
                             co_return;
                         }(),
@@ -183,17 +190,17 @@ private:
         auto& raw_registry = registry.get_raw_registry();
         if constexpr (ecs::OnComponentAdded<Derived, Component>)
         {
-            raw_registry.on_construct<Component>().connect < &System::on_construct<Component> > (this);
+            raw_registry.on_construct<Component>().template connect < &System::on_construct<Component> > (this);
         }
 
         if constexpr (ecs::OnComponentRemoved<Derived, Component>)
         {
-            raw_registry.on_destroy<Component>().connect < &System::on_destroy<Component> > (this);
+            raw_registry.on_destroy<Component>().template connect < &System::on_destroy<Component> > (this);
         }
 
         if constexpr (ecs::OnComponentChanged<Derived, Component>)
         {
-            raw_registry.on_update<Component>().connect < &System::on_update<Component> > (this);
+            raw_registry.on_update<Component>().template connect < &System::on_update<Component> > (this);
         }
     }
 
