@@ -5,6 +5,8 @@
 
 #include "base_camera_system.h"
 
+#include "portal/application/frame_context.h"
+
 namespace portal
 {
 void BaseCameraSystem::execute(FrameContext& frame, ecs::Registry& registry)

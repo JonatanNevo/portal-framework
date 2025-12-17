@@ -7,7 +7,8 @@
 #include "entity.h"
 #include "portal/core/type_traits.h"
 
-namespace portal {
+namespace portal
+{
 struct FrameContext;
 }
 

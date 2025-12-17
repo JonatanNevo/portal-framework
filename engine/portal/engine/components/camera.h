@@ -4,9 +4,8 @@
 //
 
 #pragma once
-#include <glm/vec4.hpp>
 
-#include "portal/engine/renderer/camera.h"
+#include <portal/core/glm.h>
 
 namespace portal
 {
