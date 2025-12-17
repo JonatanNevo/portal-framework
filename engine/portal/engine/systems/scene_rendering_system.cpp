@@ -52,7 +52,6 @@ void SceneRenderingSystem::update_global_descriptors(FrameContext& frame, ecs::R
         rendering_context->scene_data.sunlight_color = glm::vec4(1.f);
         rendering_context->scene_data.sunlight_direction = glm::vec4(0, 1, 0.5, 1.f);
     }
-
 }
 
 void SceneRenderingSystem::add_static_mesh_to_context(FrameContext& frame, ecs::Registry& registry)

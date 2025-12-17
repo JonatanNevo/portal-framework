@@ -9,7 +9,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 class VulkanSurface final : public Surface
 {
 public:
@@ -27,5 +26,4 @@ private:
     vk::raii::SurfaceKHR surface = nullptr;
     SurfaceCapabilities capabilities;
 };
-
 }

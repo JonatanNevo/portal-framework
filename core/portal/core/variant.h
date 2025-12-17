@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 namespace details
 {
     template <class... Ts>

@@ -41,8 +41,6 @@ uint64_t to_uint64(T obj)
     else
         return reinterpret_cast<uint64_t>(obj);
 }
-
 }
 
 #define VK_HANDLE_CAST(raii_obj) portal::to_uint64(raii_obj)
-

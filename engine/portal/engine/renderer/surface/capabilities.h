@@ -11,7 +11,6 @@
 
 namespace portal::renderer
 {
-
 enum class SurfaceTransformBits: uint16_t
 {
     Emtpy           = 0b000000000,
@@ -42,8 +41,6 @@ struct SurfaceCapabilities
     SurfaceTransform supported_transforms;
     SurfaceTransform current_transform;
 };
-
-
 }
 
 

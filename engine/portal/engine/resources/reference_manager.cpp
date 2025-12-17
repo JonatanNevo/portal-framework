@@ -9,10 +9,9 @@
 
 namespace portal
 {
-
 static auto logger = Log::get_logger("Resources");
 
-ReferenceManager::ReferenceManager(ModuleStack& stack): Module<>(stack, STRING_ID("Reference Manager")) {}
+ReferenceManager::ReferenceManager(ModuleStack& stack) : Module<>(stack, STRING_ID("Reference Manager")) {}
 
 ReferenceManager::~ReferenceManager()
 {
@@ -61,5 +60,4 @@ void ReferenceManager::move_reference(const StringId& id, void* old_ref, void* n
     unregister_reference(id, old_ref);
     register_reference(id, new_ref);
 }
-
 } // portal

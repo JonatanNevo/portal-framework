@@ -5,7 +5,8 @@
 
 #include "resource.h"
 
-namespace portal {
+namespace portal
+{
 bool Resource::operator==(const Resource& other) const
 {
     return id == other.id;

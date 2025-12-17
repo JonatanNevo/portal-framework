@@ -15,7 +15,6 @@
 
 namespace portal::resources
 {
-
 LoaderFactory::LoaderFactory(ResourceRegistry& registry, const RendererContext& context) : stub_loader(registry), context(context)
 {
     loaders[ResourceType::Texture] = std::make_shared<TextureLoader>(registry, context);

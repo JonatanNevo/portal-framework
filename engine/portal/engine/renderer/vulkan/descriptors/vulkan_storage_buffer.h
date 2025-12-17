@@ -28,7 +28,6 @@ private:
     void release();
     void init();
 
-
 private:
     const VulkanDevice& device;
     StorageBufferProperties properties;
@@ -53,5 +52,4 @@ public:
 private:
     std::unordered_map<size_t, Reference<VulkanStorageBuffer>> buffers;
 };
-
 } // portal

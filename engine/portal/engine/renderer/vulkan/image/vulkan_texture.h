@@ -8,7 +8,8 @@
 #include "portal/engine/renderer/image/texture.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 
-namespace portal::renderer {
+namespace portal::renderer
+{
 class Sampler;
 }
 
@@ -67,5 +68,4 @@ private:
 
     Reference<VulkanImage> image;
 };
-
 } // portal

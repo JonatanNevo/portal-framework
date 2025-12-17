@@ -8,7 +8,6 @@
 
 namespace portal
 {
-
 /**
  * An interface for a class that consumes window events (resize, focus, request close, etc...)
  */
@@ -21,5 +20,4 @@ public:
     virtual void on_focus(bool focused) = 0;
     virtual void on_close() = 0;
 };
-
 }

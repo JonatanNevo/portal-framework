@@ -11,7 +11,6 @@
 
 namespace portal
 {
-
 struct FrameContext;
 
 class Event;

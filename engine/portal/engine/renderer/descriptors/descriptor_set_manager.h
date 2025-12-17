@@ -40,7 +40,7 @@ public:
     virtual void set_input(StringId name, const Reference<Image>& image) = 0;
     virtual void set_input(StringId name, const Reference<ImageView>& image) = 0;
 
-    template<typename T>
+    template <typename T>
     Reference<T> get_input(const StringId name)
     {
         return reference_cast<T, RendererResource>(get_input(name));
@@ -52,5 +52,4 @@ public:
     virtual bool validate() = 0;
     virtual void bake() = 0;
 };
-
 }

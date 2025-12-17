@@ -12,11 +12,10 @@
 
 namespace portal::renderer
 {
-
-class Image: public RendererResource
+class Image : public RendererResource
 {
 public:
-    explicit Image(const StringId& id): RendererResource(id) {}
+    explicit Image(const StringId& id) : RendererResource(id) {}
 
     virtual void resize(size_t width, size_t height) = 0;
     virtual void reallocate() = 0;
@@ -47,10 +46,10 @@ struct ImageViewProperties
     StringId name;
 };
 
-class ImageView: public RendererResource
+class ImageView : public RendererResource
 {
 public:
-    explicit ImageView(const StringId& id): RendererResource(id) {}
+    explicit ImageView(const StringId& id) : RendererResource(id) {}
 };
 
 namespace utils

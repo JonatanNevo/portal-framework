@@ -147,7 +147,6 @@ TEST(BufferTests, Write)
 
 TEST(BufferTests, WriteOffset)
 {
-
     const std::vector<uint8_t> data{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     portal::Buffer buffer = portal::Buffer::allocate(20);
 
@@ -161,8 +160,8 @@ TEST(BufferTests, WriteAtBoundaries)
     portal::Buffer buffer = portal::Buffer::allocate(10);
 
     constexpr uint8_t value = 42;
-    buffer.write(&value, 1, 0);  // Write at beginning
-    buffer.write(&value, 1, 9);  // Write at end
+    buffer.write(&value, 1, 0); // Write at beginning
+    buffer.write(&value, 1, 9); // Write at end
 
     EXPECT_EQ(buffer[0], 42);
     EXPECT_EQ(buffer[9], 42);

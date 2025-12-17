@@ -12,12 +12,11 @@
 
 namespace portal::renderer::vulkan
 {
-
 const auto logger = Log::get_logger("Vulkan");
 
 VulkanPhysicalDevice::VulkanPhysicalDevice(vk::raii::PhysicalDevice&& physical_device) : handle(
     physical_device
-    )
+)
 {
     const auto available_features = physical_device.getFeatures();
     features_chain = {
@@ -30,7 +29,8 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(vk::raii::PhysicalDevice&& physical_d
                 .samplerAnisotropy = available_features.samplerAnisotropy,
                 .pipelineStatisticsQuery = available_features.pipelineStatisticsQuery,
                 .shaderStorageImageReadWithoutFormat = available_features.shaderStorageImageReadWithoutFormat,
-            }},
+            }
+        },
         {
             .shaderDrawParameters = true
         },
@@ -117,7 +117,7 @@ bool VulkanPhysicalDevice::is_extension_supported(std::string_view extensions_na
     return std::ranges::find_if(
         supported_extensions,
         [extensions_name](const auto& ext) { return std::strcmp(ext.data(), extensions_name.data()) == 0; }
-        ) != supported_extensions.end();
+    ) != supported_extensions.end();
 }
 
 bool VulkanPhysicalDevice::supports_present(Surface& surface, const uint32_t queue_family_index) const
@@ -156,7 +156,7 @@ VulkanPhysicalDevice::QueueFamilyIndices VulkanPhysicalDevice::get_queue_family_
                     (prop.queueFlags & vk::QueueFlagBits::eGraphics) == static_cast<vk::QueueFlags>(0)
                 );
             }
-            );
+        );
 
         if (it == queue_family_properties.end())
             return -1;

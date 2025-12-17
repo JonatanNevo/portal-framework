@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 /**
  * Basic coroutine, not awaitable and does not have either return value nor parameters
  */
@@ -36,10 +35,9 @@ public:
  * @tparam Awaitable The awaitable type, eg: Task
  * @param awaitable The coroutine
  */
-template<typename Awaitable>
+template <typename Awaitable>
 BasicCoroutine execute(Awaitable awaitable)
 {
     co_await awaitable;
 }
-
 }

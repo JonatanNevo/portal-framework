@@ -61,7 +61,6 @@ VulkanSwapchain::VulkanSwapchain(const VulkanContext& context, const Reference<S
     {
         LOG_WARN("Extent changed during swapchain creation");
     }
-
 }
 
 void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, const bool new_vsync)

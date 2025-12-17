@@ -9,8 +9,7 @@
 
 namespace portal
 {
-
-class SchedulerModule final: public Module<>
+class SchedulerModule final : public Module<>
 {
 public:
     explicit SchedulerModule(ModuleStack& stack, int32_t num_workers);
@@ -20,7 +19,5 @@ public:
 
 private:
     jobs::Scheduler scheduler;
-
 };
-
 } // portal

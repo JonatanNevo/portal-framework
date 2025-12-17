@@ -88,7 +88,10 @@ public:
     {
         add_property(
             reflection::Property{
-                Buffer{const_cast<void*>(static_cast<const void*>(string_view.data())), (string_view.size() * sizeof(typename std::string_view::value_type)) + 1},
+                Buffer{
+                    const_cast<void*>(static_cast<const void*>(string_view.data())),
+                    (string_view.size() * sizeof(typename std::string_view::value_type)) + 1
+                },
                 reflection::PropertyType::character,
                 reflection::PropertyContainerType::null_term_string,
                 string_view.size() + 1
@@ -407,7 +410,8 @@ protected:
 };
 
 template <>
-inline StringId Deserializer::get_value<StringId>() {
+inline StringId Deserializer::get_value<StringId>()
+{
     std::string string;
     uint64_t id;
 

@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 1: Job Basics
 // ============================================================================
@@ -371,5 +370,4 @@ TEST_F(JobTest, DestructorDestroysHandleOnlyIfNotDispatched)
         // (it was already destroyed by the scheduler)
     }
 }
-
 } // namespace portal

@@ -11,7 +11,6 @@
 
 namespace portal::details
 {
-
 std::wstring to_wstring(const std::string& str, const Encoding encoding)
 {
     int encoding_num = 0;

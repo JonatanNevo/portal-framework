@@ -27,6 +27,6 @@ protected:
     [[nodiscard]] Reference<Resource> load_precompiled_shader(const SourceMetadata& meta, const ResourceSource& source) const;
 
 private:
-   const RendererContext& context;
+    const RendererContext& context;
 };
 } // portal

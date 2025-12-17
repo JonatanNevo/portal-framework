@@ -158,5 +158,4 @@ struct formatter<portal::uint128_t>
 };
 
 #endif
-
 } // namespace std

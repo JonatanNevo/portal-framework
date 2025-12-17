@@ -7,7 +7,6 @@
 
 namespace portal::renderer
 {
-
 class Queue
 {
 public:
@@ -17,5 +16,4 @@ public:
 
     // TODO: add `submit` `present`
 };
-
 }

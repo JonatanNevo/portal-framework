@@ -7,7 +7,6 @@
 
 namespace portal::renderer
 {
-
 class Device
 {
 public:
@@ -15,5 +14,4 @@ public:
 
     virtual void wait_idle() const = 0;
 };
-
 } // portal

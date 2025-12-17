@@ -9,7 +9,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 class DebugMessenger
 {
 public:
@@ -25,7 +24,7 @@ public:
         vk::DebugUtilsMessageTypeFlagsEXT message_type,
         const vk::DebugUtilsMessengerCallbackDataEXT* callback_data,
         void* data
-        );
+    );
 
 protected:
     int error_count;
@@ -36,9 +35,8 @@ protected:
         vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
         vk::DebugUtilsMessageTypeFlagsEXT message_type,
         const vk::DebugUtilsMessengerCallbackDataEXT* callback_data
-        );
+    );
 
     spdlog::level::level_enum get_severity(const vk::DebugUtilsMessageSeverityFlagBitsEXT severity);
 };
-
 } // portal

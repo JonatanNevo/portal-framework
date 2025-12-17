@@ -14,12 +14,12 @@
 #include <ws2tcpip.h>
 #pragma comment(lib, "ws2_32.lib")
 #else
-    #include <sys/types.h>
-    #include <sys/socket.h>
-    #include <netdb.h>
-    #include <arpa/inet.h>
-    #include <netinet/in.h>
-    #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <unistd.h>
 #endif
 
 #include <steam/steamnetworkingsockets.h>
@@ -30,7 +30,6 @@
 
 namespace portal::network
 {
-
 bool is_valid_id_address(std::string_view ip)
 {
     const std::string ip_address(ip);

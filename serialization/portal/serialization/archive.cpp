@@ -8,7 +8,6 @@
 
 namespace portal
 {
-
 void ArchiveObject::update(const ArchiveObject& other)
 {
     for (auto& [name, prop] : other.property_map)
@@ -33,7 +32,7 @@ void ArchiveObject::add_property(const PropertyName& name, const char* t)
             reflection::PropertyContainerType::null_term_string,
             len + 1
         }
-        );
+    );
 }
 
 void ArchiveObject::add_property(const PropertyName& name, const std::filesystem::path& t)
@@ -71,7 +70,7 @@ reflection::Property& ArchiveObject::add_property_to_map(PropertyName name, refl
         prop.type == reflection::PropertyType::invalid || prop.type == property.type,
         "Property {} already exists with a different type",
         name
-        );
+    );
     prop = std::move(property);
     return prop;
 }
@@ -94,6 +93,4 @@ reflection::Property& ArchiveObject::get_property_from_map(const PropertyName na
     return property_map[name];
 #endif
 }
-
-
 }

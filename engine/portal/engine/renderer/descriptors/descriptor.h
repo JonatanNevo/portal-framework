@@ -11,7 +11,6 @@
 
 namespace portal::renderer
 {
-
 class BufferDescriptor : public RendererResource
 {
 public:
@@ -26,5 +25,4 @@ public:
 protected:
     DescriptorResourceType type;
 };
-
 }

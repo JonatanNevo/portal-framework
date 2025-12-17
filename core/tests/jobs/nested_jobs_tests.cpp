@@ -14,7 +14,6 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 5: Nested Jobs (Jobs within Jobs)
 // ============================================================================
@@ -88,9 +87,11 @@ TEST_F(JobTest, JobWithinJob)
     {
         for (int j = 0; j < 5; ++j)
         {
-            EXPECT_TRUE(tracker.executed_before(
-                std::format("outer_{}", i),
-                std::format("inner_{}_{}", i, j)))
+            EXPECT_TRUE(
+                tracker.executed_before(
+                    std::format("outer_{}", i),
+                    std::format("inner_{}_{}", i, j))
+            )
                 << "outer_" << i << " should execute before inner_" << i << "_" << j;
         }
     }
@@ -382,5 +383,4 @@ TEST_F(JobTest, NestedJobsWithSuspensionsAtEachLevel)
     EXPECT_TRUE(tracker.executed_before("suspend_l3_0_after", "suspend_l2_0_after"));
     EXPECT_TRUE(tracker.executed_before("suspend_l2_0_after", "suspend_l1_after"));
 }
-
 } // namespace portal

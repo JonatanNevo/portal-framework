@@ -8,13 +8,13 @@
 
 #include "portal/core/strings/string_id.h"
 
-namespace portal::renderer {
+namespace portal::renderer
+{
 class ShaderVariant;
 }
 
 namespace portal::renderer
 {
-
 enum class PrimitiveTopology
 {
     None,
@@ -88,5 +88,4 @@ enum class ResourceAccessFlags
     AccelerationStructureRead,
     AccelerationStructureWrite
 };
-
 }

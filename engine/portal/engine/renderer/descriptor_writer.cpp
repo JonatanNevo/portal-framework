@@ -16,7 +16,7 @@ void DescriptorWriter::write_image(
     const vk::raii::Sampler& sampler,
     const vk::ImageLayout layout,
     const vk::DescriptorType type
-    )
+)
 {
     const auto& info = image_infos.emplace_back(
         vk::DescriptorImageInfo{
@@ -24,7 +24,7 @@ void DescriptorWriter::write_image(
             .imageView = image_view,
             .imageLayout = layout
         }
-        );
+    );
 
     const vk::WriteDescriptorSet write{
         //left empty for now until we need to write it
@@ -43,7 +43,7 @@ void DescriptorWriter::write_buffer(
     const size_t size,
     const size_t offset,
     const vk::DescriptorType type
-    )
+)
 {
     const auto& info = buffer_infos.emplace_back(
         vk::DescriptorBufferInfo{
@@ -51,7 +51,7 @@ void DescriptorWriter::write_buffer(
             .offset = offset,
             .range = size
         }
-        );
+    );
 
     const vk::WriteDescriptorSet write{
         //left empty for now until we need to write it
@@ -64,14 +64,17 @@ void DescriptorWriter::write_buffer(
     writes.push_back(write);
 }
 
-void DescriptorWriter::clear() {
+void DescriptorWriter::clear()
+{
     image_infos.clear();
     buffer_infos.clear();
     writes.clear();
 }
 
-void DescriptorWriter::update_set(const renderer::vulkan::VulkanDevice& device, const vk::raii::DescriptorSet& set) {
-    for (auto& write : writes) {
+void DescriptorWriter::update_set(const renderer::vulkan::VulkanDevice& device, const vk::raii::DescriptorSet& set)
+{
+    for (auto& write : writes)
+    {
         write.dstSet = set;
     }
 

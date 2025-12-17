@@ -19,7 +19,7 @@ public:
     const static StringId BLACK_TEXTURE_ID;
 
 public:
-    explicit Texture(const StringId& id): RendererResource(id) {};
+    explicit Texture(const StringId& id) : RendererResource(id) {};
 
     [[nodiscard]] virtual ImageFormat get_format() const = 0;
 

@@ -11,7 +11,6 @@
 
 namespace portal
 {
-
 template <typename Result = void>
 class [[nodiscard]] Task
 {

@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 enum class JobPriority: uint8_t
 {
     Low    = 0,
@@ -95,5 +94,4 @@ private:
     std::array<std::atomic<size_t>, 3> local_count = {0, 0, 0};
     std::array<std::atomic<size_t>, 3> stealable_count = {0, 0, 0};
 };
-
 } // portal

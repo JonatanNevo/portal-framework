@@ -9,7 +9,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 const auto logger = Log::get_logger("Vulkan Debug");
 
 constexpr const char* get_message_type(const vk::DebugUtilsMessageTypeFlagsEXT message_type)
@@ -66,7 +65,7 @@ VKAPI_ATTR vk::Bool32 VKAPI_CALL DebugMessenger::debug_callback(
     const vk::DebugUtilsMessageTypeFlagsEXT message_type,
     const vk::DebugUtilsMessengerCallbackDataEXT* callback_data,
     void* data
-    )
+)
 {
     auto messenger = static_cast<DebugMessenger*>(data);
     return messenger->log(severity, message_type, callback_data);
@@ -76,7 +75,7 @@ vk::Bool32 renderer::vulkan::DebugMessenger::log(
     const vk::DebugUtilsMessageSeverityFlagBitsEXT severity,
     const vk::DebugUtilsMessageTypeFlagsEXT message_type,
     const vk::DebugUtilsMessengerCallbackDataEXT* callback_data
-    )
+)
 {
     if (skipped_messages.contains(static_cast<uint32_t>(callback_data->messageIdNumber)))
         return vk::False;
@@ -92,7 +91,7 @@ vk::Bool32 renderer::vulkan::DebugMessenger::log(
             const std::string color_str = std::format("[ {}, {}, {}, {} ]", label.color[0], label.color[1], label.color[2], label.color[3]);
             labels.append(
                 std::format("\t\t- Command Buffer Label[{0}]: name: {1}, color: {2}\n", i, label.pLabelName ? label.pLabelName : "NULL", color_str)
-                );
+            );
         }
     }
 
@@ -109,8 +108,8 @@ vk::Bool32 renderer::vulkan::DebugMessenger::log(
                     object.pObjectName ? object.pObjectName : "NULL",
                     vk::to_string(object.objectType),
                     object.objectHandle
-                    )
-                );
+                )
+            );
         }
     }
 
@@ -123,7 +122,7 @@ vk::Bool32 renderer::vulkan::DebugMessenger::log(
             "{} - {}",
             get_message_type(message_type),
             callback_data->pMessage
-            );
+        );
     }
     else
     {
@@ -135,7 +134,7 @@ vk::Bool32 renderer::vulkan::DebugMessenger::log(
             callback_data->pMessage,
             labels,
             objects
-            );
+        );
     }
 
     return vk::False;

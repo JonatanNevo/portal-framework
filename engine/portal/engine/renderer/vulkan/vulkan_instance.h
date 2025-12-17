@@ -9,13 +9,13 @@
 #include "portal/engine/renderer/device/physical_device.h"
 #include "portal/engine/renderer/vulkan/debug/debug_messenger.h"
 
-namespace portal::renderer::vulkan {
+namespace portal::renderer::vulkan
+{
 class VulkanPhysicalDevice;
 }
 
 namespace portal::renderer::vulkan
 {
-
 constexpr std::array REQUIRED_DEVICE_EXTENSIONS = {
     vk::KHRSwapchainExtensionName,
     vk::KHRCalibratedTimestampsExtensionName,
@@ -46,5 +46,4 @@ private:
 
     std::vector<std::unique_ptr<VulkanPhysicalDevice>> physical_devices;
 };
-
 } // portal

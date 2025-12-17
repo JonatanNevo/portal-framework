@@ -71,7 +71,7 @@ uint32_t rate_device_suitability(const vk::raii::PhysicalDevice& device)
         {
             return (prop.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
         }
-        ) == queue_families.end())
+    ) == queue_families.end())
     {
         LOGGER_TRACE("Candidate: {} does not support graphics queue", properties.deviceName.data());
         return 0;
@@ -117,7 +117,7 @@ uint32_t find_queue_families(const vk::raii::PhysicalDevice& device, vk::QueueFl
             {
                 return (prop.queueFlags & queue_type) != static_cast<vk::QueueFlags>(0);
             }
-            );
+        );
 
     return static_cast<uint32_t>(std::distance(families.begin(), graphics_queue_family_prop));
 }
@@ -152,7 +152,7 @@ std::vector<const char*> get_required_extensions(const vk::raii::Context& contex
             {
                 return strcmp(property.extensionName, extension) == 0;
             }
-            ))
+        ))
         {
             LOG_DEBUG_TAG("Renderer", "Required GLFW extension not supported: {}", glfw_extensions[i]);
             throw std::runtime_error("Required GLFW extension not supported: " + std::string(glfw_extensions[i]));
@@ -202,9 +202,9 @@ std::vector<const char*> get_required_validation_layers(const vk::raii::Context&
                 {
                     return strcmp(layer_property.layerName, required_layer) == 0;
                 }
-                );
+            );
         }
-        ))
+    ))
     {
         LOG_DEBUG_TAG("Renderer", "One or more required layers are not supported!");
         throw std::runtime_error("One or more required layers are not supported!");
@@ -234,7 +234,7 @@ void transition_image_layout(
     const uint32_t mip_level,
     const vk::ImageLayout old_layout,
     const vk::ImageLayout new_layout
-    )
+)
 {
     vk::PipelineStageFlags2 source_stage;
     vk::PipelineStageFlags2 destination_stage;
@@ -273,7 +273,7 @@ void transition_image_layout(
         source_stage,
         destination_stage,
         vk::ImageAspectFlagBits::eColor
-        );
+    );
 }
 
 void transition_image_layout(
@@ -287,9 +287,8 @@ void transition_image_layout(
     const vk::PipelineStageFlags2 src_stage_mask,
     const vk::PipelineStageFlags2 dst_stage_mask,
     const vk::ImageAspectFlags aspect_mask
-    )
+)
 {
-
     const vk::ImageSubresourceRange subresource_range{
         .aspectMask = aspect_mask,
         .baseMipLevel = 0,
@@ -308,7 +307,7 @@ void transition_image_layout(
         dst_access_mask,
         src_stage_mask,
         dst_stage_mask
-        );
+    );
 }
 
 void transition_image_layout(
@@ -321,7 +320,7 @@ void transition_image_layout(
     const vk::AccessFlags2 dst_access_mask,
     const vk::PipelineStageFlags2 src_stage_mask,
     const vk::PipelineStageFlags2 dst_stage_mask
-    )
+)
 {
     vk::ImageMemoryBarrier2 barrier = {
         .srcStageMask = src_stage_mask,
@@ -350,7 +349,7 @@ void copy_image_to_image(
     const vk::Image& dest,
     const vk::Extent2D src_size,
     const vk::Extent2D dst_size
-    )
+)
 {
     // Calculate aspect ratios
     const float src_aspect = static_cast<float>(src_size.width) / static_cast<float>(src_size.height);

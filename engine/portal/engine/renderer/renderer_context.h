@@ -12,7 +12,8 @@
 
 namespace portal
 {
-namespace renderer::vulkan {
+namespace renderer::vulkan
+{
     class VulkanSwapchain;
 }
 
@@ -23,7 +24,7 @@ public:
         renderer::vulkan::VulkanContext& gpu_context,
         std::vector<vk::raii::DescriptorSetLayout>& global_descriptor_set_layout,
         const renderer::AttachmentProperties& attachments
-        );
+    );
 
 
     [[nodiscard]] const renderer::vulkan::VulkanContext& get_gpu_context() const;
@@ -41,5 +42,4 @@ protected:
     std::vector<vk::raii::DescriptorSetLayout>& global_descriptor_set_layout;
     renderer::AttachmentProperties attachments;
 };
-
 } // portal

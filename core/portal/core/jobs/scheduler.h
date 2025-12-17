@@ -20,7 +20,6 @@
 
 namespace portal::jobs
 {
-
 struct Counter
 {
     std::atomic<size_t> count;
@@ -81,7 +80,7 @@ public:
     std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(
         std::tuple<Job<Results>...> jobs,
         const JobPriority priority = JobPriority::Normal
-        );
+    );
     template <typename... Results>
     std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(Job<Results>... jobs, const JobPriority priority = JobPriority::Normal);
     template <typename Result> requires (!std::is_void_v<Result>)
@@ -143,7 +142,7 @@ std::tuple<std::expected<Results, JobResultStatus>...> Scheduler::wait_for_jobs(
             (job_list.push_back(JobBase::handle_type::from_address(job.handle.address())), ...);
         },
         jobs
-        );
+    );
 
     wait_for_jobs(job_list, priority);
 
@@ -154,7 +153,7 @@ std::tuple<std::expected<Results, JobResultStatus>...> Scheduler::wait_for_jobs(
             return std::tuple<std::expected<Results, JobResultStatus>...>{std::move(job.result())...};
         },
         jobs
-        );
+    );
 }
 
 
@@ -225,7 +224,7 @@ void Scheduler::dispatch_jobs(std::tuple<Job<Results...>> jobs, const JobPriorit
             (job_list.push_back(JobBase::handle_type::from_address(job.handle.address())), ...);
         },
         jobs
-        );
+    );
 
     dispatch_jobs(job_list, priority, counter);
 }
@@ -248,5 +247,4 @@ void Scheduler::dispatch_job(Job<Result> job, JobPriority priority, Counter* cou
     PORTAL_PROF_ZONE();
     dispatch_job(JobBase::handle_type::from_address(job.handle.address()), priority, counter);
 }
-
 } // portal

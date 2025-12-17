@@ -11,7 +11,6 @@
 
 namespace portal
 {
-
 template <typename T>
 concept IntegralEnum = std::is_integral_v<std::underlying_type_t<T>>;
 
@@ -119,7 +118,6 @@ struct FlagTraits
     // A value that represents all the flags turned on, max int by default
     static constexpr Flags<FlagBitsType> all_flags = Flags<FlagBitsType>(std::numeric_limits<std::underlying_type_t<FlagBitsType>>::max());
 };
-
 }
 
 // bitwise operators

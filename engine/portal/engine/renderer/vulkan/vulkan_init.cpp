@@ -11,7 +11,7 @@ vk::raii::CommandPool create_command_pool(
     const vk::raii::Device& device,
     const uint32_t queue_family_index,
     const vk::CommandPoolCreateFlags flags
-    )
+)
 {
     const vk::CommandPoolCreateInfo create_info{
         .flags = flags,
@@ -24,7 +24,7 @@ vk::raii::CommandBuffer allocate_command_buffer(
     const vk::raii::Device& device,
     const vk::raii::CommandPool& command_pool,
     const vk::CommandBufferLevel level
-    )
+)
 {
     return std::move(allocate_command_buffers(device, command_pool, 1, level).front());
 }
@@ -34,7 +34,7 @@ std::vector<vk::raii::CommandBuffer> allocate_command_buffers(
     const vk::raii::CommandPool& command_pool,
     const uint32_t count,
     const vk::CommandBufferLevel level
-    )
+)
 {
     const vk::CommandBufferAllocateInfo alloc_info{
         .commandPool = command_pool,
@@ -50,7 +50,7 @@ vk::raii::ImageView create_image_view(
     uint32_t mip_level,
     const vk::Format format,
     const vk::ImageAspectFlags aspect_flags
-    )
+)
 {
     const vk::ImageViewCreateInfo image_view_create_info = {
         .image = image,
@@ -60,7 +60,4 @@ vk::raii::ImageView create_image_view(
     };
     return device.createImageView(image_view_create_info);
 }
-
 }
-
-

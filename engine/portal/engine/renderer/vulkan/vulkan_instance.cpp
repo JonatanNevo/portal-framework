@@ -14,7 +14,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 constexpr std::array VALIDATION_LAYERS = {
     "VK_LAYER_KHRONOS_validation"
 };
@@ -39,7 +38,7 @@ uint32_t rate_device_suitability(const VulkanPhysicalDevice& device)
         {
             return (prop.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
         }
-        ) == queue_families.end())
+    ) == queue_families.end())
     {
         LOGGER_TRACE("Candidate: {} does not support graphics queue", properties.deviceName.data());
         return 0;
@@ -74,7 +73,6 @@ uint32_t rate_device_suitability(const VulkanPhysicalDevice& device)
 }
 
 
-
 bool check_driver_api_version_support(const uint32_t requested_version)
 {
     const uint32_t instance_version = vk::enumerateInstanceVersion();
@@ -86,13 +84,13 @@ bool check_driver_api_version_support(const uint32_t requested_version)
             VK_VERSION_MAJOR(instance_version),
             VK_VERSION_MINOR(instance_version),
             VK_VERSION_PATCH(instance_version)
-            );
+        );
         LOGGER_FATAL(
             "\tYou need at least: {}.{}.{}",
             VK_VERSION_MAJOR(requested_version),
             VK_VERSION_MINOR(requested_version),
             VK_VERSION_PATCH(requested_version)
-            );
+        );
         LOGGER_FATAL("\tPlease update your GPU driver.");
 
         return false;
@@ -103,7 +101,7 @@ bool check_driver_api_version_support(const uint32_t requested_version)
         VK_VERSION_MAJOR(instance_version),
         VK_VERSION_MINOR(instance_version),
         VK_VERSION_PATCH(instance_version)
-        );
+    );
 
     return true;
 }
@@ -119,7 +117,7 @@ bool check_instance_extension_support(const std::span<const char*> extensions, c
             {
                 return strcmp(property.extensionName, extension) == 0;
             }
-            ))
+        ))
         {
             LOGGER_FATAL("Required Vulkan extension not supported: {}", extensions[i]);
             return false;
@@ -142,9 +140,9 @@ bool check_validation_layer_support(const std::span<const char* const> validatio
                 {
                     return strcmp(layer_property.layerName, required_layer) == 0;
                 }
-                );
+            );
         }
-        ))
+    ))
     {
         LOGGER_ERROR("One or more required layers are not supported!");
         return false;
@@ -153,7 +151,7 @@ bool check_validation_layer_support(const std::span<const char* const> validatio
 }
 
 
-VulkanInstance::VulkanInstance(vk::raii::Context& context): context(context)
+VulkanInstance::VulkanInstance(vk::raii::Context& context) : context(context)
 {
     PORTAL_PROF_ZONE();
 
@@ -263,7 +261,7 @@ VulkanPhysicalDevice& VulkanInstance::get_suitable_gpu() const
     std::multimap<uint32_t, std::reference_wrapper<VulkanPhysicalDevice>> candidates;
     for (const auto& dev : physical_devices)
     {
-        uint32_t score = rate_device_suitability(*dev );
+        uint32_t score = rate_device_suitability(*dev);
         candidates.emplace(score, *dev);
     }
 
@@ -289,7 +287,7 @@ void VulkanInstance::query_physical_devices()
     }
 
     // Create gpus wrapper objects from the vk::PhysicalDevice's
-    for (auto device: devices)
+    for (auto device : devices)
     {
         physical_devices.emplace_back(std::make_unique<VulkanPhysicalDevice>(std::move(device)));
     }
@@ -331,5 +329,4 @@ std::vector<const char*> VulkanInstance::get_required_instance_extensions(const 
 
     return extensions;
 }
-
 } // portal

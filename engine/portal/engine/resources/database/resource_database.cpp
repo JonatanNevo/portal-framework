@@ -1,4 +1,3 @@
-
 //
 // Copyright © 2025 Jonatan Nevo.
 // Distributed under the MIT license (see LICENSE file).
@@ -14,7 +13,6 @@
 
 namespace portal
 {
-
 void CompositeMetadata::archive(ArchiveObject& archive) const
 {
     auto* child = archive.create_child("composite");
@@ -84,7 +82,7 @@ void SourceMetadata::archive(ArchiveObject& archive) const
     archive.add_property(
         "dependencies",
         dependencies | std::ranges::views::transform([](const auto& id) { return id.string; }) | std::ranges::to<std::vector>()
-        ); // TODO: support views
+    ); // TODO: support views
 
     archive.add_property("source", source.string);
     archive.add_property("format", to_string(format));
@@ -95,7 +93,7 @@ void SourceMetadata::archive(ArchiveObject& archive) const
             meta.archive(archive);
         },
         meta
-        );
+    );
 }
 
 SourceMetadata SourceMetadata::dearchive(ArchiveObject& archive)
@@ -139,5 +137,4 @@ SourceMetadata SourceMetadata::dearchive(ArchiveObject& archive)
     }
     return metadata;
 }
-
 } // portal

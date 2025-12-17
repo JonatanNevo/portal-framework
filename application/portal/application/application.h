@@ -15,7 +15,6 @@
 
 namespace portal
 {
-
 struct ApplicationProperties
 {
     StringId name = STRING_ID("Portal Engine");

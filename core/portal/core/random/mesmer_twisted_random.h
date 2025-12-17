@@ -8,7 +8,6 @@
 
 namespace portal
 {
-
 class MesmerTwistedRandom final : public Random
 {
 public:
@@ -26,5 +25,4 @@ private:
     std::uniform_int_distribution<std::mt19937::result_type> int_distribution;
     std::uniform_real_distribution<float> float_distribution;
 };
-
 } // portal

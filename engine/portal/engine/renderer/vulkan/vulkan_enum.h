@@ -13,7 +13,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 vk::Format to_format(ImageFormat format);
 
 vk::ShaderStageFlagBits to_shader_stage(ShaderStage stage);
@@ -30,6 +29,4 @@ ImageFormat to_format(vk::Format format);
 vk::Filter to_filter(TextureFilter filter);
 vk::SamplerAddressMode to_address_mode(TextureWrap warp);
 vk::SamplerMipmapMode to_mipmap_mode(SamplerMipmapMode mode);
-
-
 }

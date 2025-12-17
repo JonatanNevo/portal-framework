@@ -12,7 +12,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 class VulkanDevice;
 
 /// Inherit this for any Vulkan object with a handle of type `Handle`.
@@ -28,9 +27,9 @@ public:
     VulkanResource(const VulkanResource&) = delete;
     VulkanResource& operator=(const VulkanResource&) = delete;
 
-    VulkanResource(VulkanResource&& other) noexcept: debug_name(std::exchange(other.debug_name, {})),
-                                                     device(other.device),
-                                                     handle(std::exchange(other.handle, {})) {}
+    VulkanResource(VulkanResource&& other) noexcept : debug_name(std::exchange(other.debug_name, {})),
+                                                      device(other.device),
+                                                      handle(std::exchange(other.handle, {})) {}
 
     VulkanResource& operator=(VulkanResource&& other) noexcept
     {
@@ -82,5 +81,4 @@ private:
     const VulkanDevice* device;
     Handle handle;
 };
-
 }

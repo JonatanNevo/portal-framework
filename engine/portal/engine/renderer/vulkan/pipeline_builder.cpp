@@ -14,8 +14,6 @@
 
 namespace portal::renderer::vulkan
 {
-
-
 PipelineBuilder& PipelineBuilder::add_shader(const VulkanShaderVariant& shader)
 {
     const std::vector<vk::PipelineShaderStageCreateInfo>& shader_create_infos = shader.get_shader_stage_create_infos();
@@ -199,7 +197,6 @@ PipelineBuilder& PipelineBuilder::disable_color_blending(const int index)
     attachment.blendEnable = false;
     attachment.colorWriteMask = color_write_mask;
     return *this;
-
 }
 
 PipelineBuilder& PipelineBuilder::set_color_attachment_formats(std::vector<ImageFormat>& formats)
@@ -209,7 +206,7 @@ PipelineBuilder& PipelineBuilder::set_color_attachment_formats(std::vector<Image
         {
             return to_format(format);
         }
-        ) | std::ranges::to<std::vector<vk::Format>>();
+    ) | std::ranges::to<std::vector<vk::Format>>();
 
     pipeline_rendering_create_info.colorAttachmentCount = static_cast<uint32_t>(color_formats.size());
     pipeline_rendering_create_info.pColorAttachmentFormats = color_formats.data();
@@ -281,9 +278,8 @@ vk::raii::Pipeline PipelineBuilder::build(const vk::raii::Device& device, const 
                 .objectHandle = VK_HANDLE_CAST(pipeline),
                 .pObjectName = name.string.data()
             }
-            );
+        );
     }
     return pipeline;
 }
-
 } // portal

@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 namespace scene
 {
     class MeshNode;
@@ -73,5 +72,4 @@ private:
 
     resources::MeshGeometryData geometry;
 };
-
 } // portal

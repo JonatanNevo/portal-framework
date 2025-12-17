@@ -6,7 +6,6 @@
 #pragma once
 
 
-
 #include "portal/engine/renderer/vulkan/base/allocated.h"
 #include "portal/engine/renderer/vulkan/base/builder_base.h"
 
@@ -50,6 +49,7 @@ public:
     ImageAllocation& operator=(const ImageAllocation&) = delete;
 
     ~ImageAllocation() override;
+
 protected:
     friend struct ImageBuilder;
     ImageAllocation(const VulkanDevice& device, const ImageBuilder& builder);

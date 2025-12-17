@@ -9,7 +9,6 @@
 
 namespace portal::resources
 {
-
 class ResourceSource
 {
 public:
@@ -18,5 +17,4 @@ public:
     [[nodiscard]] virtual Buffer load(size_t offset, size_t size) const = 0;
     [[nodiscard]] virtual std::unique_ptr<std::istream> stream() const = 0;
 };
-
 }

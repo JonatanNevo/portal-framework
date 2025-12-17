@@ -15,11 +15,10 @@
 
 namespace portal
 {
-
 class Composite final : public Resource
 {
 public:
-    explicit Composite(const StringId& id): Resource(id) {}
+    explicit Composite(const StringId& id) : Resource(id) {}
 
     std::optional<ResourceReference<renderer::Texture>> get_texture(const StringId& resource_id) const;
     std::optional<ResourceReference<renderer::Material>> get_material(const StringId& resource_id) const;
@@ -34,5 +33,4 @@ private:
     // TODO: change to weak resource reference
     std::unordered_map<ResourceType, std::unordered_map<StringId, ResourceReference<Resource>>> resources{};
 };
-
 } // portal

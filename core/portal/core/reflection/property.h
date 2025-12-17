@@ -37,7 +37,6 @@ enum class PropertyContainerType : uint8_t
     vector           = 5,
     matrix           = 6,
     object           = 7,
-
 };
 
 struct Property
@@ -148,7 +147,7 @@ struct std::formatter<portal::reflection::Property>
                 prop.type,
                 prop.container_type,
                 prop.elements_number
-                );
+            );
 
         return std::format_to(
             ctx.out(),
@@ -157,6 +156,6 @@ struct std::formatter<portal::reflection::Property>
             prop.type,
             prop.container_type,
             prop.elements_number
-            );
+        );
     }
 };

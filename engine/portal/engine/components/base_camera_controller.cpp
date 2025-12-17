@@ -7,7 +7,6 @@
 
 namespace portal
 {
-
 void BaseCameraController::move_up(float scale)
 {
     if (!should_move)
@@ -77,5 +76,4 @@ void BaseCameraController::mark_as_stopped_moving()
 {
     should_move = false;
 }
-
 } // portal

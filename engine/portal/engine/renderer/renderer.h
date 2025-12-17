@@ -17,11 +17,13 @@
 
 namespace portal
 {
-namespace renderer {
+namespace renderer
+{
     class RenderTarget;
 }
 
-namespace renderer::vulkan {
+namespace renderer::vulkan
+{
     class VulkanPipeline;
     class VulkanWindow;
 }
@@ -81,5 +83,4 @@ private:
     // Index of the frame we are currently working on, up to max frames in flight
     size_t current_frame = 0;
 };
-
 } // portal

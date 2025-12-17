@@ -18,8 +18,9 @@
 
 namespace portal::renderer::vulkan
 {
-
-VulkanMaterial::VulkanMaterial(const MaterialProperties& properties, const VulkanContext& context): Material(properties.id), properties(properties), device(context.get_device())
+VulkanMaterial::VulkanMaterial(const MaterialProperties& properties, const VulkanContext& context) : Material(properties.id),
+    properties(properties),
+    device(context.get_device())
 {
     shader_variant = reference_cast<VulkanShaderVariant, ShaderVariant>(properties.shader);
 
@@ -40,10 +41,10 @@ VulkanMaterial::VulkanMaterial(const MaterialProperties& properties, const Vulka
         switch (decl.type)
         {
         case DescriptorType::CombinedImageSampler:
-        {
-            descriptor_manager->set_input(name, properties.default_texture);
-            break;
-        }
+            {
+                descriptor_manager->set_input(name, properties.default_texture);
+                break;
+            }
         default:
             break;
         }
@@ -139,19 +140,19 @@ void VulkanMaterial::set_property(StringId bind_point, const reflection::Propert
         "Mismatching uniform types - expected: {}, given: {}",
         uniform_ptr.uniform.property.type,
         property.type
-        );
+    );
     PORTAL_ASSERT(
         property.elements_number == uniform_ptr.uniform.property.elements_number,
         "Mismatching uniform element number - expected: {}, given: {}",
         uniform_ptr.uniform.property.elements_number,
         property.elements_number
-        );
+    );
     PORTAL_ASSERT(
         property.container_type == uniform_ptr.uniform.property.container_type,
         "Mismatching uniform container type - expected: {}, given: {}",
         uniform_ptr.uniform.property.container_type,
         property.container_type
-        );
+    );
 
     auto& buffer = buffers.at(uniform_ptr.buffer_name);
     buffer->set_data(property.value, uniform_ptr.uniform.offset);

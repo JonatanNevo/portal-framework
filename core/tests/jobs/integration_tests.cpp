@@ -12,11 +12,9 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 10: Integration & Real-World Scenarios
 // ============================================================================
 
 // TODO: Implement Integration tests according to JOB_SYSTEM_TEST_PLAN.md
-
 } // namespace portal

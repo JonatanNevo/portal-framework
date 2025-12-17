@@ -11,8 +11,8 @@
 
 namespace portal
 {
-
-class EditorGuiSystem: public ecs::System<EditorGuiSystem, ecs::Owns<NameComponent>, ecs::Views<RelationshipComponent>, ecs::Views<TransformComponent>>
+class EditorGuiSystem : public ecs::System<EditorGuiSystem, ecs::Owns<NameComponent>, ecs::Views<RelationshipComponent>, ecs::Views<
+                                               TransformComponent>>
 {
 public:
     static void execute(ecs::Registry& registry);
@@ -22,5 +22,4 @@ public:
 
     [[nodiscard]] static StringId get_name() { return STRING_ID("Editor System"); };
 };
-
 } // portal

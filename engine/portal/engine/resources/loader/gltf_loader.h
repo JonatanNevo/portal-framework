@@ -56,7 +56,7 @@ protected:
         const std::filesystem::path& base_path,
         const fastgltf::Asset& asset,
         const fastgltf::Texture& texture
-        );
+    );
 
     Job<> load_texture(SourceMetadata texture_meta, const fastgltf::Asset& asset, const fastgltf::Texture& texture) const;
     Job<> load_material(SourceMetadata material_meta, const fastgltf::Asset& asset, const fastgltf::Material& material) const;
@@ -69,5 +69,4 @@ protected:
     Reference<renderer::vulkan::VulkanPipeline> g_transparent_pipeline;
     Reference<renderer::vulkan::VulkanPipeline> g_color_pipeline;
 };
-
 } // portal

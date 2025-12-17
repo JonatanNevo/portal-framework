@@ -17,7 +17,6 @@
 
 namespace portal
 {
-
 constexpr static frozen::unordered_map<int, Key, 108> KEY_MAPPING{
     // TODO: By luck there are no conflicts between mouse buttons and regular buttons, I should find a better solution for this
     {GLFW_KEY_UNKNOWN, Key::Invalid},
@@ -277,25 +276,25 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
     switch (properties.mode)
     {
     case WindowMode::Fullscreen:
-    {
-        // TODO: get window monitor from settings
-        auto* monitor = glfwGetPrimaryMonitor();
-        auto* mode = glfwGetVideoMode(monitor);
-        handle = glfwCreateWindow(mode->width, mode->height, properties.title.string.data(), monitor, nullptr);
-        break;
-    }
+        {
+            // TODO: get window monitor from settings
+            auto* monitor = glfwGetPrimaryMonitor();
+            auto* mode = glfwGetVideoMode(monitor);
+            handle = glfwCreateWindow(mode->width, mode->height, properties.title.string.data(), monitor, nullptr);
+            break;
+        }
     case WindowMode::FullscreenBorderless:
-    {
-        auto* monitor = glfwGetPrimaryMonitor();
-        auto* mode = glfwGetVideoMode(monitor);
+        {
+            auto* monitor = glfwGetPrimaryMonitor();
+            auto* mode = glfwGetVideoMode(monitor);
 
-        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
-        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
-        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
-        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-        handle = glfwCreateWindow(mode->width, mode->height, properties.title.string.data(), monitor, nullptr);
-        break;
-    }
+            glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+            glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+            glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+            glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+            handle = glfwCreateWindow(mode->width, mode->height, properties.title.string.data(), monitor, nullptr);
+            break;
+        }
     default:
         handle = glfwCreateWindow(
             static_cast<int>(properties.extent.width),
@@ -303,7 +302,7 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
             properties.title.string.data(),
             nullptr,
             nullptr
-            );
+        );
         break;
     }
 
@@ -341,7 +340,6 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
     glfwSetScrollCallback(handle, glfw_scroll_callback);
 
     glfwSetInputMode(handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
-
 }
 
 GlfwWindow::~GlfwWindow()
@@ -469,7 +467,6 @@ void GlfwWindow::on_event(Event& event)
             glfwSetInputMode(handle, GLFW_CURSOR, mode);
             return true;
         }
-        );
+    );
 }
-
 } // portal

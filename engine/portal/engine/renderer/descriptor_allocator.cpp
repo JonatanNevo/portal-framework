@@ -9,7 +9,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 DescriptorAllocator::DescriptorAllocator(const vk::raii::Device& device, const uint32_t max_sets, std::span<PoolSizeRatio> pool_ratios)
     : sets_per_pool(static_cast<uint32_t>(max_sets * 1.5)),
       device(device)
@@ -68,7 +67,7 @@ void DescriptorAllocator::destroy_pools()
 std::vector<vk::raii::DescriptorSet> DescriptorAllocator::handle_pool_resize(
     vk::raii::DescriptorPool& descriptor_pool,
     vk::DescriptorSetAllocateInfo& info
-    )
+)
 {
     full_pools.push_back(std::move(descriptor_pool));
     descriptor_pool = get_pool();
@@ -133,7 +132,7 @@ vk::raii::DescriptorPool DescriptorAllocator::create_pool(const uint32_t set_cou
                 .type = type,
                 .descriptorCount = static_cast<uint32_t>(set_count * ratio)
             }
-            );
+        );
     }
 
     const vk::DescriptorPoolCreateInfo pool_info{

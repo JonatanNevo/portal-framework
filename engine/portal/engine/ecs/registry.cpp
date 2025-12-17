@@ -114,5 +114,4 @@ void Registry::destroy_entity(const Entity entity, const bool exclude_children)
     // TODO: destroy components with custom deleter callback to ensure order
     registry.destroy(entity);
 }
-
 } // portal

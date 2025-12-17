@@ -88,4 +88,3 @@ struct std::formatter<portal::StringId>
         return std::format_to(ctx.out(), "id(\"{}\")", id.string);
     }
 };
-

@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 using namespace testing;
 using namespace std::literals;
 
@@ -23,5 +22,4 @@ TEST(StringIdTest, constexpr_construction)
     EXPECT_EQ(hash_only, name_hash);
     EXPECT_EQ(name_hash, using_define);
 }
-
 }

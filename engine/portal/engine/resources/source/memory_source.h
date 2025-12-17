@@ -8,7 +8,6 @@
 
 namespace portal::resources
 {
-
 class MemorySource final : public ResourceSource
 {
 public:
@@ -21,5 +20,4 @@ public:
 protected:
     Buffer data;
 };
-
 } // portal

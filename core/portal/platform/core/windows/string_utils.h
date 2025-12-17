@@ -9,7 +9,6 @@
 
 namespace portal::details
 {
-
 enum class Encoding
 {
     UTF8,
@@ -17,5 +16,4 @@ enum class Encoding
 };
 
 std::wstring to_wstring(const std::string& str, Encoding encoding = Encoding::UTF8);
-
 }

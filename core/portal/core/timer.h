@@ -11,7 +11,6 @@
 
 namespace portal
 {
-
 /**
  * @brief Encapsulates basic usage of chrono, providing a means to calculate float
  *        durations between time points via function calls.
@@ -144,6 +143,7 @@ class ScopedPerformanceTimer
 public:
     ScopedPerformanceTimer(const char* name, PerformanceProfiler* profiler);
     ~ScopedPerformanceTimer();
+
 private:
     const char* name;
     PerformanceProfiler* profiler;
@@ -151,5 +151,4 @@ private:
 };
 
 #define SCOPED_TIMER(name) ScopedTimer<Timer::DefaultResolution> timer__LINE__(name)
-
 } // namespace portal

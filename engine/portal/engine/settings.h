@@ -14,7 +14,6 @@
 
 namespace portal
 {
-
 enum class SettingsArchiveType
 {
     Json
@@ -36,7 +35,7 @@ public:
     void load();
     void dump() const;
 
-    template<typename T>
+    template <typename T>
     std::optional<T> get_setting(const PropertyName& name)
     {
         auto split_view = name | std::ranges::views::split('.');
@@ -88,5 +87,4 @@ private:
     // Memory ownership of properties
     std::unique_ptr<ArchiveObject> root;
 };
-
 } // portal

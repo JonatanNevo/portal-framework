@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 class GlfwWindow final : public Window
 {
 public:
@@ -41,8 +40,8 @@ public:
     [[nodiscard]] glm::vec2 get_position() const override;
 
     [[nodiscard]] GLFWwindow* get_handle() const;
+
 private:
     GLFWwindow* handle = nullptr;
 };
-
 } // portal

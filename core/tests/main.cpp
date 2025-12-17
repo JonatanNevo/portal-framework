@@ -10,7 +10,8 @@
 
 // We need this due to a bug in vcpkg in windows with gtest, which renders the target `GTest::gtest_main` unusable.
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::InitGoogleMock(&argc, argv);
     portal::Log::init();

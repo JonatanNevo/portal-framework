@@ -12,7 +12,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 class VulkanContext final
 {
 public:
@@ -31,5 +30,4 @@ private:
     VulkanPhysicalDevice& physical_device;
     VulkanDevice device;
 };
-
 } // portal

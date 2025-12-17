@@ -38,7 +38,7 @@ enum class EventCategoryBits: uint8_t
 
 using EventCategory = Flags<EventCategoryBits>;
 
-template<>
+template <>
 struct FlagTraits<EventCategoryBits>
 {
     using enum EventCategoryBits;
@@ -46,7 +46,4 @@ struct FlagTraits<EventCategoryBits>
     static constexpr bool is_bitmask = true;
     static constexpr auto all_flags = Window | Input;
 };
-
 }
-
-

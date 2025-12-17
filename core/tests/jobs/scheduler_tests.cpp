@@ -13,7 +13,6 @@
 
 namespace portal
 {
-
 // ============================================================================
 // Section 3: Scheduler
 // ============================================================================
@@ -39,7 +38,8 @@ TEST_F(JobTest, SchedulerWithZeroWorkerThreads)
     jobs::Scheduler scheduler{0};
 
     bool executed = false;
-    auto job = [&executed]() -> Job<> {
+    auto job = [&executed]() -> Job<>
+    {
         executed = true;
         co_return;
     };
@@ -55,7 +55,8 @@ TEST_F(JobTest, SchedulerWithOneWorkerThread)
     jobs::Scheduler scheduler{1};
 
     std::atomic<bool> executed{false};
-    auto job = [&executed]() -> Job<> {
+    auto job = [&executed]() -> Job<>
+    {
         executed.store(true, std::memory_order_release);
         co_return;
     };
@@ -75,7 +76,8 @@ TEST_F(JobTest, SchedulerWithMultipleWorkerThreads)
 
     for (int i = 0; i < 100; ++i)
     {
-        auto job = [&completed_count]() -> Job<> {
+        auto job = [&completed_count]() -> Job<>
+        {
             completed_count.fetch_add(1, std::memory_order_relaxed);
             co_return;
         };
@@ -117,7 +119,8 @@ TEST_F(JobTest, SchedulerWithMoreThreadsThanHardwareCores)
 
     for (int i = 0; i < 50; ++i)
     {
-        auto job = [&completed_count]() -> Job<> {
+        auto job = [&completed_count]() -> Job<>
+        {
             completed_count.fetch_add(1, std::memory_order_relaxed);
             co_return;
         };
@@ -142,7 +145,8 @@ TEST_F(JobTest, SingleJobOnSingleThreadedScheduler)
     jobs::Scheduler scheduler{0};
 
     bool executed = false;
-    auto job = [&executed]() -> Job<> {
+    auto job = [&executed]() -> Job<>
+    {
         executed = true;
         co_return;
     };
@@ -165,7 +169,8 @@ TEST_F(JobTest, WaitForJobsWithSpan)
 
     for (int i = 0; i < 5; ++i)
     {
-        auto job = [&executed_count]() -> Job<> {
+        auto job = [&executed_count]() -> Job<>
+        {
             executed_count.fetch_add(1, std::memory_order_relaxed);
             co_return;
         };
@@ -201,7 +206,8 @@ TEST_F(JobTest, WaitForJobSingleVoidJob)
     jobs::Scheduler scheduler{0};
 
     bool executed = false;
-    auto job = [&executed]() -> Job<> {
+    auto job = [&executed]() -> Job<>
+    {
         executed = true;
         co_return;
     };
@@ -291,7 +297,8 @@ TEST_F(JobTest, DispatchJobsWithoutCounter)
 
     for (int i = 0; i < 5; ++i)
     {
-        auto job = [&executed_count]() -> Job<> {
+        auto job = [&executed_count]() -> Job<>
+        {
             executed_count.fetch_add(1, std::memory_order_relaxed);
             co_return;
         };
@@ -302,7 +309,7 @@ TEST_F(JobTest, DispatchJobsWithoutCounter)
     scheduler.dispatch_jobs(std::span{jobs}, JobPriority::Normal, nullptr);
 
     // Execute the jobs manually
-    for (int i = 0; i < 10; ++i)  // More iterations than jobs to ensure all complete
+    for (int i = 0; i < 10; ++i) // More iterations than jobs to ensure all complete
     {
         scheduler.main_thread_do_work();
     }
@@ -337,12 +344,14 @@ TEST_F(JobTest, WorkerThreadCanCallWaitForJobs)
     std::atomic<bool> inner_executed{false};
     std::atomic<bool> outer_executed{false};
 
-    auto inner_job = [&inner_executed]() -> Job<> {
+    auto inner_job = [&inner_executed]() -> Job<>
+    {
         inner_executed.store(true, std::memory_order_release);
         co_return;
     };
 
-    auto outer_job = [&scheduler, &outer_executed, inner_job]() -> Job<> {
+    auto outer_job = [&scheduler, &outer_executed, inner_job]() -> Job<>
+    {
         // This job spawns another job and waits for it
         std::vector<Job<>> inner_jobs;
         inner_jobs.push_back(inner_job());
@@ -375,8 +384,10 @@ TEST_F(JobTest, WorkerThreadIterationReturnsExecutedWhenJobRuns)
     auto state = scheduler.main_thread_do_work();
 
     // Should execute the job or fill cache
-    EXPECT_TRUE(state == jobs::WorkerIterationState::Executed ||
-                state == jobs::WorkerIterationState::FilledCache)
+    EXPECT_TRUE(
+        state == jobs::WorkerIterationState::Executed ||
+        state == jobs::WorkerIterationState::FilledCache
+    )
         << "Should execute job or fill cache";
 }
 
@@ -446,7 +457,8 @@ TEST_F(JobTest, SchedulerDestructionWithPendingJobs)
         std::vector<Job<>> jobs;
         for (int i = 0; i < 10; ++i)
         {
-            auto job = [&executed_count]() -> Job<> {
+            auto job = [&executed_count]() -> Job<>
+            {
                 executed_count.fetch_add(1, std::memory_order_relaxed);
                 co_return;
             };
@@ -481,5 +493,4 @@ TEST_F(JobTest, WorkerThreadsStopGracefully)
     // If we reach here without hanging, threads stopped gracefully
     SUCCEED() << "Scheduler destructor stopped worker threads gracefully";
 }
-
 } // namespace portal

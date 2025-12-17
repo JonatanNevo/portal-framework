@@ -22,7 +22,7 @@ class SceneRenderingSystem;
 // TODO: support dependencies between systems and parallel system execution
 // TODO: support dynamic system declaration
 // TODO: support creating system stack from file
-class SystemOrchestrator final: public TaggedModule<Tag<ModuleTags::Update, ModuleTags::FrameLifecycle>, SchedulerModule, InputManager>
+class SystemOrchestrator final : public TaggedModule<Tag<ModuleTags::Update, ModuleTags::FrameLifecycle>, SchedulerModule, InputManager>
 {
 public:
     explicit SystemOrchestrator(ModuleStack& stack);
@@ -43,5 +43,4 @@ private:
     std::unique_ptr<TransformHierarchySystem> transform_system;
     std::unique_ptr<SceneRenderingSystem> scene_rendering_system;
 };
-
 } // portal

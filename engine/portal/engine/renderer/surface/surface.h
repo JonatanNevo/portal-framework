@@ -10,13 +10,13 @@
 #include "portal/engine/reference.h"
 #include "portal/engine/renderer/surface/capabilities.h"
 
-namespace portal {
+namespace portal
+{
 class Window;
 }
 
 namespace portal::renderer
 {
-
 struct SurfaceProperties
 {
     StringId debug_name;
@@ -60,5 +60,4 @@ public:
 protected:
     SurfaceProperties properties;
 };
-
 } // portal

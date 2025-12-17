@@ -44,5 +44,4 @@ private:
     std::map<HSteamNetConnection, Connection*> connections;
     std::map<HSteamListenSocket, Server*> servers;
 };
-
 } // namespace portal::network

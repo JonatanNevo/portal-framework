@@ -15,7 +15,6 @@
 
 namespace portal::renderer::vulkan::allocation
 {
-
 /**
  * Retrieves a reference to the VMA allocator singleton.  It will hold an opaque handle to the VMA
  * allocator between calls to `init` and `shutdown`.  Otherwise, it contains a null pointer.
@@ -309,7 +308,8 @@ Allocated<HandleType>::Allocated(Allocated&& other) noexcept
 {}
 
 template <typename HandleType>
-Allocated<HandleType>& Allocated<HandleType>::operator=(std::nullptr_t) {
+Allocated<HandleType>& Allocated<HandleType>::operator=(std::nullptr_t)
+{
     allocation_create_info = {};
     allocation = nullptr;
     mapped_data = nullptr;
@@ -320,12 +320,12 @@ Allocated<HandleType>& Allocated<HandleType>::operator=(std::nullptr_t) {
 
 template <typename HandleType>
 template <typename... Args>
-Allocated<HandleType>::Allocated(const VmaAllocationCreateInfo& allocation_create_info, Args&&... args):
+Allocated<HandleType>::Allocated(const VmaAllocationCreateInfo& allocation_create_info, Args&&... args) :
     VulkanResource<HandleType>(std::forward<Args>(args)...),
     allocation_create_info(allocation_create_info) {}
 
 template <typename HandleType>
-Allocated<HandleType>::Allocated(HandleType handle, vk::raii::Device* device_): VulkanResource<HandleType>(handle, device_) {}
+Allocated<HandleType>::Allocated(HandleType handle, vk::raii::Device* device_) : VulkanResource<HandleType>(handle, device_) {}
 
 template <typename HandleType>
 const HandleType* Allocated<HandleType>::get() const
@@ -347,7 +347,8 @@ const void* Allocated<HandleType>::get_data() const
 }
 
 template <typename HandleType>
-void* Allocated<HandleType>::get_data() {
+void* Allocated<HandleType>::get_data()
+{
     return mapped_data;
 }
 
@@ -436,7 +437,7 @@ vk::Buffer Allocated<HandleType>::create_buffer(const vk::BufferCreateInfo& crea
         &buffer_handle,
         &new_allocation,
         &allocation_info
-        );
+    );
 
     const auto buffer = vk::Buffer(buffer_handle);
     if (result != VK_SUCCESS)
@@ -465,7 +466,7 @@ vk::Image Allocated<HandleType>::create_image(const vk::ImageCreateInfo& create_
         &image_handle,
         &new_allocation,
         &allocation_info
-        );
+    );
 
     const auto image = vk::Image(image_handle);
 
@@ -479,7 +480,7 @@ vk::Image Allocated<HandleType>::create_image(const vk::ImageCreateInfo& create_
 }
 
 template <typename HandleType>
-void Allocated<HandleType>::post_create(const VmaAllocationInfo & allocation_info)
+void Allocated<HandleType>::post_create(const VmaAllocationInfo& allocation_info)
 {
     VkMemoryPropertyFlags memory_properties_raw{};
     vmaGetAllocationMemoryProperties(get_vma_allocator(), allocation, &memory_properties_raw);
@@ -511,5 +512,4 @@ void Allocated<HandleType>::destroy_image(const vk::Image image)
         clear();
     }
 }
-
 } // portal

@@ -14,7 +14,6 @@
 
 namespace portal::renderer
 {
-
 class UniformBufferSet;
 class UniformBuffer;
 class Texture;
@@ -50,6 +49,4 @@ struct DescriptorInput
     void set(const Reference<Image>& image, size_t index = 0);
     void set(const Reference<ImageView>& image, size_t index = 0);
 };
-
-
 }

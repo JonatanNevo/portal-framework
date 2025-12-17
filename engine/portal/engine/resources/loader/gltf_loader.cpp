@@ -30,7 +30,6 @@
 
 namespace portal::resources
 {
-
 static auto logger = Log::get_logger("Resources");
 
 renderer::TextureFilter extract_filter(const fastgltf::Filter filter)
@@ -310,7 +309,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
     const std::filesystem::path& base_path,
     const fastgltf::Asset& asset,
     const fastgltf::Texture& texture
-    )
+)
 {
     std::unique_ptr<ResourceSource> image_source;
     SourceMetadata image_source_meta;
@@ -349,7 +348,6 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
                 .source = STRING_ID((base_path / std::filesystem::path(uri_source.uri.path())).generic_string()),
                 .format = SourceFormat::Image,
             };
-
         },
         [&](const fastgltf::sources::Array& array_source)
         {
@@ -413,7 +411,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
                     }
                 },
                 buffer.data
-                );
+            );
         }
     };
     std::visit(visitor, data);
@@ -425,7 +423,7 @@ Job<> GltfLoader::load_texture(
     SourceMetadata texture_meta,
     const fastgltf::Asset& asset,
     const fastgltf::Texture& texture
-    ) const
+) const
 {
     const auto parent_path = std::filesystem::path(texture_meta.resource_id.string).parent_path();
     const auto texture_name = texture_meta.resource_id;
@@ -463,7 +461,7 @@ Job<> GltfLoader::load_texture(
         STRING_ID(std::format("{}-sampler", texture_meta.resource_id.string)),
         sampler_prop,
         context.get_gpu_context().get_device()
-        );
+    );
     vulkan_texture->set_sampler(sampler_ref);
 }
 
@@ -471,7 +469,7 @@ Job<> GltfLoader::load_material(
     SourceMetadata material_meta,
     const fastgltf::Asset& asset,
     const fastgltf::Material& material
-    ) const
+) const
 {
     const auto parent_path = std::filesystem::path(material_meta.resource_id.string).parent_path();
     const auto& material_name = material_meta.resource_id;
@@ -520,7 +518,7 @@ Job<> GltfLoader::load_mesh(
     SourceMetadata mesh_meta,
     const fastgltf::Asset& asset,
     const fastgltf::Mesh& mesh
-    ) const
+) const
 {
     const auto parent_path = std::filesystem::path(mesh_meta.resource_id.string).parent_path();
 
@@ -551,7 +549,7 @@ Job<> GltfLoader::load_mesh(
                 {
                     mesh_data.indices.push_back(i + initial_vertex);
                 }
-                );
+            );
         }
 
         // load vertex positions
@@ -572,7 +570,7 @@ Job<> GltfLoader::load_mesh(
                         .color = glm::vec4{1.f},
                     };
                 }
-                );
+            );
         }
 
         // load vertex normals
@@ -586,14 +584,13 @@ Job<> GltfLoader::load_mesh(
                 {
                     mesh_data.vertices[initial_vertex + i].normal = v;
                 }
-                );
+            );
         }
 
         // load UVs
         auto uv = p.findAttribute("TEXCOORD_0");
         if (uv != p.attributes.end())
         {
-
             fastgltf::iterateAccessorWithIndex<glm::vec2>(
                 asset,
                 asset.accessors[uv->accessorIndex],
@@ -602,14 +599,13 @@ Job<> GltfLoader::load_mesh(
                     mesh_data.vertices[initial_vertex + i].uv_x = v.x;
                     mesh_data.vertices[initial_vertex + i].uv_y = v.y;
                 }
-                );
+            );
         }
 
         // load vertex colors
         auto colors = p.findAttribute("COLOR_0");
         if (colors != p.attributes.end())
         {
-
             fastgltf::iterateAccessorWithIndex<glm::vec4>(
                 asset,
                 asset.accessors[colors->accessorIndex],
@@ -617,7 +613,7 @@ Job<> GltfLoader::load_mesh(
                 {
                     mesh_data.vertices[initial_vertex + i].color = v;
                 }
-                );
+            );
         }
 
         //loop the vertices of this surface, find min/max bounds
@@ -669,43 +665,45 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
                             auto& material = asset.materials[primitive.materialIndex.value()];
                             return STRING_ID(create_name(material.name, ResourceType::Material));
                         }
-                        ) | std::ranges::to<std::vector>()
+                    ) | std::ranges::to<std::vector>()
                 }
-                );
+            );
         }
 
         std::visit(
-            fastgltf::visitor{[&node_description](fastgltf::math::fmat4x4 matrix) mutable
-                              {
-                                  TransformSceneComponent transform_component;
-                                  // Copy data as is
-                                  std::memcpy(&transform_component.transform, matrix.data(), sizeof(matrix));
-                                  node_description.components.emplace_back(transform_component);
-                              },
+            fastgltf::visitor{
+                [&node_description](fastgltf::math::fmat4x4 matrix) mutable
+                {
+                    TransformSceneComponent transform_component;
+                    // Copy data as is
+                    std::memcpy(&transform_component.transform, matrix.data(), sizeof(matrix));
+                    node_description.components.emplace_back(transform_component);
+                },
 
-                              [&](fastgltf::TRS transform)
-                              {
-                                  glm::vec3 tl(
-                                      transform.translation[0],
-                                      transform.translation[1],
-                                      transform.translation[2]
-                                      );
-                                  glm::quat rot(
-                                      transform.rotation[3],
-                                      transform.rotation[0],
-                                      transform.rotation[1],
-                                      transform.rotation[2]
-                                      );
-                                  glm::vec3 sc(transform.scale[0], transform.scale[1], transform.scale[2]);
+                [&](fastgltf::TRS transform)
+                {
+                    glm::vec3 tl(
+                        transform.translation[0],
+                        transform.translation[1],
+                        transform.translation[2]
+                    );
+                    glm::quat rot(
+                        transform.rotation[3],
+                        transform.rotation[0],
+                        transform.rotation[1],
+                        transform.rotation[2]
+                    );
+                    glm::vec3 sc(transform.scale[0], transform.scale[1], transform.scale[2]);
 
-                                  glm::mat4 tm = glm::translate(glm::mat4(1.f), tl);
-                                  glm::mat4 rm = glm::toMat4(rot);
-                                  glm::mat4 sm = glm::scale(glm::mat4(1.f), sc);
+                    glm::mat4 tm = glm::translate(glm::mat4(1.f), tl);
+                    glm::mat4 rm = glm::toMat4(rot);
+                    glm::mat4 sm = glm::scale(glm::mat4(1.f), sc);
 
-                                  node_description.components.emplace_back(TransformSceneComponent{.transform = tm * rm * sm});
-                              }},
+                    node_description.components.emplace_back(TransformSceneComponent{.transform = tm * rm * sm});
+                }
+            },
             node.transform
-            );
+        );
 
         nodes.emplace_back(node_description);
     }
@@ -746,7 +744,7 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
             {
                 co_await registry.load_direct(scene_metadata, source);
             }()
-            );
+        );
     }
     registry.wait_all(scene_jobs);
 }

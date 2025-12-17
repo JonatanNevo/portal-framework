@@ -14,7 +14,6 @@
 
 namespace portal::renderer
 {
-
 static auto logger = Log::get_logger("Shader");
 
 Shader::Shader(const StringId& id) : Resource(id)
@@ -51,5 +50,4 @@ uint64_t Shader::calculate_permutations_hash(const std::vector<ShaderDefine>& pe
     }
     return hash;
 }
-
 }

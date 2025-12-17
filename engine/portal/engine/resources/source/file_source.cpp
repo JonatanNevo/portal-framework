@@ -12,7 +12,6 @@
 
 namespace portal::resources
 {
-
 static auto logger = Log::get_logger("Resources");
 
 FileSource::FileSource(std::filesystem::path path) : file_path(std::move(path)) {}
@@ -50,5 +49,4 @@ std::unique_ptr<std::istream> FileSource::stream() const
     auto&& file = std::make_unique<std::ifstream>(file_path, std::ios::binary);
     return file;
 }
-
 } // portal

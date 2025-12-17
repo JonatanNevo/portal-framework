@@ -12,7 +12,6 @@
 
 namespace portal::renderer
 {
-
 enum class BlendMode
 {
     None,

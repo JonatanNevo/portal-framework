@@ -8,8 +8,7 @@
 
 namespace portal
 {
-
-StringId::StringId(HashType id): id(id)
+StringId::StringId(HashType id) : id(id)
 {
     string = StringRegistry::find(id);
     if (string == INVALID_STRING_VIEW)
@@ -18,16 +17,15 @@ StringId::StringId(HashType id): id(id)
     }
 }
 
-StringId::StringId(const uint64_t id, const std::string_view string): id(id)
+StringId::StringId(const uint64_t id, const std::string_view string) : id(id)
 {
     this->string = StringRegistry::store(id, string);
 }
 
-StringId::StringId(const uint64_t id, const std::string& string): StringId(id, std::string_view(string)) {}
+StringId::StringId(const uint64_t id, const std::string& string) : StringId(id, std::string_view(string)) {}
 
 bool StringId::operator==(const StringId& other) const
 {
     return id == other.id;
 }
-
 } // portal

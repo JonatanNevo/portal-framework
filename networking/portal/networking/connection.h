@@ -78,5 +78,4 @@ private:
     std::thread polling_thread;
     bool running = false;
 };
-
 } // namespace portal::network

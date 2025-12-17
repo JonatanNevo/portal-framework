@@ -7,7 +7,6 @@
 
 namespace portal::resources::utils
 {
-
 ResourceType to_resource_type(const Resource& resource)
 {
     return resource.static_type();

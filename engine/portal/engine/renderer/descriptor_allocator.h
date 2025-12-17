@@ -11,7 +11,6 @@
 
 namespace portal::renderer::vulkan
 {
-
 class DescriptorAllocator
 {
 public:
@@ -47,5 +46,4 @@ private:
     uint32_t sets_per_pool = 0;
     const vk::raii::Device& device;
 };
-
 } // portal

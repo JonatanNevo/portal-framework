@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 static std::vector<std::pair<std::unordered_set<std::string_view>, std::pair<ResourceType, SourceFormat>>> g_asset_extensions
 {
     {{".png", ".jpg", ".jpeg", ".hdr"}, {ResourceType::Texture, SourceFormat::Image}},
@@ -32,6 +31,4 @@ std::optional<std::pair<ResourceType, SourceFormat>> utils::find_extension_type(
     LOG_WARN_TAG("Resources", "Failed to find type for extension: {}", extension);
     return std::nullopt;
 }
-
 }
-

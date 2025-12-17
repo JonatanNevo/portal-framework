@@ -11,12 +11,14 @@
 
 namespace portal
 {
-namespace renderer {
+namespace renderer
+{
     class ShaderVariant;
     class Pipeline;
 }
 
-namespace renderer::vulkan {
+namespace renderer::vulkan
+{
     class VulkanPipeline;
 }
 
@@ -25,7 +27,6 @@ class RendererContext;
 
 namespace portal::resources
 {
-
 enum class MaterialPass: uint8_t
 {
     Transparent,
@@ -62,5 +63,4 @@ private:
     Reference<renderer::vulkan::VulkanPipeline> transparent_pipeline;
     Reference<renderer::vulkan::VulkanPipeline> color_pipeline;
 };
-
 } // portal

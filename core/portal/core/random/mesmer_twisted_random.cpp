@@ -7,7 +7,6 @@
 
 namespace portal
 {
-
 void MesmerTwistedRandom::init()
 {
     init(std::random_device()());
@@ -38,5 +37,4 @@ float MesmerTwistedRandom::get_float(const float min, const float max)
 {
     return min + get_float() * (max - min);
 }
-
 } // namespace portal

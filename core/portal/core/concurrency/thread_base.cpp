@@ -9,7 +9,6 @@
 
 namespace portal
 {
-
 ThreadBase::~ThreadBase()
 {
     try_cancel_and_join();
@@ -69,8 +68,5 @@ void ThreadBase::try_cancel_and_join()
 void ThreadBase::set_name([[maybe_unused]] const std::string& name)
 {
     PORTAL_NAME_THREAD(name.c_str());
-
 }
-
-
 }

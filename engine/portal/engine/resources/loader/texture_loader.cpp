@@ -20,7 +20,6 @@
 
 namespace portal::resources
 {
-
 static auto logger = Log::get_logger("Resources");
 
 
@@ -148,7 +147,12 @@ void TextureLoader::create_standalone_texture(const StringId& id, std::span<uint
         }
     };
 
-    registry.allocate<renderer::vulkan::VulkanTexture>(id, id, properties, Buffer{data.data(), data.size() * sizeof(uint32_t)}, context.get_gpu_context());
+    registry.allocate<renderer::vulkan::VulkanTexture>(
+        id,
+        id,
+        properties,
+        Buffer{data.data(), data.size() * sizeof(uint32_t)},
+        context.get_gpu_context()
+    );
 }
-
 } // portal

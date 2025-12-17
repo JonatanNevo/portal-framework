@@ -10,7 +10,6 @@
 
 namespace portal
 {
-
 class WindowsThread final : public ThreadBase
 {
 public:
@@ -37,7 +36,7 @@ public:
 
                 callable(st);
             }
-            );
+        );
     }
 
 protected:
@@ -47,5 +46,4 @@ protected:
 };
 
 using Thread = WindowsThread;
-
 } // portal

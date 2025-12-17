@@ -39,13 +39,13 @@ public:
         return view_raw<T...>() | std::views::transform([this](const auto entity) { return Entity{entity, registry}; });
     }
 
-    template<typename... T>
+    template <typename... T>
     auto group()
     {
         return registry.group<T...>();
     }
 
-    template<typename... T, ComponentView... V>
+    template <typename... T, ComponentView... V>
     auto group(V&&... views)
     {
         return registry.group<T...>((views.comp_view)...);

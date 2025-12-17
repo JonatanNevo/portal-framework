@@ -16,7 +16,6 @@
 
 namespace portal
 {
-
 constexpr static size_t BUCKET_SIZE = 1024;
 constexpr static size_t JOB_POOL_SIZE = 1024;
 #if defined(PORTAL_TEST)
@@ -94,10 +93,12 @@ void JobPromise::unhandled_exception() noexcept
     {
         if (exception)
             std::rethrow_exception(exception);
-    } catch (const std::exception& e)
+    }
+    catch (const std::exception& e)
     {
         LOG_ERROR_TAG("Task", "Exception: {}", e.what());
-    } catch (...)
+    }
+    catch (...)
     {
         LOG_ERROR_TAG("Task", "Unknown exception");
     }
@@ -110,7 +111,7 @@ void JobPromise::add_switch_information(SwitchType type)
         std::this_thread::get_id(),
         std::chrono::system_clock::now(),
         type
-        );
+    );
 }
 
 void* JobPromise::operator new([[maybe_unused]] size_t n) noexcept

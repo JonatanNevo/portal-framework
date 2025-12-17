@@ -32,7 +32,7 @@ struct Foo
 
 struct DelegateGenerator
 {
-    template<typename Callback>
+    template <typename Callback>
     static std::unique_ptr<portal::DelegateInterface<float, float>> get_delegate(Callback&& callback)
     {
         return std::make_unique<portal::LambdaDelegate<Callback, float(float)>>(std::forward<Callback>(callback));
@@ -49,7 +49,7 @@ TEST(InnerDelegates, StaticDelegate)
 
 TEST(InnerDelegates, LambdaDelegate)
 {
-    const auto delegate = DelegateGenerator::get_delegate([](float a){return a;});
+    const auto delegate = DelegateGenerator::get_delegate([](float a) { return a; });
     EXPECT_EQ(delegate->get_owner(), nullptr);
     EXPECT_EQ(delegate->execute(10), 10);
 }
@@ -97,7 +97,7 @@ TEST(Delegate, DelegateDefaultConstructor)
 TEST(Delegate, Constructor)
 {
     portal::Delegate<void> delegate;
-    delegate.bind_lambda([](){});
+    delegate.bind_lambda([]() {});
     EXPECT_TRUE(delegate.is_bound());
     EXPECT_GT(delegate.get_size(), 0);
 }
@@ -105,7 +105,7 @@ TEST(Delegate, Constructor)
 TEST(Delegate, CopyConstructor)
 {
     portal::Delegate<void> delegate;
-    delegate.bind_lambda([](){});
+    delegate.bind_lambda([]() {});
     const auto second_delegate = delegate;
     EXPECT_TRUE(second_delegate.is_bound());
     EXPECT_GT(second_delegate.get_size(), 0);
@@ -115,7 +115,7 @@ TEST(Delegate, CopyConstructor)
 TEST(Delegate, AssignmentOperator)
 {
     portal::Delegate<void> delegate;
-    delegate.bind_lambda([](){});
+    delegate.bind_lambda([]() {});
     portal::Delegate<void> second_delegate;
     second_delegate = delegate;
     EXPECT_TRUE(second_delegate.is_bound());
@@ -126,7 +126,7 @@ TEST(Delegate, AssignmentOperator)
 TEST(Delegate, MoveConstructor)
 {
     portal::Delegate<void> delegate;
-    delegate.bind_lambda([](){});
+    delegate.bind_lambda([]() {});
     portal::Delegate<void> second_delegate(std::move(delegate));
     EXPECT_TRUE(second_delegate.is_bound());
     EXPECT_GT(second_delegate.get_size(), 0);
@@ -137,7 +137,7 @@ TEST(Delegate, MoveConstructor)
 TEST(Delegate, MoveAssignmentOperator)
 {
     portal::Delegate<void> delegate;
-    delegate.bind_lambda([](){});
+    delegate.bind_lambda([]() {});
     portal::Delegate<void> second_delegate;
     second_delegate = std::move(delegate);
     EXPECT_TRUE(second_delegate.is_bound());
@@ -148,12 +148,18 @@ TEST(Delegate, MoveAssignmentOperator)
 
 TEST(Delegate, CreateLambda)
 {
-    auto created = portal::Delegate<float, float>::create_lambda([](float a){return a;});
+    auto created = portal::Delegate<float, float>::create_lambda([](float a) { return a; });
     EXPECT_TRUE(created.is_bound());
     EXPECT_EQ(created.execute(10), 10);
 
     std::array<float, 1024> arr{0};
-    auto created_large = portal::Delegate<float, float>::create_lambda([arr](float a) mutable { arr[0] = a; return a; });
+    auto created_large = portal::Delegate<float, float>::create_lambda(
+        [arr](float a) mutable
+        {
+            arr[0] = a;
+            return a;
+        }
+    );
     EXPECT_TRUE(created_large.is_bound());
     EXPECT_EQ(created_large.execute(10), 10);
 }
@@ -200,7 +206,7 @@ TEST(Delegate, CreateSharedPtr)
 TEST(Delegate, BindLambda)
 {
     portal::Delegate<float, float> delegate;
-    delegate.bind_lambda([](float a){return a;});
+    delegate.bind_lambda([](float a) { return a; });
     EXPECT_TRUE(delegate.is_bound());
     EXPECT_EQ(delegate.execute(10), 10);
 }
@@ -254,19 +260,19 @@ TEST(MulticastDelegate, AddLambdaReference)
     portal::MulticastDelegate<int> delegate;
     std::array<int, 1024> output{0};
 
-    for (auto& value: output)
+    for (auto& value : output)
     {
         delegate.add_lambda([&value](int a) mutable { value = a; });
     }
 
-    for (auto& value: output)
+    for (auto& value : output)
     {
         EXPECT_EQ(value, 0);
     }
 
     delegate.broadcast(10);
 
-    for (auto& value: output)
+    for (auto& value : output)
     {
         EXPECT_EQ(value, 10);
     }
@@ -315,10 +321,12 @@ TEST(MulticastDelegate, AddRawConst)
     struct Foo
     {
         Foo(std::array<int, 64>& v) : values(v) {}
+
         void Bar(int a) const
         {
             values[a] = a;
         }
+
         std::array<int, 64>& values;
     };
 
@@ -338,10 +346,12 @@ TEST(MulticastDelegate, AddRaw)
     struct Foo
     {
         Foo(std::array<int, 64>& v) : values(v) {}
+
         void Bar(int a)
         {
             values[a] = a;
         }
+
         std::array<int, 64>& values;
     };
 
@@ -360,10 +370,12 @@ TEST(MulticastDelegate, AddSharedPtrConst)
     struct Foo
     {
         Foo(std::array<int, 64>& v) : values(v) {}
+
         void Bar(int a) const
         {
             values[a] = a;
         }
+
         std::array<int, 64>& values;
     };
 
@@ -382,10 +394,12 @@ TEST(MulticastDelegate, AddSharedPtr)
     struct Foo
     {
         Foo(std::array<int, 64>& v) : values(v) {}
+
         void Bar(int a)
         {
             values[a] = a;
         }
+
         std::array<int, 64>& values;
     };
 
@@ -403,9 +417,12 @@ TEST(MulticastDelegate, RemoveByHandle)
     portal::MulticastDelegate<int> delegate;
     std::array<int, 64> values{0};
 
-    auto handle = delegate.add_lambda([&values](int a) {
-        values[a] = a;
-    });
+    auto handle = delegate.add_lambda(
+        [&values](int a)
+        {
+            values[a] = a;
+        }
+    );
 
     EXPECT_EQ(values[10], 0);
     delegate.broadcast(10);
@@ -424,10 +441,12 @@ TEST(MulticastDelegate, RemoveByObject)
     struct Foo
     {
         Foo(std::array<int, 64>& v) : values(v) {}
+
         void Bar(int a)
         {
             values[a] = a;
         }
+
         std::array<int, 64>& values;
     };
 

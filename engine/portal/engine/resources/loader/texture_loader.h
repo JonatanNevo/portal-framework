@@ -18,7 +18,6 @@ class RendererContext;
 
 namespace portal::resources
 {
-
 class TextureLoader final : public ResourceLoader
 {
 public:
@@ -41,5 +40,4 @@ protected:
 private:
     const RendererContext& context;
 };
-
 } // portal

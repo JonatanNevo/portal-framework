@@ -24,7 +24,6 @@ class VulkanContext;
 
 namespace portal::resources
 {
-
 class StubLoader final : public ResourceLoader
 {
 public:
@@ -42,10 +41,10 @@ public:
     ResourceLoader& get(const SourceMetadata& meta);
 
     static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
+
 protected:
     StubLoader stub_loader;
     llvm::DenseMap<ResourceType, std::shared_ptr<ResourceLoader>> loaders;
     const RendererContext& context;
 };
-
 } // portal

@@ -21,6 +21,7 @@ public:
 protected:
     std::streamsize xsgetn(char* s, std::streamsize n) override;
     std::streampos seekoff(std::streamoff off, seekdir dir, openmode which) override;
+
 private:
     const Buffer& buffer;
     size_t _position;

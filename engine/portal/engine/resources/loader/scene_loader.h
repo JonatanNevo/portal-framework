@@ -14,13 +14,11 @@
 
 namespace portal
 {
-
 class RendererContext;
 }
 
 namespace portal::resources
 {
-
 struct TransformSceneComponent
 {
     glm::mat4 transform = glm::identity<glm::mat4>();
@@ -58,5 +56,4 @@ protected:
 
     static SceneDescription load_scene_description(const SourceMetadata& meta, const ResourceSource& source);
 };
-
 }

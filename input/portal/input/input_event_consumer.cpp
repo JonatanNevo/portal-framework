@@ -8,9 +8,7 @@
 
 namespace portal
 {
-
 void InputEventConsumer::report_key_action(Key, KeyState, std::optional<KeyModifierFlag>) {}
 
 void InputEventConsumer::report_axis_change(Axis, glm::vec2) {}
-
 }

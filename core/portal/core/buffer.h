@@ -19,32 +19,32 @@ struct Buffer
     const void* data;
     size_t size;
 
-    Buffer():
+    Buffer() :
         data(nullptr),
         size(0),
         allocated(false) {}
 
-    Buffer(std::nullptr_t):
+    Buffer(std::nullptr_t) :
         data(nullptr),
         size(0),
         allocated(false) {}
 
-    Buffer(const void* data, const size_t size):
+    Buffer(const void* data, const size_t size) :
         data(data),
         size(size),
         allocated(false) {}
 
-    Buffer(const Buffer& other): Buffer(other, 0, other.size) {}
+    Buffer(const Buffer& other) : Buffer(other, 0, other.size) {}
 
-    Buffer(const Buffer& other, const size_t size): Buffer(other, 0, size) {}
+    Buffer(const Buffer& other, const size_t size) : Buffer(other, 0, size) {}
 
-    Buffer(const Buffer& other, const size_t offest, const size_t size):
+    Buffer(const Buffer& other, const size_t offest, const size_t size) :
         data(static_cast<const uint8_t*>(other.data) + offest),
         size(size),
         allocated(false)
     {}
 
-    Buffer(Buffer&& other) noexcept:
+    Buffer(Buffer&& other) noexcept :
         data(std::exchange(other.data, nullptr)),
         size(std::exchange(other.size, 0)),
         allocated(std::exchange(other.allocated, false))
@@ -88,11 +88,11 @@ struct Buffer
         return data == nullptr;
     }
 
-    template<typename T, typename... Args>
+    template <typename T, typename... Args>
     [[nodiscard]] static Buffer create(Args&&... args)
     {
         Buffer&& buffer = allocate(sizeof(T));
-        new (buffer.data_ptr()) T(std::forward<Args>(args)...);
+        new(buffer.data_ptr()) T(std::forward<Args>(args)...);
         return std::move(buffer);
     }
 
@@ -207,7 +207,7 @@ struct Buffer
     }
 
 private:
-    Buffer(const void* data, const size_t size, const bool allocated):
+    Buffer(const void* data, const size_t size, const bool allocated) :
         data(data),
         size(size),
         allocated(allocated)

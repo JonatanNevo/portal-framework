@@ -124,7 +124,6 @@ void Connection::thread_loop()
 
 void Connection::poll_incoming_messages()
 {
-
     SteamNetworkingMessage_t* incoming_message = nullptr;
     const int message_count = sockets->ReceiveMessagesOnConnection(connection, &incoming_message, 1);
 
@@ -173,10 +172,18 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
         state = ConnectionState::ClosedByPeer;
         if (info->m_eOldState == k_ESteamNetworkingConnectionState_Connecting)
             LOG_ERROR_TAG(
-                "Networking", "Connection {} - Failed to connect: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
+            "Networking",
+            "Connection {} - Failed to connect: {}",
+            info->m_info.m_szConnectionDescription,
+            info->m_info.m_szEndDebug
+        );
         else
             LOG_ERROR_TAG(
-                "Networking", "Connection {} - Disconnected from server: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
+            "Networking",
+            "Connection {} - Disconnected from server: {}",
+            info->m_info.m_szConnectionDescription,
+            info->m_info.m_szEndDebug
+        );
         on_connection_error(&info->m_info);
         break;
 
@@ -184,10 +191,18 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
         state = ConnectionState::ProblemDetectedLocally;
         if (info->m_eOldState == k_ESteamNetworkingConnectionState_Connecting)
             LOG_ERROR_TAG(
-                "Networking", "Connection {} - Failed to connect: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
+            "Networking",
+            "Connection {} - Failed to connect: {}",
+            info->m_info.m_szConnectionDescription,
+            info->m_info.m_szEndDebug
+        );
         else
             LOG_ERROR_TAG(
-                "Networking", "Connection {} - Problem detected locally: {}", info->m_info.m_szConnectionDescription, info->m_info.m_szEndDebug);
+            "Networking",
+            "Connection {} - Problem detected locally: {}",
+            info->m_info.m_szConnectionDescription,
+            info->m_info.m_szEndDebug
+        );
         on_connection_error(&info->m_info);
         break;
 
@@ -212,7 +227,11 @@ void Connection::on_status_changed(SteamNetConnectionStatusChangedCallback_t* in
 
     default:
         LOG_TRACE_TAG(
-            "Networking", "Connection {} - State changed to {}", info->m_info.m_szConnectionDescription, static_cast<int>(info->m_info.m_eState));
+            "Networking",
+            "Connection {} - State changed to {}",
+            info->m_info.m_szConnectionDescription,
+            static_cast<int>(info->m_info.m_eState)
+        );
         break;
     }
 }

@@ -56,7 +56,7 @@ public:
                 reflection::PropertyContainerType::scalar,
                 1
             }
-            );
+        );
     }
 
     template <reflection::SmallVector T>
@@ -79,7 +79,7 @@ public:
                     reflection::PropertyContainerType::array,
                     t.size()
                 }
-                );
+            );
         }
         else
         {
@@ -91,8 +91,8 @@ public:
             }
 
             constexpr auto property_type = (reflection::String<typename T::ValueParamT>)
-                ? reflection::PropertyType::null_term_string
-                : reflection::get_property_type<typename T::ValueParamT>();
+                                               ? reflection::PropertyType::null_term_string
+                                               : reflection::get_property_type<typename T::ValueParamT>();
 
             add_property_to_map(
                 name,
@@ -102,7 +102,7 @@ public:
                     reflection::PropertyContainerType::array,
                     t.size()
                 }
-                );
+            );
         }
     }
 
@@ -126,7 +126,7 @@ public:
                     reflection::PropertyContainerType::array,
                     t.size()
                 }
-                );
+            );
         }
         else
         {
@@ -138,8 +138,8 @@ public:
             }
 
             constexpr auto property_type = (reflection::String<typename T::value_type>)
-                ? reflection::PropertyType::null_term_string
-                : reflection::get_property_type<typename T::value_type>();
+                                               ? reflection::PropertyType::null_term_string
+                                               : reflection::get_property_type<typename T::value_type>();
 
             add_property_to_map(
                 name,
@@ -149,7 +149,7 @@ public:
                     reflection::PropertyContainerType::array,
                     t.size()
                 }
-                );
+            );
         }
     }
 
@@ -164,7 +164,7 @@ public:
                 reflection::PropertyContainerType::null_term_string,
                 t.size() + 1
             }
-            );
+        );
     }
 
     template <reflection::GlmVec1 T>
@@ -178,7 +178,7 @@ public:
                 reflection::PropertyContainerType::vector,
                 1
             }
-            );
+        );
     }
 
     template <reflection::GlmVec2 T>
@@ -192,7 +192,7 @@ public:
                 reflection::PropertyContainerType::vector,
                 2
             }
-            );
+        );
     }
 
     template <reflection::GlmVec3 T>
@@ -206,7 +206,7 @@ public:
                 reflection::PropertyContainerType::vector,
                 3
             }
-            );
+        );
     }
 
     template <reflection::GlmVec4 T>
@@ -220,7 +220,7 @@ public:
                 reflection::PropertyContainerType::vector,
                 4
             }
-            );
+        );
     }
 
     template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
@@ -254,7 +254,7 @@ public:
                 reflection::PropertyContainerType::array,
                 buffer.size
             }
-            );
+        );
     }
 
     template <Archiveable T>
@@ -538,7 +538,7 @@ inline void ArchiveObject::add_property<bool>(const PropertyName& name, const bo
             reflection::PropertyContainerType::scalar,
             1
         }
-        );
+    );
 }
 
 template <>
@@ -552,7 +552,7 @@ inline void ArchiveObject::add_property<uint128_t>(const PropertyName& name, con
             reflection::PropertyContainerType::scalar,
             1
         }
-        );
+    );
 }
 
 template <>
@@ -576,6 +576,4 @@ inline bool ArchiveObject::get_property<uint128_t>(const PropertyName& name, uin
     out = *property.value.as<uint128_t*>();
     return true;
 }
-
-
 } // namespace portal

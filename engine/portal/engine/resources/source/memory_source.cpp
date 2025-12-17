@@ -9,7 +9,6 @@
 
 namespace portal::resources
 {
-
 MemorySource::MemorySource(Buffer&& data) : data(data) {}
 
 Buffer MemorySource::load() const
@@ -26,5 +25,4 @@ std::unique_ptr<std::istream> MemorySource::stream() const
 {
     return std::make_unique<BufferStreamReader>(data);
 }
-
 } // portal

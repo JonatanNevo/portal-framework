@@ -42,7 +42,8 @@ TEST_F(PoolAllocatorTest, FullCapacity)
     std::vector<TestObject*> objects;
 
     // Fill pool to capacity
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i)
+    {
         objects.push_back(allocator.alloc(i));
         EXPECT_EQ(i, objects[i]->get_value());
     }
@@ -51,7 +52,8 @@ TEST_F(PoolAllocatorTest, FullCapacity)
     EXPECT_THROW(allocator.alloc(999), std::bad_alloc);
 
     // Clean up
-    for (const auto obj : objects) {
+    for (const auto obj : objects)
+    {
         allocator.free(obj);
     }
 }
@@ -85,7 +87,8 @@ TEST_F(PoolAllocatorTest, ClearPool)
 {
     // Fill the pool
     std::vector<TestObject*> objects;
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i)
+    {
         objects.push_back(allocator.alloc(i));
     }
 
@@ -110,28 +113,38 @@ TEST_F(PoolAllocatorTest, ThreadSafety)
     std::atomic<int> success_count(0);
     std::vector<std::thread> threads;
 
-    for (int t = 0; t < THREAD_COUNT; ++t) {
-        threads.emplace_back([&]() {
-            std::vector<TestObject*> thread_objects;
+    for (int t = 0; t < THREAD_COUNT; ++t)
+    {
+        threads.emplace_back(
+            [&]()
+            {
+                std::vector<TestObject*> thread_objects;
 
-            for (int i = 0; i < 5; ++i) {
-                try {
-                    auto obj = allocator.alloc(i);
-                    thread_objects.push_back(obj);
-                    ++success_count;
-                } catch (std::bad_alloc&) {
-                    // Expected when pool is full
+                for (int i = 0; i < 5; ++i)
+                {
+                    try
+                    {
+                        auto obj = allocator.alloc(i);
+                        thread_objects.push_back(obj);
+                        ++success_count;
+                    }
+                    catch (std::bad_alloc&)
+                    {
+                        // Expected when pool is full
+                    }
+                    std::this_thread::yield();
                 }
-                std::this_thread::yield();
-            }
 
-            for (const auto obj : thread_objects) {
-                allocator.free(obj);
+                for (const auto obj : thread_objects)
+                {
+                    allocator.free(obj);
+                }
             }
-        });
+        );
     }
 
-    for (auto& t : threads) {
+    for (auto& t : threads)
+    {
         t.join();
     }
 
