@@ -139,7 +139,7 @@ public:
         std::string_view file,
         int line,
         std::string_view function,
-        spdlog::format_string_t<Args...> format,
+        std::string_view format,
         Args&&... args
     );
 
@@ -230,11 +230,11 @@ bool Log::print_assert_message(
     const std::string_view file,
     const int line,
     const std::string_view function,
-    const spdlog::format_string_t<Args...> format,
+    const std::string_view format,
     Args&&... args
 )
 {
-    const std::string formatted = std::format(format, std::forward<Args>(args)...);
+    const std::string formatted = std::vformat(format, std::make_format_args(args...));
     return print_assert_message(file, line, function, formatted);
 }
 } // namespace portal
