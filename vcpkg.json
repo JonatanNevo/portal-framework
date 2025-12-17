@@ -1,7 +1,7 @@
 {
   "name": "portal-framework",
   "version-string": "1.0.0",
-  "builtin-baseline": "cfcbdb245f1179a5a493890a0b69531d66969e62",
+  "builtin-baseline": "6e874449535f1cc48e9b87a308fbfe8a071d56b0",
   "dependencies": [
     {
       "name": "gamenetworkingsockets",
