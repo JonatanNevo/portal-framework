@@ -54,6 +54,14 @@ jobs:
           submodules: 'recursive'
           fetch-depth: 0
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - run: pip install portal_tool
+      - run: python -m portal_tool install --only-dependencies
+
       - uses: lukka/get-cmake@latest
 
       - uses: lukka/run-vcpkg@v11.5
