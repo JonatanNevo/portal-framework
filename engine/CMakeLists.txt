@@ -22,7 +22,6 @@ find_package(Vulkan REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
-find_package(SPIRV-Tools CONFIG REQUIRED)
 find_package(slang CONFIG REQUIRED)
 find_package(glaze CONFIG REQUIRED)
 find_package(EnTT CONFIG REQUIRED)
@@ -59,7 +58,6 @@ target_link_libraries(portal-engine
         imgui::imgui
         fastgltf::fastgltf
         slang::slang
-        SPIRV-Tools-static
         glaze::glaze
         EnTT::EnTT
 )
