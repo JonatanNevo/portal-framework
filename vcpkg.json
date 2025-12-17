@@ -64,10 +64,6 @@
       "version>=": "0.9.0"
     },
     {
-      "name": "spirv-tools",
-      "version>=": "1.4.309.0"
-    },
-    {
       "name": "glaze",
       "version>=": "6.0.1"
     },
