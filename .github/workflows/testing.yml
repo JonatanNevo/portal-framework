@@ -1,0 +1,23 @@
+name: Export Cache
+on: workflow_dispatch
+
+jobs:
+  export-cache:
+    runs-on: macos-latest
+    steps:
+      - name: Restore cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            # your cache paths here
+            ~/.vcpkg
+          key: macOS-vcpkg-binary-cache-0f6613c8e391c0befcd56528e0713631b958f7868aadf9e43dac6a190d0d587
+          
+      - name: Create tarball
+        run: tar -czf cache-export.tar.gz -C ~/.vcpkg .
+        
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cache-contents
+          path: cache-export.tar.gz
