@@ -12,7 +12,7 @@
 
 namespace portal
 {
-void JsonArchive::dump(const std::filesystem::path& output_path)
+void JsonArchive::dump(const std::filesystem::path& output_path, const size_t indent)
 {
     if (!FileSystem::exists(output_path.parent_path()))
     {
@@ -27,12 +27,12 @@ void JsonArchive::dump(const std::filesystem::path& output_path)
         return;
     }
 
-    dump(output);
+    dump(output, indent);
 }
 
-void JsonArchive::dump(std::ostream& output)
+void JsonArchive::dump(std::ostream& output, const size_t indent)
 {
-    output << std::setw(4) << prepare_json();
+    output << std::setw(indent) << prepare_json();
 }
 
 void JsonArchive::read(const std::filesystem::path& input_path)
@@ -54,7 +54,7 @@ void JsonArchive::read(const std::filesystem::path& input_path)
 
 void JsonArchive::read(std::istream& input)
 {
-    deserialize(nlohmann::json::parse(input, nullptr, true, true));
+    deserialize(nlohmann::json::parse(input, nullptr, false, true));
 }
 
 nlohmann::json JsonArchive::prepare_json()

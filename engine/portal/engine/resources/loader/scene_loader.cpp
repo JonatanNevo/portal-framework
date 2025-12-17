@@ -32,13 +32,11 @@ class NodeComponentVisitor
 {
 public:
     NodeComponentVisitor(
-        const NodeDescription& description,
         const Entity entity,
         ResourceRegistry& registry
     )
         : registry(registry),
-          entity(entity),
-          description(description) {}
+          entity(entity) {}
 
     void operator()(const TransformSceneComponent& transform_component)
     {
@@ -70,7 +68,6 @@ public:
 private:
     ResourceRegistry& registry;
     Entity entity;
-    const NodeDescription& description;
 };
 
 void SceneLoader::load_scene_nodes(Entity scene_entity, ecs::Registry& ecs_registry, SceneDescription description) const
@@ -92,7 +89,7 @@ void SceneLoader::load_scene_nodes(Entity scene_entity, ecs::Registry& ecs_regis
             child_entity.set_parent(entity);
         }
 
-        NodeComponentVisitor visitor(node_description, entity, registry);
+        NodeComponentVisitor visitor(entity, registry);
         for (auto& component : node_description.components)
         {
             std::visit(visitor, component);

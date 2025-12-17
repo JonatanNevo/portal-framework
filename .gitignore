@@ -85,6 +85,18 @@ vcpkg_installed/
 
 # CMake
 cmake-build-*/
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+CMakeUserPresets.json
 
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
@@ -130,4 +142,3 @@ sessions/.archived/
 sessions/
 CLAUDE.md
 .claude/
-

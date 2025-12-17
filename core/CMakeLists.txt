@@ -177,6 +177,7 @@ configure_file("portal/core/config.h.cmake" "portal/core/config.h")
 target_precompile_headers(portal-core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/portal/core/config.h)
 
 if (PORTAL_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(tests)
 endif ()
 unset(PORTAL_BUILD_TESTS CACHE)

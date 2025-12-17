@@ -49,6 +49,7 @@ else()
 endif()
 
 if (PORTAL_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(tests)
 endif ()
 unset(PORTAL_BUILD_TESTS CACHE)
