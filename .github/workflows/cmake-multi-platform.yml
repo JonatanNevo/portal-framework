@@ -39,13 +39,7 @@ jobs:
           - os: macos-latest
             c_compiler: cl
     env:
-      # Indicates the location of the vcpkg as a Git submodule of the project repository.
-      # Not using "VCPKG_ROOT" because a variable with the same name is defined in the VS's
-      # Developer Command Prompt environment in VS 2022 17.6, which would override this one
-      # if it had the same name.
-      _VCPKG_: ${{ github.workspace }}/vcpkg
-
-      # Tells vcpkg where binary packages are stored.
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg/bincache,readwrite
       VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
 
     steps:
@@ -79,8 +73,6 @@ jobs:
       - uses: lukka/run-vcpkg@v11.5
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-        env:
-          VCPKG_BINARY_SOURCES: default,rw
 
       - name: Restore vcpkg
         uses: actions/cache@v4
