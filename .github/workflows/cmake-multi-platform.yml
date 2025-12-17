@@ -17,9 +17,9 @@ jobs:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
-        build_type: [ Release ]
-        c_compiler: [ clang, cl ]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Release]
+        c_compiler: [clang, cl]
         include:
           - os: windows-latest
             c_compiler: cl
@@ -38,69 +38,28 @@ jobs:
             c_compiler: cl
           - os: macos-latest
             c_compiler: cl
-    env:
-      # Indicates the location of the vcpkg as a Git submodule of the project repository.
-      # Not using "VCPKG_ROOT" because a variable with the same name is defined in the VS's
-      # Developer Command Prompt environment in VS 2022 17.6, which would override this one
-      # if it had the same name.
-      _VCPKG_: ${{ github.workspace }}/vcpkg
-
-      # Tells vcpkg where binary packages are stored.
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg/bincache
-
-      # Let's use GitHub Action cache as storage for the vcpkg Binary Caching feature.
-      VCPKG_BINARY_SOURCES: 'clear;x-gha,readwrite'
 
     steps:
-      # Set env vars needed for vcpkg to leverage the GitHub Action cache as a storage
-      # for Binary Caching.
-      - uses: actions/github-script@v7
-        with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: 'recursive'
+          fetch-depth: 0
 
-      - name: "Create directory '${{ env.VCPKG_DEFAULT_BINARY_CACHE }}'"
-        run: mkdir -p $VCPKG_DEFAULT_BINARY_CACHE
-        shell: bash
-
-      # Setup the build machine with the most recent versions of CMake and Ninja. Both are cached if not already: on subsequent runs both will be quickly restored from GitHub cache service.
       - uses: lukka/get-cmake@latest
 
-      # Restore vcpkg from the GitHub Action cache service. Note that packages are restored by vcpkg's binary caching
-      # when it is being run afterwards by CMake.
-      - name: Restore vcpkg
-        uses: actions/cache@v4
+      - uses: lukka/run-vcpkg@v11.5
         with:
-          # The first path is the location of vcpkg: it contains the vcpkg executable and data files, as long as the
-          # built package archives (aka binary cache) which are located by VCPKG_DEFAULT_BINARY_CACHE env var.
-          # The other paths starting with '!' are exclusions: they contain termporary files generated during the build of the installed packages.
-          path: |
-            ${{ env._VCPKG_ }}
-            !${{ env._VCPKG_ }}/buildtrees
-            !${{ env._VCPKG_ }}/packages
-            !${{ env._VCPKG_ }}/downloads
-            !${{ env._VCPKG_ }}/installed
-          # The key is composed in a way that it gets properly invalidated whenever a different version of vcpkg is being used.
-          key: |
-            ${{ hashFiles( '.git/modules/vcpkg/HEAD' )}}
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
-      # On Windows runners, let's ensure to have the Developer Command Prompt environment setup correctly.
-      # As used here the Developer Command Prompt created is targeting x64 and using the default the Windows SDK.
-      - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Restore from cache the dependencies and generate project files
-        run: |
-          cmake --preset ninja-multi
-
-      - name: Build (Release configuration)
-        run: |
-          cmake --build --preset release
-
-      - name: Test (Release configuration)
-        run: |
-          ctest --preset test-release
+      # Note: if the preset misses the "configuration", it is possible to explicitly select the
+      # configuration with the additional `--config` flag, e.g.:
+      #   buildPreset: 'ninja-vcpkg'
+      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
+      #   testPreset: 'ninja-vcpkg'
+      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
+      - uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ninja-multi'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}', '-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
+          buildPreset: 'release'
+          testPreset: 'test-release'
