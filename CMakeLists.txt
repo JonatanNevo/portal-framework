@@ -13,7 +13,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(llvm-adt)
 add_subdirectory(core)
 add_subdirectory(networking)
 add_subdirectory(application)
