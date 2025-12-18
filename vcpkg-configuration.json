@@ -2,7 +2,7 @@
   "registries": [
     {
       "kind": "git",
-      "baseline": "490e9bd8e48b15d7bffd5c70cd9a53497eff7dc6",
+      "baseline": "fc6dad99dbdef11a67457d2f55a1c6520c7a1d50",
       "reference": "main",
       "repository": "https://github.com/JonatanNevo/portal-vcpkg-registry",
       "packages": [
@@ -11,7 +11,8 @@
         "portal-gui",
         "portal-input",
         "portal-networking",
-        "portal-serialization"
+        "portal-serialization",
+        "llvm-adt"
       ]
     }
   ],

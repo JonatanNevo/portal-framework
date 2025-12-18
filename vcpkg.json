@@ -4,6 +4,10 @@
   "builtin-baseline": "6e874449535f1cc48e9b87a308fbfe8a071d56b0",
   "dependencies": [
     {
+      "name": "llvm-adt",
+      "version>=": "0.2.0"
+    },
+    {
       "name": "gamenetworkingsockets",
       "version>=": "1.4.1#1"
     },
