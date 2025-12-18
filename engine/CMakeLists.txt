@@ -29,7 +29,7 @@ find_package(EnTT CONFIG REQUIRED)
 option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
 if(PORTAL_FIND_PACKAGE)
     find_package(portal-input CONFIG REQUIRED)
-    find_package(portal-networking CONFIG REQUIRED)
+#    find_package(portal-networking CONFIG REQUIRED)
     find_package(portal-serialization CONFIG REQUIRED)
 endif ()
 unset(PORTAL_FIND_PACKAGE CACHE)
@@ -51,7 +51,7 @@ target_link_libraries(portal-engine
         portal::core
         portal::application
         portal::input
-        portal::networking
+#        portal::networking
         portal::serialization
         Vulkan::Vulkan
         GPUOpen::VulkanMemoryAllocator
