@@ -18,11 +18,10 @@ jobs:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
       matrix:
-#        c_compiler: [clang, cl]
-        c_compiler: [ clang ]
+        c_compiler: [clang, cl]
         include:
-#          - c_compiler: cl
-#            cpp_compiler: cl
+          - c_compiler: cl
+            cpp_compiler: cl
           - c_compiler: clang
             cpp_compiler: clang++
     env:
@@ -42,9 +41,6 @@ jobs:
           python-version: '3.13'
 
       - uses: lukka/get-cmake@latest
-
-      - run: pip install portal_tool
-      - run: python -m portal_tool install -y --only-dependencies
 
       - uses: lukka/run-vcpkg@b3dd708d38df5c856fe1c18dc0d59ab771f93921
         with:
@@ -127,6 +123,9 @@ jobs:
 #          sudo update-alternatives --set clang++ /usr/bin/clang++-19
 #          clang --version
 #          clang++ --version
+
+#      - run: pip install portal_tool
+#      - run: python -m portal_tool install -y --only-dependencies
 
 #      - name: Create vcpkg binary cache directory
 #        run: mkdir -p ${{ env.CACHE_DIR }}

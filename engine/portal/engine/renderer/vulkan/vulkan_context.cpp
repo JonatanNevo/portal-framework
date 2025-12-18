@@ -8,7 +8,6 @@
 #include <span>
 
 #include <GLFW/glfw3.h>
-#include <steam/steamtypes.h>
 
 #include "portal/core/log.h"
 #include "portal/core/debug/assert.h"
