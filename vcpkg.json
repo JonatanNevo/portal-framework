@@ -8,10 +8,6 @@
       "version>=": "0.2.0"
     },
     {
-      "name": "gamenetworkingsockets",
-      "version>=": "1.4.1#1"
-    },
-    {
       "name": "glm",
       "version>=": "1.0.2"
     },
