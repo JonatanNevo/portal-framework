@@ -75,29 +75,58 @@ jobs:
 
       - uses: lukka/get-cmake@latest
 
+      - name: Install Brew Dependencies
+        uses: gerlero/brew-install@v1.1.2
+        with:
+          packages: mono
+
       - uses: lukka/run-vcpkg@b3dd708d38df5c856fe1c18dc0d59ab771f93921
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
-      - name: Install mono
+      - name: Add NuGet sources
         shell: bash
         run: |
-          brew update
-          brew install nuget
-          brew install mono
-
-      - name: Add NuGet sources
-        shell: pwsh
-        run: |
-          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
-            sources add `
-            -Source "${{ env.FEED_URL }}" `
-            -StorePasswordInClearText `
-            -Name GitHubPackages `
-            -UserName "${{ env.USERNAME }}" `
+          # Fetch nuget with full output
+          echo "Fetching nuget..."
+          ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
+          NUGET_OUTPUT=$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget 2>&1)
+          echo "Full output:"
+          echo "$NUGET_OUTPUT"
+          
+          NUGET_PATH=$(echo "$NUGET_OUTPUT" | tail -n 1)
+          echo "NuGet path: $NUGET_PATH"
+          
+          # Verify the file exists
+          if [ ! -f "$NUGET_PATH" ]; then
+            echo "Error: NuGet executable not found at $NUGET_PATH"
+            echo "Full output was:"
+            echo "$NUGET_OUTPUT"
+            exit 1
+          fi
+          
+          # Check if mono is available (required on macOS)
+          if ! command -v mono &> /dev/null; then
+            echo "Error: mono is not installed"
+            exit 1
+          fi
+          
+          # Test nuget
+          echo "Testing nuget..."
+          mono "$NUGET_PATH" help || echo "Nuget help failed with exit code $?"
+          
+          # Add source
+          echo "Adding NuGet source..."
+          mono "$NUGET_PATH" sources add \
+            -Source "${{ env.FEED_URL }}" \
+            -StorePasswordInClearText \
+            -Name GitHubPackages \
+            -UserName "${{ env.USERNAME }}" \
             -Password "${{ secrets.GITHUB_TOKEN }}"
-          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
-            setapikey "${{ secrets.GITHUB_TOKEN }}" `
+          
+          # Set API key
+          echo "Setting API key..."
+          mono "$NUGET_PATH" setapikey "${{ secrets.GITHUB_TOKEN }}" \
             -Source "${{ env.FEED_URL }}"
 
       - uses: lukka/run-cmake@v10
