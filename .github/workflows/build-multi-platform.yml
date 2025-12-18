@@ -87,33 +87,20 @@ jobs:
       - name: Add NuGet sources
         shell: bash
         run: |
-          # Fetch nuget with full output
+          # Temporarily unset VCPKG_FORCE_SYSTEM_BINARIES to allow downloading nuget
+          unset VCPKG_FORCE_SYSTEM_BINARIES
+          
+          # Fetch nuget
           echo "Fetching nuget..."
           ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
-          NUGET_OUTPUT=$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget 2>&1)
-          echo "Full output:"
-          echo "$NUGET_OUTPUT"
-          
-          NUGET_PATH=$(echo "$NUGET_OUTPUT" | tail -n 1)
+          NUGET_PATH=$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget | tail -n 1)
           echo "NuGet path: $NUGET_PATH"
           
           # Verify the file exists
           if [ ! -f "$NUGET_PATH" ]; then
             echo "Error: NuGet executable not found at $NUGET_PATH"
-            echo "Full output was:"
-            echo "$NUGET_OUTPUT"
             exit 1
           fi
-          
-          # Check if mono is available (required on macOS)
-          if ! command -v mono &> /dev/null; then
-            echo "Error: mono is not installed"
-            exit 1
-          fi
-          
-          # Test nuget
-          echo "Testing nuget..."
-          mono "$NUGET_PATH" help || echo "Nuget help failed with exit code $?"
           
           # Add source
           echo "Adding NuGet source..."
@@ -122,7 +109,7 @@ jobs:
             -StorePasswordInClearText \
             -Name GitHubPackages \
             -UserName "${{ env.USERNAME }}" \
-            -Password "${{ secrets.GITHUB_TOKEN }}"
+            -Password "${{ secrets.GITHUB_TOKEN }}" || true
           
           # Set API key
           echo "Setting API key..."
