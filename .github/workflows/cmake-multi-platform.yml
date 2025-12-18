@@ -16,13 +16,13 @@ env:
 
 jobs:
   build_windows:
-    name: ${{ github.workflow }} Windows ${{ matrix.c_compiler }}
+    name: Build Windows ${{ matrix.c_compiler }}
     runs-on: windows-latest
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
-      fail-fast: false
+      fail-fast: true
       matrix:
-        c_compiler: [clang, cl]
+        c_compiler: [ clang, cl ]
         include:
           - c_compiler: cl
             cpp_compiler: cl
@@ -63,7 +63,7 @@ jobs:
           testPreset: 'test-release'
 
   build_macos:
-    name: ${{ github.workflow }} MacOS
+    name: Build MacOS
     runs-on: macos-latest
 
     steps:
@@ -78,21 +78,25 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
-      - uses: NuGet/setup-nuget@v2.0.1
+      - name: Install mono
+        shell: bash
+        run: |
+          brew update
+          brew install mono
 
       - name: Add NuGet sources
-        shell: pwsh
+        shell: bash
         run: |
-          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
-            sources add `
-            -Source "${{ env.FEED_URL }}" `
-            -StorePasswordInClearText `
-            -Name GitHubPackages `
-            -UserName "${{ env.USERNAME }}" `
-            -Password "${{ secrets.GITHUB_TOKEN }}"
-          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
-            setapikey "${{ secrets.GITHUB_TOKEN }}" `
-            -Source "${{ env.FEED_URL }}"
+          mono `${{ env.VCPKG_ROOT }}/vcpkg fetch nuget | tail -n 1` \
+          sources add \
+          -Source "${{ env.FEED_URL }}" \
+          -StorePasswordInClearText \
+          -Name GitHubPackages \
+          -UserName "${{ env.USERNAME }}" \
+          -Password "${{ secrets.GITHUB_TOKEN }}"
+          mono `${{ env.VCPKG_ROOT }}/vcpkg fetch nuget | tail -n 1` \
+          setapikey "${{ secrets.GITHUB_TOKEN }}" \
+          -Source "${{ env.FEED_URL }}"
 
       - uses: lukka/run-cmake@v10
         with:
@@ -103,13 +107,13 @@ jobs:
 
   build_linux:
     if: false # TODO: fix ubuntu build
-    name: ${{ github.workflow }} ${{ matrix.os_name }} ${{ matrix.c_compiler }}
+    name: Build Linux ${{ matrix.os_name }} ${{ matrix.c_compiler }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [ubuntu-latest]
-        c_compiler: [clang, gcc]
+        os: [ ubuntu-latest ]
+        c_compiler: [ clang, gcc ]
         include:
           - os: ubuntu-latest
             os_name: Ubuntu
@@ -151,10 +155,12 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
-      - uses: NuGet/setup-nuget@v2.0.1
+      - name: Install mono
+        shell: bash
+        run: sudo apt-get install -y mono-complete
 
       - name: Add NuGet sources
-        shell: pwsh
+        shell: bash
         run: |
           .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
             sources add `
