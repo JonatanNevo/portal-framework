@@ -9,10 +9,14 @@ on:
 permissions:
   packages: write
 
+env:
+  USERNAME: JonatanNevo
+  FEED_URL: https://nuget.pkg.github.com/JonatanNevo/index.json
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/JonatanNevo/index.json,readwrite"
 
 jobs:
   build_windows:
-    name: ${{ github.workflow }} Windows-${{ matrix.c_compiler }}
+    name: ${{ github.workflow }} Windows ${{ matrix.c_compiler }}
     runs-on: windows-latest
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
@@ -24,21 +28,12 @@ jobs:
             cpp_compiler: cl
           - c_compiler: clang
             cpp_compiler: clang++
-    env:
-      USERNAME: JonatanNevo
-      CACHE_DIR: ${{ github.workspace }}/vcpkg-cache
-      FEED_URL: https://nuget.pkg.github.com/JonatanNevo/index.json
-      VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/JonatanNevo/index.json,readwrite"
 
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
           fetch-depth: 0
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.13'
 
       - uses: lukka/get-cmake@latest
 
@@ -60,90 +55,121 @@ jobs:
             setapikey "${{ secrets.GITHUB_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
 
-      # Note: if the preset misses the "configuration", it is possible to explicitly select the
-      # configuration with the additional `--config` flag, e.g.:
-      #   buildPreset: 'ninja-vcpkg'
-      #   buildPresetAdditionalArgs: "[`--config`, `Release`]"
-      #   testPreset: 'ninja-vcpkg'
-      #   testPresetAdditionalArgs: "[`--config`, `Release`]"
       - uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}', '-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
           buildPreset: 'release'
           testPreset: 'test-release'
-#jobs:
-#  build:
-#    name: ${{ github.workflow }} ${{ matrix.os }}-${{ matrix.c_compiler }}
-#    runs-on: ${{ matrix.os }}
-#    strategy:
-#      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
-#      fail-fast: false
-#      matrix:
-##        os: [ubuntu-latest, windows-latest, macos-latest]
-##        os: [windows-latest, macos-latest]
-#        os: [windows-latest]
-#        build_type: [Release]
-##        c_compiler: [clang, cl]
-#        c_compiler: [clang]
-#        include:
-##          - os: windows-latest
-##            c_compiler: cl
-##            cpp_compiler: cl
-#          - os: windows-latest
-#            c_compiler: clang
-#            cpp_compiler: clang++
-## TODO: Fix ubuntu build
-##          - os: ubuntu-latest
-##            c_compiler: clang
-##            cpp_compiler: clang++
-##          - os: macos-latest
-##            c_compiler: clang
-##            cpp_compiler: clang++
-##        exclude:
-###          - os: ubuntu-latest
-###            c_compiler: cl
-##          - os: macos-latest
-##            c_compiler: cl
-#    env:
-#      CACHE_DIR: ${{ github.workspace }}/vcpkg-cache
-#      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-cache,readwrite
-#      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg-cache
 
-#    steps:
-#      - name: Install Clang
-#        if: runner.os == 'Linux'
-#        run: |
-#          wget https://apt.llvm.org/llvm.sh
-#          chmod +x llvm.sh
-#          sudo ./llvm.sh 19 all
-#          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
-#          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
-#          sudo update-alternatives --set clang /usr/bin/clang-19
-#          sudo update-alternatives --set clang++ /usr/bin/clang++-19
-#          clang --version
-#          clang++ --version
+  build_macos:
+    name: ${{ github.workflow }} MacOS
+    runs-on: macos-latest
 
-#      - run: pip install portal_tool
-#      - run: python -m portal_tool install -y --only-dependencies
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
 
-#      - name: Create vcpkg binary cache directory
-#        run: mkdir -p ${{ env.CACHE_DIR }}
-#        shell: bash
+      - uses: lukka/get-cmake@latest
 
+      - uses: lukka/run-vcpkg@b3dd708d38df5c856fe1c18dc0d59ab771f93921
+        with:
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
-#      - name: Restore vcpkg artifacts
-#        uses: actions/cache/restore@v4
-#        with:
-#          path: ${{ env.CACHE_DIR }}
-#
-#          key: ${{ runner.os }}-vcpkg-binary-cache-${{ hashFiles('.git/modules/vcpkg/HEAD') }}
-#          restore-keys: ${{ runner.os }}-vcpkg-binary-cache-
+      - uses: NuGet/setup-nuget@v2.0.1
 
+      - name: Add NuGet sources
+        shell: pwsh
+        run: |
+          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+            sources add `
+            -Source "${{ env.FEED_URL }}" `
+            -StorePasswordInClearText `
+            -Name GitHubPackages `
+            -UserName "${{ env.USERNAME }}" `
+            -Password "${{ secrets.GITHUB_TOKEN }}"
+          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+            setapikey "${{ secrets.GITHUB_TOKEN }}" `
+            -Source "${{ env.FEED_URL }}"
 
-#      - name: Save vcpkg artifacts
-#        uses: actions/cache/save@v4
-#        with:
-#          path: ${{ env.CACHE_DIR }}
-#
-#          key: ${{ runner.os }}-vcpkg-binary-cache-${{ hashFiles('.git/modules/vcpkg/HEAD') }}
+      - uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ninja-multi'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=clang++', '-DCMAKE_C_COMPILER=clang']"
+          buildPreset: 'release'
+          testPreset: 'test-release'
+
+  build_linux:
+    if: false # TODO: fix ubuntu build
+    name: ${{ github.workflow }} ${{ matrix.os_name }} ${{ matrix.c_compiler }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        c_compiler: [clang, gcc]
+        include:
+          - os: ubuntu-latest
+            os_name: Ubuntu
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: ubuntu-latest
+            os_name: Ubuntu
+            c_compiler: clang
+            cpp_compiler: clang++
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Install Clang
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 19 all
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
+          sudo update-alternatives --set clang /usr/bin/clang-19
+          sudo update-alternatives --set clang++ /usr/bin/clang++-19
+          clang --version
+          clang++ --version
+
+      - run: pip install portal_tool
+      - run: python -m portal_tool install -y --only-dependencies
+
+      - uses: lukka/run-vcpkg@b3dd708d38df5c856fe1c18dc0d59ab771f93921
+        with:
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+
+      - uses: NuGet/setup-nuget@v2.0.1
+
+      - name: Add NuGet sources
+        shell: pwsh
+        run: |
+          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+            sources add `
+            -Source "${{ env.FEED_URL }}" `
+            -StorePasswordInClearText `
+            -Name GitHubPackages `
+            -UserName "${{ env.USERNAME }}" `
+            -Password "${{ secrets.GITHUB_TOKEN }}"
+          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+            setapikey "${{ secrets.GITHUB_TOKEN }}" `
+            -Source "${{ env.FEED_URL }}"
+
+      - uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ninja-multi'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=clang++', '-DCMAKE_C_COMPILER=clang']"
+          buildPreset: 'release'
+          testPreset: 'test-release'
