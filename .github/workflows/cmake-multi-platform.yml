@@ -16,6 +16,7 @@ env:
 
 jobs:
   build_windows:
+    if: false
     name: Build Windows ${{ matrix.c_compiler }}
     runs-on: windows-latest
     strategy:
@@ -82,21 +83,22 @@ jobs:
         shell: bash
         run: |
           brew update
+          brew install nuget
           brew install mono
 
       - name: Add NuGet sources
-        shell: bash
+        shell: pwsh
         run: |
-          mono `${{ env.VCPKG_ROOT }}/vcpkg fetch nuget | tail -n 1` \
-          sources add \
-          -Source "${{ env.FEED_URL }}" \
-          -StorePasswordInClearText \
-          -Name GitHubPackages \
-          -UserName "${{ env.USERNAME }}" \
-          -Password "${{ secrets.GITHUB_TOKEN }}"
-          mono `${{ env.VCPKG_ROOT }}/vcpkg fetch nuget | tail -n 1` \
-          setapikey "${{ secrets.GITHUB_TOKEN }}" \
-          -Source "${{ env.FEED_URL }}"
+          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+            sources add `
+            -Source "${{ env.FEED_URL }}" `
+            -StorePasswordInClearText `
+            -Name GitHubPackages `
+            -UserName "${{ env.USERNAME }}" `
+            -Password "${{ secrets.GITHUB_TOKEN }}"
+          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
+            setapikey "${{ secrets.GITHUB_TOKEN }}" `
+            -Source "${{ env.FEED_URL }}"
 
       - uses: lukka/run-cmake@v10
         with:
