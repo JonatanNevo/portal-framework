@@ -16,7 +16,6 @@ env:
 
 jobs:
   build_windows:
-    if: false
     name: Build Windows ${{ matrix.c_compiler }}
     runs-on: windows-latest
     strategy:
@@ -82,6 +81,7 @@ jobs:
         with:
           packages: mono
 
+      # run-vcpkg is setting `VCPKG_FORCE_SYSTEM_BINARIES` env var and there is not way to unset it, so we have to bootstrap vcpkg manually.
       - name: Bootstrap vcpkg
         shell: bash
         run: |
@@ -90,20 +90,9 @@ jobs:
       - name: Add NuGet sources
         shell: bash
         run: |
-          # Fetch nuget
           echo "Fetching nuget..."
-          ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
           NUGET_PATH=$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget | tail -n 1)
-          echo "NuGet path: $NUGET_PATH"
           
-          # Verify the file exists
-          if [ ! -f "$NUGET_PATH" ]; then
-            echo "Error: NuGet executable not found at $NUGET_PATH"
-            exit 1
-          fi
-          
-          # Add source
-          echo "Adding NuGet source..."
           mono "$NUGET_PATH" sources add \
             -Source "${{ env.FEED_URL }}" \
             -StorePasswordInClearText \
@@ -111,8 +100,6 @@ jobs:
             -UserName "${{ env.USERNAME }}" \
             -Password "${{ secrets.GITHUB_TOKEN }}" || true
           
-          # Set API key
-          echo "Setting API key..."
           mono "$NUGET_PATH" setapikey "${{ secrets.GITHUB_TOKEN }}" \
             -Source "${{ env.FEED_URL }}"
 
