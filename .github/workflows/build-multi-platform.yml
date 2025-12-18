@@ -66,6 +66,8 @@ jobs:
   build_macos:
     name: Build MacOS
     runs-on: macos-latest
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
 
     steps:
       - uses: actions/checkout@v4
@@ -80,16 +82,14 @@ jobs:
         with:
           packages: mono
 
-      - uses: lukka/run-vcpkg@b3dd708d38df5c856fe1c18dc0d59ab771f93921
-        with:
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: |
+          ${{ env.VCPKG_ROOT }}/bootstrap-vcpkg.sh
 
       - name: Add NuGet sources
         shell: bash
         run: |
-          # Temporarily unset VCPKG_FORCE_SYSTEM_BINARIES to allow downloading nuget
-          unset VCPKG_FORCE_SYSTEM_BINARIES
-          
           # Fetch nuget
           echo "Fetching nuget..."
           ${{ env.VCPKG_ROOT }}/vcpkg fetch nuget
