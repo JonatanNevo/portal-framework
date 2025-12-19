@@ -65,6 +65,7 @@ vcpkg_installed/
 .idea/**/dynamic.xml
 .idea/**/uiDesigner.xml
 .idea/**/dbnavigator.xml
+.idea/**/copilot.data.migration.agent.xml
 
 # Gradle
 .idea/**/gradle.xml
