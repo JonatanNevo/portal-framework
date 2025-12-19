@@ -27,31 +27,85 @@ namespace jobs
     struct Counter;
 }
 
+/**
+ * Status codes returned when attempting to retrieve a Job's result.
+ *
+ * Job results are retrieved via Job<T>::result() which returns std::expected<T, JobResultStatus>.
+ * The status indicates whether the result is available or why it cannot be retrieved.
+ */
 enum class JobResultStatus
 {
-    Unknown,
-    Missing, // The job has not completed yet
-    VoidType
+    Unknown,   ///< Unknown state (should not occur in normal operation)
+    Missing,   ///< The job has not completed yet; result not available
+    VoidType   ///< Attempted to retrieve result from Job<void> (which has no return value)
 };
 
+/**
+ * Awaiter for suspending a Job and re-dispatching it to the scheduler.
+ *
+ * When a Job executes `co_await SuspendJob()`, the job is suspended and re-queued
+ * in the scheduler, allowing the worker thread to process other work instead of
+ * blocking. The suspended job will be resumed later when a worker picks it up.
+ *
+ * This is the core mechanism that enables the work-stealing scheduler's efficiency:
+ * workers never idle waiting for specific jobs - they continuously process available work.
+ *
+ * Example:
+ * @code
+ * Job<void> long_operation()
+ * {
+ *     do_work_phase1();
+ *     co_await SuspendJob();  // Yield to allow other work
+ *     do_work_phase2();
+ *     co_return;
+ * }
+ * @endcode
+ */
 class SuspendJob
 {
 public:
     constexpr bool await_ready() noexcept { return false; }
 
+    /**
+     * Suspends the job and re-queues it in the scheduler.
+     * 
+     * @param handle The coroutine handle to suspend
+     * @return Handle to resume next (scheduler continuation)
+     */
     std::coroutine_handle<> await_suspend(std::coroutine_handle<> handle) noexcept;
+    
     void await_resume() noexcept {};
 };
 
+/**
+ * Awaiter for finalizing a Job when it completes.
+ *
+ * Returned by JobPromise::final_suspend(), this awaiter handles cleanup when a job
+ * reaches its end (via co_return). It decrements the associated Counter (if any),
+ * notifies waiting threads, and returns the continuation handle to resume the caller.
+ *
+ * This enables automatic parent-job resumption in nested job scenarios:
+ * when a child job completes, the parent that co_awaited it automatically resumes.
+ */
 class FinalizeJob
 {
 public:
     constexpr bool await_ready() noexcept { return false; }
 
+    /**
+     * Finalizes the job and returns continuation to resume.
+     *
+     * @param handle The completing job's coroutine handle
+     * @return Continuation handle (parent job or noop_coroutine)
+     */
     std::coroutine_handle<> await_suspend(std::coroutine_handle<> handle) noexcept;
+
     void await_resume() noexcept {};
 };
 
+/**
+ * State transition types tracked in job execution flow for debugging and profiling.
+ */
 enum class SwitchType
 {
     Start,
@@ -61,6 +115,9 @@ enum class SwitchType
     Error
 };
 
+/**
+ * Records a single state transition in a job's execution history.
+ */
 struct SwitchInformation
 {
     std::thread::id thread_id;
@@ -68,6 +125,12 @@ struct SwitchInformation
     SwitchType type;
 };
 
+/**
+ * Promise type for the C++20 coroutine protocol used by Job<T>.
+ *
+ * JobPromise manages the coroutine's state, result storage, and integration with the
+ * work-stealing scheduler.
+ */
 class JobPromise
 {
 public:
@@ -101,6 +164,12 @@ public:
 
     void unhandled_exception() noexcept;
 
+    /**
+     * Retrieve the job's result value.
+     *
+     * @tparam Result The return type of the job
+     * @return Expected containing result or JobResultStatus::Missing if incomplete
+     */
     template <typename Result>
     std::expected<Result, JobResultStatus> get_result()
     {
@@ -110,8 +179,18 @@ public:
         return std::unexpected{JobResultStatus::Missing};
     }
 
+    /**
+     * Record a state transition for profiling.
+     *
+     * @param type The type of state transition (Start, Resume, Pause, etc.)
+     */
     void add_switch_information(SwitchType type);
 
+    /**
+     * Allocate and default-construct result storage.
+     *
+     * @tparam Result The return type to allocate storage for
+     */
     template <typename Result> requires (!std::is_void_v<Result>)
     void initialize_result()
     {
@@ -120,6 +199,11 @@ public:
         new(result) Result();
     }
 
+    /**
+     * Destroy result storage and deallocate memory.
+     *
+     * @tparam Result The return type to destroy
+     */
     template <typename Result> requires (!std::is_void_v<Result>)
     void destroy_result()
     {
@@ -134,15 +218,31 @@ public:
     void* operator new(size_t n) noexcept;
     void operator delete(void* ptr) noexcept;
 
+    /**
+     * Set the scheduler for this job.
+     *
+     * @param scheduler_ptr Pointer to the owning scheduler
+     */
     void set_scheduler(jobs::Scheduler* scheduler_ptr) noexcept;
+
+    /**
+     * Set the counter to decrement on completion.
+     *
+     * @param counter_ptr Pointer to the synchronization counter
+     */
     void set_counter(jobs::Counter* counter_ptr) noexcept;
+
+    /**
+     * Set the coroutine to resume after this job completes.
+     *
+     * @param caller Handle to the continuation coroutine
+     */
     void set_continuation(std::coroutine_handle<> caller) noexcept;
 
     [[nodiscard]] std::coroutine_handle<> get_continuation() const noexcept { return continuation; }
     [[nodiscard]] static size_t get_allocated_size() noexcept;
     [[nodiscard]] jobs::Counter* get_counter() const noexcept { return counter; }
     [[nodiscard]] jobs::Scheduler* get_scheduler() const noexcept { return scheduler; }
-
     [[nodiscard]] bool is_completed() const noexcept { return completed; }
 
 
@@ -166,7 +266,11 @@ protected:
     llvm::SmallVector<SwitchInformation> switch_information;
 };
 
-
+/**
+ * Base class for Job<T> providing type-erased job handle.
+ *
+ * Move-only. Jobs must be dispatched to scheduler before destruction.
+ */
 class JobBase
 {
 public:
@@ -212,8 +316,21 @@ public:
         return handle.promise().operator co_await();
     }
 
+    /** Mark job as dispatched to scheduler (prevents double-free on destruction). */
     void set_dispatched();
+
+    /**
+     * Set the scheduler for this job.
+     *
+     * @param scheduler_ptr Pointer to the owning scheduler
+     */
     void set_scheduler(jobs::Scheduler* scheduler_ptr) const noexcept;
+
+    /**
+     * Set the counter to decrement on completion.
+     *
+     * @param counter_ptr Pointer to the synchronization counter
+     */
     void set_counter(jobs::Counter* counter_ptr) const noexcept;
 
     [[nodiscard]] bool is_dispatched() const noexcept { return dispatched; }
@@ -227,6 +344,23 @@ protected:
 template <typename Result>
 class ResultPromise;
 
+/**
+ * C++20 coroutine type for asynchronous work with return value.
+ *
+ * Jobs start suspended and must be dispatched via Scheduler::wait_for_job() or dispatch_job().
+ *
+ * @tparam Result Return type (use void for jobs without return values)
+ *
+ * Example:
+ * @code
+ * Job<int> compute() 
+ * {
+ *     co_return 42;
+ * }
+ * 
+ * auto result = scheduler.wait_for_job(compute());
+ * @endcode
+ */
 template <typename Result = void>
 class [[nodiscard]] Job final : public JobBase
 {
@@ -234,6 +368,11 @@ public:
     using promise_type = ResultPromise<Result>;
     using handle_type = std::coroutine_handle<promise_type>;
 
+    /**
+     * Retrieve the job's result value.
+     *
+     * @return Expected containing result or JobResultStatus if job incomplete
+     */
     std::expected<Result, JobResultStatus> result()
     {
         auto result_handle = handle_type::from_address(handle.address());
@@ -272,6 +411,11 @@ public:
     }
 };
 
+/**
+ * Specialization of Job for void return type (no result).
+ *
+ * Job<void> does not allocate result storage. Calling result() always returns VoidType status.
+ */
 template <>
 class [[nodiscard]] Job<void> final : public JobBase
 {
@@ -290,6 +434,13 @@ public:
     Job& operator=(Job&& other) noexcept = default;
 };
 
+/**
+ * Promise type for Job<Result> with non-void return value.
+ *
+ * Allocates result storage and stores return value via return_value().
+ *
+ * @tparam Result Return type
+ */
 template <typename Result>
 class ResultPromise : public JobPromise
 {
@@ -307,6 +458,11 @@ public:
     }
 };
 
+/**
+ * Promise specialization for Job<void> with no return value.
+ *
+ * No result storage allocated. Completion signaled via return_void().
+ */
 template <>
 class ResultPromise<void> : public JobPromise
 {

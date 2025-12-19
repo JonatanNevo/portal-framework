@@ -9,6 +9,7 @@ The core module, provides common functionalities for all other modules.
  - [Timer](../core/portal/core/timer.h)
  - [Non Owning Buffer](../core/portal/core/buffer.h)
  - [Random](../core/portal/core/random/random.h)
+ - [Jobs System](../core/portal/core/jobs/job.h) - Work-stealing scheduler with C++20 coroutines (Job<T>, Task<T>, Scheduler)
 
 ## Memory
 Inspired by llvm's support library allocators.
