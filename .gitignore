@@ -136,6 +136,9 @@ portal-ports/
 
 build*/
 
+# Generated API documentation
+docs/api/
+
 # cc-sessions runtime files
 sessions/sessions-state.json
 sessions/transcripts/
