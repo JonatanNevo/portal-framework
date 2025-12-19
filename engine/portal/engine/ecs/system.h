@@ -75,28 +75,22 @@ public:
             {
                 if constexpr (ecs::ParallelExecution<Derived>)
                 {
-                    scheduler.dispatch_jobs(
-                        group(registry) | std::views::transform(
-                            [this, &registry, &context](auto entity)
-                            {
-                                return [this, &registry, &context, entity]() -> Job<>
-                                {
-                                    if constexpr (ecs::HasExecuteSingleWithContext<Derived>)
-                                        derived().execute_single(context, registry, entity);
-                                    else
-                                        derived().execute_single(registry, entity);
-
-                                    co_return;
-                                }();
-                            }
-                        ),
-                        JobPriority::Normal,
-                        counter
-                    );
+                    if constexpr (ecs::HasExecuteJobWithContext<Derived>)
+                        scheduler.dispatch_job<void>(
+                            derived().execute(context, registry, scheduler),
+                            JobPriority::Normal,
+                            counter
+                        );
+                    else
+                        scheduler.dispatch_job<void>(
+                            derived().execute(registry, scheduler),
+                            JobPriority::Normal,
+                            counter
+                        );
                 }
                 else if constexpr (ecs::SequentialExecution<Derived>)
                 {
-                    scheduler.dispatch_job(
+                    scheduler.dispatch_job<void>(
                         [this, &registry, &context]() -> Job<>
                         {
                             if constexpr (ecs::HasExecuteWithContext<Derived>)
@@ -109,8 +103,6 @@ public:
                                 std::ignore = context;
                                 derived().execute(registry);
                             }
-
-
                             co_return;
                         }(),
                         JobPriority::Normal,
@@ -190,17 +182,17 @@ private:
         auto& raw_registry = registry.get_raw_registry();
         if constexpr (ecs::OnComponentAdded<Derived, Component>)
         {
-            raw_registry.on_construct<Component>().template connect < &System::on_construct<Component> > (this);
+            raw_registry.on_construct<Component>().template connect<&System::on_construct<Component>>(this);
         }
 
         if constexpr (ecs::OnComponentRemoved<Derived, Component>)
         {
-            raw_registry.on_destroy<Component>().template connect < &System::on_destroy<Component> > (this);
+            raw_registry.on_destroy<Component>().template connect<&System::on_destroy<Component>>(this);
         }
 
         if constexpr (ecs::OnComponentChanged<Derived, Component>)
         {
-            raw_registry.on_update<Component>().template connect < &System::on_update<Component> > (this);
+            raw_registry.on_update<Component>().template connect<&System::on_update<Component>>(this);
         }
     }
 

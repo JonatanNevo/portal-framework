@@ -6,6 +6,7 @@
 #pragma once
 #include "entity.h"
 #include "portal/core/type_traits.h"
+#include "portal/core/jobs/job.h"
 
 namespace portal
 {
@@ -53,17 +54,17 @@ template <typename System>
 concept SequentialExecution = HasExecute<System> || HasExecuteWithContext<System>;
 
 template <typename System>
-concept HasExecuteSingle = requires(System& system, Registry& registry, Entity entity) {
-    { system.execute_single(registry, entity) } -> std::same_as<void>;
+concept HasExecuteJob = requires(System& system, Registry& registry, jobs::Scheduler& scheduler) {
+    { system.execute(registry, scheduler) } -> std::same_as<Job<>>;
 };
 
 template <typename System>
-concept HasExecuteSingleWithContext = requires(System& system, FrameContext& context, Registry& registry, Entity entity) {
-    { system.execute_single(context, registry, entity) } -> std::same_as<void>;
+concept HasExecuteJobWithContext = requires(System& system, FrameContext& context, Registry& registry, jobs::Scheduler& scheduler) {
+    { system.execute(context, registry, scheduler) } -> std::same_as<Job<>>;
 };
 
 template <typename System>
-concept ParallelExecution = HasExecuteSingle<System> || HasExecuteSingleWithContext<System>;
+concept ParallelExecution = HasExecuteJob<System> || HasExecuteJobWithContext<System>;
 
 template <typename System>
 concept SystemConcept =
