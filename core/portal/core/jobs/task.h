@@ -11,6 +11,28 @@
 
 namespace portal
 {
+/**
+ * Lightweight C++20 coroutine for simple async operations.
+ *
+ * Unlike Job<T>, Task does not use the work-stealing scheduler. Tasks are executed
+ * directly when co_awaited, making them suitable for simple sequential async code.
+ *
+ * @tparam Result Return type (use void for tasks without return values)
+ *
+ * Example:
+ * @code
+ * Task<int> simple_async_work()
+ * {
+ *     co_return 42;
+ * }
+ *
+ * Task<void> caller()
+ * {
+ *     int value = co_await simple_async_work();
+ *     co_return;
+ * }
+ * @endcode
+ */
 template <typename Result = void>
 class [[nodiscard]] Task
 {

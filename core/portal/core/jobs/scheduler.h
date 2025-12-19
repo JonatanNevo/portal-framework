@@ -20,12 +20,21 @@
 
 namespace portal::jobs
 {
+/**
+ * Synchronization primitive for fork-join parallelism.
+ *
+ * Tracks in-flight job count. Used with dispatch_jobs() and wait_for_counter()
+ * for parallel work synchronization.
+ */
 struct Counter
 {
     std::atomic<size_t> count;
     std::atomic_flag blocking;
 };
 
+/**
+ * Return status from worker_thread_iteration() / main_thread_do_work().
+ */
 enum class WorkerIterationState
 {
     Executed,
@@ -33,9 +42,18 @@ enum class WorkerIterationState
     EmptyQueue
 };
 
+/**
+ * Work-stealing scheduler for Job<T> coroutines.
+ *
+ * Manages worker threads, job queues, and work-stealing algorithm. Jobs are dispatched
+ * to per-worker queues and can be stolen by idle workers for load balancing.
+ */
 class Scheduler
 {
 public:
+    /**
+     * Per-worker execution context with local queue and job cache.
+     */
     struct WorkerContext
     {
         constexpr static size_t CACHE_SIZE = 4;
@@ -55,10 +73,15 @@ public:
     };
 
 public:
-    // Create a scheduler with as many hardware threads as possible
-    //  0 ... No worker threads, just one main thread
-    //  n ... n number of worker threads
-    // -1 ... As many worker threads as cpus, -1
+    /**
+     * Create scheduler with specified number of worker threads.
+     *
+     * @param num_worker_threads Worker count:
+     *   -  0: No workers, main thread only
+     *   -  n: Exactly n worker threads
+     *   - -1: Hardware concurrency - 1
+     * @param job_cache_size Per-worker job cache size (default 4)
+     */
     explicit Scheduler(int32_t num_worker_threads, size_t job_cache_size = WorkerContext::CACHE_SIZE);
     ~Scheduler();
 
@@ -66,39 +89,136 @@ public:
     Scheduler& operator=(const Scheduler&) = delete;
     Scheduler& operator=(Scheduler&&) = delete;
 
+    /**
+     * Block until counter reaches zero (fork-join synchronization).
+     *
+     * @param counter Counter to wait on
+     */
     void wait_for_counter(Counter& counter);
 
-    // Execute all jobs in the job list, then free the job list object
-    // this takes possession of the job list object, and acts as if it was
-    // a blocking call.
-    //
-    // Once this call returns, the JobList that was given as a parameter
-    // has been consumed, and you should not re-use it.
+    /**
+     * Dispatch jobs and block until all complete.
+     *
+     * @param jobs Span of type-erased jobs to execute
+     * @param priority Execution priority (High, Normal, or Low)
+     */
     void wait_for_jobs(std::span<JobBase> jobs, JobPriority priority = JobPriority::Normal);
 
+    /**
+     * Dispatch tuple of jobs and block until all complete, returning their results.
+     *
+     * @tparam Results Return types of the jobs in the tuple
+     * @param jobs Tuple of Job<T> coroutines
+     * @param priority Execution priority
+     * @return Tuple of std::expected<T, JobResultStatus> results
+     */
     template <typename... Results>
     std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(
         std::tuple<Job<Results>...> jobs,
         const JobPriority priority = JobPriority::Normal
     );
+
+    /**
+     * Dispatch variadic jobs and block until all complete, returning their results.
+     *
+     * @tparam Results Return types of the jobs
+     * @param jobs Variadic pack of Job<T> coroutines
+     * @param priority Execution priority
+     * @return Tuple of std::expected<T, JobResultStatus> results
+     */
     template <typename... Results>
     std::tuple<std::expected<Results, JobResultStatus>...> wait_for_jobs(Job<Results>... jobs, const JobPriority priority = JobPriority::Normal);
+
+    /**
+     * Dispatch span of jobs and block until all complete, collecting non-void results.
+     *
+     * @tparam Result Return type of the jobs
+     * @param jobs Span of Job<Result> coroutines
+     * @param priority Execution priority
+     * @return SmallVector of results
+     */
     template <typename Result> requires (!std::is_void_v<Result>)
     auto wait_for_jobs(const std::span<Job<Result>> jobs, const JobPriority priority = JobPriority::Normal);
+
+    /**
+     * Dispatch span of void jobs and block until all complete.
+     *
+     * @tparam Result Must be void
+     * @param jobs Span of Job<void> coroutines
+     * @param priority Execution priority
+     */
     template <typename Result> requires std::is_void_v<Result>
     void wait_for_jobs(const std::span<Job<Result>> jobs, const JobPriority priority = JobPriority::Normal);
+
+    /**
+     * Dispatch single void job and block until complete.
+     *
+     * @tparam Result Must be void
+     * @param job Job<void> coroutine
+     * @param priority Execution priority
+     */
     template <typename Result> requires std::is_void_v<Result>
     void wait_for_job(Job<Result> job, const JobPriority priority = JobPriority::Normal);
+
+    /**
+     * Dispatch single job and block until complete, returning result.
+     *
+     * @tparam Result Return type of the job
+     * @param job Job<Result> coroutine
+     * @param priority Execution priority
+     * @return The job's result value
+     */
     template <typename Result> requires (!std::is_void_v<Result>)
     Result wait_for_job(Job<Result> job, const JobPriority priority = JobPriority::Normal);
 
+    /**
+     * Dispatch jobs for async execution without blocking.
+     *
+     * @param jobs Span of type-erased jobs
+     * @param priority Execution priority
+     * @param counter Optional counter to track completion
+     */
     void dispatch_jobs(std::span<JobBase> jobs, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr);
+
+    /**
+     * Dispatch single job for async execution without blocking.
+     *
+     * @param job Type-erased job to execute
+     * @param priority Execution priority
+     * @param counter Optional counter to track completion
+     */
     void dispatch_job(JobBase job, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr);
 
+    /**
+     * Dispatch tuple of jobs for async execution without blocking.
+     *
+     * @tparam Results Return types of the jobs
+     * @param jobs Tuple of Job<T> coroutines
+     * @param priority Execution priority
+     * @param counter Optional counter to track completion
+     */
     template <typename... Results>
     void dispatch_jobs(std::tuple<Job<Results...>> jobs, const JobPriority priority = JobPriority::Normal, Counter* counter = nullptr);
+
+    /**
+     * Dispatch span of jobs for async execution without blocking.
+     *
+     * @tparam Result Return type of the jobs
+     * @param jobs Span of Job<Result> coroutines
+     * @param priority Execution priority
+     * @param counter Optional counter to track completion
+     */
     template <typename Result>
     void dispatch_jobs(std::span<Job<Result>> jobs, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr);
+
+    /**
+     * Dispatch single typed job for async execution without blocking.
+     *
+     * @tparam Result Return type of the job
+     * @param job Job<Result> coroutine
+     * @param priority Execution priority
+     * @param counter Optional counter to track completion
+     */
     template <typename Result>
     void dispatch_job(Job<Result> job, JobPriority priority = JobPriority::Normal, Counter* counter = nullptr);
 
@@ -106,6 +226,11 @@ public:
     [[nodiscard]] const JobStats& get_stats() const { return stats; }
     [[nodiscard]] static size_t get_tls_worker_id() { return tls_worker_id; }
 
+    /**
+     * Process one job from main thread
+     *
+     * @return State indicating whether work was executed, cache filled, or queue empty
+     */
     WorkerIterationState main_thread_do_work();
 
 private:
