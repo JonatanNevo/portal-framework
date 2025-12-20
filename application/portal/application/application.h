@@ -15,6 +15,13 @@
 
 namespace portal
 {
+/**
+ * Configuration properties for Portal application initialization.
+ *
+ * ApplicationProperties contains startup configuration passed to the Application
+ * constructor, including window dimensions, frame buffering settings, resource
+ * paths, and scheduler configuration.
+ */
 struct ApplicationProperties
 {
     StringId name = STRING_ID("Portal Engine");
@@ -25,19 +32,83 @@ struct ApplicationProperties
     size_t frames_in_flight = 3;
 };
 
+/**
+ * Main application class providing the game loop and module orchestration.
+ *
+ * Application is the entry point for Portal Framework applications. It manages the
+ * main game loop, coordinates module lifecycle execution, and handles frame timing.
+ *
+ * The typical flow:
+ * 1. Construct Application (or derived class like Engine) with ApplicationProperties
+ * 2. Register modules with modules.add_module<T>()
+ * 3. Call modules.build_dependency_graph()
+ * 4. Call run() to start the game loop
+ *
+ * Each frame executes:
+ * - process_events() - virtual method for windowing/input (override in derived class)
+ * - modules.begin_frame(context)
+ * - modules.update(context)
+ * - modules.gui_update(context)
+ * - modules.post_update(context)
+ * - modules.end_frame(context)
+ *
+ * Derived classes (typically Engine) register their specific modules in the constructor
+ * and override process_events() for platform-specific event handling.
+ *
+ * Example:
+ * @code
+ * int main() {
+ *     ApplicationProperties props{
+ *         .name = STRING_ID("My Game"),
+ *         .width = 1920,
+ *         .height = 1080
+ *     };
+ *     Engine engine(props);  // Engine derives from Application
+ *     return engine.run();
+ * }
+ * @endcode
+ */
 class Application
 {
 public:
+    /**
+     * Construct application with configuration properties.
+     * @param properties Configuration for window, buffering, resources, etc.
+     */
     explicit Application(const ApplicationProperties& properties);
     virtual ~Application();
 
+    /**
+     * Start the main game loop.
+     *
+     * Executes the frame loop until should_run() returns false. Each iteration
+     * processes events, executes module lifecycle hooks in sequence, and updates
+     * frame timing. Blocks until the application stops.
+     */
     void run();
+
+    /**
+     * Request the application to stop.
+     * Sets the should_stop flag, causing the game loop to exit after the current frame.
+     */
     void stop();
 
+    /**
+     * Process platform events (override in derived classes).
+     * Called at the beginning of each frame before module lifecycle execution.
+     */
     virtual void process_events() {};
 
+    /**
+     * Dispatch an event to all registered event handlers and modules.
+     * @param event The event to dispatch
+     */
     void on_event(Event& event);
 
+    /**
+     * Check if the application should continue running.
+     * @return true if the game loop should continue, false to exit
+     */
     [[nodiscard]] virtual bool should_run() const;
 
 protected:
@@ -53,5 +124,15 @@ protected:
     llvm::SmallVector<std::reference_wrapper<EventHandler>> event_handlers;
 };
 
+/**
+ * Factory function for creating the application instance.
+ *
+ * User implements this function to instantiate their Application-derived class.
+ * Called by the framework's main entry point.
+ *
+ * @param arc Argument count from main()
+ * @param argv Argument vector from main()
+ * @return Unique pointer to the application instance
+ */
 std::unique_ptr<Application> create_application(int arc, char** argv);
 } // portal
