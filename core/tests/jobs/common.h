@@ -5,37 +5,33 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
+#include <set>
+#include <catch2/catch_test_macros.hpp>
 
 #include "portal/core/jobs/job.h"
 
 namespace portal
 {
-class JobTest : public testing::Test
+// Helper functions for job test setup/teardown
+inline void job_test_setup()
 {
-protected:
-    void SetUp() override
-    {
-        EXPECT_EQ(JobPromise::get_allocated_size(), 0) << "Allocator has invalid state";
-    }
+    REQUIRE(JobPromise::get_allocated_size() == 0);
+}
 
-    void TearDown() override
-    {
-        EXPECT_EQ(JobPromise::get_allocated_size(), 0) << "Memory leak in test";
-    }
-};
+inline void job_test_teardown()
+{
+    REQUIRE(JobPromise::get_allocated_size() == 0);
+}
 
 template <class Rep, class Period>
 void simulate_work(const std::chrono::duration<Rep, Period>& duration)
 {
-    [[maybe_unused]] volatile double sink = 0.0;
-
     const auto start = std::chrono::high_resolution_clock::now();
     int i = 1;
     while (std::chrono::high_resolution_clock::now() - start < duration)
     {
         // Simulate some work
-        sink = std::sqrt(++i);
+        std::ignore = std::sqrt(++i);
     }
 }
 

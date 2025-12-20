@@ -1,7 +1,5 @@
-if(NOT GTest_FOUND)
-    # For Windows: Prevent overriding the parent project's compiler/linker settings
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    find_package(GTest REQUIRED)
+if(NOT Catch2_FOUND)
+    find_package(Catch2 CONFIG REQUIRED)
 endif()
 
 enable_testing()
@@ -9,12 +7,12 @@ enable_testing()
 file(GLOB_RECURSE TEST_SOURCES "*tests.cpp")
 file(GLOB_RECURSE TEST_HEADERS "*.h")
 
-add_executable(portal-serialization-test ${TEST_SOURCES} ${TEST_HEADERS} main.cpp)
+add_executable(portal-serialization-test ${TEST_SOURCES} ${TEST_HEADERS} logger_listener.cpp)
 target_link_libraries(portal-serialization-test
         portal-serialization
-        GTest::gtest
-        GTest::gmock
+        Catch2::Catch2
+        Catch2::Catch2WithMain
 )
 
-include(GoogleTest)
-gtest_discover_tests(portal-serialization-test)
+include(Catch)
+catch_discover_tests(portal-serialization-test)
