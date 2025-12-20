@@ -1,90 +1,71 @@
 {
-  "name": "portal-framework",
-  "version-string": "1.0.0",
-  "builtin-baseline": "6e874449535f1cc48e9b87a308fbfe8a071d56b0",
-  "dependencies": [
-    {
-      "name": "llvm-adt",
-      "version>=": "0.2.0"
-    },
-    {
-      "name": "glm",
-      "version>=": "1.0.2"
-    },
-    {
-      "name": "spdlog",
-      "version>=": "1.16.0"
-    },
-    {
-      "name": "imgui",
-      "version>=": "1.91.7",
-      "features": [
-        "glfw-binding",
-        "vulkan-binding",
-        "docking-experimental"
+  "name" : "portal-framework",
+  "version-string" : "1.0.0",
+  "builtin-baseline" : "6e874449535f1cc48e9b87a308fbfe8a071d56b0",
+  "dependencies" : [ {
+    "name" : "llvm-adt",
+    "version>=" : "0.2.0"
+  }, {
+    "name" : "glm",
+    "version>=" : "1.0.2"
+  }, {
+    "name" : "spdlog",
+    "version>=" : "1.16.0"
+  }, {
+    "name" : "imgui",
+    "version>=" : "1.91.7",
+    "features" : [ "glfw-binding", "vulkan-binding", "docking-experimental" ]
+  }, {
+    "name" : "stb",
+    "version>=" : "2024-07-29#1"
+  }, {
+    "name" : "glfw3",
+    "version>=" : "3.4#1"
+  }, {
+    "name" : "nlohmann-json",
+    "version>=" : "3.11.3#1"
+  }, {
+    "name" : "vulkan-memory-allocator",
+    "version>=" : "3.1.0"
+  }, {
+    "name" : "concurrentqueue",
+    "version>=" : "1.0.4"
+  }, {
+    "name" : "tracy",
+    "features" : [ "gui-tools" ],
+    "version>=" : "0.11.1#2"
+  }, {
+    "name" : "shader-slang",
+    "version>=" : "2025.14.3"
+  }, {
+    "name" : "fastgltf",
+    "version>=" : "0.9.0"
+  }, {
+    "name" : "glaze",
+    "version>=" : "6.0.1"
+  }, {
+    "name" : "mimalloc",
+    "features" : [ "override" ],
+    "version>=" : "2.2.3#1"
+  }, {
+    "name" : "frozen",
+    "version>=" : "1.2.0"
+  }, {
+    "name" : "enchantum",
+    "version>=" : "0.3.0"
+  }, {
+    "name" : "entt",
+    "version>=" : "3.16.0"
+  }],
+  "features": {
+    "dev": {
+      "description": "Builds the framework with additional dependencies for development purposes.",
+      "dependencies": [
+        {
+          "name" : "catch2",
+          "version>=" : "3.11.0"
+        }
       ]
-    },
-    {
-      "name": "stb",
-      "version>=": "2024-07-29#1"
-    },
-    {
-      "name": "glfw3",
-      "version>=": "3.4#1"
-    },
-    {
-      "name": "gtest",
-      "version>=": "1.16.0"
-    },
-    {
-      "name": "nlohmann-json",
-      "version>=": "3.11.3#1"
-    },
-    {
-      "name": "vulkan-memory-allocator",
-      "version>=": "3.1.0"
-    },
-    {
-      "name": "concurrentqueue",
-      "version>=": "1.0.4"
-    },
-    {
-      "name": "tracy",
-      "features": [
-        "gui-tools"
-      ],
-      "version>=": "0.11.1#2"
-    },
-    {
-      "name": "shader-slang",
-      "version>=": "2025.14.3"
-    },
-    {
-      "name": "fastgltf",
-      "version>=": "0.9.0"
-    },
-    {
-      "name": "glaze",
-      "version>=": "6.0.1"
-    },
-    {
-      "name": "mimalloc",
-      "features": [
-        "override"
-      ],
-      "version>=": "2.2.3#1"
-    },
-    {
-      "name": "frozen",
-      "version>=": "1.2.0"
-    },
-    {
-      "name": "enchantum",
-      "version>=": "0.3.0"
-    },
-    {
-      "name": "entt",
-      "version>=": "3.16.0"
     }
-  ]
+  }
 }

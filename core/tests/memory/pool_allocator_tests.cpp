@@ -3,7 +3,7 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
 
 #include "portal/core/memory/pool_allocator.h"
 #include "portal/core/memory/stack_allocator.h"
@@ -21,93 +21,87 @@ private:
     uint64_t value;
 };
 
-class PoolAllocatorTest : public ::testing::Test
+TEST_CASE("PoolAllocator Basic Operations", "[memory][pool_allocator]")
 {
-protected:
     portal::PoolAllocator<TestObject, 10> allocator;
-};
 
-// Test basic allocation
-TEST_F(PoolAllocatorTest, BasicAllocation)
-{
-    const auto obj = allocator.alloc(42);
-    ASSERT_NE(nullptr, obj);
-    EXPECT_EQ(42, obj->get_value());
-    allocator.free(obj);
-}
-
-// Test allocating to full capacity
-TEST_F(PoolAllocatorTest, FullCapacity)
-{
-    std::vector<TestObject*> objects;
-
-    // Fill pool to capacity
-    for (int i = 0; i < 10; ++i)
+    SECTION("BasicAllocation")
     {
-        objects.push_back(allocator.alloc(i));
-        EXPECT_EQ(i, objects[i]->get_value());
+        const auto obj = allocator.alloc(42);
+        REQUIRE(obj != nullptr);
+        REQUIRE(obj->get_value() == 42);
+        allocator.free(obj);
     }
 
-    // Next allocation should throw
-    EXPECT_THROW(allocator.alloc(999), std::bad_alloc);
-
-    // Clean up
-    for (const auto obj : objects)
+    SECTION("FullCapacity")
     {
+        std::vector<TestObject*> objects;
+
+        // Fill pool to capacity
+        for (int i = 0; i < 10; ++i)
+        {
+            objects.push_back(allocator.alloc(i));
+            REQUIRE(objects[i]->get_value() == i);
+        }
+
+        // Next allocation should throw
+        REQUIRE_THROWS_AS(allocator.alloc(999), std::bad_alloc);
+
+        // Clean up
+        for (const auto obj : objects)
+        {
+            allocator.free(obj);
+        }
+    }
+
+    SECTION("MemoryReuse")
+    {
+        const auto obj1 = allocator.alloc(42);
+        const auto addr1 = static_cast<void*>(obj1);
+        allocator.free(obj1);
+
+        const auto obj2 = allocator.alloc(24);
+        const auto addr2 = static_cast<void*>(obj2);
+
+        // Should reuse the same memory address
+        REQUIRE(addr1 == addr2);
+        REQUIRE(obj2->get_value() == 24);
+
+        allocator.free(obj2);
+    }
+
+    SECTION("FreeNullptr")
+    {
+        // Should not crash
+        REQUIRE_NOTHROW(allocator.free(nullptr));
+    }
+
+    SECTION("ClearPool")
+    {
+        // Fill the pool
+        std::vector<TestObject*> objects;
+        for (int i = 0; i < 10; ++i)
+        {
+            objects.push_back(allocator.alloc(i));
+        }
+
+        // Should throw when full
+        REQUIRE_THROWS_AS(allocator.alloc(999), std::bad_alloc);
+
+        // Clear without freeing individual objects
+        allocator.clear();
+
+        // Should be able to allocate again
+        const auto obj = allocator.alloc(42);
+        REQUIRE(obj != nullptr);
+        REQUIRE(obj->get_value() == 42);
         allocator.free(obj);
     }
 }
 
-// Test memory reuse
-TEST_F(PoolAllocatorTest, MemoryReuse)
+TEST_CASE("PoolAllocator Thread Safety", "[memory][pool_allocator]")
 {
-    const auto obj1 = allocator.alloc(42);
-    const auto addr1 = static_cast<void*>(obj1);
-    allocator.free(obj1);
-
-    const auto obj2 = allocator.alloc(24);
-    const auto addr2 = static_cast<void*>(obj2);
-
-    // Should reuse the same memory address
-    EXPECT_EQ(addr1, addr2);
-    EXPECT_EQ(24, obj2->get_value());
-
-    allocator.free(obj2);
-}
-
-// Test freeing nullptr
-TEST_F(PoolAllocatorTest, FreeNullptr)
-{
-    // Should not crash
-    EXPECT_NO_THROW(allocator.free(nullptr));
-}
-
-// Test clear functionality
-TEST_F(PoolAllocatorTest, ClearPool)
-{
-    // Fill the pool
-    std::vector<TestObject*> objects;
-    for (int i = 0; i < 10; ++i)
-    {
-        objects.push_back(allocator.alloc(i));
-    }
-
-    // Should throw when full
-    EXPECT_THROW(allocator.alloc(999), std::bad_alloc);
-
-    // Clear without freeing individual objects
-    allocator.clear();
-
-    // Should be able to allocate again
-    const auto obj = allocator.alloc(42);
-    ASSERT_NE(nullptr, obj);
-    EXPECT_EQ(42, obj->get_value());
-    allocator.free(obj);
-}
-
-// Test thread safety
-TEST_F(PoolAllocatorTest, ThreadSafety)
-{
+    portal::PoolAllocator<TestObject, 10> allocator;
     allocator.clear();
     constexpr int THREAD_COUNT = 5;
     std::atomic<int> success_count(0);
@@ -149,15 +143,14 @@ TEST_F(PoolAllocatorTest, ThreadSafety)
     }
 
     // Verify we can still allocate
-    EXPECT_NO_THROW(allocator.alloc(42));
+    REQUIRE_NOTHROW(allocator.alloc(42));
 }
 
-// Test custom lock type
-TEST_F(PoolAllocatorTest, CustomLockType)
+TEST_CASE("PoolAllocator Custom Lock Type", "[memory][pool_allocator]")
 {
     portal::PoolAllocator<TestObject, 5, std::mutex> custom_allocator;
 
     const auto obj = custom_allocator.alloc(42);
-    ASSERT_NE(nullptr, obj);
+    REQUIRE(obj != nullptr);
     custom_allocator.free(obj);
 }

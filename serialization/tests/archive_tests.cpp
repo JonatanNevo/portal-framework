@@ -4,13 +4,15 @@
 //
 
 #include <numeric>
-#include <gtest/gtest.h>
 #include <vector>
 #include <string>
 #include <unordered_map>
 
-#include <glm/glm.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers.hpp>
+#include <catch2/matchers/catch_matchers_all.hpp>
 
+#include <portal/core/glm.h>
 #include "portal/core/buffer.h"
 #include "portal/serialization/archive.h"
 
@@ -36,337 +38,444 @@ struct TestObject
     }
 };
 
-class ArchiveObjectTest : public ::testing::Test
+using namespace Catch::Matchers;
+
+SCENARIO("Archive can handle basic types")
 {
-protected:
-    ArchiveObject archive;
-};
-
-// 1. Basic Property Operations
-TEST_F(ArchiveObjectTest, AddAndGetBoolProperty)
-{
-    constexpr bool value = true;
-    archive.add_property("test_bool", value);
-
-    bool retrieved;
-    ASSERT_TRUE(archive.get_property("test_bool", retrieved));
-    EXPECT_EQ(retrieved, value);
-}
-
-
-TEST_F(ArchiveObjectTest, AddAndGetIntegerProperty)
-{
-    constexpr int value = 42;
-    archive.add_property("test_int", value);
-
-    int retrieved;
-    ASSERT_TRUE(archive.get_property("test_int", retrieved));
-    EXPECT_EQ(retrieved, value);
-}
-
-TEST_F(ArchiveObjectTest, AddAndGetFloatProperty)
-{
-    constexpr float value = 3.14f;
-    archive.add_property("test_float", value);
-
-    float retrieved;
-    ASSERT_TRUE(archive.get_property("test_float", retrieved));
-    EXPECT_FLOAT_EQ(retrieved, value);
-}
-
-TEST_F(ArchiveObjectTest, AddAndGetDoubleProperty)
-{
-    constexpr double value = 2.71828;
-    archive.add_property("test_double", value);
-
-    double retrieved;
-    ASSERT_TRUE(archive.get_property("test_double", retrieved));
-    EXPECT_DOUBLE_EQ(retrieved, value);
-}
-
-TEST_F(ArchiveObjectTest, AddAndGetUint128Property)
-{
-    constexpr uint128_t value = 12345678901234567890ULL;
-    archive.add_property("test_uint128", value);
-
-    uint128_t retrieved;
-    ASSERT_TRUE(archive.get_property("test_uint128", retrieved));
-    EXPECT_EQ(retrieved, value);
-}
-
-// 2. Container Types
-TEST_F(ArchiveObjectTest, AddAndGetVectorProperty)
-{
-    const std::vector<int> int_values = {1, 2, 3, 4, 5};
-    const std::vector<float> float_values = {1.1, 2.2, 3.3, 4.4, 5.5};
-    const std::vector<std::string> string_values = {"first", "second", "third"};
-    archive.add_property("int_vector", int_values);
-    archive.add_property("float_vector", float_values);
-    archive.add_property("string_vector", string_values);
-
-    std::vector<int> retrieved_int;
-    std::vector<float> retrieved_float;
-    std::vector<std::string> retrieved_string;
-    ASSERT_TRUE(archive.get_property("int_vector", retrieved_int));
-    ASSERT_TRUE(archive.get_property("float_vector", retrieved_float));
-    ASSERT_TRUE(archive.get_property("string_vector", retrieved_string));
-    EXPECT_EQ(retrieved_int, int_values);
-    EXPECT_EQ(retrieved_float, float_values);
-    EXPECT_EQ(retrieved_string, string_values);
-}
-
-TEST_F(ArchiveObjectTest, StringsCopyData)
-{
+    GIVEN("An archive object")
     {
-        std::vector<std::string> value = {"first", "second", "third"};
-        archive.add_property("vector", value);
-        value.clear();
-        value.emplace_back("something");
-        value.emplace_back("else");
-    }
+        ArchiveObject archive;
 
-    std::vector<std::string> retrieved;
-    ASSERT_TRUE(archive.get_property("vector", retrieved));
-    std::vector<std::string> expected = {"first", "second", "third"};
-    EXPECT_EQ(retrieved, expected);
-}
+        THEN("`add_property<bool>` is called")
+        {
+            constexpr bool value = true;
+            archive.add_property("test_bool", value);
 
-TEST_F(ArchiveObjectTest, AddAndGetStringProperty)
-{
-    const std::string value = "Hello, World!";
-    archive.add_property("test_string", value);
+            THEN("A boolean is inserted")
+            {
+                bool retrieved;
+                REQUIRE(archive.get_property("test_bool", retrieved));
+                REQUIRE(retrieved == value);
+            }
+        }
 
-    std::string retrieved;
-    ASSERT_TRUE(archive.get_property("test_string", retrieved));
-    EXPECT_EQ(retrieved, value);
-}
+        THEN("`add_property<int>` is called")
+        {
+            constexpr int value = 42;
+            archive.add_property("test_int", value);
 
-TEST_F(ArchiveObjectTest, AddAndGetGlmVec2Property)
-{
-    glm::vec2 value(1.0f, 2.0f);
-    archive.add_property("test_vec2", value);
+            THEN("An integer is inserted")
+            {
+                int retrieved;
+                REQUIRE(archive.get_property("test_int", retrieved));
+                REQUIRE(retrieved == value);
+            }
+        }
 
-    glm::vec2 retrieved;
-    ASSERT_TRUE(archive.get_property("test_vec2", retrieved));
-    EXPECT_EQ(retrieved.x, value.x);
-    EXPECT_EQ(retrieved.y, value.y);
-}
+        THEN("`add_property<float>` is called")
+        {
+            constexpr float value = 3.14f;
+            archive.add_property("test_float", value);
 
-TEST_F(ArchiveObjectTest, AddAndGetGlmVec3Property)
-{
-    glm::vec3 value(1.0f, 2.0f, 3.0f);
-    archive.add_property("test_vec3", value);
+            THEN("A float is inserted")
+            {
+                float retrieved;
+                REQUIRE(archive.get_property("test_float", retrieved));
+                REQUIRE(retrieved == value);
+            }
+        }
 
-    glm::vec3 retrieved;
-    ASSERT_TRUE(archive.get_property("test_vec3", retrieved));
-    EXPECT_EQ(retrieved.x, value.x);
-    EXPECT_EQ(retrieved.y, value.y);
-    EXPECT_EQ(retrieved.z, value.z);
-}
+        THEN("`add_property<double>` is called")
+        {
+            constexpr double value = 2.71828;
+            archive.add_property("test_double", value);
 
-TEST_F(ArchiveObjectTest, AddAndGetGlmVec4Property)
-{
-    glm::vec4 value(1.0f, 2.0f, 3.0f, 4.0f);
-    archive.add_property("test_vec4", value);
-
-    glm::vec4 retrieved;
-    ASSERT_TRUE(archive.get_property("test_vec4", retrieved));
-    EXPECT_EQ(retrieved.x, value.x);
-    EXPECT_EQ(retrieved.y, value.y);
-    EXPECT_EQ(retrieved.z, value.z);
-    EXPECT_EQ(retrieved.w, value.w);
-}
-
-TEST_F(ArchiveObjectTest, AddAndGetMapProperty)
-{
-    const std::unordered_map<std::string, int> values = {
-        {"key1", 10},
-        {"key2", 20},
-        {"key3", 30}
-    };
-    archive.add_property("test_map", values);
-
-    std::unordered_map<std::string, int> retrieved;
-    ASSERT_TRUE(archive.get_property("test_map", retrieved));
-    EXPECT_EQ(retrieved, values);
-}
-
-// 3. Binary Data
-TEST_F(ArchiveObjectTest, AddAndGetBinaryBlockWithBuffer)
-{
-    const std::vector<std::byte> data = {(std::byte)0x01, (std::byte)0x02, (std::byte)0x03, (std::byte)0x04, (std::byte)0x05};
-    Buffer buffer = Buffer::allocate(data.size());
-    buffer.write(data.data(), data.size());
-
-    archive.add_binary_block("binary_data", buffer);
-
-    Buffer retrieved;
-    ASSERT_TRUE(archive.get_binary_block("binary_data", retrieved));
-    EXPECT_EQ(retrieved.size, buffer.size);
-    EXPECT_EQ(std::memcmp(retrieved.data, buffer.data, buffer.size), 0);
-}
-
-TEST_F(ArchiveObjectTest, AddAndGetBinaryBlockWithVector)
-{
-    std::vector<std::byte> data = {(std::byte)0xAA, (std::byte)0xBB, (std::byte)0xCC, (std::byte)0xDD};
-    archive.add_binary_block("binary_vector", data);
-
-    std::vector<std::byte> retrieved;
-    ASSERT_TRUE(archive.get_binary_block("binary_vector", retrieved));
-    EXPECT_EQ(retrieved, data);
-}
-
-TEST_F(ArchiveObjectTest, BinaryDataIntegrity)
-{
-    std::vector<std::byte> original_data(1024);
-    for (size_t i = 0; i < original_data.size(); ++i)
-    {
-        original_data[i] = static_cast<std::byte>(i % 256);
-    }
-    archive.add_binary_block("large_binary", original_data);
-
-    std::vector<std::byte> retrieved_data;
-    ASSERT_TRUE(archive.get_binary_block("large_binary", retrieved_data));
-    EXPECT_EQ(retrieved_data, original_data);
-}
-
-// 4. Archiveable Objects
-TEST_F(ArchiveObjectTest, AddAndGetArchiveableObject)
-{
-    const TestObject obj{42, "test_object"};
-    archive.add_property("test_obj", obj);
-
-    TestObject retrieved;
-    ASSERT_TRUE(archive.get_property("test_obj", retrieved));
-    EXPECT_EQ(retrieved.value, obj.value);
-    EXPECT_EQ(retrieved.name, obj.name);
-}
-
-TEST_F(ArchiveObjectTest, NestedObjectSerialization)
-{
-    const TestObject first_object{100, "first"};
-    const TestObject second_object{200, "second"};
-
-    const std::vector vec_objects = {first_object, second_object};
-    archive.add_property("nested_objects_vec", vec_objects);
-
-    std::vector<TestObject> retrieved_vec;
-    ASSERT_TRUE(archive.get_property("nested_objects_vec", retrieved_vec));
-    EXPECT_EQ(retrieved_vec.size(), vec_objects.size());
-    for (size_t i = 0; i < vec_objects.size(); ++i)
-    {
-        EXPECT_EQ(retrieved_vec[i].value, vec_objects[i].value);
-        EXPECT_EQ(retrieved_vec[i].name, vec_objects[i].name);
-    }
-
-
-    const std::unordered_map<std::string, TestObject> objects = {{"first", first_object}, {"second", second_object}};
-    archive.add_property("nested_objects", objects);
-
-    std::unordered_map<std::string, TestObject> retrieved;
-    ASSERT_TRUE(archive.get_property("nested_objects", retrieved));
-    EXPECT_EQ(retrieved.size(), objects.size());
-    for (const auto& [key, value] : objects)
-    {
-        auto it = retrieved.find(key);
-        ASSERT_NE(it, retrieved.end());
-        EXPECT_EQ(it->second.value, value.value);
-        EXPECT_EQ(it->second.name, value.name);
+            THEN("A double is inserted")
+            {
+                double retrieved;
+                REQUIRE(archive.get_property("test_double", retrieved));
+                REQUIRE(retrieved == value);
+            }
+        }
     }
 }
 
-// 5. Edge Cases
-TEST_F(ArchiveObjectTest, EmptyVector)
+SCENARIO("Archive can handle complex types")
 {
-    const std::vector<int> empty_vector;
-    archive.add_property("empty_vector", empty_vector);
+    GIVEN("An archive object")
+    {
+        ArchiveObject archive;
 
-    std::vector<int> retrieved;
-    ASSERT_TRUE(archive.get_property("empty_vector", retrieved));
-    EXPECT_TRUE(retrieved.empty());
+        THEN("`add_property<uint128_t>` is called")
+        {
+            constexpr uint128_t value = 12345678901234567890ULL;
+            archive.add_property("test_uint128", value);
+
+            THEN("A uint128_t is inserted")
+            {
+                uint128_t retrieved;
+                REQUIRE(archive.get_property("test_uint128", retrieved));
+                REQUIRE(retrieved == value);
+            }
+        }
+
+        THEN("`add_property<std::vector>` is called")
+        {
+            const std::vector<int> int_values = {1, 2, 3, 4, 5};
+            const std::vector<float> float_values = {1.1, 2.2, 3.3, 4.4, 5.5};
+            const std::vector<std::string> string_values = {"first", "second", "third"};
+            archive.add_property("int_vector", int_values);
+            archive.add_property("float_vector", float_values);
+            archive.add_property("string_vector", string_values);
+
+            THEN("A vector is inserted")
+            {
+                std::vector<int> retrieved_int;
+                std::vector<float> retrieved_float;
+                std::vector<std::string> retrieved_string;
+                REQUIRE(archive.get_property("int_vector", retrieved_int));
+                REQUIRE(archive.get_property("float_vector", retrieved_float));
+                REQUIRE(archive.get_property("string_vector", retrieved_string));
+                REQUIRE_THAT(retrieved_int, RangeEquals(int_values));
+                REQUIRE_THAT(retrieved_float, RangeEquals(float_values));
+                REQUIRE_THAT(retrieved_string, RangeEquals(string_values));
+            }
+        }
+
+        THEN("`add_property<std::vector<std::string>>` is called")
+        {
+            const std::string value = "Hello, World!";
+            archive.add_property("test_string", value);
+
+            THEN("A string is inserted")
+            {
+                std::string retrieved;
+                REQUIRE(archive.get_property("test_string", retrieved));
+                REQUIRE_THAT(retrieved, Equals(value));
+            }
+
+            THEN("string data is copied")
+            {
+                {
+                    std::vector<std::string> new_value = {"first", "second", "third"};
+                    archive.add_property("vector", new_value);
+                    new_value.clear();
+                    new_value.emplace_back("something");
+                    new_value.emplace_back("else");
+                }
+
+                std::vector<std::string> retrieved;
+                REQUIRE(archive.get_property("vector", retrieved));
+                std::vector<std::string> expected = {"first", "second", "third"};
+                REQUIRE_THAT(retrieved, Equals(expected));
+            }
+
+        }
+
+        THEN("`add_property<glm::vec2>` is called")
+        {
+            glm::vec2 value(1.0f, 2.0f);
+            archive.add_property("test_vec2", value);
+
+            THEN("A vec2 is inserted")
+            {
+                glm::vec2 retrieved;
+                REQUIRE(archive.get_property("test_vec2", retrieved));
+                REQUIRE(retrieved.x == value.x);
+                REQUIRE(retrieved.y == value.y);
+            }
+        }
+
+        THEN("`add_property<glm::vec3>` is called")
+        {
+            glm::vec3 value(1.0f, 2.0f, 3.0f);
+            archive.add_property("test_vec3", value);
+
+            THEN("A vec3 is inserted")
+            {
+                glm::vec3 retrieved;
+                REQUIRE(archive.get_property("test_vec3", retrieved));
+                REQUIRE(retrieved.x == value.x);
+                REQUIRE(retrieved.y == value.y);
+                REQUIRE(retrieved.z == value.z);
+            }
+        }
+
+        THEN("`add_property<glm::vec4>` is called")
+        {
+            glm::vec4 value(1.0f, 2.0f, 3.0f, 4.0f);
+            archive.add_property("test_vec4", value);
+
+            THEN("A vec4 is inserted")
+            {
+                glm::vec4 retrieved;
+                REQUIRE(archive.get_property("test_vec4", retrieved));
+                REQUIRE(retrieved.x == value.x);
+                REQUIRE(retrieved.y == value.y);
+                REQUIRE(retrieved.z == value.z);
+                REQUIRE(retrieved.w == value.w);
+            }
+        }
+
+        THEN("`add_property<std::unordered_map>` is called")
+        {
+            const std::unordered_map<std::string, int> values = {
+                {"key1", 10},
+                {"key2", 20},
+                {"key3", 30}
+            };
+            archive.add_property("test_map", values);
+
+            THEN("A map is inserted")
+            {
+                std::unordered_map<std::string, int> retrieved;
+                REQUIRE(archive.get_property("test_map", retrieved));
+                REQUIRE_THAT(retrieved, RangeEquals(values));
+            }
+        }
+
+        THEN("multiple add_proprty calls are made with varius type")
+        {
+            archive.add_property("int_prop", 42);
+            archive.add_property("float_prop", 3.14f);
+            archive.add_property("string_prop", std::string("hello"));
+            archive.add_property("vector_prop", std::vector<int>{1, 2, 3});
+
+            int int_val;
+            float float_val;
+            std::string string_val;
+            std::vector<int> vector_val;
+
+            REQUIRE(archive.get_property("int_prop", int_val));
+            REQUIRE(archive.get_property("float_prop", float_val));
+            REQUIRE(archive.get_property("string_prop", string_val));
+            REQUIRE(archive.get_property("vector_prop", vector_val));
+
+            REQUIRE(int_val == 42);
+            REQUIRE_THAT(float_val, WithinRel(3.14f));
+            REQUIRE(string_val ==  "hello");
+            REQUIRE_THAT(vector_val, Equals(std::vector<int>{1, 2, 3}));
+        }
+    }
 }
 
-TEST_F(ArchiveObjectTest, EmptyString)
+SCENARIO("Archive can handle binary data")
 {
-    const std::string empty_string;
-    archive.add_property("empty_string", empty_string);
+    GIVEN("An archive")
+    {
+        ArchiveObject archive;
 
-    std::string retrieved;
-    ASSERT_TRUE(archive.get_property("empty_string", retrieved));
-    EXPECT_TRUE(retrieved.empty());
+        AND_GIVEN("Binary data")
+        {
+            const std::vector<std::byte> data = {(std::byte)0xAA, (std::byte)0xBB, (std::byte)0xCC, (std::byte)0xDD, (std::byte)0xEE};
+            Buffer buffer = Buffer::allocate(data.size());
+            buffer.write(data.data(), data.size());
+
+            THEN("`add_binary_block` is called")
+            {
+                archive.add_binary_block("binary_data", buffer);
+
+                THEN("Binary data is written as is to the archive")
+                {
+                    Buffer retrieved;
+                    REQUIRE(archive.get_binary_block("binary_data", retrieved));
+                    REQUIRE(retrieved.size ==  buffer.size);
+                    REQUIRE(std::memcmp(retrieved.data, buffer.data, buffer.size) ==  0);
+                }
+
+                THEN("Binary data can be retrieved into vector")
+                {
+                    std::vector<std::byte> retrieved;
+                    REQUIRE(archive.get_binary_block("binary_data", retrieved));
+                    REQUIRE_THAT(retrieved, RangeEquals(data));
+                }
+            }
+        }
+
+        AND_GIVEN("Large binary data")
+        {
+            std::vector<std::byte> original_data(1024);
+            for (size_t i = 0; i < original_data.size(); ++i)
+            {
+                original_data[i] = static_cast<std::byte>(i % 256);
+            }
+
+            THEN("`add_binary_block` is called with a large buffer")
+            {
+                archive.add_binary_block("large_binary", original_data);
+
+                THEN("Large binary archiving data works correctly")
+                {
+
+                }    std::vector<std::byte> retrieved_data;
+                REQUIRE(archive.get_binary_block("large_binary", retrieved_data));
+                REQUIRE_THAT(retrieved_data, RangeEquals(original_data));
+            }
+        }
+    }
 }
 
-TEST_F(ArchiveObjectTest, EmptyMap)
+SCENARIO("Archive can handle custom types")
 {
-    const std::unordered_map<std::string, int> empty_map;
-    archive.add_property("empty_map", empty_map);
+    GIVEN("An archive object")
+    {
+        ArchiveObject archive;
 
-    std::unordered_map<std::string, int> retrieved;
-    ASSERT_TRUE(archive.get_property("empty_map", retrieved));
-    EXPECT_TRUE(retrieved.empty());
+        AND_GIVEN("A custom object")
+        {
+            const TestObject obj{42, "test_object"};
+
+            THEN("`add_property` is called")
+            {
+                archive.add_property("test_obj", obj);
+
+                THEN("The custom object is archived correctly")
+                {
+                    TestObject retrieved;
+
+                    REQUIRE(archive.get_property("test_obj", retrieved));
+                    REQUIRE(retrieved.value == obj.value);
+                    REQUIRE_THAT(retrieved.name, Equals(obj.name));
+                }
+            }
+        }
+
+        AND_GIVEN("Nested custom objects")
+        {
+            const TestObject first_object{100, "first"};
+            const TestObject second_object{200, "second"};
+
+            THEN("`add_property` is called on a vector of custom objects")
+            {
+                const std::vector vec_objects = {first_object, second_object};
+
+                archive.add_property("nested_objects_vec", vec_objects);
+
+                THEN("The nested objects are written correctly to the archive")
+                {
+                    std::vector<TestObject> retrieved_vec;
+                    REQUIRE(archive.get_property("nested_objects_vec", retrieved_vec));
+                    REQUIRE(retrieved_vec.size() ==  vec_objects.size());
+                    for (size_t i = 0; i < vec_objects.size(); ++i)
+                    {
+                        REQUIRE(retrieved_vec[i].value ==  vec_objects[i].value);
+                        REQUIRE_THAT(retrieved_vec[i].name, Equals(vec_objects[i].name));
+                    }
+                }
+            }
+
+            THEN("`add_property` is called on a map of custom objects")
+            {
+                const std::unordered_map<std::string, TestObject> objects = {{"first", first_object}, {"second", second_object}};
+                archive.add_property("nested_objects", objects);
+
+                std::unordered_map<std::string, TestObject> retrieved;
+                REQUIRE(archive.get_property("nested_objects", retrieved));
+                REQUIRE(retrieved.size() ==  objects.size());
+                for (const auto& [key, value] : objects)
+                {
+                    auto it = retrieved.find(key);
+                    REQUIRE_FALSE(it ==  retrieved.end());
+                    REQUIRE(it->second.value ==  value.value);
+                    REQUIRE_THAT(it->second.name, Equals(value.name));
+                }
+
+            }
+        }
+    }
 }
 
-TEST_F(ArchiveObjectTest, LargeDataSet)
+SCENARIO("Archive handles empty containers corretly")
 {
-    std::vector<int> large_vector(10000);
-    std::iota(large_vector.begin(), large_vector.end(), 0);
+    GIVEN("An archive object")
+    {
+        ArchiveObject archive;
 
-    archive.add_property("large_vector", large_vector);
+        THEN("adding empty vector is handled")
+        {
+            const std::vector<int> empty_vector;
+            archive.add_property("empty_vector", empty_vector);
 
-    std::vector<int> retrieved;
-    ASSERT_TRUE(archive.get_property("large_vector", retrieved));
-    EXPECT_EQ(retrieved.size(), large_vector.size());
-    EXPECT_EQ(retrieved, large_vector);
+            std::vector<int> retrieved;
+            REQUIRE(archive.get_property("empty_vector", retrieved));
+            REQUIRE(retrieved.empty());
+        }
+
+        THEN("adding empty string is handled")
+        {
+            const std::string empty_string;
+            archive.add_property("empty_string", empty_string);
+
+            std::string retrieved;
+            REQUIRE(archive.get_property("empty_string", retrieved));
+            REQUIRE(retrieved.empty());
+        }
+
+        THEN("adding empty map is handled")
+        {
+            const std::unordered_map<std::string, int> empty_map;
+            archive.add_property("empty_map", empty_map);
+
+            std::unordered_map<std::string, int> retrieved;
+            REQUIRE(archive.get_property("empty_map", retrieved));
+            REQUIRE(retrieved.empty());
+        }
+    }
 }
 
-TEST_F(ArchiveObjectTest, PropertyNameConflicts)
+SCENARIO("Archiving large data sets")
 {
-    archive.add_property("duplicate", 10);
-    archive.add_property("duplicate", 20); // Should overwrite
+    GIVEN("An archive object and large data set")
+    {
+        ArchiveObject archive;
 
-    int retrieved;
-    ASSERT_TRUE(archive.get_property("duplicate", retrieved));
-    EXPECT_EQ(retrieved, 20);
+        std::vector<int> large_vector(10000);
+        std::iota(large_vector.begin(), large_vector.end(), 0);
+
+        THEN("Archive can handle large data sets")
+        {
+            archive.add_property("large_vector", large_vector);
+
+            std::vector<int> retrieved;
+            REQUIRE(archive.get_property("large_vector", retrieved));
+            REQUIRE(retrieved.size() ==  large_vector.size());
+            REQUIRE_THAT(retrieved, RangeEquals(large_vector));
+        }
+    }
 }
 
-// 7. Error Handling
-TEST_F(ArchiveObjectTest, InvalidPropertyAccess)
+SCENARIO("Archive recovers from invalid input correctly")
 {
-    int value;
-    EXPECT_FALSE(archive.get_property("non_existent_property", value));
-}
+    GIVEN("An archive object")
+    {
+        ArchiveObject archive;
 
-TEST_F(ArchiveObjectTest, NullTerminatedStringHandling)
-{
-    std::string test_string = "test\0embedded\0nulls";
-    archive.add_property("null_string", test_string);
+        THEN("Property name conflicts are not fatal")
+        {
+            archive.add_property("duplicate", 10);
+            archive.add_property("duplicate", 20); // Should overwrite
 
-    std::string retrieved;
-    ASSERT_TRUE(archive.get_property("null_string", retrieved));
-    // Should handle null-terminated strings properly
-    EXPECT_EQ(retrieved.length(), test_string.length());
-}
+            int retrieved;
+            REQUIRE(archive.get_property("duplicate", retrieved));
+            REQUIRE(retrieved ==  20);
+        }
 
-// Additional comprehensive tests
-TEST_F(ArchiveObjectTest, MultiplePropertyTypes)
-{
-    archive.add_property("int_prop", 42);
-    archive.add_property("float_prop", 3.14f);
-    archive.add_property("string_prop", std::string("hello"));
-    archive.add_property("vector_prop", std::vector<int>{1, 2, 3});
+        THEN("Invalid property access is not fatal")
+        {
+            int value;
+            REQUIRE_FALSE(archive.get_property("non_existent_property", value));
+        }
 
-    int int_val;
-    float float_val;
-    std::string string_val;
-    std::vector<int> vector_val;
+        THEN("Strings containing null bytes are handles correctly")
+        {
+            std::string test_string = "test\0embedded\0nulls";
+            archive.add_property("null_string", test_string);
 
-    ASSERT_TRUE(archive.get_property("int_prop", int_val));
-    ASSERT_TRUE(archive.get_property("float_prop", float_val));
-    ASSERT_TRUE(archive.get_property("string_prop", string_val));
-    ASSERT_TRUE(archive.get_property("vector_prop", vector_val));
+            std::string retrieved;
+            REQUIRE(archive.get_property("null_string", retrieved));
 
-    EXPECT_EQ(int_val, 42);
-    EXPECT_FLOAT_EQ(float_val, 3.14f);
-    EXPECT_EQ(string_val, "hello");
-    EXPECT_EQ(vector_val, (std::vector<int>{1, 2, 3}));
+            REQUIRE(retrieved.length() ==  test_string.length());
+            REQUIRE_THAT(retrieved, RangeEquals(test_string));
+        }
+    }
 }

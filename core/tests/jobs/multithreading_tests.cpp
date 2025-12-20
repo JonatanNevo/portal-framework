@@ -3,7 +3,7 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
 #include <portal/core/jobs/job.h>
 #include "portal/core/log.h"
 #include "portal/core/jobs/scheduler.h"
