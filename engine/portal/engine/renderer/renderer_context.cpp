@@ -12,7 +12,7 @@ namespace portal
 RendererContext::RendererContext(
     renderer::vulkan::VulkanContext& gpu_context,
     std::vector<vk::raii::DescriptorSetLayout>& global_descriptor_set_layout,
-    const renderer::AttachmentProperties& attachments
+    renderer::AttachmentProperties& attachments
 ) : gpu_context(gpu_context),
     global_descriptor_set_layout(global_descriptor_set_layout),
     attachments(attachments)

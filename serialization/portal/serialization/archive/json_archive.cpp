@@ -252,27 +252,27 @@ void JsonArchive::deserialize_array(ArchiveObject* root, const std::string& key,
     {
     case nlohmann::detail::value_t::object:
         {
-            std::vector<ArchiveObject> objects;
-            for (auto& value : array)
+            reflection::Property property = {
+                Buffer::allocate(array.size() * sizeof(ArchiveObject)),
+                reflection::PropertyType::object,
+                reflection::PropertyContainerType::array,
+                array.size()
+            };
+
+            for (size_t i = 0; i < array.size(); ++i)
             {
-                auto& child = objects.emplace_back();
-                deserialize_object(&child, value);
+                new(property.value.as<ArchiveObject*>() + i) ArchiveObject();
             }
 
-            const auto buffer = Buffer::allocate(objects.size() * sizeof(ArchiveObject));
-            for (size_t i = 0; i < objects.size(); ++i)
+            int index = 0;
+            for (auto& value : array)
             {
-                new(buffer.as<ArchiveObject*>() + i) ArchiveObject(objects[i]);
+                deserialize_object(&property.value.as<ArchiveObject*>()[index++], value);
             }
 
             root->add_property_to_map(
                 key,
-                {
-                    buffer,
-                    reflection::PropertyType::object,
-                    reflection::PropertyContainerType::array,
-                    objects.size()
-                }
+                std::move(property)
             );
             break;
         }

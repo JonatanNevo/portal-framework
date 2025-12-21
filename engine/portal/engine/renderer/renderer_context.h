@@ -23,9 +23,8 @@ public:
     RendererContext(
         renderer::vulkan::VulkanContext& gpu_context,
         std::vector<vk::raii::DescriptorSetLayout>& global_descriptor_set_layout,
-        const renderer::AttachmentProperties& attachments
+        renderer::AttachmentProperties& attachments
     );
-
 
     [[nodiscard]] const renderer::vulkan::VulkanContext& get_gpu_context() const;
     [[nodiscard]] renderer::vulkan::VulkanContext& get_gpu_context();
@@ -40,6 +39,6 @@ protected:
     // TODO: use baseclasses here
     renderer::vulkan::VulkanContext& gpu_context;
     std::vector<vk::raii::DescriptorSetLayout>& global_descriptor_set_layout;
-    renderer::AttachmentProperties attachments;
+    renderer::AttachmentProperties& attachments;
 };
 } // portal

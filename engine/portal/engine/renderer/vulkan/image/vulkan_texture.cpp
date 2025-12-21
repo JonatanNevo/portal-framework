@@ -175,6 +175,11 @@ Reference<Image> VulkanTexture::get_image() const
     return image;
 }
 
+Buffer VulkanTexture::get_buffer() const
+{
+    return image_data;
+}
+
 Buffer VulkanTexture::get_writeable_buffer()
 {
     return image_data;

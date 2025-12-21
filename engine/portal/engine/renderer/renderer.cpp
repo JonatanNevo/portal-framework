@@ -49,16 +49,14 @@ using namespace renderer;
 
 [[maybe_unused]] static auto logger = Log::get_logger("Renderer");
 
-Renderer::Renderer(ModuleStack& stack, vulkan::VulkanContext& context, const Reference<vulkan::VulkanSwapchain>& swapchain)
+Renderer::Renderer(ModuleStack& stack, vulkan::VulkanContext& context)
     : TaggedModule(stack, STRING_ID("Renderer")),
-
-      swapchain(swapchain),
       attachments(
           {
               .attachment_images = {
                   // Present Image
                   {
-                      .format = vulkan::to_format(swapchain->get_color_format()),
+                      .format = ImageFormat::None,
                       .blend = false
                   },
                   // Depth Image
@@ -73,18 +71,25 @@ Renderer::Renderer(ModuleStack& stack, vulkan::VulkanContext& context, const Ref
       ),
       context(context),
       renderer_context(context, scene_descriptor_set_layouts, attachments)
+{}
+
+Renderer::~Renderer()
+{
+    cleanup();
+}
+
+void Renderer::set_swapchain(const Reference<vulkan::VulkanSwapchain>& new_swapchain)
 {
     PORTAL_PROF_ZONE();
+
+    swapchain = new_swapchain;
+    // TODO: is this the best way to do this?
+    attachments.attachment_images[0].format = vulkan::to_format(swapchain->get_color_format()),
 
     init_render_target();
     init_frame_resources();
 
     is_initialized = true;
-}
-
-Renderer::~Renderer()
-{
-    cleanup();
 }
 
 void Renderer::cleanup()
@@ -106,6 +111,7 @@ void Renderer::cleanup()
 void Renderer::begin_frame(FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
+    PORTAL_ASSERT(is_initialized, "Renderer is not initialized");
 
     // TODO: pull the `RenderingContext` from some cache instead of allocating each frame
     frame.rendering_context = FrameRenderingContext{

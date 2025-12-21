@@ -14,6 +14,7 @@
 #include <portal/core/reflection/property.h>
 #include <portal/core/reflection/property_concepts.h>
 
+#include "portal/core/strings/string_utils.h"
 #include "portal/serialization/archive.h"
 
 
@@ -233,6 +234,12 @@ public:
         }
     }
 
+    template<typename T> requires std::is_enum_v<T>
+    void add_property(const PropertyName& name, const T& e)
+    {
+        add_property(name, portal::to_string(e));
+    }
+
     template <typename T>
     void add_property(const PropertyName&, const T&) = delete;
 
@@ -262,6 +269,17 @@ public:
     {
         auto* child = create_child(name);
         t.archive(*child);
+    }
+
+    template<typename T> requires std::is_enum_v<T>
+    bool get_property(const PropertyName& name, T& out)
+    {
+        std::string out_string;
+        if (!get_property<std::string>(name, out_string))
+            return false;
+
+        out =  portal::from_string<T>(out_string);
+        return true;
     }
 
     template <typename T>

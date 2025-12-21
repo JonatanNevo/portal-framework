@@ -53,7 +53,6 @@ portal_add_module(core
             frozen
         concurrentqueue
 
-
         COMPLEX_DEPENDENCIES
             llvm-adt|LINK|llvm::adt
             mimalloc|LINK|mimalloc-static

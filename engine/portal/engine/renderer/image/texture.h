@@ -36,6 +36,7 @@ public:
     virtual void resize(size_t width, size_t height, size_t depth) = 0;
 
     [[nodiscard]] virtual Reference<Image> get_image() const = 0;
+    [[nodiscard]] virtual Buffer get_buffer() const = 0;
     virtual Buffer get_writeable_buffer() = 0;
 
     virtual bool loaded() const = 0;

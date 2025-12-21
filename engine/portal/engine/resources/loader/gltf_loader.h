@@ -53,6 +53,7 @@ protected:
     static fastgltf::Asset load_asset(const SourceMetadata& meta, fastgltf::GltfDataGetter& data);
 
     static std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> find_image_source(
+        const std::filesystem::path& base_name,
         const std::filesystem::path& base_path,
         const fastgltf::Asset& asset,
         const fastgltf::Texture& texture

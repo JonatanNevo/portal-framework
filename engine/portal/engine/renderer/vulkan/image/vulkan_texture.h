@@ -44,6 +44,7 @@ public:
 
     [[nodiscard]] Reference<Image> get_image() const override;
 
+    [[nodiscard]] Buffer get_buffer() const override;
     Buffer get_writeable_buffer() override;
 
     [[nodiscard]] TextureType get_type() const override;

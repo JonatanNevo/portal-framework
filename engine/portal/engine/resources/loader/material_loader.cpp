@@ -85,9 +85,9 @@ Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const Resou
 
 void MaterialLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource&)
 {
-    meta.dependencies.push_back(STRING_ID("pbr"));
+    meta.dependencies.push_back(STRING_ID("engine/shaders/pbr"));
     meta.meta = MaterialMetadata{
-        .shader = STRING_ID("pbr")
+        .shader = STRING_ID("engine/shaders/pbr")
     };
 }
 

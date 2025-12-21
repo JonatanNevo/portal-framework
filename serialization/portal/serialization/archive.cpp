@@ -47,7 +47,7 @@ bool ArchiveObject::get_property(const PropertyName& name, std::filesystem::path
         return false;
 
     // TODO: make absolute?
-    out = absolute(std::filesystem::path(string));
+    out = std::filesystem::path(string);
     return true;
 }
 
