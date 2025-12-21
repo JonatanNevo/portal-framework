@@ -13,38 +13,20 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
+
 file(GLOB_RECURSE NETWORKING_SOURCES CONFIGURE_DEPENDS "portal/networking/*.cpp")
 file(GLOB_RECURSE NETWORKING_HEADERS CONFIGURE_DEPENDS "portal/networking/*.h")
 
-find_package(GameNetworkingSockets CONFIG REQUIRED)
+portal_add_module(networking
+        SOURCES ${NETWORKING_SOURCES}
+        HEADERS ${NETWORKING_HEADERS}
 
-option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
-if(PORTAL_FIND_PACKAGE)
-    find_package(portal-core CONFIG REQUIRED)
-endif ()
-unset(PORTAL_FIND_PACKAGE CACHE)
+        PORTAL_DEPENDENCIES
+        core
 
-add_library(portal-networking STATIC ${NETWORKING_SOURCES})
-add_library(portal::networking ALIAS portal-networking)
-
-target_sources(portal-networking PUBLIC
-        FILE_SET HEADERS
-        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES ${NETWORKING_HEADERS}
+        COMPLEX_DEPENDENCIES
+        GameNetworkingSockets|LINK|GameNetworkingSockets::shared
 )
 
-set_target_properties(portal-networking PROPERTIES EXPORT_NAME networking)
-
-target_link_libraries(portal-networking
-        PUBLIC
-        portal::core
-        GameNetworkingSockets::shared
-)
-
-if(MSVC)
-    target_compile_options(portal-networking PRIVATE /W4 /WX)
-else()
-    target_compile_options(portal-networking PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
-endif()
-
-portal_install_target(portal-networking)
+portal_install_module(networking)

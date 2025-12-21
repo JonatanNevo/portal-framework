@@ -56,16 +56,17 @@
   }, {
     "name" : "entt",
     "version>=" : "3.16.0"
-  }],
-  "features": {
-    "dev": {
-      "description": "Builds the framework with additional dependencies for development purposes.",
-      "dependencies": [
-        {
-          "name" : "catch2",
-          "version>=" : "3.11.0"
-        }
-      ]
+  }, {
+    "name" : "gamenetworkingsockets",
+    "version>=" : "1.4.1#1"
+  } ],
+  "features" : {
+    "dev" : {
+      "description" : "Builds the framework with additional dependencies for development purposes.",
+      "dependencies" : [ {
+        "name" : "catch2",
+        "version>=" : "3.11.0"
+      } ]
     }
   }
 }

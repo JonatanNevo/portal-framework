@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
 
-# Experimental packaging tools
-set(CMAKE_EXPERIMENTAL_EXPORT_PACKAGE_DEPENDENCIES 1942b4fa-b2c5-4546-9385-83f254070067)
-
 file(READ "version.txt" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
 project(portal-core VERSION ${PROJECT_VERSION})
@@ -20,6 +17,7 @@ option(PORTAL_BUILD_DIST "Build the distribution package" OFF)
 
 include(cmake/portal-test-helpers.cmake)
 include(cmake/portal-install-helpers.cmake)
+include(cmake/portal-module-helpers.cmake)
 
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
 file(GLOB_RECURSE CORE_HEADERS CONFIGURE_DEPENDS "portal/core/*.h")
@@ -35,40 +33,30 @@ file(GLOB_RECURSE CORE_MACOS_HEADERS CONFIGURE_DEPENDS "portal/platform/core/mac
 file(GLOB_RECURSE CORE_LINUX_SOURCES CONFIGURE_DEPENDS "portal/platform/core/linux/*.cpp")
 file(GLOB_RECURSE CORE_LINUX_HEADERS CONFIGURE_DEPENDS "portal/platform/core/linux/*.h")
 
-find_package(llvm-adt CONFIG REQUIRED)
-find_package(glm CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-find_package(enchantum CONFIG REQUIRED)
-find_package(mimalloc CONFIG REQUIRED)
-find_package(frozen CONFIG REQUIRED)
-find_package(concurrentqueue CONFIG REQUIRED)
+portal_add_module(core
+        SOURCES ${CORE_SOURCES}
+        HEADERS ${CORE_HEADERS} ${CORE_HAL_HEADERS}
 
-if (PORTAL_PROFILE)
-    set(CACHE TRACY_ENABLE TYPE BOOL FORCE ON)
-    find_package(Tracy CONFIG REQUIRED)
-else ()
-    set(CACHE TRACY_ENABLE TYPE BOOL FORCE OFF)
-endif ()
+        WINDOWS_SOURCES ${CORE_WINDOWS_SOURCES}
+        WINDOWS_HEADERS ${CORE_WINDOWS_HEADERS}
 
-add_library(portal-core STATIC ${CORE_SOURCES})
-add_library(portal::core ALIAS portal-core)
+        MACOS_SOURCES ${CORE_MACOS_SOURCES}
+        MACOS_HEADERS ${CORE_MACOS_HEADERS}
 
-target_sources(portal-core PUBLIC
-        FILE_SET HEADERS
-        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES ${CORE_HEADERS} ${CORE_HAL_HEADERS}
-)
+        LINUX_SOURCES ${CORE_LINUX_SOURCES}
+        LINUX_HEADERS ${CORE_LINUX_HEADERS}
 
-set_target_properties(portal-core PROPERTIES EXPORT_NAME core)
-target_link_libraries(portal-core
-        PUBLIC
-        llvm::adt
-        glm::glm
-        spdlog::spdlog
-        enchantum::enchantum
-        mimalloc-static
-        frozen::frozen
-        concurrentqueue::concurrentqueue
+        DEPENDENCIES
+            glm
+            spdlog
+            enchantum
+            frozen
+        concurrentqueue
+
+
+        COMPLEX_DEPENDENCIES
+            llvm-adt|LINK|llvm::adt
+            mimalloc|LINK|mimalloc-static
 )
 
 target_compile_definitions(portal-core PUBLIC
@@ -80,35 +68,6 @@ target_compile_definitions(portal-core PUBLIC
         GLM_FORCE_DEPTH_ZERO_TO_ONE
         SPDLOG_USE_STD_FORMAT
 )
-
-if (WIN32)
-    target_sources(portal-core
-            PRIVATE ${CORE_WINDOWS_SOURCES}
-            PUBLIC
-            FILE_SET HEADERS
-            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-            FILES ${CORE_WINDOWS_HEADERS}
-    )
-elseif (APPLE)
-    target_sources(portal-core
-            PRIVATE ${CORE_MACOS_SOURCES}
-            PUBLIC
-            FILE_SET HEADERS
-            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-            FILES ${CORE_MACOS_HEADERS}
-    )
-elseif (UNIX)
-    message(STATUS ${CORE_LINUX_SOURCES})
-    target_sources(portal-core
-            PRIVATE ${CORE_LINUX_SOURCES}
-            PUBLIC
-            FILE_SET HEADERS
-            BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-            FILES ${CORE_LINUX_HEADERS}
-    )
-else ()
-    message(FATAL_ERROR "Unsupported platform")
-endif ()
 
 if (WIN32)
     set(PORTAL_PLATFORM_WINDOWS ON)
@@ -159,7 +118,6 @@ if (MSVC)
             "/volatile:iso"
             "$<$<CONFIG:Release>:/Zi>"
     )
-    target_compile_options(portal-core PRIVATE /W4 /WX)
 
     target_link_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:/DEBUG /OPT:REF /OPT:ICF>"
@@ -168,7 +126,6 @@ else ()
     target_compile_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:-g>"
     )
-    target_compile_options(portal-core PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif ()
 
 configure_file("portal/core/config.h.cmake" "portal/core/config.h")
@@ -177,8 +134,9 @@ target_precompile_headers(portal-core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/portal/
 enable_testing()
 portal_build_tests(tests)
 
-portal_install_target(portal-core
+portal_install_module(core
         FILES
         cmake/portal-test-helpers.cmake
         cmake/portal-install-helpers.cmake
+        cmake/portal-module-helpers.cmake
 )
