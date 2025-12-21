@@ -96,7 +96,7 @@ private:
  * @tparam B The bucket size
  * @tparam C The max number of buckets that can be allocated (pool size is `sizeof(T) * C`)
  */
-template <size_t B, size_t C, typename L=SpinLock, bool check_allocations = false> requires (sizeof(B) >= sizeof(void*))
+template <size_t B, size_t C, typename L=SpinLock, bool check_allocations = false> requires (B >= sizeof(void*))
 class BucketPoolAllocator
 {
 public:
