@@ -97,6 +97,8 @@ function(portal_read_settings TARGET_NAME)
         message(FATAL_ERROR "Failed to find settings in ${SETTINGS_PATH}")
     endif ()
 
+    # TODO: validate engine version matches what in the json
+
     cmake_path(GET SETTINGS_PATH FILENAME SETTINGS_FILENAME)
     set(SETTINGS_OUTPUT_PATH "$<TARGET_FILE_DIR:${TARGET_NAME}>/${SETTINGS_FILENAME}")
 
@@ -114,11 +116,11 @@ function(portal_read_settings TARGET_NAME)
     add_dependencies(${TARGET_NAME} ${SETTINGS_COPY_TARGET_NAME})
 
     file(READ ${SETTINGS_PATH} SETTINGS_CONTENT)
-    string(JSON RESOURCES_LIST_LENGTH LENGTH ${SETTINGS_CONTENT} application resources)
+    string(JSON RESOURCES_LIST_LENGTH LENGTH ${SETTINGS_CONTENT} engine resources)
     if(RESOURCES_LIST_LENGTH GREATER 0)
         math(EXPR RESOURCES_LIST_LAST_INDEX "${RESOURCES_LIST_LENGTH} - 1")
         foreach(IDX RANGE ${RESOURCES_LIST_LAST_INDEX})
-            string(JSON RESOURCE_OBJECT GET "${SETTINGS_CONTENT}" application resources ${IDX})
+            string(JSON RESOURCE_OBJECT GET "${SETTINGS_CONTENT}" engine resources ${IDX})
             string(JSON RESOURCE_TYPE GET ${RESOURCE_OBJECT} type)
             string(JSON RESOURCE_PATH GET ${RESOURCE_OBJECT} path)
 

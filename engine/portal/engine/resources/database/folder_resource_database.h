@@ -49,7 +49,7 @@ protected:
     void populate();
 
     DatabaseError validate();
-    DatabaseError validate_metadata(const SourceMetadata& meta) const;
+    [[nodiscard]] DatabaseError validate_metadata(const SourceMetadata& meta) const;
 
     void mend(DatabaseError error);
     void clean_metadata();

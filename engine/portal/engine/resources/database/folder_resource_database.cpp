@@ -15,12 +15,11 @@
 
 namespace portal
 {
-
 using namespace std::literals;
 
 constexpr auto RESOURCE_METADATA_EXTENSION = ".pmeta";
 constexpr auto DATABASE_METADATA_EXTENSION = ".podb";
-constexpr std::array IGNORED_EXTENSIONS = { ".bin"sv };
+constexpr std::array IGNORED_EXTENSIONS = {".bin"sv};
 
 const auto ROOT_DATABASE_METADATA_FILENAME = std::format("root{}", DATABASE_METADATA_EXTENSION);
 
@@ -238,7 +237,7 @@ DatabaseError FolderResourceDatabase::validate()
 
     std::unordered_map<StringId, bool> corresponding_meta;
     corresponding_meta.reserve(resources.size());
-    for (auto& meta : resources | std::views::values)
+    for (auto& [_, meta] : resources)
         corresponding_meta[meta.source] = false;
 
     std::unordered_set<StringId> missing_metadata;
@@ -249,7 +248,8 @@ DatabaseError FolderResourceDatabase::validate()
         // TODO: support links?
         if (entry.is_regular_file())
         {
-            if (entry.path().extension() != RESOURCE_METADATA_EXTENSION && entry.path().extension() != DATABASE_METADATA_EXTENSION && std::ranges::none_of(IGNORED_EXTENSIONS, [&entry](const auto& ext) { return entry.path().extension() == ext; }))
+            if (entry.path().extension() != RESOURCE_METADATA_EXTENSION && entry.path().extension() != DATABASE_METADATA_EXTENSION &&
+                std::ranges::none_of(IGNORED_EXTENSIONS, [&entry](const auto& ext) { return entry.path().extension() == ext; }))
             {
                 auto relative_path = std::filesystem::relative(entry.path(), root_path);
                 auto file_as_string_id = STRING_ID(relative_path.generic_string());
@@ -326,7 +326,7 @@ void FolderResourceDatabase::mend(const DatabaseError error)
     {
         std::unordered_map<StringId, bool> corresponding_meta;
         corresponding_meta.reserve(resources.size());
-        for (auto& meta : resources | std::views::values)
+        for (auto& [_, meta] : resources)
             corresponding_meta[meta.source] = false;
 
         for (auto& entry : std::filesystem::recursive_directory_iterator(root_path))
@@ -334,7 +334,8 @@ void FolderResourceDatabase::mend(const DatabaseError error)
             // TODO: support links?
             if (entry.is_regular_file())
             {
-                if (entry.path().extension() != RESOURCE_METADATA_EXTENSION && entry.path().extension() != DATABASE_METADATA_EXTENSION && std::ranges::none_of(IGNORED_EXTENSIONS, [&entry](const auto& ext) { return entry.path().extension() == ext; }))
+                if (entry.path().extension() != RESOURCE_METADATA_EXTENSION && entry.path().extension() != DATABASE_METADATA_EXTENSION &&
+                    std::ranges::none_of(IGNORED_EXTENSIONS, [&entry](const auto& ext) { return entry.path().extension() == ext; }))
                 {
                     auto relative_path = std::filesystem::relative(entry.path(), root_path);
                     auto file_as_string_id = STRING_ID(relative_path.generic_string());
