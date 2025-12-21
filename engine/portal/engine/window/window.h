@@ -10,6 +10,8 @@
 #include "portal/engine/reference.h"
 #include "portal/core/events/event_handler.h"
 #include "portal/core/strings/string_id.h"
+#include "portal/engine/renderer/image/texture.h"
+#include "portal/engine/resources/resource_reference.h"
 
 namespace portal
 {
@@ -46,8 +48,8 @@ enum class WindowMode
 struct WindowProperties
 {
     StringId title = STRING_ID("Portal");
-    std::optional<std::filesystem::path> icon_path = R"(C:\Code\portal-framework\engine\resources\portal_icon_64x64.png)";
     WindowExtent extent{1280, 720};
+    ResourceReference<renderer::Texture> icon;
 
     WindowMode mode = WindowMode::Default;
     bool resizeable = true;

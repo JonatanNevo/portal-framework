@@ -5,6 +5,7 @@
 
 #include "vulkan_device.h"
 
+#include "vulkan_utils.h"
 #include "portal/engine/renderer/descriptor_layout_builder.h"
 #include "portal/engine/renderer/vulkan/pipeline_builder.h"
 #include "portal/engine/renderer/vulkan/vulkan_init.h"

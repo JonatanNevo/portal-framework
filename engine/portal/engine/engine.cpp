@@ -13,6 +13,7 @@
 #include "portal/engine/resources/database/folder_resource_database.h"
 #include "portal/engine/resources/resources/composite.h"
 #include "portal/engine/window/glfw_window.h"
+#include "resources/database/resource_database_facade.h"
 
 namespace portal
 {
@@ -20,6 +21,7 @@ static auto logger = Log::get_logger("Engine");
 
 Engine::Engine(const ApplicationProperties& properties) : Application(properties)
 {
+    auto& settings = Settings::get();
     auto& input = modules.add_module<InputManager>(
         [this](auto& event)
         {
@@ -27,31 +29,41 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
         }
     );
 
+    vulkan_context = std::make_unique<renderer::vulkan::VulkanContext>();
+    auto& renderer = modules.add_module<Renderer>(*vulkan_context);
+
+    modules.add_module<SchedulerModule>(settings.get_setting<int32_t>("application.scheduler-threads").value_or(0));
+    modules.add_module<ReferenceManager>();
+    auto& system_orchestrator = modules.add_module<SystemOrchestrator>();
+
+    auto& resource_database = modules.add_module<ResourceDatabaseFacade>();
+    for (auto& description : settings.get_setting<std::vector<DatabaseDescription>>("application.resources").value_or({}))
+    {
+        resource_database.register_database(description);
+    }
+
+    auto& registry = modules.add_module<ResourceRegistry>(renderer.get_renderer_context());
+
+    auto icon_ref = registry.immediate_load<renderer::Texture>(
+        STRING_ID(settings.get_setting<std::string>("application.icon").value_or("engine/portal_icon_64x64"))
+    );
+
     const WindowProperties window_properties{
         .title = properties.name,
-        .icon_path = Settings::get().get_setting<std::filesystem::path>("application.icon-path"),
         .extent = {properties.width, properties.height},
+        .icon = icon_ref,
         .requested_frames_in_flight = properties.frames_in_flight,
     };
     window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, input});
-
-    vulkan_context = std::make_unique<renderer::vulkan::VulkanContext>();
 
     auto surface = window->create_surface(*vulkan_context);
     // TODO: find better surface control
     vulkan_context->get_device().add_present_queue(*surface);
 
     auto swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(*vulkan_context, surface);
-    auto& renderer = modules.add_module<Renderer>(*vulkan_context, swapchain);
-
+    renderer.set_swapchain(swapchain);
     this->properties.frames_in_flight = swapchain->get_image_count();
 
-    modules.add_module<SchedulerModule>(properties.scheduler_worker_num);
-    auto& system_orchestrator = modules.add_module<SystemOrchestrator>();
-
-    modules.add_module<ReferenceManager>();
-    modules.add_module<FolderResourceDatabase>(properties.resources_path);
-    auto& registry = modules.add_module<ResourceRegistry>(renderer.get_renderer_context());
 
     modules.add_module<ImGuiModule>(*window);
     modules.add_module<EditorModule>();

@@ -9,7 +9,10 @@
 #include <stb_image.h>
 
 #include "portal/core/files/file_system.h"
+#include "portal/engine/renderer/image/image.h"
+#include "portal/engine/renderer/image/texture.h"
 #include "portal/engine/renderer/vulkan/surface/vulkan_surface.h"
+#include "portal/engine/resources/resource_reference.h"
 #include "portal/engine/window/window_event_consumer.h"
 #include "portal/input/input_event_consumer.h"
 #include "portal/input/input_events.h"
@@ -312,10 +315,17 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
     }
 
     // Setup icon
-    if (properties.icon_path && FileSystem::exists(properties.icon_path.value()))
+    if (properties.icon.is_valid())
     {
         GLFWimage icon;
-        icon.pixels = stbi_load(properties.icon_path.value().generic_string().c_str(), &icon.width, &icon.height, 0, 4);
+        icon.pixels = properties.icon->get_buffer().as<unsigned char*>();
+        icon.width = static_cast<int>(properties.icon->get_width());
+        icon.height = static_cast<int>(properties.icon->get_height());
+        if (!icon.pixels)
+        {
+            const char* reason = stbi_failure_reason();
+            LOGGER_ERROR("Failed to load icon: {}", reason);
+        }
         glfwSetWindowIcon(handle, 1, &icon);
     }
     else

@@ -33,9 +33,10 @@ class Window;
 class Renderer final : public TaggedModule<Tag<ModuleTags::FrameLifecycle, ModuleTags::Update, ModuleTags::PostUpdate>>
 {
 public:
-    Renderer(ModuleStack& stack, renderer::vulkan::VulkanContext& context, const Reference<renderer::vulkan::VulkanSwapchain>& swapchain);
+    Renderer(ModuleStack& stack, renderer::vulkan::VulkanContext& context);
     ~Renderer() override;
 
+    void set_swapchain(const Reference<renderer::vulkan::VulkanSwapchain>& new_swapchain);
     void cleanup();
 
     void begin_frame(FrameContext& frame) override;

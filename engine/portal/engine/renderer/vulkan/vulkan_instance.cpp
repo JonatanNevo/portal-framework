@@ -7,6 +7,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include "vulkan_utils.h"
 #include "portal/core/debug/assert.h"
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
@@ -156,6 +157,7 @@ VulkanInstance::VulkanInstance(vk::raii::Context& context) : context(context)
     PORTAL_PROF_ZONE();
 
     LOGGER_INFO("Initializing vulkan instance");
+    glfwInit();
     PORTAL_ASSERT(glfwVulkanSupported(), "glfw must support vulkan");
 
     if (!check_driver_api_version_support(vk::ApiVersion14))

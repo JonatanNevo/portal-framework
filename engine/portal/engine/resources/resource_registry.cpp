@@ -131,7 +131,7 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
         co_return nullptr;
     }
 
-    const auto source = get_dependency<ResourceDatabase>().create_source(*meta);
+    const auto source = get_dependency<ResourceDatabase>().create_source(resource_id, *meta);
 
     auto job = load_direct(*meta, *source);
     co_await job;

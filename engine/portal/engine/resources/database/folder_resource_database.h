@@ -27,16 +27,25 @@ struct DatabaseMetadata
 class FolderResourceDatabase final : public ResourceDatabase
 {
 public:
-    FolderResourceDatabase(ModuleStack& stack, const std::filesystem::path& path);
+    static std::unique_ptr<FolderResourceDatabase> create(ModuleStack& stack, const std::filesystem::path& base_path);
+
     ~FolderResourceDatabase() override;
 
     std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) override;
-    DatabaseError add(SourceMetadata meta) override;
+    DatabaseError add(StringId resource_id, SourceMetadata meta) override;
     DatabaseError remove(StringId resource_id) override;
 
-    std::unique_ptr<resources::ResourceSource> create_source(SourceMetadata meta) override;
+    std::unique_ptr<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) override;
 
 protected:
+    FolderResourceDatabase(
+        ModuleStack& stack,
+        const StringId& name,
+        std::filesystem::path  root_path,
+        std::filesystem::path  meta_path,
+        DatabaseMetadata metadata
+    );
+
     void populate();
 
     DatabaseError validate();
@@ -45,8 +54,8 @@ protected:
     void mend(DatabaseError error);
     void clean_metadata();
 
-    void save_meta() const;
-    DatabaseMetadata load_meta() const;
+    static void save_meta(const std::filesystem::path& meta_path, DatabaseMetadata& metadata);
+    static DatabaseMetadata load_meta(const std::filesystem::path& meta_path);
 
 private:
     std::filesystem::path root_path;

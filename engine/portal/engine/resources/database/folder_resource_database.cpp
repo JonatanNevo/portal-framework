@@ -6,6 +6,7 @@
 #include "folder_resource_database.h"
 
 #include <unordered_set>
+#include <utility>
 
 #include "portal/core/files/file_system.h"
 #include "portal/engine/resources/loader/loader_factory.h"
@@ -45,24 +46,70 @@ DatabaseMetadata DatabaseMetadata::dearchive(ArchiveObject& archive)
     return metadata;
 }
 
-FolderResourceDatabase::FolderResourceDatabase(ModuleStack& stack, const std::filesystem::path& path)
-    : ResourceDatabase(stack, STRING_ID("Folder Resource Databse")),
-      root_path(std::filesystem::absolute(path)),
-      meta_path(root_path / ROOT_DATABASE_METADATA_FILENAME)
+std::filesystem::path validate_and_create_path(const std::filesystem::path& base_path)
 {
-    if (!FileSystem::is_directory(root_path) && !FileSystem::create_directory(root_path))
+    std::filesystem::path output;
+
+    if (base_path.is_absolute())
+        output = base_path;
+    else
+        output = std::filesystem::absolute("resources") / base_path;
+
+    if (!FileSystem::is_directory(output) && !FileSystem::create_directory(output))
     {
-        LOGGER_ERROR("Failed to initialize resource database directory: {}", root_path.generic_string());
+        LOGGER_ERROR("Failed to initialize resource database directory: {}", output.generic_string());
         throw std::runtime_error("Failed to initialize resource database directory");
     }
 
-    if (!FileSystem::exists(meta_path))
+    return output;
+}
+
+std::filesystem::path validate_and_create_meta_path(const std::filesystem::path& root_path)
+{
+    std::vector<std::filesystem::path> meta_files;
+
+    for (const auto& entry : std::filesystem::directory_iterator(root_path))
     {
-        LOGGER_ERROR("Failed to find database in {}", root_path.generic_string());
-        throw std::runtime_error("Failed to find database in root path");
+        if (entry.is_regular_file() && entry.path().extension() == DATABASE_METADATA_EXTENSION)
+        {
+            meta_files.push_back(entry.path());
+        }
     }
 
-    metadata = load_meta();
+    if (meta_files.empty())
+    {
+        LOGGER_ERROR("Failed to find database metadata file in {}", root_path.generic_string());
+        throw std::runtime_error("Failed to find database metadata file in root path");
+    }
+
+    if (meta_files.size() > 1)
+    {
+        LOGGER_ERROR("Found {} database metadata files in {}, expected exactly one", meta_files.size(), root_path.generic_string());
+        throw std::runtime_error("Multiple database metadata files found in root path");
+    }
+
+    return meta_files[0];
+}
+
+std::unique_ptr<FolderResourceDatabase> FolderResourceDatabase::create(ModuleStack& stack, const std::filesystem::path& base_path)
+{
+    const auto root_path = validate_and_create_path(base_path);
+    const auto meta_path = validate_and_create_meta_path(root_path);
+    const auto metadata = load_meta(meta_path);
+    return std::unique_ptr<FolderResourceDatabase>(new FolderResourceDatabase(stack, metadata.name, root_path, meta_path, metadata));
+}
+
+FolderResourceDatabase::FolderResourceDatabase(
+    ModuleStack& stack,
+    const StringId& name,
+    std::filesystem::path root_path,
+    std::filesystem::path meta_path,
+    DatabaseMetadata metadata
+) : ResourceDatabase(stack, name),
+    root_path(std::move(root_path)),
+    meta_path(std::move(meta_path)),
+    metadata(metadata)
+{
     LOGGER_INFO("Loaded folder database {}, version: {}", metadata.name, metadata.version);
 
     populate();
@@ -86,11 +133,11 @@ std::expected<SourceMetadata, DatabaseError> FolderResourceDatabase::find(const 
     return std::unexpected{DatabaseErrorBit::MissingResource};
 }
 
-DatabaseError FolderResourceDatabase::add(SourceMetadata meta)
+DatabaseError FolderResourceDatabase::add(StringId resource_id, SourceMetadata meta)
 {
-    if (resources.contains(meta.resource_id))
+    if (resources.contains(resource_id))
     {
-        LOGGER_ERROR("Attempted to add resource with handle {} that already exists", meta.resource_id);
+        LOGGER_ERROR("Attempted to add resource with handle {} that already exists", resource_id);
         return DatabaseErrorBit::Conflict;
     }
 
@@ -103,6 +150,7 @@ DatabaseError FolderResourceDatabase::add(SourceMetadata meta)
 
     const auto source_path = std::filesystem::path(meta.source.string);
     const auto metadata_path = root_path / std::format("{}{}", source_path.generic_string(), RESOURCE_METADATA_EXTENSION);
+    meta.full_source_path = STRING_ID((root_path / source_path).generic_string());
 
     const resources::FileSource source(root_path / source_path);
     resources::LoaderFactory::enrich_metadata(meta, source);
@@ -112,7 +160,7 @@ DatabaseError FolderResourceDatabase::add(SourceMetadata meta)
     archiver.dump(metadata_path);
 
     // TODO(#45): thread safety?
-    resources[meta.resource_id] = meta;
+    resources[resource_id] = meta;
 
     return DatabaseErrorBit::Success;
 }
@@ -137,7 +185,7 @@ DatabaseError FolderResourceDatabase::remove(const StringId resource_id)
 }
 
 
-std::unique_ptr<resources::ResourceSource> FolderResourceDatabase::create_source(SourceMetadata meta)
+std::unique_ptr<resources::ResourceSource> FolderResourceDatabase::create_source(StringId, const SourceMetadata meta)
 {
     // TODO: if source starts with 'http://' use network source
     return std::make_unique<resources::FileSource>(root_path / meta.source.string);
@@ -158,6 +206,7 @@ void FolderResourceDatabase::populate()
 
                 // TODO: Add serialization checks
                 auto resource_metadata = SourceMetadata::dearchive(archiver);
+                resource_metadata.full_source_path = STRING_ID((root_path / entry.path()).generic_string());
                 resources[resource_metadata.resource_id] = resource_metadata;
 
                 // TODO: update to new version if necessary
@@ -185,10 +234,11 @@ DatabaseError FolderResourceDatabase::validate()
 
     std::unordered_map<StringId, bool> corresponding_meta;
     corresponding_meta.reserve(resources.size());
-    for (auto& [handle, meta] : resources)
+    for (auto& meta : resources | std::views::values)
         corresponding_meta[meta.source] = false;
 
     std::unordered_set<StringId> missing_metadata;
+    std::unordered_set<StringId> corrupt_meta;
 
     for (auto& entry : std::filesystem::recursive_directory_iterator(root_path))
     {
@@ -204,6 +254,20 @@ DatabaseError FolderResourceDatabase::validate()
                 else
                     missing_metadata.insert(file_as_string_id);
             }
+            else if (entry.path().extension() == RESOURCE_METADATA_EXTENSION)
+            {
+                auto relative_path = std::filesystem::relative(entry.path(), root_path);
+                auto file_as_string_id = STRING_ID(relative_path.generic_string());
+
+                JsonArchive archiver;
+                archiver.read(entry.path());
+                SourceMetadata meta = SourceMetadata::dearchive(archiver);
+                if (validate_metadata(meta) != DatabaseErrorBit::Success)
+                {
+                    LOGGER_WARN("Corrupt metadata: {}", relative_path.generic_string());
+                    corrupt_meta.insert(file_as_string_id);
+                }
+            }
         }
     }
 
@@ -212,6 +276,12 @@ DatabaseError FolderResourceDatabase::validate()
     {
         LOGGER_WARN("Found some stale metadate in database");
         error |= DatabaseErrorBit::StaleMetadata;
+    }
+
+    if (!corrupt_meta.empty())
+    {
+        LOGGER_WARN("Found some corrupt metadate in database");
+        error |= DatabaseErrorBit::CorruptMetadata;
     }
 
     if (!missing_metadata.empty())
@@ -230,6 +300,13 @@ DatabaseError FolderResourceDatabase::validate_metadata(const SourceMetadata& me
     if (!FileSystem::exists(resource_path))
         return DatabaseErrorBit::MissingResource;
 
+    const auto expected_resource_id = STRING_ID(
+        std::format("{}/{}", get_name().string, std::filesystem::path(meta.source.string).replace_extension("").generic_string())
+    );
+
+    if (meta.resource_id != expected_resource_id)
+        return DatabaseErrorBit::CorruptMetadata;
+
     return DatabaseErrorBit::Success;
 }
 
@@ -245,7 +322,7 @@ void FolderResourceDatabase::mend(const DatabaseError error)
     {
         std::unordered_map<StringId, bool> corresponding_meta;
         corresponding_meta.reserve(resources.size());
-        for (auto& [handle, meta] : resources)
+        for (auto& meta : resources | std::views::values)
             corresponding_meta[meta.source] = false;
 
         for (auto& entry : std::filesystem::recursive_directory_iterator(root_path))
@@ -268,14 +345,49 @@ void FolderResourceDatabase::mend(const DatabaseError error)
                     auto [resource_type, source_format] = value.value();
 
                     // TODO: calculate dependencies?
+                    auto resource_id = STRING_ID(
+                        std::format("{}/{}", get_name().string, relative_path.replace_extension("").generic_string())
+                    );
                     SourceMetadata meta{
-                        .resource_id = STRING_ID(relative_path.replace_extension("").generic_string()),
+                        .resource_id = resource_id,
                         .type = resource_type,
                         .source = file_as_string_id,
                         .format = source_format,
                     };
 
-                    add(meta);
+                    add(meta.resource_id, meta);
+                }
+            }
+        }
+
+        metadata.dirty |= ResourceDirtyBits::DataChange;
+    }
+
+    if (error & DatabaseErrorBit::CorruptMetadata)
+    {
+        for (auto& entry : std::filesystem::recursive_directory_iterator(root_path))
+        {
+            // TODO: support links?
+            if (entry.is_regular_file())
+            {
+                if (entry.path().extension() == RESOURCE_METADATA_EXTENSION)
+                {
+                    auto relative_path = std::filesystem::relative(entry.path(), root_path);
+
+                    JsonArchive archiver;
+                    archiver.read(entry.path());
+                    SourceMetadata meta = SourceMetadata::dearchive(archiver);
+                    if (validate_metadata(meta) & DatabaseErrorBit::CorruptMetadata)
+                    {
+                        LOGGER_DEBUG("Mending corrupt metadata: {}", relative_path.generic_string());
+                        remove(meta.resource_id);
+
+                        meta.resource_id = STRING_ID(
+                            std::format("{}/{}", get_name().string, relative_path.replace_extension("").generic_string())
+                        );
+
+                        add(meta.resource_id, meta);
+                    }
                 }
             }
         }
@@ -285,24 +397,24 @@ void FolderResourceDatabase::mend(const DatabaseError error)
 
     // TODO: delete stale metadata
 
-    save_meta();
+    save_meta(meta_path, metadata);
 }
 
 void FolderResourceDatabase::clean_metadata()
 {
     metadata.resource_count = resources.size();
     metadata.dirty = ResourceDirtyBits::Clean;
-    save_meta();
+    save_meta(meta_path, metadata);
 }
 
-void FolderResourceDatabase::save_meta() const
+void FolderResourceDatabase::save_meta(const std::filesystem::path& meta_path, DatabaseMetadata& metadata)
 {
     JsonArchive archiver;
     metadata.archive(archiver);
     archiver.dump(meta_path);
 }
 
-DatabaseMetadata FolderResourceDatabase::load_meta() const
+DatabaseMetadata FolderResourceDatabase::load_meta(const std::filesystem::path& meta_path)
 {
     JsonArchive json_dearchiver;
     json_dearchiver.read(meta_path);

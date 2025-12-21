@@ -25,9 +25,19 @@ PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* data, const size_t length)
     return ::rapidhash(data, length);
 }
 
+PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string_view str)
+{
+    return ::rapidhash(str.data(), str.length());
+}
+
 PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string& str)
 {
     return ::rapidhash(str.c_str(), str.length());
+}
+
+PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* str)
+{
+    return ::rapidhash(str, std::strlen(str));
 }
 
 template <size_t n>

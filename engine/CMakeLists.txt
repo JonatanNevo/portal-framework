@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+include(cmake/portal-engine-helpers.cmake)
+
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS "portal/engine/*.cpp")
 file(GLOB_RECURSE ENGINE_HEADERS CONFIGURE_DEPENDS "portal/engine/*.h")
 
@@ -36,21 +38,17 @@ portal_add_module(engine
             Vulkan|FIND_PACKAGE_ARGS|REQUIRED
             VulkanMemoryAllocator|LINK|GPUOpen::VulkanMemoryAllocator
 )
-
+portal_add_resources(portal-engine
+        resources
+        OUTPUT_NAME
+            engine
+)
 
 if(PORTAL_BUILD_TESTS)
     add_subdirectory(tests)
 
-    add_executable(engine_test MACOSX_BUNDLE main.cpp)
-    target_link_libraries(engine_test portal::engine)
-
-    set_target_properties(engine_test PROPERTIES
-            MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_IDENTIFIER com.portal.engine_test
-            MACOSX_BUNDLE_BUNDLE_NAME "Engine Test"
-            MACOSX_BUNDLE_ICON_FILE resources/portal_icon_64x64.icns
-            MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-            MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+    portal_add_game(engine_test
+            SOURCES main.cpp
     )
 endif ()
 unset(PORTAL_BUILD_TESTS CACHE)
@@ -60,9 +58,7 @@ target_compile_definitions(portal-engine PUBLIC
         VK_ENABLE_BETA_EXTENSIONS
 )
 
-foreach (BUILD_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS "resources/*")
-    file(COPY ${RESOURCES} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE}/resources")
-endforeach ()
-
-portal_install_module(engine)
+portal_install_module(engine
+        FILES
+            cmake/portal-engine-helpers.cmake
+)

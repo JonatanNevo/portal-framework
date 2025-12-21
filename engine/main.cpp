@@ -51,15 +51,11 @@ ApplicationProperties make_application_properties()
     const auto name = settings.get_setting<std::string>("application.name");
     const auto width = settings.get_setting<size_t>("application.window.width");
     const auto height = settings.get_setting<size_t>("application.window.height");
-    const auto resources_path = settings.get_setting<std::filesystem::path>("application.resources-path");
-    const auto scheduler_worker_num = settings.get_setting<int32_t>("application.scheduler-threads");
 
     return ApplicationProperties{
         .name = STRING_ID(name.value()),
         .width = width.value(),
-        .height = height.value(),
-        .resources_path = resources_path.value(),
-        .scheduler_worker_num = scheduler_worker_num.value(),
+        .height = height.value()
     };
 }
 
@@ -73,8 +69,8 @@ std::unique_ptr<Application> portal::create_application(int, char**)
     // TODO: Should not be here
 
     auto& engine_context = engine->get_engine_context();
-    [[maybe_unused]] auto composite = engine_context.get_resource_registry().immediate_load<Composite>(STRING_ID("game/ABeautifulGame"));
-    auto scene = engine_context.get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
+    [[maybe_unused]] auto composite = engine_context.get_resource_registry().immediate_load<Composite>(STRING_ID("resources/game/ABeautifulGame"));
+    auto scene = engine_context.get_resource_registry().get<Scene>(STRING_ID("resources/game/gltf-Scene-Scene"));
     PORTAL_ASSERT(scene.get_state() == ResourceState::Loaded, "Failed to load scene");
 
     // Serialize camera as well

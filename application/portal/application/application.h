@@ -23,10 +23,6 @@ struct ApplicationProperties
 
     bool resizeable = true;
     size_t frames_in_flight = 3;
-
-    //TODO: move to settings
-    std::filesystem::path resources_path;
-    int32_t scheduler_worker_num = 1;
 };
 
 class Application

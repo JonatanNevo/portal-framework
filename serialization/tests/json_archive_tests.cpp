@@ -217,6 +217,16 @@ SCENARIO("JsonArchive can serialize nested objects")
             REQUIRE(json_output.find("\"object_array\"") != std::string::npos);
             REQUIRE(json_output.find("\"object1\"") != std::string::npos);
             REQUIRE(json_output.find("\"object2\"") != std::string::npos);
+
+            THEN("Array of nested objects is deserialized")
+            {
+                JsonArchive read_archive;
+                read_archive.read(ss);
+
+                std::vector<TestArchiveObject> read_object_array;
+                REQUIRE(read_archive.get_property("object_array", read_object_array));
+                REQUIRE_THAT(read_object_array, RangeEquals({obj1, obj2}));
+            }
         }
     }
 }
