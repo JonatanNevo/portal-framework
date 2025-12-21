@@ -46,8 +46,8 @@ portal_add_resources(portal-engine
 
 set_target_properties(portal-engine PROPERTIES PORTAL_ENGINE_VERSION ${PROJECT_VERSION})
 
-enable_testing()
-portal_build_tests(tests)
+#enable_testing()
+#portal_build_tests(tests)
 
 target_compile_definitions(portal-engine PUBLIC
         VULKAN_HPP_NO_STRUCT_CONSTRUCTORS

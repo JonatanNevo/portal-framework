@@ -44,7 +44,7 @@ ApplicationProperties make_application_properties()
 {
     auto& settings = Settings::get();
 
-    const auto name = settings.get_setting<std::string>("application.name");
+    const auto name = settings.get_setting<std::string>("name");
     const auto width = settings.get_setting<size_t>("application.window.width");
     const auto height = settings.get_setting<size_t>("application.window.height");
 

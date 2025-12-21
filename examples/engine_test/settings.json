@@ -1,18 +1,23 @@
 {
+    "name": "Engine Test",
+
     "application": {
         "fullscreen": false,
-        "name": "Engine Test",
-        "resources": [
-            {
-                "path": "resources",
-                "type": "Folder"
-            }
-        ],
         "scheduler-threads": 0,
         "window": {
             "height": 900,
             "width": 1600
         }
+    },
+
+    "engine": {
+        "include_engine_resources": true,
+        "resources": [
+            {
+                "path": "resources",
+                "type": "Folder"
+            }
+        ]
     },
     "log-level": "Debug"
 }
