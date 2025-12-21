@@ -69,8 +69,8 @@ std::unique_ptr<Application> portal::create_application(int, char**)
     // TODO: Should not be here
 
     auto& engine_context = engine->get_engine_context();
-    [[maybe_unused]] auto composite = engine_context.get_resource_registry().immediate_load<Composite>(STRING_ID("resources/game/ABeautifulGame"));
-    auto scene = engine_context.get_resource_registry().get<Scene>(STRING_ID("resources/game/gltf-Scene-Scene"));
+    [[maybe_unused]] auto composite = engine_context.get_resource_registry().immediate_load<Composite>(STRING_ID("game/ABeautifulGame"));
+    auto scene = engine_context.get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
     PORTAL_ASSERT(scene.get_state() == ResourceState::Loaded, "Failed to load scene");
 
     // Serialize camera as well

@@ -62,11 +62,6 @@ void TransformHierarchySystem::on_component_added(const Entity entity, Transform
     entity.get_registry().emplace_or_replace<TransformDirtyTag>(entity);
 }
 
-void TransformHierarchySystem::on_component_removed(const Entity entity, TransformComponent&)
-{
-    entity.get_registry().emplace_or_replace<TransformDirtyTag>(entity);
-}
-
 void TransformHierarchySystem::on_component_changed(const Entity entity, TransformComponent&)
 {
     entity.get_registry().emplace_or_replace<TransformDirtyTag>(entity);

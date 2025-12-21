@@ -51,7 +51,7 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     const WindowProperties window_properties{
         .title = properties.name,
         .extent = {properties.width, properties.height},
-        .icon = icon_ref,
+        .icon = icon_ref.get(),
         .requested_frames_in_flight = properties.frames_in_flight,
     };
     window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, input});
@@ -89,7 +89,7 @@ Engine::~Engine()
     vulkan_context->get_device().wait_idle();
     modules.clean();
 
-    std::ignore = vulkan_context.release();
+    vulkan_context.reset();
     glfwTerminate();
 }
 

@@ -20,6 +20,8 @@ public:
         : BaseModule(name), dependencies(create_dependencies(stack))
     {}
 
+    ~TaggedModule() override = default;
+
     [[nodiscard]] std::vector<BaseModule*> get_dependencies() const override
     {
         if constexpr (sizeof...(Dependencies) == 0)

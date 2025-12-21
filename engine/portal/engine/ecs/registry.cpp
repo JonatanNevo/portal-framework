@@ -30,7 +30,8 @@ Registry::~Registry()
 {
     for (const auto entity : view<entt::entity>())
     {
-        destroy_entity(entity, true);
+        if (registry.valid(entity))
+            destroy_entity(entity, true);
     }
 
     registry.clear();

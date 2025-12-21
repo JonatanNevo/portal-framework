@@ -16,7 +16,7 @@ int main(int argc, char** argv)
     // TODO: fetch default log levels from environment?
     Log::init({.default_log_level = Log::LogLevel::Trace});
 
-    const auto application = create_application(argc, argv);
+    auto application = create_application(argc, argv);
     try
     {
         application->run();
@@ -29,6 +29,7 @@ int main(int argc, char** argv)
     {
         LOG_FATAL("Unhandled unknown exception");
     }
+    application.reset();
 
     Log::shutdown();
     return 0;
