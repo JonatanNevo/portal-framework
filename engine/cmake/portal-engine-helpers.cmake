@@ -90,10 +90,64 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_ADDITIONAL_RESOURCES "${EXISTING_ADDITIONAL_RESOURCES}")
 endfunction()
 
+function(portal_read_settings TARGET_NAME)
+    get_target_property(SETTINGS_PATH ${TARGET_NAME} PORTAL_SETTINGS_PATH)
+
+    if (NOT EXISTS ${SETTINGS_PATH})
+        message(FATAL_ERROR "Failed to find settings in ${SETTINGS_PATH}")
+    endif ()
+
+    cmake_path(GET SETTINGS_PATH FILENAME SETTINGS_FILENAME)
+    set(SETTINGS_OUTPUT_PATH "$<TARGET_FILE_DIR:${TARGET_NAME}>/${SETTINGS_FILENAME}")
+
+    set(SETTINGS_COPY_TARGET_NAME "${TARGET_NAME}_copy_settings")
+    add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${SETTINGS_FILENAME}
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${SETTINGS_PATH}"
+            "${SETTINGS_OUTPUT_PATH}"
+            DEPENDS ${SETTINGS_PATH}
+            COMMENT "Copying settings file for ${TARGET_NAME}: ${SETTINGS_FILENAME}"
+            VERBATIM
+    )
+    add_custom_target(${SETTINGS_COPY_TARGET_NAME} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${SETTINGS_FILENAME})
+    add_dependencies(${TARGET_NAME} ${SETTINGS_COPY_TARGET_NAME})
+
+    file(READ ${SETTINGS_PATH} SETTINGS_CONTENT)
+    string(JSON RESOURCES_LIST_LENGTH LENGTH ${SETTINGS_CONTENT} application resources)
+    if(RESOURCES_LIST_LENGTH GREATER 0)
+        math(EXPR RESOURCES_LIST_LAST_INDEX "${RESOURCES_LIST_LENGTH} - 1")
+        foreach(IDX RANGE ${RESOURCES_LIST_LAST_INDEX})
+            string(JSON RESOURCE_OBJECT GET "${SETTINGS_CONTENT}" application resources ${IDX})
+            string(JSON RESOURCE_TYPE GET ${RESOURCE_OBJECT} type)
+            string(JSON RESOURCE_PATH GET ${RESOURCE_OBJECT} path)
+
+            cmake_path(IS_RELATIVE RESOURCE_PATH IS_RELATIVE_VAR)
+
+            if (IS_RELATIVE_VAR)
+                file(GLOB_RECURSE RESOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${RESOURCE_PATH}/*")
+                set(RESOURCE_TARGET_NAME "${TARGET_NAME}_copy_settings_${RESOURCE_PATH}")
+
+                add_custom_target(${RESOURCE_TARGET_NAME}
+                        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                        "${CMAKE_CURRENT_SOURCE_DIR}/${RESOURCE_PATH}"
+                        "$<TARGET_FILE_DIR:${TARGET_NAME}>/resources/${RESOURCE_PATH}"
+                        DEPENDS ${RESOURCE_FILES} ${SETTINGS_PATH}
+                        COMMENT "Copying resources form ${TARGET_NAME} settings: ${RESOURCE_PATH} -> resources/${ARG_OUTPUT_NAME}"
+                        VERBATIM
+                )
+
+                add_dependencies(${TARGET_NAME} ${RESOURCE_TARGET_NAME})
+            else ()
+                message(STATUS "Found absolute resource path, skipping... ${RESOURCE_PATH}")
+            endif ()
+        endforeach ()
+    endif()
+endfunction()
 
 function(portal_add_game TARGET_NAME)
     set(options "")
-    set(oneValueArgs "")
+    set(oneValueArgs SETTINGS_FILE)
     set(multiValueArgs
             SOURCES
             RESOURCE_PATHS
@@ -129,7 +183,16 @@ function(portal_add_game TARGET_NAME)
         portal_add_resources(${TARGET_NAME} ${ARG_RESOURCE_PATHS})
     endforeach ()
 
-    # TODO: add install + package targets
+    if (NOT ARG_SETTINGS_FILE)
+        set(ARG_SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/settings.json")
+    endif ()
 
-    # TODO: create settings.json
+    if(NOT EXISTS ${ARG_SETTINGS_FILE})
+        message(FATAL_ERROR "Failed to find settings file ${ARG_SETTINGS_FILE} for target ${TARGET_NAME}")
+    endif ()
+
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_SETTINGS_PATH ${ARG_SETTINGS_FILE})
+
+    portal_read_settings(${TARGET_NAME})
+    # TODO: add install + package targets
 endfunction()

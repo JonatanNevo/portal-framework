@@ -40,7 +40,7 @@ Settings& Settings::get()
     return *g_settings;
 }
 
-Settings::Settings(const SettingsArchiveType type, const std::filesystem::path& path) : type(type), settings_path(path)
+Settings::Settings(const SettingsArchiveType type, const std::filesystem::path& path) : type(type), settings_path(std::filesystem::absolute(path))
 {
     switch (type)
     {
