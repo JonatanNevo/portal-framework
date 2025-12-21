@@ -100,29 +100,4 @@ foreach (BUILD_TYPE ${CMAKE_CONFIGURATION_TYPES})
     file(COPY ${RESOURCES} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE}/resources")
 endforeach ()
 
-install(
-        TARGETS portal-engine
-        EXPORT portal-engine-targets
-        FILE_SET HEADERS
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-version.cmake"
-        COMPATIBILITY ExactVersion
-)
-
-install(
-        EXPORT portal-engine-targets
-        FILE portal-engine-config.cmake
-        NAMESPACE portal::
-        DESTINATION share/portal-engine
-        EXPORT_PACKAGE_DEPENDENCIES
-)
-
-install(
-        FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-engine-version.cmake"
-        DESTINATION share/portal-engine
-)
+portal_install_target(portal-engine)

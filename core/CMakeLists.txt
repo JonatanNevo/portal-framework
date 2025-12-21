@@ -18,6 +18,9 @@ option(PORTAL_DEBUG_ALLOCATIONS "Enable debug allocations (for debug only)" OFF)
 option(PORTAL_PROFILE "Enable profiling with Tracy" OFF)
 option(PORTAL_BUILD_DIST "Build the distribution package" OFF)
 
+include(cmake/portal-test-helpers.cmake)
+include(cmake/portal-install-helpers.cmake)
+
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
 file(GLOB_RECURSE CORE_HEADERS CONFIGURE_DEPENDS "portal/core/*.h")
 
@@ -171,35 +174,11 @@ endif ()
 configure_file("portal/core/config.h.cmake" "portal/core/config.h")
 target_precompile_headers(portal-core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/portal/core/config.h)
 
-if (PORTAL_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif ()
-unset(PORTAL_BUILD_TESTS CACHE)
+enable_testing()
+portal_build_tests(tests)
 
-install(
-    TARGETS portal-core
-    EXPORT portal-core-targets
-    FILE_SET HEADERS
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/portal-core-version.cmake"
-    COMPATIBILITY ExactVersion
-)
-
-install(
-    EXPORT portal-core-targets
-    FILE portal-core-config.cmake
-    NAMESPACE portal::
-    DESTINATION share/portal-core
-    EXPORT_PACKAGE_DEPENDENCIES
-)
-
-install(
-    FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-core-version.cmake"
-    DESTINATION share/portal-core
+portal_install_target(portal-core
+        FILES
+        cmake/portal-test-helpers.cmake
+        cmake/portal-install-helpers.cmake
 )

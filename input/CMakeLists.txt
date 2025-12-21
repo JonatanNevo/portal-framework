@@ -51,29 +51,4 @@ else()
     target_compile_options(portal-input PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
-install(
-        TARGETS portal-input
-        EXPORT portal-input-targets
-        FILE_SET HEADERS
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-input-version.cmake"
-        COMPATIBILITY ExactVersion
-)
-
-install(
-        EXPORT portal-input-targets
-        FILE portal-input-config.cmake
-        NAMESPACE portal::
-        DESTINATION share/portal-input
-        EXPORT_PACKAGE_DEPENDENCIES
-)
-
-install(
-        FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-input-version.cmake"
-        DESTINATION share/portal-input
-)
+portal_install_target(portal-input)

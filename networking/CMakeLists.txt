@@ -47,29 +47,4 @@ else()
     target_compile_options(portal-networking PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
-install(
-        TARGETS portal-networking
-        EXPORT portal-networking-targets
-        FILE_SET HEADERS
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-version.cmake"
-        COMPATIBILITY ExactVersion
-)
-
-install(
-        EXPORT portal-networking-targets
-        FILE portal-networking-config.cmake
-        NAMESPACE portal::
-        DESTINATION share/portal-networking
-        EXPORT_PACKAGE_DEPENDENCIES
-)
-
-install(
-        FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-networking-version.cmake"
-        DESTINATION share/portal-networking
-)
+portal_install_target(portal-networking)
