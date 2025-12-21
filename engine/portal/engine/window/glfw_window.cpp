@@ -315,7 +315,7 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
     }
 
     // Setup icon
-    if (properties.icon.is_valid())
+    if (properties.icon)
     {
         GLFWimage icon;
         icon.pixels = properties.icon->get_buffer().as<unsigned char*>();

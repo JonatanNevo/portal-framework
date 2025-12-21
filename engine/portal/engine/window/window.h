@@ -49,7 +49,7 @@ struct WindowProperties
 {
     StringId title = STRING_ID("Portal");
     WindowExtent extent{1280, 720};
-    ResourceReference<renderer::Texture> icon;
+    renderer::Texture* icon;
 
     WindowMode mode = WindowMode::Default;
     bool resizeable = true;

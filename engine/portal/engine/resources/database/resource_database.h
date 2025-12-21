@@ -97,6 +97,7 @@ class ResourceDatabase : public Module<>
 {
 public:
     explicit ResourceDatabase(ModuleStack& stack, const StringId& name) : Module<>(stack, name) {}
+    ~ResourceDatabase() override = default;
 
     virtual std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) = 0;
     virtual DatabaseError add(StringId resource_id, SourceMetadata meta) = 0;

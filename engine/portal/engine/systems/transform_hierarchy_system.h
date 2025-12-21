@@ -17,7 +17,6 @@ public:
     static void execute(ecs::Registry& registry);
 
     static void on_component_added(Entity entity, TransformComponent& transform);
-    static void on_component_removed(Entity entity, TransformComponent& transform);
     static void on_component_changed(Entity entity, TransformComponent& transform);
 
     [[nodiscard]] static StringId get_name() { return STRING_ID("Transform Hierarchy"); };

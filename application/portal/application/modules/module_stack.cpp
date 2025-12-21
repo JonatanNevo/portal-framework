@@ -24,12 +24,10 @@ ModuleStack::~ModuleStack()
 void ModuleStack::clean()
 {
     // delete modules in reverse order of dependency
-    for (auto& module : modules | std::views::reverse)
-    {
-        std::ignore = module.release();
-    }
+    std::ranges::reverse(modules);
     modules.clear();
 }
+
 
 void ModuleStack::build_dependency_graph()
 {
