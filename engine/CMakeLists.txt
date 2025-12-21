@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
 
-# Experimental packaging tools
-set(CMAKE_EXPERIMENTAL_EXPORT_PACKAGE_DEPENDENCIES 1942b4fa-b2c5-4546-9385-83f254070067)
-
 file(READ "version.txt" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
 project(portal-engine VERSION ${PROJECT_VERSION})
@@ -17,56 +14,29 @@ file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS "portal/engine/*.cpp")
 file(GLOB_RECURSE ENGINE_HEADERS CONFIGURE_DEPENDS "portal/engine/*.h")
 
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
+option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF)
 
-find_package(Vulkan REQUIRED)
-find_package(VulkanMemoryAllocator CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
-find_package(fastgltf CONFIG REQUIRED)
-find_package(slang CONFIG REQUIRED)
-find_package(glaze CONFIG REQUIRED)
-find_package(EnTT CONFIG REQUIRED)
+portal_add_module(engine
+        SOURCES ${ENGINE_SOURCES}
+        HEADERS ${ENGINE_HEADERS}
 
-option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
-if(PORTAL_FIND_PACKAGE)
-    find_package(portal-input CONFIG REQUIRED)
-#    find_package(portal-networking CONFIG REQUIRED)
-    find_package(portal-serialization CONFIG REQUIRED)
-endif ()
-unset(PORTAL_FIND_PACKAGE CACHE)
+        PORTAL_DEPENDENCIES
+            input
+            networking
+            serialization
 
+        DEPENDENCIES
+            imgui
+            fastgltf
+            slang
+            glaze
+            EnTT
 
-add_library(portal-engine STATIC ${ENGINE_SOURCES})
-target_sources(portal-engine PUBLIC
-        FILE_SET HEADERS
-        BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
-        FILES ${ENGINE_HEADERS}
+        COMPLEX_DEPENDENCIES
+            Vulkan|FIND_PACKAGE_ARGS|REQUIRED
+            VulkanMemoryAllocator|LINK|GPUOpen::VulkanMemoryAllocator
 )
 
-set_target_properties(portal-engine PROPERTIES EXPORT_NAME engine)
-
-add_library(portal::engine ALIAS portal-engine)
-
-target_link_libraries(portal-engine
-        PUBLIC
-        portal::core
-        portal::application
-        portal::input
-#        portal::networking
-        portal::serialization
-        Vulkan::Vulkan
-        GPUOpen::VulkanMemoryAllocator
-        imgui::imgui
-        fastgltf::fastgltf
-        slang::slang
-        glaze::glaze
-        EnTT::EnTT
-)
-
-if(MSVC)
-    target_compile_options(portal-engine PRIVATE /W4 /WX)
-else()
-    target_compile_options(portal-engine PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
-endif()
 
 if(PORTAL_BUILD_TESTS)
     add_subdirectory(tests)
@@ -90,14 +60,9 @@ target_compile_definitions(portal-engine PUBLIC
         VK_ENABLE_BETA_EXTENSIONS
 )
 
-find_program(SLANG_COMPILER "slangc" REQUIRED)
-
-add_custom_target(compile-shaders ALL DEPENDS ${COMPILED_SHADERS})
-add_dependencies(portal-engine compile-shaders)
-
 foreach (BUILD_TYPE ${CMAKE_CONFIGURATION_TYPES})
     file(GLOB_RECURSE RESOURCES CONFIGURE_DEPENDS "resources/*")
     file(COPY ${RESOURCES} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE}/resources")
 endforeach ()
 
-portal_install_target(portal-engine)
+portal_install_module(engine)

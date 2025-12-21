@@ -1,4 +1,9 @@
-function(portal_install_target TARGET_NAME)
+function(portal_install_module MODULE_NAME)
+    # Experimental packaging tools
+    set(CMAKE_EXPERIMENTAL_EXPORT_PACKAGE_DEPENDENCIES 1942b4fa-b2c5-4546-9385-83f254070067)
+
+    set(TARGET_NAME portal-${MODULE_NAME})
+
     set(options "")
     set(oneValueArgs COMPONENT)
     set(multiValueArgs FILES)
