@@ -44,14 +44,10 @@ portal_add_resources(portal-engine
             engine
 )
 
-if(PORTAL_BUILD_TESTS)
-    add_subdirectory(tests)
+set_target_properties(portal-engine PROPERTIES PORTAL_ENGINE_VERSION ${PROJECT_VERSION})
 
-    portal_add_game(engine_test
-            SOURCES main.cpp
-    )
-endif ()
-unset(PORTAL_BUILD_TESTS CACHE)
+enable_testing()
+portal_build_tests(tests)
 
 target_compile_definitions(portal-engine PUBLIC
         VULKAN_HPP_NO_STRUCT_CONSTRUCTORS

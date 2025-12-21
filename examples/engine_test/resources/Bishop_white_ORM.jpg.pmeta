@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "game/Bishop_white_ORM",
+    "source": "Bishop_white_ORM.jpg",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 2048,
+        "width": 2048
+    },
+    "type": "Texture"
+}

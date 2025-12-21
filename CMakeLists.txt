@@ -8,10 +8,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+enable_testing()
+
 add_subdirectory(core)
 add_subdirectory(networking)
 add_subdirectory(application)
 add_subdirectory(input)
 add_subdirectory(serialization)
 add_subdirectory(engine)
-enable_testing()
+
+add_subdirectory(examples/engine_test)

@@ -37,6 +37,7 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     auto& system_orchestrator = modules.add_module<SystemOrchestrator>();
 
     auto& resource_database = modules.add_module<ResourceDatabaseFacade>();
+    resource_database.register_database({DatabaseType::Folder, "engine"});
     for (auto& description : settings.get_setting<std::vector<DatabaseDescription>>("application.resources").value_or({}))
     {
         resource_database.register_database(description);

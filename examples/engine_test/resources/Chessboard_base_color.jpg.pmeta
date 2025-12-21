@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "game/Chessboard_base_color",
+    "source": "Chessboard_base_color.jpg",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 2048,
+        "width": 2048
+    },
+    "type": "Texture"
+}
