@@ -46,29 +46,4 @@ else()
     target_compile_options(portal-application PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
-install(
-        TARGETS portal-application
-        EXPORT portal-application-targets
-        FILE_SET HEADERS
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-application-version.cmake"
-        COMPATIBILITY ExactVersion
-)
-
-install(
-        EXPORT portal-application-targets
-        FILE portal-application-config.cmake
-        NAMESPACE portal::
-        DESTINATION share/portal-application
-        EXPORT_PACKAGE_DEPENDENCIES
-)
-
-install(
-        FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-application-version.cmake"
-        DESTINATION share/portal-application
-)
+portal_install_target(portal-application)

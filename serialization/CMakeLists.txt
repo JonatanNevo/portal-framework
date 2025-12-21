@@ -48,35 +48,7 @@ else()
     target_compile_options(portal-serialization PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
 endif()
 
-if (PORTAL_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif ()
-unset(PORTAL_BUILD_TESTS CACHE)
+enable_testing()
+portal_build_tests(tests)
 
-install(
-        TARGETS portal-serialization
-        EXPORT portal-serialization-targets
-        FILE_SET HEADERS
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-version.cmake"
-        COMPATIBILITY ExactVersion
-)
-
-install(
-        EXPORT portal-serialization-targets
-        FILE portal-serialization-config.cmake
-        NAMESPACE portal::
-        DESTINATION share/portal-serialization
-        EXPORT_PACKAGE_DEPENDENCIES
-)
-
-install(
-        FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/portal-serialization-version.cmake"
-        DESTINATION share/portal-serialization
-)
+portal_install_target(portal-serialization)
