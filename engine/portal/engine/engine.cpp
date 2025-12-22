@@ -93,6 +93,8 @@ Engine::~Engine()
 {
     LOGGER_INFO("Shutting down Engine");
     vulkan_context->get_device().wait_idle();
+    engine_context->get_renderer().cleanup();
+    ecs_registry.clear();
     modules.clean();
 
     vulkan_context.reset();

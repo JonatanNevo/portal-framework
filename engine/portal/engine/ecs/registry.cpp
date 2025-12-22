@@ -28,13 +28,7 @@ Registry::Registry()
 
 Registry::~Registry()
 {
-    for (const auto entity : view<entt::entity>())
-    {
-        if (registry.valid(entity))
-            destroy_entity(entity, true);
-    }
-
-    registry.clear();
+    clear();
 }
 
 Entity Registry::entity_from_id(const entt::entity id)
@@ -114,5 +108,16 @@ void Registry::destroy_entity(const Entity entity, const bool exclude_children)
 
     // TODO: destroy components with custom deleter callback to ensure order
     registry.destroy(entity);
+}
+
+void Registry::clear()
+{
+    for (const auto entity : view<entt::entity>())
+    {
+        if (registry.valid(entity))
+            destroy_entity(entity, true);
+    }
+
+    registry.clear();
 }
 } // portal

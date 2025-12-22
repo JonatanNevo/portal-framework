@@ -24,7 +24,8 @@ ModuleStack::~ModuleStack()
 void ModuleStack::clean()
 {
     // delete modules in reverse order of dependency
-    std::ranges::reverse(modules);
+    for (auto& module : modules | std::views::reverse)
+        module.reset();
     modules.clear();
 }
 

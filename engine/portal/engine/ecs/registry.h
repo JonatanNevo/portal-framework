@@ -27,6 +27,8 @@ public:
 
     void destroy_entity(Entity entity, bool exclude_children = false);
 
+    void clear();
+
     template <typename C>
     void clear()
     {
