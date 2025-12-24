@@ -28,10 +28,56 @@ namespace jobs
 
 namespace portal::ecs
 {
+/**
+ * @brief CRTP base class for ECS systems that operate on entities with specific components.
+ *
+ * System provides a template-based framework for defining game logic that operates on
+ * entities possessing certain components. It uses the Curiously Recurring Template Pattern
+ * (CRTP) to achieve static polymorphism without virtual dispatch overhead.
+ *
+ * The class template accepts a Derived type (the system implementation) and a pack of
+ * ComponentOwnership wrappers (Owns<T> or Views<T>) that specify which components the
+ * system operates on and their access semantics.
+ *
+ * @tparam Derived The derived system class (CRTP parameter)
+ * @tparam Components Pack of Owns<T> or Views<T> wrappers specifying component ownership
+ *
+ * @par Component Ownership:
+ * - **Owns\<T\>**: EnTT packs these components for cache-efficient iteration
+ * - **Views\<T\>**: Components accessed but not layout-optimized
+ *
+ * @par Execution Policies:
+ * - **Sequential**: `void execute(Registry&)` or `void execute(FrameContext&, Registry&)`
+ * - **Parallel**: `Job<> execute(Registry&, Scheduler&)` or variants with FrameContext/Counter
+ *
+ * @par Example - Sequential System:
+ * @code
+ * class MySystem : public System<MySystem, Owns<TransformComponent>> {
+ * public:
+ *     MySystem() : System(ExecutionPolicy::Sequential) {}
+ *     static StringId get_name() { return STRING_ID("MySystem"); }
+ *
+ *     void execute(Registry& registry) {
+ *         for (auto [entity, transform] : group(registry).each()) {
+ *             // Process entities
+ *         }
+ *     }
+ * };
+ * @endcode
+ *
+ * @see SystemBase for execution policy management
+ * @see Owns for owned component wrapper
+ * @see Views for viewed component wrapper
+ */
 template <typename Derived, ComponentOwnership... Components>
 class System : public SystemBase
 {
 public:
+    /**
+     * @brief Constructs a system with the specified execution policy.
+     *
+     * @param policy The execution policy (Sequential or Parallel). Defaults to Sequential.
+     */
     explicit System(
         const ExecutionPolicy policy = ExecutionPolicy::Sequential
     ) : SystemBase(policy)
@@ -42,6 +88,16 @@ public:
         );
     }
 
+    /**
+     * @brief Registers the system with the registry.
+     *
+     * Sets up the system's EnTT group for optimized component iteration and registers
+     * component lifecycle callbacks if the derived class implements them.
+     *
+     * @param registry The registry to register with
+     *
+     * @note Called automatically by Registry::register_system().
+     */
     void register_to(Registry& registry)
     {
         register_component_callbacks(registry);
@@ -49,6 +105,20 @@ public:
         group(registry);
     }
 
+    /**
+     * @brief Internal execution dispatcher (called by system orchestrator).
+     *
+     * Dispatches to the derived system's execute() method based on the current execution
+     * policy and detected method signatures. Handles both sequential and parallel execution,
+     * with automatic wrapping of sequential systems as jobs when running in parallel mode.
+     *
+     * @param context Frame timing and resource context
+     * @param registry The ECS registry
+     * @param scheduler Job scheduler for parallel execution
+     * @param counter Optional job counter for synchronization
+     *
+     * @note This is an internal method called by the system orchestrator. do not call it yourself.
+     */
     void _execute(FrameContext& context, Registry& registry, jobs::Scheduler& scheduler, jobs::Counter* counter)
     {
         // TODO: move the policy to compile time argument for performance
@@ -81,9 +151,21 @@ public:
                             JobPriority::Normal,
                             counter
                         );
-                    else
+                    else if constexpr (ecs::HasExecuteJobCounterWithContext<Derived>)
+                        scheduler.dispatch_job<void>(
+                            derived().execute(context, registry, scheduler, counter),
+                            JobPriority::Normal,
+                            counter
+                        );
+                    else if constexpr (ecs::HasExecuteJob<Derived>)
                         scheduler.dispatch_job<void>(
                             derived().execute(registry, scheduler),
+                            JobPriority::Normal,
+                            counter
+                        );
+                    else
+                        scheduler.dispatch_job<void>(
+                            derived().execute(registry, scheduler, counter),
                             JobPriority::Normal,
                             counter
                         );
@@ -119,6 +201,39 @@ public:
     }
 
 protected:
+    /**
+     * @brief Creates an EnTT group for iterating entities with the system's components.
+     *
+     * Returns a cached EnTT group that provides cache-friendly iteration over entities
+     * possessing all components specified in the system's template parameters. The group
+     * is created based on the component ownership semantics (Owns vs Views).
+     *
+     * Components wrapped in Owns<T> are treated as owned (packed together for cache locality),
+     * while components wrapped in Views<T> are treated as viewed (accessed via indirection).
+     *
+     * @param registry The registry to create the group from
+     * @return EnTT group object for iteration
+     *
+     * @par Example:
+     * @code
+     * class MySystem : public System<
+     *     MySystem,
+     *     Owns<TransformComponent>,
+     *     Views<RenderComponent>
+     * > {
+     *     void execute(Registry& registry) {
+     *         // group() returns entities with both components
+     *         for (auto [entity, transform, render] : group(registry).each()) {
+     *             // TransformComponent access is cache-optimized
+     *             // RenderComponent access may be slower
+     *         }
+     *     }
+     * };
+     * @endcode
+     *
+     * @note The group is cached by EnTT - subsequent calls return the same optimized view.
+     * @note This method is called automatically by register_to() to set up storage optimization.
+     */
     static auto group(Registry& registry)
     {
         // TODO: decorate with custom `group` class that transforms `entt::entity` to `Entity` class
