@@ -1,0 +1,14 @@
+.. _exhale_function_flags_8h_1a2195926b3074461655c9bf27b3e39ff9:
+
+Template Function operator&(BitType, const portal::Flags<BitType>&)
+===================================================================
+
+- Defined in :ref:`file_portal_core_flags.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: operator&(BitType, const portal::Flags<BitType>&)
+   :project: portal core

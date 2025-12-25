@@ -1,0 +1,1876 @@
+
+Full API
+--------
+
+Namespaces
+**********
+
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_fastgltf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__ecs.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__jobs.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__renderer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__renderer__image.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__renderer__shader_reflection.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__renderer__utils.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__renderer__vulkan.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__renderer__vulkan__allocation.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__renderer__vulkan__utils.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__resources.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__resources__utils.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__scene.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__utils.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_std.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_std__literals.rst
+
+Classes and Structs
+*******************
+
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1CallbackConsumers.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1CameraComponent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1CompositeMetadata.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1DatabaseDescription.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1DatabaseMetadata.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1ecs_1_1Owns.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1ecs_1_1System_1_1group__caller.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1ecs_1_1System_1_1group__caller_3_01type__list_3_01Owned_8_8_8_01_4_00_01type__list_3_01Viewed_8_8_8_01_4_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1ecs_1_1System_1_1is__owns__wrapper.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1ecs_1_1System_1_1is__views__wrapper.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1ecs_1_1Views.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1EmptyMeta.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1FlagTraits_3_01portal_1_1renderer_1_1SurfaceTransformBits_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1FlagTraits_3_01ResourceDirtyBits_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1InputComponent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1MainCameraTag.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1MaterialMetadata.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1NameComponent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1PlayerTag.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1RelationshipComponent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1AttachmentProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1AttachmentTextureProperty.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1CompiledShader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1DescriptorInput.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1DescriptorSetManagerProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1DriverVersion.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1FrameRenderingContext.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1FrameResources.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1image_1_1ClearValue.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1image_1_1Properties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1image_1_1SubresourceRange.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1ImageViewProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1MaterialProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1PipelineProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1PipelineStatistics.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1RenderObject.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1RenderTargetProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1SamplerProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1shader__reflection_1_1BufferDescriptor.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1shader__reflection_1_1ImageSamplerDescriptor.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1shader__reflection_1_1PushConstantsRange.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1shader__reflection_1_1ShaderDescriptorSet.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1shader__reflection_1_1ShaderResourceDeclaration.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1shader__reflection_1_1StageInfo.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1shader__reflection_1_1Uniform.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1ShaderCompiler_1_1CompileRequest.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1ShaderDefine.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1ShaderReflection.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1StorageBufferProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1SurfaceCapabilities.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1SurfaceProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1TextureProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1Bounds.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1BufferBuilder.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1BuilderBase.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1DescriptorAllocator_1_1PoolSizeRatio.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1DescriptorWriter.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1GPUCameraData.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1GPUDrawPushConstants.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1GPUMeshBuffers.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1GPUSceneData.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1ImageBuilder.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1SwapchainImageData.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1Vertex.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1VulkanDescriptorSetManager_1_1WriteDescriptor.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1VulkanDevice_1_1ImmediateCommandBuffer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1VulkanImageInfo.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1VulkanMaterial_1_1UniformPointer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1renderer_1_1vulkan_1_1VulkanPhysicalDevice_1_1QueueFamilyIndices.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1Bounds.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1MaterialDetails.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1MeshData.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1MeshGeometryData.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1MeshGeometryData_1_1Submesh.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1MeshSceneComponent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1NodeDescription.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1SceneDescription.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1TransformSceneComponent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1resources_1_1Vertex.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1SceneTag.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1SourceMetadata.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1SpeedComponent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1StaticMeshComponent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1TextureMetadata.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1TransformDirtyTag.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1WindowExtent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1WindowProperties.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1hash_3_01portal_1_1ResourceType_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1BaseCameraController.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1BaseCameraSystem.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1BasePlayerInputSystem.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ChildIterator.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ChildRange.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Composite.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1DeletionQueue.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ecs_1_1Registry.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ecs_1_1System.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ecs_1_1SystemBase.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1EditorGuiSystem.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1EditorModule.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Engine.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1EngineContext.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Entity.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1FolderResourceDatabase.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1GlfwWindow.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ImGuiModule.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1MeshGeometry.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1RecursiveChildIterator.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1RecursiveChildRange.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ReferenceManager.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Renderer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1BufferDescriptor.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1DescriptorSetManager.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1Device.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1Image.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1ImageView.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1Material.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1PhysicalDevice.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1Pipeline.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1Queue.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1RendererResource.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1RenderTarget.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1Sampler.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1Shader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1ShaderCompiler.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1ShaderVariant.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1StorageBuffer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1StorageBufferSet.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1Surface.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1Texture.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1UniformBuffer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1UniformBufferSet.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1AllocatedBuffer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1allocation_1_1Allocated.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1DebugMessenger.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1DescriptorAllocator.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1DescriptorLayoutBuilder.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1ImageAllocation.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1PipelineBuilder.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanContext.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanDescriptorSetManager.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanDevice.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanImage.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanInstance.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanMaterial.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanPhysicalDevice.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanPipeline.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanQueue.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanRenderTarget.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanResource.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanSampler.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanShader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanShaderVariant.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanStorageBuffer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanStorageBufferSet.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanSurface.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanSwapchain.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanTexture.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanUniformBuffer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1renderer_1_1vulkan_1_1VulkanUniformBufferSet.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1RendererContext.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Resource.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ResourceDatabase.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ResourceDatabaseFacade.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ResourceDatabaseFactory.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ResourceReference.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ResourceRegistry.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1FileSource.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1GltfLoader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1LoaderFactory.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1MaterialLoader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1MemorySource.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1MeshLoader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1NodeComponentVisitor.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1ResourceLoader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1ResourceSource.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1SceneLoader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1ShaderLoader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1StubLoader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1resources_1_1TextureLoader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Scene.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1SceneRenderingSystem.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1SchedulerModule.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Settings.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1SystemOrchestrator.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1TransformComponent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1TransformHierarchySystem.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Window.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1WindowCloseEvent.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1WindowEventConsumer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1WindowResizeEvent.rst
+
+Enums
+*****
+
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a5ac6a811902b84b554ce4dc4fd8b5116.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a96d8722b27a683a0f71b01b01cee898f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1ecs_1a3ea1224d9e73100f3d89eac9c7d1135a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1acebf2e44b9031d5e9e6527c0616d3a5a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a67df53679dd938679947fb11f2a96d19.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a8b097b4b41c1520384d2d913cbf6a844.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a7af6e64229290818773393bbfef753f1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a7a5668f11eed304e22d3c5027c0d7727.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1aeede409e82b3c5611718c0e7b6dadf86.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1_1image_1ae4b084160a276d66028756e0301d12fc.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1af707114814eaa53fa3c534e68ce6740e.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a2cb98ea9bd9ed7b828a4fdefa5885ba7.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a95f39cf0756e4685bc5bdafcb73709b1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a1340963045cf611b8839c45ecb812a42.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a1fc7527728776c954b20a555c2e5411a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1ab35f6ca7d3c62469c943b99832412354.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a0ed829eac317ee66f304b1aa83b20604.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1afbd8e953ffc796d7a5f7b528135341c0.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1ad6c5e8fbde7ebe0d569613e30a6af391.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a1a2f2e3412b1a773aa7e4d0bc82a597a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1a3d5889fac07c57f353908859d7401133.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1renderer_1af7260022a6f41dabbe62f00ee47842b7.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1afd8e25e6510075774ccb753477fa8cc3.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1resources_1a46a31d6524fdb309d48d67f99cec8e82.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a5622f1bfcd3923ba97484d6b1cea6d1a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a218454f1bcc10da45db3f7facd1557cd.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1acbbc8f2595852515bd506236374045d0.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a4b0c68150686cb05c5e104bd8f8babbd.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a38fc382309367c2c53aa4564c2c32527.rst
+
+Functions
+*********
+
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a59e0af272db547a4ac32a51ea5cec843.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a07c9f868e92eebcc6ef709f72e0fb426.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a30283797d954ad88b501890387b7a09f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a8142e816566b2fb7ae044b1fb9c981cf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a91ac36115ce02369f73f75dc81499152.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a5752e9ef2f341911d23a6431f26c7075.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a7d6c88e1b419fda6fcd07338205ed543.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a055d540b60216a45de3a24aba44167a9.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1af8573f0d903ef63ffea69d2b4938c04b.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1ae6b3b720a9a5bfc78ab3419d47d41c15.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a84ccc2f34830244b0e203073cd5ea64e.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1abfac1e9a8dd780d4bc8d774a3ea49fa1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1a7e18473eb7711baba0cef4c7d9273f22.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1a5cc26b8f128b3ae66234d7511881db69.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1af49791e856c2ad0511a0cbad98c6fb76.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1abfd999676a5359719efca7f5ef86b941.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1ae555ed192de9f1500a8039d1f8ed4c24.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1ae247937b2192dead14aaef495bcbd3f6.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1a055befdd023823d1764adfa96c1d1d05.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1utils_1a50866ff2975e6ece8d0fffc71107ffb2.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1utils_1a2108ebddbbc999dcf4a1aa9f464b1322.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1utils_1a4c4f6b6d9ec9d3384a4319c9ce502803.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1utils_1a8070bea353c88ce5cb75802cf9450e19.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1utils_1a933efb391db9311b5081cc1e0c091885.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a9cb6770d42de0c861fa1842ffc548efd.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1aed3def48be5d9f115dc623530d2d43b6.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1_1allocation_1a8a102467eb083e87a7a789fd5ed2a787.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1_1allocation_1ade9ca785dbd843ef328204c91035d046.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1_1allocation_1a67dd89712a00e88ee71f616c5da94e5a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1aa8a9e98db3495df1d688ffd3d071cba0.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a41397afa621cd54ec44e4b20b57a10af.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a649e10d682cc5077206a1d4360ac9924.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a03115f2a823b9eb607251c8198980310.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a66b48d3123891798764d7d6c72dd08af.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1afda7d5f830cad54181808131531a5584.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a3261a40c4b2ae1fa17642e9438e8533c.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a790941568ebe37940b75360fbf79fca1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a2c8fd3521cada182d0cccf1f2ec76aa5.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a46d6ab99e9bcedab70880de0c2a7526f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1abab0cf4c3c5cefb74b08e39493e67cb1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1af2b7cf894c23166049e1cdc505958288.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1ab507bd7da799477959ddfcf3c2e90f07.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a670f4a2874b2eb76a49aa26d5249488a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1acbcb17c8888f41559e81530ebf7002e9.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a32fb81a0c6a1578023aa069818bf5458.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a25b28c512e7a9e0fc2d400b06b8094c3.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a4629071aa03bdb15b321459965ca7e6c.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a29dce218159bf078ab4afccebe6e75e4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a38d2844705f640fc4f5c37681302f7c7.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1ab871b55bc56b489ebf57e4a4ce17916c.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a8f4b0405843852d69cd94a2b3d4e3508.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a949008b6a2450a2b78ad2aa6e8e02ebf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1af872aee4edf18c71f69a318ca845346e.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a68103c335613dd6468888140ea98aef3.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a64163ed65188ffea62aca8e6ee8a6ff4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a9233f03b4f207d512ecf32f185c23cfe.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a32547fc17c8d8344c8181619caeb4b6d.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1ad60aee3a0ead123e7d45aeb42dd45807.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a37c2c301d8b895594512c7186b69f9d9.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1afee20ee6c56a29e7443404ba0e28dec2.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1a88b10870f533de0d0603440c6fe2dc33.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1_1utils_1a0d28348758b85bc92ee5376ff07d79ab.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1_1utils_1af71e4c3bcffd17fd9809d33d8b4658ff.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1_1utils_1acd00b0c8d470fc0ac1efdc4f598f378f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1renderer_1_1vulkan_1_1utils_1a1b0855cc3b4af22b8846203bb0fefcba.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1resources_1a2c65cddce51009d1ac982db7f4f792c3.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1resources_1a6b5f91840f532f6dbfd5431d60ecb5d5.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1resources_1a5230d04de8f44af3e0a8d53b4ee21047.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1resources_1_1utils_1ac3ec2a6cddc3130df8207fe8592bb1f0.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1aaba8412a1b91795612595fb97ab47289.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a7b9ec3770fa9a4692a2e5cbacda6b436.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a09e9a95c511a9ea9e20a89d35b906f6c.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1utils_1aa48340f700f610e28f0519dcd8529641.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1utils_1ad05c1679a23c5ced78c1bd9548a75f21.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1utils_1a583076d69e662e4c6b63e516c00347c0.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a1acbc0a316d2ec316751b75f86166d28.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a6346872f94551add02888be5200c9644.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_transform_8cpp_1a790630408ed52dc7990b43cad0c9f968.rst
+
+Variables
+*********
+
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a9104e3f2224844ca47d9d421a8021342.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1acd82c7797006c72d1a0cdc315f825f2b.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1ecs_1a2c4689546a6cf68fd140e9a0ef6eb28e.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a21b6974c9e218b5c7aed7fcb608c03fb.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a08ac2d75cec4c1dd07c821f36ac61d34.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1ab5db58576557aea02fc59e1339d6ce4d.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a8af4023b9ee8750ba972c919cb85eb6e.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a7b940651baf49ce9112dbc0988ddf591.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1aac43b19ed95c31cda9bc327bc41cb2d4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1aac43b19ed95c31cda9bc327bc41cb2d4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1_1vulkan_1_1allocation_1a3d676f8bc75a35e3fa035edfaf822492.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1_1vulkan_1_1allocation_1a0c988112231d01da1661b1e41651cc0a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1_1vulkan_1a05206c5320fff731094d5832edf74f28.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1_1vulkan_1afc34ff6cf5fc8890bae72e14144ebf1f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1_1vulkan_1a6e33f4ce6add64f092d19d04a68f5ef8.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1_1vulkan_1a43e4ac48164ced87f63ae2b2d0b87998.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1_1vulkan_1aaa78f3e5094237986ef9378f75afa336.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1renderer_1_1vulkan_1a0b9235dc0fb0e28f16304a3f95ac1b0d.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1aba7131b1e5ce4f89aa7d737b4883f639.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1resources_1a5105b563899c1d64944407488769764f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1resources_1a5105b563899c1d64944407488769764f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1resources_1a5105b563899c1d64944407488769764f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1resources_1a5105b563899c1d64944407488769764f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a31ca976d6ea3a9b0ec9e31e7682c5571.rst
+
+Defines
+*******
+
+
+.. toctree::
+   :maxdepth: 5
+
+   define_shader__compiler_8cpp_1a5fb5dd214f207ed40d3435ef727a1045.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1a5fb5dd214f207ed40d3435ef727a1045.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1a1facf22ab33310ba924e025dd6a479be.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1a5bda89f74f23523f68bfd3c75490c7dc.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1ac40aa92484041f5144880219df2ccacb.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1ac56b18fd86dd952f556e847322669fba.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1aad910ad931c9112a818e64cfd0d2e8e1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1a504601662595f67850a86d0e94edf092.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1a95721477ea74ac1a87174dcd2355c63f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1a3e8d39cdefea70d4350a54277ef86aa8.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__enum_8cpp_1a66a7802c4ea7f617559712426dfe73a9.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_resource_8h_1ada116479b93dafd81988677f57f3ddce.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__swapchain_8h_1ab91f325a54d3e35fe831a86d6382c2a9.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_glfw__window_8h_1ab91f325a54d3e35fe831a86d6382c2a9.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_texture__loader_8cpp_1a18372412ad2fc3ce1e3240b3cf0efe78.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_vulkan__common_8h_1a0a319950dd34eb9a28f3a15b1febc228.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_renderer_8cpp_1abea80547807da765ebe9fce1c6dd6a8d.rst
+
+Typedefs
+********
+
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1ad71c9902ea386ef8154a5b29537dbe1b.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1af4b00b4ac66dfe6c3c336cc7e9ec0bc2.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1_1renderer_1a63845cba4d017aeeca5a869745db60b1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1a0ec628fcc12feb645b68c0db2c145165.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1ae98de7441f6502597dcdfe488f9af81d.rst

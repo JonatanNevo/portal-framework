@@ -1,0 +1,14 @@
+.. _exhale_define_log_8h_1ac4409187175b90df461476adb390e677:
+
+Define LOG_DEBUG_TAG
+====================
+
+- Defined in :ref:`file_portal_core_log.h`
+
+
+Define Documentation
+--------------------
+
+
+.. doxygendefine:: LOG_DEBUG_TAG
+   :project: portal core

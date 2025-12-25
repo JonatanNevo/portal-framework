@@ -1,0 +1,14 @@
+.. _exhale_define_log_8h_1ad4a9117ce894e3319e903142347a0f63:
+
+Define LOG_ERROR
+================
+
+- Defined in :ref:`file_portal_core_log.h`
+
+
+Define Documentation
+--------------------
+
+
+.. doxygendefine:: LOG_ERROR
+   :project: portal core

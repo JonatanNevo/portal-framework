@@ -1,0 +1,14 @@
+.. _exhale_define_common_8h_1a415d29f23688687ac3c7bc26442196bd:
+
+Define add_overflow
+===================
+
+- Defined in :ref:`file_portal_core_common.h`
+
+
+Define Documentation
+--------------------
+
+
+.. doxygendefine:: add_overflow
+   :project: portal core
