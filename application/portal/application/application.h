@@ -16,6 +16,7 @@
 namespace portal
 {
 /**
+ * @struct ApplicationProperties application.h portal/application/application.h
  * Configuration properties for Portal application initialization.
  *
  * ApplicationProperties contains startup configuration passed to the Application
@@ -33,7 +34,8 @@ struct ApplicationProperties
 };
 
 /**
- * Main application class providing the game loop and module orchestration.
+ * @class Application application.h
+ * The main application class providing the game loop and module orchestration.
  *
  * Application is the entry point for Portal Framework applications. It manages the
  * main game loop, coordinates module lifecycle execution, and handles frame timing.
