@@ -13,6 +13,7 @@
  * exception handling, and platform-specific entry points (WinMain on Windows).
  *
  * Example usage:
+
  * @code
  * #include <portal/application/entry_point.h>
  *
