@@ -22,7 +22,7 @@ add_subdirectory(examples/engine_test)
 # API Documentation with Doxygen
 option(PORTAL_BUILD_DOCS "Build API documentation with Doxygen" OFF)
 if(PORTAL_BUILD_DOCS)
-    add_subdirectory(docs)
+    add_subdirectory(docs2)
 endif()
 
 enable_testing()

@@ -60,6 +60,14 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       }
+    },
+    {
+      "name": "docs",
+      "inherits": "ninja-multi",
+      "binaryDir": "${sourceDir}/build/ninja-multi",
+      "cacheVariables": {
+        "PORTAL_BUILD_DOCS": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -77,6 +85,12 @@
       "name": "release",
       "configurePreset": "ninja-multi",
       "configuration": "Release"
+    },
+    {
+      "name": "docs",
+      "configurePreset": "docs",
+      "configuration": "Release",
+      "targets": ["docs"]
     }
   ],
   "testPresets": [
@@ -84,6 +98,21 @@
       "name": "test-release",
       "configurePreset": "ninja-multi",
       "configuration": "Release"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "build-docs",
+      "steps": [
+        {
+          "name": "docs",
+          "type": "configure"
+        },
+        {
+          "name": "docs",
+          "type": "build"
+        }
+      ]
     }
   ]
 }
