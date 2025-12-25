@@ -1,0 +1,18 @@
+
+File Hierarchy
+--------------
+
+
+.. raw:: html
+
+   <ul class="treeView" id="file-treeView">
+     <li>
+       <ul class="collapsibleList">
+         <li class="lastChild">Directory <a href="dir_portal.html#dir-portal">portal</a><ul><li class="lastChild">Directory <a href="dir_portal_serialization.html#dir-portal-serialization">serialization</a><ul><li>Directory <a href="dir_portal_serialization_archive.html#dir-portal-serialization-archive">archive</a><ul><li>File <a href="file_portal_serialization_archive_json_archive.cpp.html#file-portal-serialization-archive-json-archive.cpp">json_archive.cpp</a></li><li class="lastChild">File <a href="file_portal_serialization_archive_json_archive.h.html#file-portal-serialization-archive-json-archive.h">json_archive.h</a></li></ul></li><li>Directory <a href="dir_portal_serialization_serialize.html#dir-portal-serialization-serialize">serialize</a><ul><li>File <a href="file_portal_serialization_serialize_binary_searilization.cpp.html#file-portal-serialization-serialize-binary-searilization.cpp">binary_searilization.cpp</a></li><li class="lastChild">File <a href="file_portal_serialization_serialize_binary_searilization.h.html#file-portal-serialization-serialize-binary-searilization.h">binary_searilization.h</a></li></ul></li><li>File <a href="file_portal_serialization_archive.cpp.html#file-portal-serialization-archive.cpp">archive.cpp</a></li><li>File <a href="file_portal_serialization_archive.h.html#file-portal-serialization-archive.h">archive.h</a></li><li class="lastChild">File <a href="file_portal_serialization_serialize.h.html#file-portal-serialization-serialize.h">serialize.h</a></li></ul></li></ul></li>
+       </ul>
+     </li><!-- only tree view element -->
+   </ul><!-- /treeView file-treeView -->
+
+.. end raw html for treeView
+
+

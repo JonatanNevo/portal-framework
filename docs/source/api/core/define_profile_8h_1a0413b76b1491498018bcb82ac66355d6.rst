@@ -1,0 +1,14 @@
+.. _exhale_define_profile_8h_1a0413b76b1491498018bcb82ac66355d6:
+
+Define PORTAL_FRAME_MARK
+========================
+
+- Defined in :ref:`file_portal_core_debug_profile.h`
+
+
+Define Documentation
+--------------------
+
+
+.. doxygendefine:: PORTAL_FRAME_MARK
+   :project: portal core

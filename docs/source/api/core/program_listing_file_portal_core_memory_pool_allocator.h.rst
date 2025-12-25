@@ -1,0 +1,158 @@
+
+.. _program_listing_file_portal_core_memory_pool_allocator.h:
+
+Program Listing for File pool_allocator.h
+=========================================
+
+|exhale_lsh| :ref:`Return to documentation for file <file_portal_core_memory_pool_allocator.h>` (``portal\core\memory\pool_allocator.h``)
+
+.. |exhale_lsh| unicode:: U+021B0 .. UPWARDS ARROW WITH TIP LEFTWARDS
+
+.. code-block:: cpp
+
+   //
+   // Copyright © 2025 Jonatan Nevo.
+   // Distributed under the MIT license (see LICENSE file).
+   //
+   
+   #pragma once
+   
+   #include <array>
+   #include <mutex>
+   #include <new>
+   
+   #include "portal/core/concurrency/spin_lock.h"
+   
+   namespace portal
+   {
+   template <typename T, size_t C, typename L=SpinLock> requires (sizeof(T) >= sizeof(void*))
+   class PoolAllocator
+   {
+   public:
+       constexpr static auto pool_size = C * sizeof(T);
+   
+       PoolAllocator() noexcept { clear(); }
+   
+       template <typename... Args>
+       T* alloc(Args&&... args)
+       {
+           std::lock_guard<L> lock(lock_object);
+           if (full)
+               throw std::bad_alloc();
+   
+           auto allocated_mem = reinterpret_cast<T*>(head);
+           head = static_cast<void**>(*head);
+           if (reinterpret_cast<void*>(head) == pool.data() + pool_size)
+               full = true;
+   
+           return new(allocated_mem) T(std::forward<Args>(args)...);
+       }
+   
+       void free(T* p)
+       {
+           std::lock_guard<L> lock(lock_object);
+           if (p == nullptr)
+               return;
+   
+           p->~T();
+   
+           if (full)
+               full = false;
+   
+           // TODO: Iterate over tree?
+           *reinterpret_cast<void**>(p) = head;
+           head = reinterpret_cast<void**>(p);
+       }
+   
+       void clear()
+       {
+           std::lock_guard<L> lock(lock_object);
+           // Initialize the pool with pointers to the next free block (as offsets)
+           for (size_t i = 0; i < pool_size; i += sizeof(T))
+           {
+               if (i + sizeof(T) == pool_size)
+                   *reinterpret_cast<void**>(pool.data() + i) = nullptr;
+               *reinterpret_cast<void**>(pool.data() + i) = reinterpret_cast<void*>(pool.data() + (i + sizeof(T)));
+           }
+           head = reinterpret_cast<void**>(pool.data());
+           full = false;
+       }
+   
+   private:
+       std::array<uint8_t, pool_size> pool{};
+       void** head = nullptr;
+       bool full = false;
+       L lock_object{};
+   };
+   
+   template <size_t B, size_t C, typename L=SpinLock, bool check_allocations = false> requires (B >= sizeof(void*))
+   class BucketPoolAllocator
+   {
+   public:
+       constexpr static auto bucket_size = B;
+       constexpr static auto pool_size = C * B;
+   
+       BucketPoolAllocator() noexcept { clear(); }
+   
+       void* alloc()
+       {
+           std::lock_guard<L> lock(lock_object);
+           if (full)
+               throw std::bad_alloc();
+   
+           const auto allocated_mem = reinterpret_cast<void*>(head);
+           head = static_cast<void**>(*head);
+           if (reinterpret_cast<void*>(head) == pool.data() + pool_size)
+               full = true;
+   
+           if constexpr (check_allocations)
+               ++allocated_buckets;
+   
+           return allocated_mem;
+       }
+   
+       void free(void* p)
+       {
+           std::lock_guard<L> lock(lock_object);
+           if (p == nullptr)
+               return;
+   
+           if (full)
+               full = false;
+   
+           // TODO: Iterate over tree?
+           *static_cast<void**>(p) = head;
+           head = static_cast<void**>(p);
+   
+           if constexpr (check_allocations)
+               --allocated_buckets;
+       }
+   
+       void clear()
+       {
+           std::lock_guard<L> lock(lock_object);
+           // Initialize the pool with pointers to the next free block (as offsets)
+           for (size_t i = 0; i < pool_size; i += bucket_size)
+           {
+               if (i + bucket_size == pool_size)
+                   *reinterpret_cast<void**>(pool.data() + i) = nullptr;
+               *reinterpret_cast<void**>(pool.data() + i) = reinterpret_cast<void*>(pool.data() + (i + bucket_size));
+           }
+           head = reinterpret_cast<void**>(pool.data());
+           full = false;
+       }
+   
+       [[nodiscard]] size_t get_allocation_size() const requires (check_allocations)
+       {
+           return allocated_buckets.load();
+       }
+   
+   private:
+       std::array<uint8_t, pool_size> pool{};
+       std::atomic<size_t> allocated_buckets = 0;
+   
+       void** head = nullptr;
+       bool full = false;
+       L lock_object{};
+   };
+   } // portal

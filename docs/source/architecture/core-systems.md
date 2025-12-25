@@ -1,6 +1,6 @@
 # Core Systems Architecture
 
-This document provides architecture documentation for Portal Framework's foundational systems: the job system, memory allocators, concurrency primitives, and string ID system.
+This document provides architecture documentation for Portal Framework's foundational systems: the job system, memory allocators, concurrency primitives, string ID system, and input system.
 
 ## Table of Contents
 
@@ -26,6 +26,9 @@ This document provides architecture documentation for Portal Framework's foundat
   - [Compile-Time Hashing](#compile-time-hashing)
   - [StringRegistry](#stringregistry)
   - [Hash Map Integration](#hash-map-integration)
+- [Input System](#input-system)
+  - [Architecture Overview](#input-system-architecture-overview)
+  - [API Documentation](#input-system-api-documentation)
 
 ---
 

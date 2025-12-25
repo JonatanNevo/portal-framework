@@ -1,0 +1,58 @@
+
+.. _program_listing_file_portal_engine_components_transform.h:
+
+Program Listing for File transform.h
+====================================
+
+|exhale_lsh| :ref:`Return to documentation for file <file_portal_engine_components_transform.h>` (``portal\engine\components\transform.h``)
+
+.. |exhale_lsh| unicode:: U+021B0 .. UPWARDS ARROW WITH TIP LEFTWARDS
+
+.. code-block:: cpp
+
+   //
+   // Copyright © 2025 Jonatan Nevo.
+   // Distributed under the MIT license (see LICENSE file).
+   //
+   
+   #pragma once
+   
+   #include <portal/core/glm.h>
+   
+   namespace portal
+   {
+   struct TransformDirtyTag {};
+   
+   class TransformComponent
+   {
+   public:
+       TransformComponent() = default;
+       explicit TransformComponent(const glm::vec3& translation);
+       TransformComponent(const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale);
+   
+       void set_matrix(const glm::mat4& matrix);
+       void set_translation(const glm::vec3& new_translation);
+       void set_rotation(const glm::quat& new_rotation);
+       void set_rotation_euler(const glm::vec3& new_rotation_euler);
+       void set_scale(const glm::vec3& new_scale);
+   
+       void calculate_world_matrix(const glm::mat4& root);
+   
+       [[nodiscard]] const glm::mat4& get_world_matrix() const;
+       [[nodiscard]] const glm::vec3& get_translation() const;
+       [[nodiscard]] const glm::quat& get_rotation() const;
+       [[nodiscard]] const glm::vec3& get_rotation_euler() const;
+       [[nodiscard]] const glm::vec3& get_scale() const;
+   
+   private:
+       glm::vec3 translation = glm::vec3(0.0f);
+       glm::quat rotation = glm::identity<glm::quat>();
+       glm::vec3 scale = glm::vec3(1.0f);
+   
+       // TODO: we need the euler rotation only for "human readable rotations" meaning the editor and the likes.
+       // TODO: Find a way to exclude the euler rotation from runtime, maybe as a different component
+       glm::vec3 rotation_euler = glm::vec3(0.0f);
+   
+       glm::mat4 world_matrix = glm::mat4(1.0f);
+   };
+   } // portal

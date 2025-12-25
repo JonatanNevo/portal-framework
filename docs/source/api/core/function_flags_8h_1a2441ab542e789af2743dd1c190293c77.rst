@@ -1,0 +1,14 @@
+.. _exhale_function_flags_8h_1a2441ab542e789af2743dd1c190293c77:
+
+Template Function operator~
+===========================
+
+- Defined in :ref:`file_portal_core_flags.h`
+
+
+Function Documentation
+----------------------
+
+
+.. doxygenfunction:: operator~(BitType)
+   :project: portal core

@@ -1,0 +1,1186 @@
+
+Full API
+--------
+
+Namespaces
+**********
+
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_llvm.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__details.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__hash.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__jobs.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__platform.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_portal__reflection.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_spdlog.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   namespace_std.rst
+
+Classes and Structs
+*******************
+
+
+.. toctree::
+   :maxdepth: 5
+
+   structllvm_1_1DenseMapInfo_3_01portal_1_1StringId_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1BasicCoroutine_1_1Promise.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1Buffer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1concat.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1concat_3_01type__list_3_01Ts_8_8_8_01_4_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1concat_3_01type__list_3_01Ts_8_8_8_01_4_00_01type__list_3_01Us_8_8_8_01_4_00_01Rest_8_8_8_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1concat_3_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1details_1_1visitor.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1FileStat.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1FileSystem_1_1FileDialogFilterItem.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1filter.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1filter_3_01Pred_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1filter_3_01Pred_00_01T_00_01Ts_8_8_8_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1FlagTraits.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1FlagTraits_3_01EventCategoryBits_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1is__specialization__of.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1is__specialization__of_3_01Template_3_01Args_8_8_8_01_4_00_01Template_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1jobs_1_1Counter.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1jobs_1_1Scheduler_1_1WorkerContext.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1JobStats_1_1GlobalStats.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1JobStats_1_1ThreadStats.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1Log_1_1Settings.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1PerformanceProfiler_1_1PerFrameData.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1QueueSet.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1reflection_1_1Property.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1StringId.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1SwitchInformation.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1Task_1_1Awaiter.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1Task_1_1FinalAwaiter.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1Task_1_1Promise.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1ThreadSpecification.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1type__list.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structportal_1_1uint128__t.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1formatter_3_01glm_1_1vec2_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1formatter_3_01glm_1_1vec3_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1formatter_3_01glm_1_1vec4_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1formatter_3_01portal_1_1reflection_1_1Property_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1formatter_3_01portal_1_1StringId_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1formatter_3_01portal_1_1uint128__t_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1formatter_3_01T_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1hash_3_01portal_1_1StringId_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   structstd_1_1hash_3_01portal_1_1uint128__t_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1AssertionLock.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1BasicCoroutine.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1BucketPoolAllocator.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1BufferedAllocator.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1BufferStreamReader.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1BufferStreamWriter.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Event.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1EventHandler.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1EventRunner.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1FileSystem.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1FinalizeJob.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Flags.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Job.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Job_3_01void_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1JobBase.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1JobPromise.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1JobPromise_1_1JobAwaiter.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1jobs_1_1Scheduler.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1JobStats.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1LinuxThread.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Log.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1MacOSThread.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1MesmerTwistedRandom.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1PerformanceProfiler.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1PoolAllocator.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Random.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ReentrantSpinLock.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ResultPromise.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ResultPromise_3_01void_01_4.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ScopedLogContext.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ScopedPerformanceTimer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ScopedTimer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1source__location__flag__formatter.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1SpinLock.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1StackAllocator.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1StringRegistry.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1SuspendJob.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Task.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1ThreadBase.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1Timer.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1WindowsThread.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   classportal_1_1WorkerQueue.rst
+
+Enums
+*****
+
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1details_1aa8f78844ba9aa2a12b1aaf9f36600697.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a3efb68d74b8d930641baff581bbcb4fd.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a59d85e47d12d7f0afa757ffa683d31e1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a2249cdc3472350473a7313ab415ccd65.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1ab446a22ce8756e62a6313eaf566fe28a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a0bb8edf69d2390b10d0d152577894f58.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1jobs_1aac643d2d1096eb640aaba52d44036e8c.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1reflection_1af6b57ad1f4075e5da0761b99e7d926e1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1_1reflection_1a7c5106d5008fe9891f6f2cfdb6b9c7b8.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a530589b91079bc6c9d6474e5d6a79474.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a300599616721c96d066bbd0d0ab10357.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   enum_namespaceportal_1a5e55d8f4bae15ad7f2a1849a463ba953.rst
+
+Functions
+*********
+
+
+.. toctree::
+   :maxdepth: 5
+
+   function_common_8h_1af846910f3096d169bdaf8d7366e543ec.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_flags_8h_1a2195926b3074461655c9bf27b3e39ff9.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_flags_8h_1aed85dd1c095b5e45a976e0f100c6cdf6.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_flags_8h_1a7568a0ca39d74c73978fc44e2de3d951.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_flags_8h_1ad5ca7a3b6c268e9aa44971e9a80a2183.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_flags_8h_1a42806aa99396ff5e71e91e2b21f4b0ab.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_flags_8h_1a47637c7b47d3ee5d5425e02fddf25e15.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_flags_8h_1a2441ab542e789af2743dd1c190293c77.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1details_1a3c0b9536fccd362fe687ee63968017e2.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1aed0811720e9b4b76bddc362e1957f830.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a49f867f91ccf2d6bd312805a8684ee19.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1hash_1a83d9b157af9e06bf416c6572223d6790.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1hash_1a5a5eb7253e198536dc82028d42aaa893.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1hash_1a53f7a771f2331703db90d25068682c58.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1hash_1a16b3a6bc19361e8b0fc638f2c2d7657a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1hash_1af4415b7ca406f2c61551897507a98562.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a2751575575abbb8ec22d4e89d56707db.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1platform_1a71dea3e4e9200b87db5479ce5458aa9f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1platform_1a259c86598251afbb213d86e2145815a5.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1reflection_1a1ef074e71121b74f410587ecb4e553fc.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1reflection_1ac22bb8c637d1f0f443fa7b57c54baebc.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1reflection_1aa96d69c65a233f16afc124daccd15284.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1_1reflection_1abcb14553254e626a646ce5a323a1e6f6.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_namespaceportal_1a3eb6b62e6f91b2ff04174e0962d4d6c8.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_assert_8h_1a61762111b1a306ae07f548b48b17ab18.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1aed8006eb9923fdb6dc793a37b7165a79.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1a3748114bf938adc3645fe457d12c4856.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1abd27e5aa9a7f03d4b08c8f7e5b47f17e.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1a941de6cb8c5eca68ef7c2b72c6fff1bd.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1aeb536ec770a64bb85ff74230da41404c.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1a8f7aaff46102879492a0c244ca254647.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1a1fc81808eb7a6002022c689dfdf3512b.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1ad76028413b2ead1cd4182c55cb0b131d.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1ad88fe0a61e3a9e789fe95af454f015dd.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1a540b5029786de86e75a66cf8c2007e95.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1a405c85427c6c0501c9c22904b42a28fd.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1acd827f16c48e294de6ae63f218e3db83.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_rapidhash_8h_1af04b13c4a5b6af838b713847ca236210.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   function_common_8h_1a866fd40fbdd36ca8fd56bb6b84f22766.rst
+
+Variables
+*********
+
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a539f3ad5e31c02c2c023331573ebedbd.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1af2a5ecdc46d14dbfc798aa89105de1bc.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1ad22b2e079ce2d23aabb5cbecaa85758e.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a85560581228f3eddb9c6c0a2eea339c5.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a4004625e06d9c09a873dfda57af2b27a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a6d2a5b84445c23726d717807dce2b1c0.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a4fbf3f8fcd1ee15438fa100767b8b432.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1ad00611161946aaed2bb2f59bb8d62b2f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1af0d5e1306186893a87408ed9a2961166.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a3a90042406af89233a7016a76538bfad.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1_1jobs_1a68cb0f35ad85504124bea24038f7837e.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a42db7698d733750bf1ae42bbfadd74bf.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1a6d5f46e6e127395adf88f83fe00c4184.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_namespaceportal_1acda6956e08f2a77310286bfd049ead3d.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   variable_rapidhash_8h_1aebb641f536c63fd69dbc29b5415c6c85.rst
+
+Defines
+*******
+
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1a46f71e4f32893b1218324b2315496317.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1a00151b6045b91d3b38f23358db148bd1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_common_8h_1a415d29f23688687ac3c7bc26442196bd.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_asserion__lock_8h_1a33bd2e72cb256e4c1732755e24272fac.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_asserion__lock_8h_1a11ca503ba23df0eaa3ffd8e9c69e67ad.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_asserion__lock_8h_1ad3f827b9fbc8771a11debbdfefff8554.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_preprocessor_8h_1a2bef49451fc1d04eb02e5c2414209701.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_job__stats_8h_1a22a2e271bd1f8a66224fa7dcfd41b683.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_event_8h_1abd52deea587a36ef619e596a0c691839.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_event_8h_1a80d534fc4d69a68eefd1573fd0ac2f44.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1a754b3d074e0af4ad3c7b918dd77ecb2d.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1ac4409187175b90df461476adb390e677.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1ad4a9117ce894e3319e903142347a0f63.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1abea1df19df8baab394b13f22b1d1ba88.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1a89cecd05aeaafc715ebc091cf74d10fe.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1a678a1da11641355882af0f1cd4ffbeac.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1a378e28bfcb78d17285210d6bbb70a083.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1acac58320685d276f698c840475904ba7.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1a58c994180e09d2f6400133b19b1d7036.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1ad07a6f32067e84bdb1c6fecb2a347297.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1add82efa459e0af380b68522c29b9fd44.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1aca9c3cfe4af18280ada7d9beec01963e.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1ac64dacae71cdff35dfb797c836670a8a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1a9202a44e5e364eb224b9fbb86b30677c.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1ad9ae191b6a8a90f8067e463168bc2a2c.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1af4a846e40bb8c1d12d9022914b0b4495.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1aa63f02fbf8b42aa667980e56e3a6c821.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1af9d477fa2a8dfc9f6530643362e67043.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_assert_8h_1ac220f7b0e127860b9764ba77fdfc28e6.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1a4d33fd366cde90966bbebad83874e9f5.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_assert_8h_1a98f3be8d13b6111420ec7a7a5d03e386.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_assert_8h_1a084a57729f351534aa3a42f834e16a08.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_assert_8h_1a71919f96b2b366f41b4d8dfbd476d021.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_common_8h_1a3892aa7ce5914ac08b35d0863feb817b.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_common_8h_1af9851e9153b3b09f3f04292001ed3af7.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_profile_8h_1a0413b76b1491498018bcb82ac66355d6.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_profile_8h_1a6d79d5e6b2f88f194ce0f79085b38007.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_profile_8h_1adea4d0d597e97e0f405ad3f65cce3cad.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_linux__platform__logger_8cpp_1a2cac905882e71b76e1de235a2fa057e3.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_macos__platform__logger_8cpp_1a2cac905882e71b76e1de235a2fa057e3.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_windows__platform__logger_8cpp_1a2cac905882e71b76e1de235a2fa057e3.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_hash_8h_1a03f44846bf90fb1f9aa5cef1114acfe7.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_preprocessor_8h_1aa9106f53310d38d1ff833788106f9bd1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_profile_8h_1a594a1ad31fb1ae1e7207210b9086e23a.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_preprocessor_8h_1a5beb9293bb1c45f07cb69a04e59a6674.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_preprocessor_8h_1ad7a5a95d588ee6088e2b985c2b3b5615.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_profile_8h_1adf6d611c7211397b14dc0e942c170204.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_profile_8h_1aedb1822cddc40ae4149e0fc8a2719dd1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_preprocessor_8h_1a7a3b345c518de1ff1a42b272703e5a13.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_profile_8h_1aa85339fdb5628937965ecd235cbf09ab.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_profile_8h_1a3680b9c9cffbdfc0c4637baa3c633dcb.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_profile_8h_1adc9e531fd1c0068649bff07d8b670558.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1a39e4a10cb8a4467840ccf13b234d5130.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1a4d61ddb0caaf8ce107acd2fabc9c1d69.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1a1d28bb3dd72a2e96f1596cff17e5330f.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1a0ba3a7d84dd321f8d4ea741685779b81.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1abb7a2beaaf7fdb7ca42ea76c5dd62d73.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1a18374e0467cb5e8fabf38cbe02e9e304.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1a9c68f57decd34a5ce34d42fe568d8f69.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_rapidhash_8h_1a9332edb2172539e546797cd0a2ff0284.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_timer_8h_1a53772e0d0387e2ed97e14328b4b2cb8b.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_log_8h_1a2f4baff4e07cfa27761ab32a42a471be.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_string__id_8h_1a1ad7e403b15c1de5283ca016b58ab03b.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   define_common_8h_1a5a29be18d9c887eebd75c190b7883900.rst
+
+Typedefs
+********
+
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1ac8b3ad1af178713e8fbdd2273cd31e9d.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1a75466aeaf5a1fe677ad924661a01ff9d.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1ad9bda0164c813a001093680dc2d70ee1.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1aba3b24274a7e56756079f7828f21529c.rst
+
+.. toctree::
+   :maxdepth: 5
+
+   typedef_namespaceportal_1a748a8c40acd7ab3be22f8a9b22dee30b.rst

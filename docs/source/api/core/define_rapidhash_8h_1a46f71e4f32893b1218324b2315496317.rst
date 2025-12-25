@@ -1,0 +1,14 @@
+.. _exhale_define_rapidhash_8h_1a46f71e4f32893b1218324b2315496317:
+
+Define _likely_
+===============
+
+- Defined in :ref:`file_portal_core_strings_rapidhash_rapidhash.h`
+
+
+Define Documentation
+--------------------
+
+
+.. doxygendefine:: _likely_
+   :project: portal core
