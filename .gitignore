@@ -138,6 +138,8 @@ build*/
 
 # Generated API documentation
 docs/api/
+docs/.venv/
+docs_build.log
 
 # cc-sessions runtime files
 sessions/sessions-state.json

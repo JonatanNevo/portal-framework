@@ -1,0 +1,17 @@
+[project]
+name = "portal-framework-docs"
+version = "0.1.6"
+description = "Documentation build dependencies for Portal Framework"
+requires-python = ">=3.12"
+dependencies = [
+    "sphinx>=7.0.0",
+    "breathe>=4.35.0",
+    "furo>=2024.1.0",
+    "myst-parser>=2.0.0",
+    "exhale>=0.3.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "sphinx-autobuild>=2024.0.0",
+]
