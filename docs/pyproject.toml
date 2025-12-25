@@ -5,10 +5,13 @@ description = "Documentation build dependencies for Portal Framework"
 requires-python = ">=3.12"
 dependencies = [
     "sphinx>=7.0.0",
-    "breathe>=4.35.0",
-    "furo>=2024.1.0",
     "myst-parser>=2.0.0",
     "exhale>=0.3.7",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-inline-tabs>=2025.12.21.14",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.1",
+    "furo>=2025.12.19",
 ]
 
 [project.optional-dependencies]

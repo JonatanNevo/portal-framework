@@ -8,8 +8,18 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-enable_testing()
+option(PORTAL_BUILD_DOCS "Build API documentation with Doxygen" OFF)
+if(PORTAL_BUILD_DOCS)
+    find_package(Doxygen REQUIRED)
+    if(NOT DOXYGEN_FOUND)
+        message(FATAL_ERROR "Doxygen is required to build API documentation. Please install Doxygen.")
+    endif()
 
+    set_property(GLOBAL PROPERTY PORTAL_DOCS_TARGETS "")
+    set(PORTAL_DOCS_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs/build)
+endif()
+
+enable_testing()
 add_subdirectory(core)
 add_subdirectory(networking)
 add_subdirectory(application)
@@ -19,10 +29,6 @@ add_subdirectory(engine)
 
 add_subdirectory(examples/engine_test)
 
-# API Documentation with Doxygen
-option(PORTAL_BUILD_DOCS "Build API documentation with Doxygen" OFF)
 if(PORTAL_BUILD_DOCS)
-    add_subdirectory(docs2)
+    add_subdirectory(docs)
 endif()
-
-enable_testing()

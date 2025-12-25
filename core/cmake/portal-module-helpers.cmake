@@ -1,3 +1,109 @@
+function(portal_register_docs MODULE_NAME)
+    set(DOXYFILE_IN_CONTENT "
+# Doxyfile 1.15.0
+
+#---------------------------------------------------------------------------
+# Project related configuration options
+#---------------------------------------------------------------------------
+
+DOXYFILE_ENCODING      = UTF-8
+PROJECT_NAME           = @PORTAL_DOXYGEN_PROJECT_NAME@
+OUTPUT_DIRECTORY       = @PORTAL_DOXYGEN_OUTPUT@
+
+FULL_PATH_NAMES = YES
+STRIP_FROM_PATH = .
+
+ALIASES  = \"rst=\\verbatim embed:rst:leading-asterisk\"
+ALIASES += \"endrst=\\endverbatim\"
+
+
+#---------------------------------------------------------------------------
+# Build related configuration options
+#---------------------------------------------------------------------------
+
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = NO
+CASE_SENSE_NAMES       = YES
+
+
+#---------------------------------------------------------------------------
+# Configuration options related to warning and progress messages
+#---------------------------------------------------------------------------
+WARN_NO_PARAMDOC       = YES
+
+
+#---------------------------------------------------------------------------
+# Configuration options related to the input files
+#---------------------------------------------------------------------------
+INPUT                  = @PORTAL_DOXYGEN_INPUT@
+RECURSIVE              = YES
+EXCLUDE                = vcpkg \
+                         build \
+                         cmake-build-* \
+                         out
+EXCLUDE_PATTERNS       = */tests/* \
+                         */test/* \
+                         */.git/* \
+                         */vcpkg_installed/* \
+                         */build*/* \
+                         *_impl.h \
+                         *_internal.h
+EXCLUDE_SYMBOLS        = detail \
+                         internal \
+                         impl
+
+
+#---------------------------------------------------------------------------
+# Configuration options related to the HTML output
+#---------------------------------------------------------------------------
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+
+#---------------------------------------------------------------------------
+# Configuration options related to the XML output
+#---------------------------------------------------------------------------
+GENERATE_XML           = YES
+
+#---------------------------------------------------------------------------
+# Configuration options related to the preprocessor
+#---------------------------------------------------------------------------
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+INCLUDE_PATH           = @PORTAL_DOXYGEN_INCLUDE_PATH@
+SKIP_FUNCTION_MACROS   = NO
+EXPAND_ONLY_PREDEF     = NO
+
+PREDEFINED             = DOXYGEN_DOCUMENTATION_BUILD
+PREDEFINED             += DOXYGEN_SHOULD_SKIP_THIS
+")
+
+    set(PORTAL_DOXYGEN_PROJECT_NAME "portal ${MODULE_NAME}")
+    set(PORTAL_DOXYGEN_OUTPUT ${PORTAL_DOCS_BINARY_DIR}/doxygen/${MODULE_NAME})
+    set(PORTAL_DOXYGEN_INPUT ${CMAKE_CURRENT_SOURCE_DIR}/portal)
+    set(PORTAL_DOXYGEN_INCLUDE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+
+    file(MAKE_DIRECTORY ${PORTAL_DOXYGEN_OUTPUT})
+
+    set(DOXYFILE_INPUT "${CMAKE_CURRENT_BINARY_DIR}/docs/Doxyfile.in")
+    set(DOXYFILE_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/docs/Doxyfile")
+
+    file(WRITE "${DOXYFILE_INPUT}" "${DOXYFILE_IN_CONTENT}")
+
+    configure_file(${DOXYFILE_INPUT} ${DOXYFILE_OUTPUT} @ONLY)
+
+    set(GENERATE_DOCS_TARGET "${MODULE_NAME}_make_docs")
+
+    add_custom_target(${GENERATE_DOCS_TARGET}
+            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYFILE_OUTPUT}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            DEPENDS ${DOXYFILE_OUTPUT}
+            COMMENT "Generating Doxygen XML for ${MODULE_NAME}"
+            VERBATIM
+    )
+    set_property(GLOBAL APPEND PROPERTY PORTAL_DOCS_TARGETS ${GENERATE_DOCS_TARGET})
+endfunction()
+
 function(portal_add_dependency MODULE_NAME DEPENDENCY)
     set(options PORTAL SKIP_LINK)
     set(oneValueArgs LINK)
@@ -17,7 +123,7 @@ function(portal_add_dependency MODULE_NAME DEPENDENCY)
     endif ()
 
     if (ARG_PORTAL)
-        if(PORTAL_FIND_PACKAGE)
+        if (PORTAL_FIND_PACKAGE)
             find_package(portal-${DEPENDENCY} CONFIG REQUIRED)
         endif ()
     else ()
@@ -26,7 +132,7 @@ function(portal_add_dependency MODULE_NAME DEPENDENCY)
 
     if (NOT ARG_SKIP_LINK)
         target_link_libraries(portal-${MODULE_NAME} PUBLIC ${ARG_LINK})
-    endif()
+    endif ()
 endfunction()
 
 function(portal_add_module MODULE_NAME)
@@ -93,28 +199,32 @@ function(portal_add_module MODULE_NAME)
         message(FATAL_ERROR "Unsupported platform")
     endif ()
 
-    if(MSVC)
+    if (MSVC)
         target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
-    else()
+    else ()
         target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
-    endif()
+    endif ()
 
-    foreach(dep ${ARG_PORTAL_DEPENDENCIES})
+    foreach (dep ${ARG_PORTAL_DEPENDENCIES})
         portal_add_dependency(${MODULE_NAME} ${dep} PORTAL)
-    endforeach()
+    endforeach ()
 
-    foreach(dep ${ARG_DEPENDENCIES})
+    foreach (dep ${ARG_DEPENDENCIES})
         portal_add_dependency(${MODULE_NAME} ${dep})
-    endforeach()
+    endforeach ()
 
-    foreach(dep_spec ${ARG_COMPLEX_DEPENDENCIES})
+    foreach (dep_spec ${ARG_COMPLEX_DEPENDENCIES})
         string(REPLACE "|" " " dep_args "${dep_spec}")
         separate_arguments(dep_args)
         list(GET dep_args 0 dep_name)
         list(REMOVE_AT dep_args 0)
 
         portal_add_dependency(${MODULE_NAME} ${dep_name} ${dep_args})
-    endforeach()
+    endforeach ()
 
     unset(PORTAL_FIND_PACKAGE CACHE)
+
+    if (PORTAL_BUILD_DOCS)
+        portal_register_docs(${MODULE_NAME})
+    endif ()
 endfunction()

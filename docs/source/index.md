@@ -1,4 +1,4 @@
-# Portal Framework
+# ![Portal Framework](_static/Portal_Banner.png)
 
 Welcome to the **Portal Framework** - a modular C++23 game engine framework designed for high-performance, data-oriented game development.
 
@@ -35,22 +35,19 @@ modules/context
 :maxdepth: 1
 :caption: API Reference
 
-api/index
-```
+api/core/root.rst
+api/application/root.rst
+api/input/root.rst
+api/serialization/root.rst
+api/engine/root.rst
+api/networking/root.rst
 
-```{toctree}
-:maxdepth: 1
-:caption: Developer Resources
-
-GitHub Repository <https://github.com/JonatanNevo/portal-framework>
 ```
 
 ## Getting Started
 
 To get started with the Portal Framework, check out the [Core Systems Architecture](architecture/core-systems.md) documentation
 for an overview of the framework's architecture and design principles.
-
-For detailed API documentation, browse the [API Reference](api/index.md) section.
 
 ## Indices and Tables
 
