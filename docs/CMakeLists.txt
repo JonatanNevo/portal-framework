@@ -9,7 +9,7 @@ get_property(DOCS_TARGET GLOBAL PROPERTY PORTAL_DOCS_TARGETS)
 
 # Sphinx HTML generation target (main documentation build)
 add_custom_target(docs
-    COMMAND ${UV_EXECUTABLE} run python -m sphinx -b html
+    COMMAND ${UV_EXECUTABLE} run python -m sphinx -b html -j auto
         ${CMAKE_CURRENT_SOURCE_DIR}/source
         ${CMAKE_CURRENT_SOURCE_DIR}/build/html
     DEPENDS ${DOCS_TARGET}
