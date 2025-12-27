@@ -22,16 +22,129 @@ namespace portal
 {
 class ArchiveObject;
 
+/**
+ * @brief Concept for types that can be serialized into an ArchiveObject.
+ *
+ * A type satisfies the Archiveable concept if it provides a method to serialize
+ * itself into an ArchiveObject using the visitor pattern.
+ *
+ * Example:
+ * @code
+ * struct PlayerData {
+ *     std::string name;
+ *     int level;
+ *     glm::vec3 position;
+ *
+ *     void archive(ArchiveObject& ar) const {
+ *         ar.add_property("name", name);
+ *         ar.add_property("level", level);
+ *         ar.add_property("position", position);
+ *     }
+ * };
+ * @endcode
+ *
+ * @tparam T The type to check for archiveability.
+ */
 template <typename T>
 concept Archiveable = requires(T t, ArchiveObject& s) {
     { t.archive(s) } -> std::same_as<void>;
 };
 
+/**
+ * @brief Concept for types that can be deserialized from an ArchiveObject.
+ *
+ * A type satisfies the Dearchiveable concept if it provides a static method to
+ * construct itself from an ArchiveObject using the visitor pattern.
+ *
+ * Example:
+ * @code
+ * struct PlayerData {
+ *     static PlayerData dearchive(ArchiveObject& ar) {
+ *         PlayerData p;
+ *         ar.get_property("name", p.name);
+ *         ar.get_property("level", p.level);
+ *         ar.get_property("position", p.position);
+ *         return p;
+ *     }
+ * };
+ * @endcode
+ *
+ * @tparam T The type to check for dearchiveability.
+ */
 template <typename T>
 concept Dearchiveable = requires(T t, ArchiveObject& d) {
     { T::dearchive(d) } -> std::same_as<T>;
 };
 
+/**
+ * @brief Container for named properties in the Archive/Visitor serialization pattern.
+ *
+ * ArchiveObject is the core abstraction of Portal's format-agnostic serialization system.
+ * It acts as an intermediate object graph representation that can be populated by user
+ * types (via the archive() method) and then serialized to various formats like JSON, XML,
+ * or binary. Think of it as a hierarchical property tree where each node can contain
+ * named properties (scalars, arrays, vectors, strings) or child ArchiveObjects.
+ *
+ * ## Supported Types
+ *
+ * ArchiveObject automatically handles:
+ * - **Scalars**: All integral types (int8_t through uint128_t), floating-point (float, double), bool
+ * - **Strings**: std::string, std::string_view, C-strings, std::filesystem::path
+ * - **GLM vectors**: glm::vec1/2/3/4 and their variants (ivec, dvec, etc.)
+ * - **Containers**: std::vector, llvm::SmallVector of any supported type
+ * - **Maps**: std::unordered_map, std::map with string-convertible keys
+ * - **Enums**: Serialized as strings via portal::to_string() for human readability
+ * - **Custom types**: Any type implementing the Archiveable/Dearchiveable concepts
+ * - **Binary data**: Raw byte buffers via add_binary_block()
+ *
+ * ## Error Handling
+ *
+ * - **Type mismatches**: Debug builds assert when deserializing the wrong type. Release builds
+ *   may produce undefined behavior, so ensure serialization/deserialization symmetry.
+ * - **Missing properties**: get_property() returns false if a property doesn't exist, allowing
+ *   callers to provide defaults or handle optional properties gracefully.
+ *
+ * ## Usage Example
+ *
+ * @code
+ * struct Config {
+ *     std::string name;
+ *     int value;
+ *     glm::vec3 position;
+ *     std::vector<std::string> tags;
+ *
+ *     void archive(ArchiveObject& ar) const {
+ *         ar.add_property("name", name);
+ *         ar.add_property("value", value);
+ *         ar.add_property("position", position);
+ *         ar.add_property("tags", tags);
+ *     }
+ *
+ *     static Config dearchive(ArchiveObject& ar) {
+ *         Config c;
+ *         ar.get_property("name", c.name);
+ *         ar.get_property("value", c.value);
+ *         ar.get_property("position", c.position);
+ *         ar.get_property("tags", c.tags);
+ *         return c;
+ *     }
+ * };
+ *
+ * // Serialize to JSON - Config as root object
+ * JsonArchive archive;
+ * config.archive(archive);
+ * archive.dump("config.json");
+ *
+ * // Deserialize from JSON - Config as root object
+ * JsonArchive loaded;
+ * loaded.read("config.json");
+ * Config restored = Config::dearchive(loaded);
+ * @endcode
+ *
+ * @see JsonArchive for JSON format implementation
+ * @see Archiveable concept for making custom types serializable
+ * @see Dearchiveable concept for making custom types deserializable
+ */
 class ArchiveObject
 {
 public:
@@ -44,22 +157,45 @@ public:
     ArchiveObject& operator=(const ArchiveObject& other) = default;
     ArchiveObject& operator=(ArchiveObject&& other) = default;
 
+    /**
+     * @brief Merges properties from another ArchiveObject into this one.
+     *
+     * Properties from the other object are copied into this object's property map.
+     * If a property with the same name already exists, it will be replaced.
+     *
+     * @param other The source ArchiveObject containing properties to merge.
+     */
     void update(const ArchiveObject& other);
 
-    template <typename T> requires (std::integral<T> || std::floating_point<T>) && (!std::is_same_v<T, bool>)
+    /**
+     * @brief Adds a scalar numeric property (integer or floating-point) to the archive.
+     *
+     * Stores a copy of the scalar value with appropriate type metadata. Supports all
+     * integral types (int8_t through int64_t, unsigned variants) and floating-point
+     * types (float, double). Boolean values use a specialized template (see add_property<bool>).
+     *
+     * @tparam T Numeric type (integral or floating-point, excluding bool)
+     * @param name Property name identifier for serialization/deserialization
+     * @param t The scalar value to serialize
+     */
+    template <typename T>
+        requires(std::integral<T> || std::floating_point<T>) && (!std::is_same_v<T, bool>)
     void add_property(const PropertyName& name, const T& t)
     {
-        add_property_to_map(
-            name,
-            {
-                Buffer::create<T>(t),
-                reflection::get_property_type<T>(),
-                reflection::PropertyContainerType::scalar,
-                1
-            }
-        );
+        add_property_to_map(name, {Buffer::create<T>(t), reflection::get_property_type<T>(), reflection::PropertyContainerType::scalar, 1});
     }
 
+    /**
+     * @brief Adds an llvm::SmallVector property to the archive.
+     *
+     * Handles two cases:
+     * - If elements are Archiveable: Each element archives itself into a child ArchiveObject
+     * - Otherwise: Wraps each element in an ArchiveObject with property name "v" (maintains type uniformity)
+     *
+     * @tparam T SmallVector type satisfying reflection::SmallVector concept
+     * @param name Property name identifier
+     * @param t The SmallVector to serialize
+     */
     template <reflection::SmallVector T>
     void add_property(const PropertyName& name, const T& t)
     {
@@ -68,45 +204,42 @@ public:
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (int i = 0; i < t.size(); ++i)
             {
-                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 t[i].archive(*object);
             }
 
-            add_property_to_map(
-                name,
-                {
-                    std::move(buffer),
-                    reflection::PropertyType::object,
-                    reflection::PropertyContainerType::array,
-                    t.size()
-                }
-            );
+            add_property_to_map(name, {std::move(buffer), reflection::PropertyType::object, reflection::PropertyContainerType::array, t.size()});
         }
         else
         {
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (size_t i = 0; i < t.size(); ++i)
             {
-                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 object->add_property("v", t[i]);
             }
 
-            constexpr auto property_type = (reflection::String<typename T::ValueParamT>)
-                                               ? reflection::PropertyType::null_term_string
-                                               : reflection::get_property_type<typename T::ValueParamT>();
+            constexpr auto property_type = (reflection::String<typename T::ValueParamT>) ? reflection::PropertyType::null_term_string
+                                                                                         : reflection::get_property_type<typename T::ValueParamT>();
 
-            add_property_to_map(
-                name,
-                {
-                    std::move(buffer),
-                    property_type,
-                    reflection::PropertyContainerType::array,
-                    t.size()
-                }
-            );
+            add_property_to_map(name, {std::move(buffer), property_type, reflection::PropertyContainerType::array, t.size()});
         }
     }
 
+    /**
+     * @brief Adds a std::vector property to the archive.
+     *
+     * Handles two cases:
+     * - If elements are Archiveable: Each element archives itself into a child ArchiveObject
+     * - Otherwise: Wraps each element in an ArchiveObject with property name "v" (maintains type uniformity)
+     *
+     * This dual approach enables serialization of both primitive types (int, float, string) and
+     * complex user-defined types in a consistent manner.
+     *
+     * @tparam T Vector type satisfying reflection::Vector concept (std::vector<...>)
+     * @param name Property name identifier
+     * @param t The vector to serialize
+     */
     template <reflection::Vector T>
     void add_property(const PropertyName& name, const T& t)
     {
@@ -115,116 +248,117 @@ public:
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (int i = 0; i < t.size(); ++i)
             {
-                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 t[i].archive(*object);
             }
 
-            add_property_to_map(
-                name,
-                {
-                    std::move(buffer),
-                    reflection::PropertyType::object,
-                    reflection::PropertyContainerType::array,
-                    t.size()
-                }
-            );
+            add_property_to_map(name, {std::move(buffer), reflection::PropertyType::object, reflection::PropertyContainerType::array, t.size()});
         }
         else
         {
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (size_t i = 0; i < t.size(); ++i)
             {
-                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 object->add_property("v", t[i]);
             }
 
-            constexpr auto property_type = (reflection::String<typename T::value_type>)
-                                               ? reflection::PropertyType::null_term_string
-                                               : reflection::get_property_type<typename T::value_type>();
+            constexpr auto property_type = (reflection::String<typename T::value_type>) ? reflection::PropertyType::null_term_string
+                                                                                        : reflection::get_property_type<typename T::value_type>();
 
-            add_property_to_map(
-                name,
-                {
-                    std::move(buffer),
-                    property_type,
-                    reflection::PropertyContainerType::array,
-                    t.size()
-                }
-            );
+            add_property_to_map(name, {std::move(buffer), property_type, reflection::PropertyContainerType::array, t.size()});
         }
     }
 
+    /**
+     * @brief Adds a string property to the archive.
+     *
+     * Handles std::string, std::string_view, and other types satisfying reflection::String concept.
+     * The string is copied with null terminator for safe deserialization.
+     *
+     * @tparam T String type satisfying reflection::String concept
+     * @param name Property name identifier
+     * @param t The string to serialize
+     */
     template <reflection::String T>
     void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
             name,
-            {
-                Buffer::copy(t.data(), t.size() + 1),
-                reflection::PropertyType::character,
-                reflection::PropertyContainerType::null_term_string,
-                t.size() + 1
-            }
-        );
+            {Buffer::copy(t.data(), t.size() + 1),
+             reflection::PropertyType::character,
+             reflection::PropertyContainerType::null_term_string,
+             t.size() + 1});
     }
 
+    /**
+     * @brief Adds a GLM vec1 property (single-component vector).
+     *
+     * @tparam T GLM vec1 type (e.g., glm::vec1, glm::ivec1)
+     * @param name Property name identifier
+     * @param t The vector to serialize
+     */
     template <reflection::GlmVec1 T>
     void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
-            name,
-            {
-                Buffer::create<T>(t),
-                reflection::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vector,
-                1
-            }
-        );
+            name, {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::vector, 1});
     }
 
+    /**
+     * @brief Adds a GLM vec2 property (two-component vector).
+     *
+     * @tparam T GLM vec2 type (e.g., glm::vec2, glm::ivec2, glm::dvec2)
+     * @param name Property name identifier
+     * @param t The vector to serialize
+     */
     template <reflection::GlmVec2 T>
     void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
-            name,
-            {
-                Buffer::create<T>(t),
-                reflection::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vector,
-                2
-            }
-        );
+            name, {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::vector, 2});
     }
 
+    /**
+     * @brief Adds a GLM vec3 property (three-component vector).
+     *
+     * @tparam T GLM vec3 type (e.g., glm::vec3, glm::ivec3, glm::dvec3)
+     * @param name Property name identifier
+     * @param t The vector to serialize
+     */
     template <reflection::GlmVec3 T>
     void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
-            name,
-            {
-                Buffer::create<T>(t),
-                reflection::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vector,
-                3
-            }
-        );
+            name, {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::vector, 3});
     }
 
+    /**
+     * @brief Adds a GLM vec4 property (four-component vector).
+     *
+     * @tparam T GLM vec4 type (e.g., glm::vec4, glm::ivec4, glm::dvec4)
+     * @param name Property name identifier
+     * @param t The vector to serialize
+     */
     template <reflection::GlmVec4 T>
     void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(
-            name,
-            {
-                Buffer::create<T>(t),
-                reflection::get_property_type<typename T::value_type>(),
-                reflection::PropertyContainerType::vector,
-                4
-            }
-        );
+            name, {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::vector, 4});
     }
 
-    template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
+    /**
+     * @brief Adds a map property with string-convertible keys.
+     *
+     * Creates a child ArchiveObject and populates it with key-value pairs from the map.
+     * Keys must be convertible to std::string_view. Values are serialized recursively.
+     *
+     * @tparam T Map type (std::unordered_map, std::map, etc.) with string-like keys
+     * @param name Property name identifier
+     * @param t The map to serialize
+     */
+    template <reflection::Map T>
+        requires std::is_convertible_v<typename T::key_type, PropertyName>
     void add_property(const PropertyName& name, const T& t)
     {
         auto* child = create_child(name);
@@ -234,36 +368,79 @@ public:
         }
     }
 
-    template<typename T> requires std::is_enum_v<T>
+    /**
+     * @brief Adds an enum property serialized as a string.
+     *
+     * Uses portal::to_string() to convert the enum to its string representation,
+     * making the serialized format human-readable. Deserialization uses portal::from_string().
+     *
+     * @tparam T Enum type
+     * @param name Property name identifier
+     * @param e The enum value to serialize
+     */
+    template <typename T>
+        requires std::is_enum_v<T>
     void add_property(const PropertyName& name, const T& e)
     {
         add_property(name, portal::to_string(e));
     }
 
+    /**
+     * @brief Deleted template to catch unsupported types at compile time.
+     *
+     * If compilation fails here, the type doesn't satisfy any supported concept.
+     * Implement Archiveable concept or add a specialized add_property overload.
+     */
     template <typename T>
     void add_property(const PropertyName&, const T&) = delete;
 
+    /**
+     * @brief Adds a C-string property.
+     * @param name Property name identifier
+     * @param t Null-terminated C-string
+     */
     void add_property(const PropertyName& name, const char* t);
+
+    /**
+     * @brief Adds a filesystem path property.
+     * @param name Property name identifier
+     * @param t Filesystem path
+     */
     void add_property(const PropertyName& name, const std::filesystem::path& t);
 
-    void add_binary_block(const PropertyName& name, const std::vector<std::byte>& data)
-    {
-        add_binary_block(name, {data.data(), data.size()});
-    }
+    /**
+     * @brief Adds a binary data block property from a byte vector.
+     *
+     * Stores arbitrary binary data that doesn't fit standard types (images, compressed data, etc.).
+     * The data is copied internally and marked with PropertyType::binary for special handling
+     * during serialization (e.g., base64 encoding in JSON).
+     *
+     * @param name Property name identifier
+     * @param data Binary data as a vector of bytes
+     */
+    void add_binary_block(const PropertyName& name, const std::vector<std::byte>& data) { add_binary_block(name, {data.data(), data.size()}); }
 
+    /**
+     * @brief Adds a binary data block property from a Buffer.
+     *
+     * @param name Property name identifier
+     * @param buffer Buffer containing the binary data (will be copied)
+     */
     void add_binary_block(const PropertyName& name, const Buffer& buffer)
     {
-        add_property_to_map(
-            name,
-            {
-                Buffer::copy(buffer),
-                reflection::PropertyType::binary,
-                reflection::PropertyContainerType::array,
-                buffer.size
-            }
-        );
+        add_property_to_map(name, {Buffer::copy(buffer), reflection::PropertyType::binary, reflection::PropertyContainerType::array, buffer.size});
     }
 
+    /**
+     * @brief Adds a custom Archiveable type as a nested property.
+     *
+     * Creates a child ArchiveObject and calls the type's archive() method to populate it.
+     * This enables hierarchical serialization of user-defined types.
+     *
+     * @tparam T Type satisfying the Archiveable concept
+     * @param name Property name identifier
+     * @param t The object to serialize
+     */
     template <Archiveable T>
     void add_property(const PropertyName& name, const T& t)
     {
@@ -271,21 +448,49 @@ public:
         t.archive(*child);
     }
 
-    template<typename T> requires std::is_enum_v<T>
+    /**
+     * @brief Retrieves an enum property deserialized from its string representation.
+     *
+     * Reads the property as a string and converts it back to the enum using portal::from_string().
+     *
+     * @tparam T Enum type
+     * @param name Property name identifier
+     * @param out Output parameter to store the enum value
+     * @return true if property exists and conversion succeeds, false otherwise
+     */
+    template <typename T>
+        requires std::is_enum_v<T>
     bool get_property(const PropertyName& name, T& out)
     {
         std::string out_string;
         if (!get_property<std::string>(name, out_string))
             return false;
 
-        out =  portal::from_string<T>(out_string);
+        out = portal::from_string<T>(out_string);
         return true;
     }
 
+    /**
+     * @brief Deleted template to catch unsupported types at compile time during deserialization.
+     *
+     * If compilation fails here, the type doesn't satisfy any supported concept.
+     * Implement Dearchiveable concept or add a specialized get_property overload.
+     */
     template <typename T>
     bool get_property(const PropertyName& name, T& t) = delete;
 
-    template <typename T> requires (std::integral<T>) && (!std::is_same_v<T, bool>)
+    /**
+     * @brief Retrieves an integral property value.
+     *
+     * Reads a scalar integer value (int8_t through int64_t, unsigned variants).
+     *
+     * @tparam T Integral type (excluding bool)
+     * @param name Property name identifier
+     * @param out Output parameter to store the value
+     * @return true if property exists and type matches, false otherwise
+     */
+    template <typename T>
+        requires(std::integral<T>) && (!std::is_same_v<T, bool>)
     bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = get_property_from_map(name);
@@ -296,7 +501,19 @@ public:
         return true;
     }
 
-    template <typename T> requires std::floating_point<T>
+    /**
+     * @brief Retrieves a floating-point property value with automatic float/double conversion.
+     *
+     * Handles JSON's ambiguity between float and double by automatically converting
+     * between the two when necessary.
+     *
+     * @tparam T Floating-point type (float or double)
+     * @param name Property name identifier
+     * @param out Output parameter to store the value
+     * @return true if property exists and is numeric, false otherwise
+     */
+    template <typename T>
+        requires std::floating_point<T>
     bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = get_property_from_map(name);
@@ -326,6 +543,17 @@ public:
         return true;
     }
 
+    /**
+     * @brief Retrieves a std::vector property.
+     *
+     * Clears the output vector and populates it with elements from the archived array.
+     * Handles both primitive element types and Archiveable custom types.
+     *
+     * @tparam T Vector type satisfying reflection::Vector concept
+     * @param name Property name identifier
+     * @param out Output vector to populate
+     * @return true if property exists and is an array, false otherwise
+     */
     template <reflection::Vector T>
     bool get_property(const PropertyName& name, T& out)
     {
@@ -339,6 +567,16 @@ public:
         return format_array<T, typename T::value_type>(name, prop, out);
     }
 
+    /**
+     * @brief Retrieves an llvm::SmallVector property.
+     *
+     * Clears the output SmallVector and populates it with elements from the archived array.
+     *
+     * @tparam T SmallVector type satisfying reflection::SmallVector concept
+     * @param name Property name identifier
+     * @param out Output SmallVector to populate
+     * @return true if property exists and is an array, false otherwise
+     */
     template <reflection::SmallVector T>
     bool get_property(const PropertyName& name, T& out)
     {
@@ -352,6 +590,16 @@ public:
         return format_array<T, typename T::ValueParamT>(name, prop, out);
     }
 
+    /**
+     * @brief Retrieves a string property.
+     *
+     * Handles both null-terminated and length-prefixed string storage.
+     *
+     * @tparam T String type satisfying reflection::String concept
+     * @param name Property name identifier
+     * @param out Output string to populate
+     * @return true if property exists and is a string, false otherwise
+     */
     template <reflection::String T>
     bool get_property(const PropertyName& name, T& out)
     {
@@ -376,6 +624,14 @@ public:
         return true;
     }
 
+    /**
+     * @brief Retrieves a GLM vec1 property (single-component vector).
+     *
+     * @tparam T GLM vec1 type (e.g., glm::vec1, glm::ivec1)
+     * @param name Property name identifier
+     * @param out Output parameter to store the vector
+     * @return true if property exists and is a 1-component vector, false otherwise
+     */
     template <reflection::GlmVec1 T>
     bool get_property(const PropertyName& name, T& out)
     {
@@ -390,6 +646,14 @@ public:
         return true;
     }
 
+    /**
+     * @brief Retrieves a GLM vec2 property (two-component vector).
+     *
+     * @tparam T GLM vec2 type (e.g., glm::vec2, glm::ivec2, glm::dvec2)
+     * @param name Property name identifier
+     * @param out Output parameter to store the vector
+     * @return true if property exists and is a 2-component vector, false otherwise
+     */
     template <reflection::GlmVec2 T>
     bool get_property(const PropertyName& name, T& out)
     {
@@ -403,6 +667,14 @@ public:
         return true;
     }
 
+    /**
+     * @brief Retrieves a GLM vec3 property (three-component vector).
+     *
+     * @tparam T GLM vec3 type (e.g., glm::vec3, glm::ivec3, glm::dvec3)
+     * @param name Property name identifier
+     * @param out Output parameter to store the vector
+     * @return true if property exists and is a 3-component vector, false otherwise
+     */
     template <reflection::GlmVec3 T>
     bool get_property(const PropertyName& name, T& out)
     {
@@ -416,6 +688,14 @@ public:
         return true;
     }
 
+    /**
+     * @brief Retrieves a GLM vec4 property (four-component vector).
+     *
+     * @tparam T GLM vec4 type (e.g., glm::vec4, glm::ivec4, glm::dvec4)
+     * @param name Property name identifier
+     * @param out Output parameter to store the vector
+     * @return true if property exists and is a 4-component vector, false otherwise
+     */
     template <reflection::GlmVec4 T>
     bool get_property(const PropertyName& name, T& out)
     {
@@ -429,7 +709,19 @@ public:
         return true;
     }
 
-    template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
+    /**
+     * @brief Retrieves a map property with string-convertible keys.
+     *
+     * Clears the output map and populates it with key-value pairs from the child ArchiveObject.
+     * Handles both primitive value types and Dearchiveable custom types.
+     *
+     * @tparam T Map type (std::unordered_map, std::map, etc.) with string-like keys
+     * @param name Property name identifier
+     * @param out Output map to populate
+     * @return true if property exists and is an object, false otherwise
+     */
+    template <reflection::Map T>
+        requires std::is_convertible_v<typename T::key_type, PropertyName>
     bool get_property(const PropertyName& name, T& out)
     {
         using ValueType = T::mapped_type;
@@ -456,6 +748,16 @@ public:
         return true;
     }
 
+    /**
+     * @brief Retrieves a custom Archiveable type from a nested property.
+     *
+     * Gets the child ArchiveObject and calls the type's static dearchive() method to reconstruct it.
+     *
+     * @tparam T Type satisfying the Archiveable concept
+     * @param name Property name identifier
+     * @param out Output parameter to store the dearchived object
+     * @return true if property exists and is an object, false otherwise
+     */
     template <Archiveable T>
     bool get_property(const PropertyName& name, T& out)
     {
@@ -467,8 +769,21 @@ public:
         return true;
     }
 
+    /**
+     * @brief Retrieves a filesystem path property.
+     * @param name Property name identifier
+     * @param out Output parameter to store the path
+     * @return true if property exists, false otherwise
+     */
     bool get_property(const PropertyName& name, std::filesystem::path& out);
 
+    /**
+     * @brief Retrieves a binary data block property into a Buffer.
+     *
+     * @param name Property name identifier
+     * @param buffer Output Buffer to receive a copy of the binary data
+     * @return true if the property exists and is binary type, false otherwise
+     */
     bool get_binary_block(const PropertyName& name, Buffer& buffer)
     {
         const auto& property = get_property_from_map(name);
@@ -481,6 +796,13 @@ public:
         return true;
     }
 
+    /**
+     * @brief Retrieves a binary data block property into a byte vector.
+     *
+     * @param name Property name identifier
+     * @param data Output vector to receive the binary data
+     * @return true if the property exists and is binary type, false otherwise
+     */
     bool get_binary_block(const PropertyName& name, std::vector<std::byte>& data)
     {
         const auto& property = get_property_from_map(name);
@@ -493,7 +815,27 @@ public:
         return true;
     }
 
+    /**
+     * @brief Creates a new child ArchiveObject and adds it as a property.
+     *
+     * Creates a nested ArchiveObject for hierarchical serialization. Used internally
+     * by add_property() when serializing Archiveable types or maps. The child becomes
+     * owned by this ArchiveObject and is stored in the property map.
+     *
+     * @param name Property name for the child object
+     * @return Pointer to the newly created child ArchiveObject (non-owning)
+     */
     virtual ArchiveObject* create_child(PropertyName name);
+
+    /**
+     * @brief Retrieves a child ArchiveObject by name.
+     *
+     * Used during deserialization to access nested objects. Returns null if no child
+     * with the given name exists.
+     *
+     * @param name Property name of the child object
+     * @return Pointer to the child ArchiveObject, or nullptr if not found
+     */
     virtual ArchiveObject* get_object(PropertyName name);
 
     // Iterator support for range-based for loops
@@ -503,7 +845,8 @@ public:
     auto end() const { return property_map.end(); }
 
 protected:
-    template <typename T, typename ValueType> requires (reflection::Vector<T> || reflection::SmallVector<T>)
+    template <typename T, typename ValueType>
+        requires(reflection::Vector<T> || reflection::SmallVector<T>)
     bool format_array(const PropertyName& name, const reflection::Property& prop, T& out) const
     {
         const auto& [value, type, container_type, elements_number] = prop;
@@ -548,29 +891,13 @@ protected:
 template <>
 inline void ArchiveObject::add_property<bool>(const PropertyName& name, const bool& b)
 {
-    add_property_to_map(
-        name,
-        {
-            Buffer::create<bool>(b),
-            reflection::PropertyType::boolean,
-            reflection::PropertyContainerType::scalar,
-            1
-        }
-    );
+    add_property_to_map(name, {Buffer::create<bool>(b), reflection::PropertyType::boolean, reflection::PropertyContainerType::scalar, 1});
 }
 
 template <>
 inline void ArchiveObject::add_property<uint128_t>(const PropertyName& name, const uint128_t& t)
 {
-    add_property_to_map(
-        name,
-        {
-            Buffer::create<uint128_t>(t),
-            reflection::PropertyType::integer128,
-            reflection::PropertyContainerType::scalar,
-            1
-        }
-    );
+    add_property_to_map(name, {Buffer::create<uint128_t>(t), reflection::PropertyType::integer128, reflection::PropertyContainerType::scalar, 1});
 }
 
 template <>
