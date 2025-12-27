@@ -3,7 +3,7 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include "binary_searilization.h"
+#include "binary_serialization.h"
 
 #include <ranges>
 
@@ -74,11 +74,7 @@ struct Header
         magic[1] = static_cast<char>((serialized >> 8) & 0xFF);
         const auto version = static_cast<uint8_t>((serialized >> 16) & 0xFF);
         const auto params = decode_params(static_cast<uint8_t>((serialized >> 24) & 0xFF));
-        const auto header = Header{
-            .magic = std::string_view(magic, 2),
-            .version = version,
-            .params = params
-        };
+        const auto header = Header{.magic = std::string_view(magic, 2), .version = version, .params = params};
         validate_header(header);
         return header;
     }
@@ -126,12 +122,10 @@ private:
 
 BinarySerializer::BinarySerializer(std::ostream& output) :
     BinarySerializer(output, BinarySerializationParams{})
-{
-}
+{}
 
 BinarySerializer::BinarySerializer(std::ostream& output, const BinarySerializationParams params) :
-    params(params),
-    output(output)
+    params(params), output(output)
 {
     if (params.encode_header)
     {
@@ -144,8 +138,8 @@ void BinarySerializer::add_property(const reflection::Property property)
 {
     output.write(reinterpret_cast<const char*>(&property.container_type), 1);
     output.write(reinterpret_cast<const char*>(&property.type), 1);
-    if (property.container_type != reflection::PropertyContainerType::scalar && !(property.container_type == reflection::PropertyContainerType::vector
-        && params.pack_elements))
+    if (property.container_type != reflection::PropertyContainerType::scalar &&
+        !(property.container_type == reflection::PropertyContainerType::vector && params.pack_elements))
     {
         output.write(reinterpret_cast<const char*>(&property.elements_number), element_number_size(params));
     }
@@ -173,8 +167,7 @@ BinaryDeserializer::BinaryDeserializer(std::istream& input, const bool read_head
 }
 
 BinaryDeserializer::BinaryDeserializer(std::istream& input, const BinarySerializationParams params) :
-    input(input),
-    params(params)
+    input(input), params(params)
 {
     const auto size = input.seekg(0, std::ios::end).tellg();
     input.seekg(0, std::ios::beg);
@@ -203,11 +196,6 @@ reflection::Property BinaryDeserializer::get_property()
     const Buffer value{buffer.data() + cursor, elements_number * element_size};
     cursor += elements_number * element_size;
 
-    return {
-        .value = value,
-        .type = type,
-        .container_type = container_type,
-        .elements_number = elements_number
-    };
+    return {.value = value, .type = type, .container_type = container_type, .elements_number = elements_number};
 }
 } // namespace portal
