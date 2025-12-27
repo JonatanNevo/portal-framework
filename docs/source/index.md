@@ -1,4 +1,12 @@
-# ![Portal Framework](_static/Portal_Banner.png)
+```{image} _static/portal_splash_dark.png
+    :align: center
+    :class: only-dark
+```
+
+```{image} _static/portal_splash_light.png
+    :align: center
+    :class: only-light
+```
 
 Welcome to the **Portal Framework** - a modular C++23 game engine framework designed for high-performance, data-oriented game development.
 

@@ -100,7 +100,7 @@ breathe_projects = {
 }
 
 breathe_default_project = "portal engine"
-breathe_default_members = ('members', 'undoc-members')
+breathe_default_members = tuple()
 
 exhale_args = {
     # These arguments are required
@@ -110,9 +110,9 @@ exhale_args = {
     "rootFileTitle": "Unknown",
     "containmentFolder": "source/api",
     "createTreeView": True,
+    "minifyTreeView": False,
     "contentsDirectives": False,
     "exhaleExecutesDoxygen": False,
-    "generateBreatheFileDirectives": True
 }
 
 exhale_projects_args = {
@@ -157,13 +157,15 @@ myst_enable_extensions = [
 
 html_theme = 'furo'
 html_static_path = ['_static']
-html_logo = '_static/portal_icon_64x64.png'
 html_title = "Portal Framework"
 
 html_theme_options = {
     "source_repository": "https://github.com/JonatanNevo/portal-framework",
     "source_branch": "main",
     "source_directory": "docs/",
+    "light_logo": "portal_banner_light.png",
+    "dark_logo": "portal_banner_dark.png",
+    "sidebar_hide_name": True,
 }
 
 todo_include_todos = True

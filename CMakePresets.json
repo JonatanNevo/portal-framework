@@ -8,8 +8,7 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_CONFIGURATION_TYPES": "Debug;RelWithDebInfo;Release",
-        "VCPKG_MANIFEST_FEATURES": "dev",
-        "PORTAL_BUILD_DOCS": "ON"
+        "VCPKG_MANIFEST_FEATURES": "dev"
       }
     },
     {
