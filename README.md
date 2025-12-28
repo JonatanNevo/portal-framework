@@ -1,4 +1,6 @@
-# ![Portal Framework](docs/source/_static/portal_splash_dark.png)
+![Portal Framework](docs/source/_static/portal_splash_dark.png)
+
+# Portal Framework
 
 A modular cross-platform framework for creating C++ applications, with focus on graphics (3D) application.
 
