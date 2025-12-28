@@ -13,26 +13,62 @@ A modular cross-platform framework for creating C++ applications, with focus on 
   - Clang 19 or later
   - GCC 15 or later 
 
-# Installation
-TODO
-## vcpkg (recommended)
-TODO
-## Submodule
-TODO
+# Usage
+## Portal Tool (Recommended)
+> Currently `portal-tool` only works on Windows, linux has known issues and macos is not yet tested
+### Requirements
+- Python 3.12 or later
+- CMake 3.30 or later
+- Ninja build system
+- Git
+- C++ 23+ compiler
 
-# Standalone Build
-## xcode
+### Installation
+Install the portal tool package
+```shell
+pip install portal-tool
+```
+
+Install the platform specific dependencies
+```shell
+portal-tool install
+```
+
+Initialize a project using portal engine
+```shell
+portal-tool init
+```
+
+Build the new project
+```shell
+cd <project-name>
+cmake --preset ninja-multi
+cmake --build --preset debug/development/release
+```
+
+# Development
+
+## Cmake
+```shell
+cmake --preset ninja-multi
+```
+
+```shell
+cmake --build --preset debug/development/release
+```
+
+## External Toolchains
+### xcode
 ```shell
 cmake --preset xcode
 ```
 This will generate an Xcode project in the `build/xcode` directory. You can open the project in Xcode and build it from there.
-## visual studio
+### visual studio
 ```bash
 cmake --preset vs2022
 ```
 This will generate a Visual Studio solution in the `build/vs2022` directory.
 > vs2026 is also supported, but cmake 4.2+ is required
-
 
 
 # Modules
@@ -50,6 +86,7 @@ Detailed architecture documentation is available in the `docs/architecture/` dir
 - [**Core Systems Architecture**](docs/architecture/core-systems.md) - In-depth documentation of the job system, memory allocators, concurrency primitives, and string ID system
 
 # Examples
+TODO
 
 # Roadmap
 ## Missing modules
