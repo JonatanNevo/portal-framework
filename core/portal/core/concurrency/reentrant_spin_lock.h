@@ -13,12 +13,29 @@
 namespace portal
 {
 /**
- * A performant reentrant spin lock, for use in places where each thread is expected to hold the lock for a very short time.
- * This lock meets the `BasicLockable` and `Lockable` requirements, and can be used with `std::lock_guard`, `std::scoped_lock` or `std::unique_lock`.
+ * Reentrant spin lock allowing the same thread to lock multiple times.
  *
- * This class is templated to allow for different ref count sizes.
+ * Unlike SpinLock, the same thread can acquire the lock multiple times without deadlocking.
+ * Each lock() must be matched with an unlock(). Maintains a reference count per thread.
  *
- * This is based on the spinlock implementation from the book "Game Engine Architecture" by Jason Gregory.
+ * Use when: Recursive calls may re-acquire the same lock (call chains, nested operations)
+ * Use SpinLock when: No recursion needed (simpler, slightly faster)
+ *
+ * Example (Recursive tree traversal):
+ * @code
+ * ReentrantSpinLock tree_lock;
+ * void process_node(Node* node) {
+ *     std::lock_guard lock(tree_lock);  // Safe even if already locked
+ *     process(node);
+ *     if (node->left) process_node(node->left);   // Recursive call re-locks
+ *     if (node->right) process_node(node->right);
+ * }
+ * @endcode
+ *
+ * @tparam T Reference count type (default uint32_t). Use smaller types (uint16_t, uint8_t)
+ *           if maximum recursion depth is known and small, to save memory.
+ *
+ * @see SpinLock for non-reentrant version (faster when recursion not needed)
  */
 template <typename T = uint32_t> requires std::is_integral_v<T>
 class ReentrantSpinLock

@@ -11,10 +11,24 @@
 namespace portal
 {
 /**
- * A performant spin lock, for use in places where each thread is expected to hold the lock for a very short time.
- * This lock meets the `BasicLockable` and `Lockable` requirements, and can be used with `std::lock_guard`, `std::scoped_lock` or `std::unique_lock`.
+ * High-performance spin lock for very short critical sections (microseconds).
  *
- * This is based on the spinlock implementation from the book "Game Engine Architecture" by Jason Gregory.
+ * Busy-waits instead of sleeping when contended, making it faster than std::mutex for
+ * brief critical sections but wasteful for longer ones. Uses exponential backoff (1-1024
+ * yields) to reduce CPU waste under contention.
+ *
+ * Use for: O(1) operations, rare contention, predictable short durations
+ * Use std::mutex for: Longer sections, unpredictable duration, high contention
+ *
+ * Example:
+ * @code
+ * SpinLock stats_lock;
+ * std::lock_guard lock(stats_lock);
+ * stats.count++;  // Brief critical section
+ * @endcode
+ *
+ * @note Not reentrant - same thread locking twice deadlocks (use ReentrantSpinLock)
+ * @see ReentrantSpinLock for reentrant variant
  */
 class SpinLock
 {
