@@ -3,6 +3,19 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
+/**
+ * @file resource_reference.h
+ * @brief Smart handle for asynchronously-loaded resources
+ *
+ * This file defines ResourceReference<T>, the primary user-facing API for working with
+ * resources in the Portal Framework. Unlike Reference<T> (which is std::shared_ptr<T>),
+ * ResourceReference provides asynchronous loading semantics with state tracking.
+ *
+ * @see ResourceRegistry for loading resources
+ * @see ResourceState for the state machine
+ * @see Reference for the underlying shared pointer type
+ */
+
 #pragma once
 
 #include "resources/resource.h"
@@ -12,11 +25,118 @@
 
 namespace portal
 {
+/**
+ * @class ResourceReference
+ * @brief Type-safe smart handle for asynchronously-loaded resources
+ *
+ * ResourceReference<T> is the primary interface for accessing resources loaded by the
+ * ResourceRegistry. It provides a handle-based API where references can exist before
+ * the resource finishes loading, enabling non-blocking async loading patterns.
+ *
+ * Key Concepts:
+ *
+ * **Handle vs Resource**:
+ * A ResourceReference is a handle to a resource, not the resource itself. The actual
+ * resource lives in the ResourceRegistry's internal storage. Multiple references can
+ * point to the same resource, and references are cheap to copy.
+ *
+ * **Lazy State Synchronization**:
+ * References cache their state (Unknown/Pending/Loaded/Error) and only query the
+ * registry when needed. Calling get_state() or is_valid() triggers a registry lookup
+ * if the cached state isn't Loaded. This avoids redundant lookups and enables efficient
+ * state polling.
+ *
+ * **Reference Counting**:
+ * The ReferenceManager tracks how many ResourceReferences point to each resource. This
+ * enables future features like automatic unloading when reference counts drop to zero.
+ * Copy/move operations automatically update the reference counts.
+ *
+ * **Thread Safety**:
+ * State queries are thread-safe. The registry uses internal locking to ensure state
+ * transitions are atomic. However, the underlying resource (accessed via get()) must
+ * be used in accordance with its own thread-safety guarantees.
+ *
+ * Distinction from Reference<T>:
+ *
+ * - `Reference<T>` = `std::shared_ptr<T>` - Generic ownership for any engine object
+ * - `ResourceReference<T>` = Smart handle for user assets with async loading semantics
+ *
+ * Once a resource is loaded in the registry, it's always valid. But a
+ * ResourceReference might point to a resource that's still loading, failed, or doesn't exist.
+ *
+ * Usage Example (Async Loading):
+ * @code
+ * // Request async load (returns immediately)
+ * auto texture_ref = registry.load<TextureResource>(STRING_ID("textures/albedo.png"));
+ *
+ * // First frame: resource is probably still loading
+ * if (texture_ref.is_valid()) {
+ *     // This branch won't execute yet
+ *     auto& texture = texture_ref.get();
+ *     renderer.bind_texture(texture);
+ * } else {
+ *     // Show loading placeholder
+ *     renderer.bind_texture(default_texture);
+ * }
+ *
+ * // Later frames: resource finishes loading
+ * if (texture_ref.is_valid()) {
+ *     // Now this executes - texture is ready
+ *     auto& texture = texture_ref.get();
+ *     renderer.bind_texture(texture);
+ * }
+ * @endcode
+ *
+ * Usage Example (Synchronous Loading):
+ * @code
+ * // Block until loaded (for critical startup resources)
+ * auto mesh_ref = registry.immediate_load<MeshResource>(STRING_ID("models/character.gltf"));
+ * // mesh_ref.is_valid() is guaranteed true here (or Error if load failed)
+ * @endcode
+ *
+ * Usage Example (Error Handling):
+ * @code
+ * auto shader_ref = registry.load<ShaderResource>(STRING_ID("shaders/pbr.slang"));
+ *
+ * switch (shader_ref.get_state()) {
+ *     case ResourceState::Loaded:
+ *         // Ready to use
+ *         break;
+ *     case ResourceState::Pending:
+ *         // Still loading, try again next frame
+ *         break;
+ *     case ResourceState::Error:
+ *         // Load failed, use fallback
+ *         LOG_ERROR("Failed to load shader");
+ *         shader_ref = registry.get<ShaderResource>(STRING_ID("shaders/fallback.slang"));
+ *         break;
+ *     case ResourceState::Missing:
+ *         // File doesn't exist
+ *         LOG_ERROR("Shader file not found");
+ *         break;
+ * }
+ * @endcode
+ *
+ * @tparam T The resource type (must satisfy ResourceConcept)
+ *
+ * @note Default-constructed references are in Null state and is_valid() returns false
+ * @note Moved-from references become Null
+ * @note operator-> and operator* dont check if the resource isn't loaded - use is_valid() first
+ *
+ * @see ResourceRegistry::load() for async loading
+ * @see ResourceRegistry::immediate_load() for blocking loading
+ * @see ResourceRegistry::get() for retrieving already-loaded resources
+ * @see ResourceState for all possible states
+ * @see ReferenceManager for reference counting details
+ */
 template <ResourceConcept T>
 class ResourceReference
 {
 public:
+    /** @brief Default constructor - creates a Null reference */
     ResourceReference() = default;
+
+    /** @brief Nullptr constructor - creates a Null reference */
     explicit ResourceReference(std::nullptr_t) : ResourceReference() {};
 
     ~ResourceReference()

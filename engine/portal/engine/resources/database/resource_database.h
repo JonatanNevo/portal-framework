@@ -3,6 +3,19 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
+/**
+ * @file resource_database.h
+ * @brief Filesystem abstraction and metadata management for the resource system
+ *
+ * This file defines the ResourceDatabase interface and SourceMetadata structures that
+ * provide filesystem abstraction for resource loading. The database discovers resources
+ * by scanning directories, extracts metadata, and provides ResourceSource abstractions
+ * for reading file data.
+ *
+ * @see FolderResourceDatabase for the concrete filesystem-based implementation
+ * @see ResourceRegistry for how the database integrates with loading
+ */
+
 #pragma once
 #include <expected>
 #include <llvm/ADT/SmallVector.h>
@@ -22,20 +35,49 @@ namespace resources
 
 struct SourceMetadata;
 
+/**
+ * @struct EmptyMeta
+ * @brief Placeholder metadata for resources without format-specific metadata
+ *
+ * Used as the default variant value in SourceMetadata::meta when a resource type
+ * doesn't require additional metadata beyond the base SourceMetadata fields.
+ */
 struct EmptyMeta
 {
     void archive(ArchiveObject&) const {}
 };
 
+/**
+ * @struct CompositeMetadata
+ * @brief Metadata for composite resources containing multiple sub-resources
+ *
+ * Composite resources (like GLTF files) contain multiple embedded assets. This metadata
+ * stores the child resources discovered during metadata enrichment. The GltfLoader uses
+ * this to create separate resource entries for each texture, material, mesh, and scene
+ * found in the GLTF file.
+ *
+ * @see GltfLoader::enrich_metadata() for how children are populated
+ * @see ResourceType::Composite for composite resource handling
+ */
 struct CompositeMetadata
 {
+    /** @brief Map of child resource names to their metadata */
     std::unordered_map<std::string, SourceMetadata> children;
+
+    /** @brief Type identifier for the composite (e.g., "gltf") */
     std::string type;
 
     void archive(ArchiveObject& archive) const;
     static CompositeMetadata dearchive(ArchiveObject& archive);
 };
 
+/**
+ * @struct TextureMetadata
+ * @brief Format-specific metadata for texture resources
+ *
+ * Extracted during database scanning or loader enrichment. Contains information about
+ * the texture format that loaders need to properly decode and upload to GPU memory.
+ */
 struct TextureMetadata
 {
     bool hdr;
@@ -47,6 +89,13 @@ struct TextureMetadata
     static TextureMetadata dearchive(ArchiveObject& archive);
 };
 
+/**
+ * @struct MaterialMetadata
+ * @brief Format-specific metadata for material resources
+ *
+ * Materials reference shaders and textures. This metadata stores the shader reference
+ * that defines how the material should be rendered.
+ */
 struct MaterialMetadata
 {
     StringId shader;
@@ -55,6 +104,37 @@ struct MaterialMetadata
     static MaterialMetadata dearchive(ArchiveObject& archive);
 };
 
+/**
+ * @struct SourceMetadata
+ * @brief Complete metadata for a resource, used by loaders and the registry
+ *
+ * SourceMetadata contains everything a loader needs to load a resource:
+ * - Resource identity (resource_id, type)
+ * - Source location (source path, format)
+ * - Dependencies (other resources this depends on)
+ * - Format-specific metadata (texture dimensions, composite children, etc.)
+ *
+ * The database populates this during filesystem scanning and loaders can enrich it
+ * with additional metadata (e.g., GltfLoader adds CompositeMetadata with children).
+ *
+ * Usage Example:
+ * @code
+ * // Database provides metadata
+ * auto meta = database.find(STRING_ID("textures/albedo.png")).value();
+ * // meta.type == ResourceType::Texture
+ * // meta.format == SourceFormat::Image
+ * // meta.source == STRING_ID("textures/albedo.png")
+ * // std::get<TextureMetadata>(meta.meta) contains dimensions and format
+ *
+ * // Loader uses metadata to load
+ * auto source = database.create_source(meta.resource_id, meta);
+ * auto resource = loader.load(meta, *source);
+ * @endcode
+ *
+ * @see ResourceDatabase::find() for querying metadata
+ * @see ResourceLoader::load() for how loaders consume metadata
+ * @see LoaderFactory::enrich_metadata() for metadata enrichment
+ */
 struct SourceMetadata
 {
     // Resource Information
@@ -70,12 +150,28 @@ struct SourceMetadata
     StringId full_source_path = INVALID_STRING_ID;
 
     // Specific metadata
+    /**
+     * @brief Format-specific metadata variant
+     *
+     * Contains additional metadata specific to the resource type:
+     * - TextureMetadata: HDR flag, dimensions, format
+     * - CompositeMetadata: Child resources for GLTF files
+     * - MaterialMetadata: Shader reference
+     * - EmptyMeta: No additional metadata needed
+     */
     std::variant<TextureMetadata, CompositeMetadata, MaterialMetadata, EmptyMeta> meta = EmptyMeta{};
 
     void archive(ArchiveObject& archive) const;
     static SourceMetadata dearchive(ArchiveObject& archive);
 };
 
+/**
+ * @enum DatabaseErrorBit
+ * @brief Error codes for database operations (bitfield flags)
+ *
+ * Database operations can fail for various reasons. These error flags can be combined to
+ * indicate multiple issues (e.g., MissingResource | StaleMetadata).
+ */
 enum class DatabaseErrorBit: uint8_t
 {
     Success         = 0b00000000,
@@ -91,18 +187,65 @@ enum class DatabaseErrorBit: uint8_t
     Unspecified = std::numeric_limits<uint8_t>::max(),
 };
 
+/** @brief Combined flags type for database errors */
 using DatabaseError = Flags<DatabaseErrorBit>;
 
+/**
+ * @class ResourceDatabase
+ * @brief Abstract interface for resource metadata storage and file access
+ *
+ * The ResourceDatabase provides filesystem abstraction for the resource system. It discovers
+ * resources by scanning directories, extracts and caches metadata, and creates ResourceSource
+ * abstractions for reading file data.
+ *
+ * Responsibilities:
+ * - Discovery: Scan filesystem directories to find resource files
+ * - Metadata: Extract and cache SourceMetadata for each resource
+ * - Persistence: Save/load metadata to avoid re-scanning on startup
+ * - Source Creation: Provide ResourceSource objects for reading file bytes
+ *
+ * @see FolderResourceDatabase for the concrete filesystem implementation
+ * @see ResourceSource for the file reading abstraction
+ * @see SourceMetadata for what metadata is stored
+ */
 class ResourceDatabase : public Module<>
 {
 public:
     explicit ResourceDatabase(ModuleStack& stack, const StringId& name) : Module<>(stack, name) {}
     ~ResourceDatabase() override = default;
 
+    /**
+     * @brief Find metadata for a resource by its ID
+     *
+     * @param resource_id StringId of the resource to find
+     * @return SourceMetadata if found, or DatabaseError explaining why lookup failed
+     */
     virtual std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) = 0;
+
+    /**
+     * @brief Add a new resource to the database
+     *
+     * @param resource_id StringId for the new resource
+     * @param meta Complete metadata for the resource
+     * @return Success or error flags indicating why the operation failed
+     */
     virtual DatabaseError add(StringId resource_id, SourceMetadata meta) = 0;
+
+    /**
+     * @brief Remove a resource from the database
+     *
+     * @param resource_id StringId of the resource to remove
+     * @return Success if removed, NotFound if resource didn't exist
+     */
     virtual DatabaseError remove(StringId resource_id) = 0;
 
+    /**
+     * @brief Create a ResourceSource for reading resource data
+     *
+     * @param resource_id StringId of the resource
+     * @param meta Metadata describing the resource
+     * @return Unique pointer to a ResourceSource for reading bytes
+     */
     virtual std::unique_ptr<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) = 0;
 };
 } // portal
