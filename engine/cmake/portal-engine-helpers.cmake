@@ -28,9 +28,9 @@ function(portal_add_resources TARGET_NAME RESOURCE_PATH)
     add_dependencies(${TARGET_NAME} ${RESOURCE_TARGET_NAME})
 
     get_target_property(EXISTING_RESOURCES ${TARGET_NAME} PORTAL_RESOURCES)
-    if(NOT EXISTING_RESOURCES)
+    if (NOT EXISTING_RESOURCES)
         set(EXISTING_RESOURCES "")
-    endif()
+    endif ()
 
     list(APPEND EXISTING_RESOURCES "${ARG_OUTPUT_NAME}")
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_RESOURCES "${EXISTING_RESOURCES}")
@@ -49,18 +49,18 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
     endif ()
 
     get_target_property(EXISTING_ADDITIONAL_RESOURCES ${TARGET_NAME} PORTAL_ADDITIONAL_RESOURCES)
-    if(NOT EXISTING_ADDITIONAL_RESOURCES)
+    if (NOT EXISTING_ADDITIONAL_RESOURCES)
         set(EXISTING_ADDITIONAL_RESOURCES "")
-    endif()
+    endif ()
 
     set(RESOURCES_TO_COPY ${TARGET_RESOURCES})
     if (ARG_RESOURCES_TO_FETCH)
         # Validate and use only specific resources
         set(RESOURCES_TO_COPY "")
         foreach (RESOURCE_PATH ${ARG_RESOURCES_TO_FETCH})
-            if(NOT RESOURCE_PATH IN_LIST TARGET_RESOURCES)
+            if (NOT RESOURCE_PATH IN_LIST TARGET_RESOURCES)
                 message(FATAL_ERROR "Resource '${RESOURCE_PATH}' not found in target ${TARGET_TO_FETCH}. Available resources: ${TARGET_RESOURCES}")
-            endif()
+            endif ()
             list(APPEND RESOURCES_TO_COPY "${RESOURCE_PATH}")
         endforeach ()
     endif ()
@@ -83,9 +83,9 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
                 VERBATIM
         )
 
-        if(TARGET ${SOURCE_COPY_TARGET})
+        if (TARGET ${SOURCE_COPY_TARGET})
             add_dependencies(${FETCH_TARGET_NAME} ${SOURCE_COPY_TARGET})
-        endif()
+        endif ()
         add_dependencies(${FETCH_TARGET_NAME} ${TARGET_TO_FETCH})
 
         add_dependencies(${TARGET_NAME} ${FETCH_TARGET_NAME})
@@ -122,9 +122,9 @@ function(portal_read_settings TARGET_NAME)
 
     file(READ ${SETTINGS_PATH} SETTINGS_CONTENT)
     string(JSON RESOURCES_LIST_LENGTH LENGTH ${SETTINGS_CONTENT} engine resources)
-    if(RESOURCES_LIST_LENGTH GREATER 0)
+    if (RESOURCES_LIST_LENGTH GREATER 0)
         math(EXPR RESOURCES_LIST_LAST_INDEX "${RESOURCES_LIST_LENGTH} - 1")
-        foreach(IDX RANGE ${RESOURCES_LIST_LAST_INDEX})
+        foreach (IDX RANGE ${RESOURCES_LIST_LAST_INDEX})
             string(JSON RESOURCE_OBJECT GET "${SETTINGS_CONTENT}" engine resources ${IDX})
             string(JSON RESOURCE_TYPE GET ${RESOURCE_OBJECT} type)
             string(JSON RESOURCE_PATH GET ${RESOURCE_OBJECT} path)
@@ -150,7 +150,7 @@ function(portal_read_settings TARGET_NAME)
                 message(STATUS "Found absolute resource path, skipping... ${RESOURCE_PATH}")
             endif ()
         endforeach ()
-    endif()
+    endif ()
 endfunction()
 
 function(portal_package_game TARGET_NAME)
@@ -164,29 +164,51 @@ function(portal_package_game TARGET_NAME)
             COMPONENT ${TARGET_NAME}
             RUNTIME_DEPENDENCY_SET ${TARGET_NAME}_deps
             RUNTIME
-                DESTINATION .
+            DESTINATION .
     )
 
-    install(
-            RUNTIME_DEPENDENCY_SET ${TARGET_NAME}_deps
-            PRE_EXCLUDE_REGEXES
+    if (WIN32)
+        install(
+                RUNTIME_DEPENDENCY_SET ${TARGET_NAME}_deps
+                PRE_EXCLUDE_REGEXES
                 # Windows API Set DLLs
                 "api-ms-win-.*" "ext-ms-.*"
+                POST_EXCLUDE_REGEXES
+                # Windows system directories
+                ".*[Ss]ystem32/.*\\.dll" ".*[Ww]in[Ss]x[Ss]/.*\\.dll"
+                COMPONENT ${TARGET_NAME}
+                DESTINATION .
+        )
+    else ()
+        if (APPLE)
+            set_target_properties(${TARGET_NAME} PROPERTIES
+                    INSTALL_RPATH "@executable_path/lib"
+                    BUILD_WITH_INSTALL_RPATH TRUE
+            )
+        elseif (UNIX)
+            set_target_properties(${TARGET_NAME} PROPERTIES
+                    INSTALL_RPATH "$ORIGIN/lib"
+                    BUILD_WITH_INSTALL_RPATH TRUE
+            )
+        endif ()
+
+        install(
+                RUNTIME_DEPENDENCY_SET ${TARGET_NAME}_deps
+                PRE_EXCLUDE_REGEXES
                 # Common system libraries (all platforms)
                 "libc\\.so.*" "libm\\.so.*" "libpthread\\.so.*" "libdl\\.so.*"
                 "librt\\.so.*" "libgcc_s\\.so.*" "libstdc\\+\\+\\.so.*"
                 "ld-linux.*\\.so.*" "libSystem\\..*dylib" "libc\\+\\+\\..*dylib"
-            POST_EXCLUDE_REGEXES
-                # Windows system directories
-                ".*[Ss]ystem32/.*\\.dll" ".*[Ww]in[Ss]x[Ss]/.*\\.dll"
+                POST_EXCLUDE_REGEXES
                 # Linux system directories
                 ".*/lib/.*\\.so.*" ".*/lib64/.*\\.so.*"
                 ".*/usr/lib/.*\\.so.*" ".*/usr/lib64/.*\\.so.*"
                 # macOS system directories
                 ".*/System/Library/.*" ".*/usr/lib/.*\\.dylib"
-            COMPONENT ${TARGET_NAME}
-            DESTINATION lib
-    )
+                COMPONENT ${TARGET_NAME}
+                DESTINATION lib
+        )
+    endif ()
 
     set(FILES_TO_INSTALL "")
 
@@ -197,9 +219,9 @@ function(portal_package_game TARGET_NAME)
 
     if (FILES_TO_INSTALL)
         install(
-            FILES ${FILES_TO_INSTALL}
-            COMPONENT ${TARGET_NAME}
-            DESTINATION .
+                FILES ${FILES_TO_INSTALL}
+                COMPONENT ${TARGET_NAME}
+                DESTINATION .
         )
     endif ()
 
@@ -231,6 +253,7 @@ function(portal_package_game TARGET_NAME)
     endforeach ()
 
 endfunction()
+
 function(portal_add_game TARGET_NAME)
     set(options "")
     set(oneValueArgs SETTINGS_FILE)
@@ -253,7 +276,7 @@ function(portal_add_game TARGET_NAME)
                 MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
                 MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
         )
-    else()
+    else ()
         add_executable(${TARGET_NAME} ${ARG_SOURCES})
     endif ()
 
@@ -273,7 +296,7 @@ function(portal_add_game TARGET_NAME)
         set(ARG_SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/settings.json")
     endif ()
 
-    if(NOT EXISTS ${ARG_SETTINGS_FILE})
+    if (NOT EXISTS ${ARG_SETTINGS_FILE})
         message(FATAL_ERROR "Failed to find settings file ${ARG_SETTINGS_FILE} for target ${TARGET_NAME}")
     endif ()
 
