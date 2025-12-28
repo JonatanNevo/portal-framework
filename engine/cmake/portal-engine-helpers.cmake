@@ -67,7 +67,10 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
     foreach (RESOURCE_PATH ${RESOURCES_TO_COPY})
         list(APPEND EXISTING_ADDITIONAL_RESOURCES "${RESOURCE_PATH}")
 
-        set(FETCH_TARGET_NAME "${TARGET_NAME}_fetch_${RESOURCE_PATH}_from_${TARGET_TO_FETCH}")
+        set(_TARGET_TO_FETCH_NORMALIZED "${TARGET_TO_FETCH}")
+        string(REPLACE "::" "_" _TARGET_TO_FETCH_NORMALIZED "${_TARGET_TO_FETCH_NORMALIZED}")
+
+        set(FETCH_TARGET_NAME "${TARGET_NAME}_fetch_${RESOURCE_PATH}_from_${_TARGET_TO_FETCH_NORMALIZED}")
 
         set(SOURCE_COPY_TARGET "${TARGET_TO_FETCH}_copy_${RESOURCE_PATH}")
 
@@ -179,7 +182,7 @@ function(portal_add_game TARGET_NAME)
             ${ARG_LINK_LIBRARIES}
     )
 
-    portal_fetch_resources(${TARGET_NAME} portal-engine)
+    portal_fetch_resources(${TARGET_NAME} portal::engine)
 
     foreach (RESOURCE_PATH ${ARG_RESOURCE_PATHS})
         portal_add_resources(${TARGET_NAME} ${ARG_RESOURCE_PATHS})
