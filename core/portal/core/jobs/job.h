@@ -129,17 +129,45 @@ struct SwitchInformation
  * Promise type for the C++20 coroutine protocol used by Job<T>.
  *
  * JobPromise manages the coroutine's state, result storage, and integration with the
- * work-stealing scheduler.
+ * work-stealing scheduler. It implements the promise_type concept required for C++20
+ * coroutines, handling suspension, resumption, result storage, and scheduler integration.
+ *
+ * @see ResultPromise for typed promise implementation
+ * @see Job for the coroutine type using this promise
  */
 class JobPromise
 {
 public:
+    /**
+     * Awaiter for suspending parent job until child job completes.
+     *
+     * When a Job is co_awaited (e.g., `co_await child_job()`), this awaiter:
+     * 1. Checks if child is already complete (await_ready)
+     * 2. Sets parent as continuation and dispatches child (await_suspend)
+     * 3. Returns child's result when resumed (await_resume)
+     *
+     */
     class JobAwaiter
     {
     public:
+        /**
+         * @brief Construct awaiter for a job
+         * @param handle Handle to the job being awaited
+         */
         explicit JobAwaiter(const std::coroutine_handle<JobPromise> handle) : handle(handle) {}
 
+        /**
+         * Check if job is already complete (optimization to skip suspension).
+         * @return true if job already finished, false if must suspend
+         */
         bool await_ready() noexcept;
+
+        /**
+         * Suspend calling job and establish parent-child relationship.
+         *
+         * @param caller The parent job's coroutine handle
+         * @return Handle to resume next (the child job to execute)
+         */
         std::coroutine_handle<JobPromise> await_suspend(std::coroutine_handle<> caller) noexcept;
 
         template <typename T = void> requires (std::is_same_v<T, void>)
@@ -345,21 +373,84 @@ template <typename Result>
 class ResultPromise;
 
 /**
- * C++20 coroutine type for asynchronous work with return value.
+ * C++20 coroutine type for asynchronous parallel work with optional return value.
  *
- * Jobs start suspended and must be dispatched via Scheduler::wait_for_job() or dispatch_job().
+ * Job<T> is the primary coroutine type for the Portal Framework's work-stealing scheduler.
+ * Jobs integrate with the Scheduler for parallel execution, support nested parallelism via
+ * co_await, and participate in fork-join synchronization via Counter.
+ *
+ * Lifecycle:
+ * 1. Job created suspended (via co_return from job function)
+ * 2. Dispatched to Scheduler via wait_for_job() or dispatch_job()
+ * 3. Executed on worker thread (may suspend/resume on different threads)
+ * 4. Result retrieved via result() or automatic in co_await
+ *
+ * Thread Safety:
+ * - Jobs can migrate between worker threads when suspended/resumed
+ * - Result storage is thread-safe (accessed only after completion)
+ * - Multiple threads can co_await the same job (scheduler handles synchronization)
+ *
  *
  * @tparam Result Return type (use void for jobs without return values)
  *
- * Example:
+ * @note Jobs must be dispatched to scheduler before going out of scope
+ * @note Nested jobs (child co_awaited by parent) automatically chain: parent resumes when child completes
+ *
+ * Example (Simple Job):
  * @code
- * Job<int> compute() 
+ * Job<int> compute_sum(int a, int b)
  * {
- *     co_return 42;
+ *     co_return a + b;
  * }
- * 
- * auto result = scheduler.wait_for_job(compute());
+ *
+ * auto result = scheduler.wait_for_job(compute_sum(10, 32)); // result = 42
  * @endcode
+ *
+ * Example (Nested Jobs - Parent/Child):
+ * @code
+ * Job<int> child_work(int value)
+ * {
+ *     // Simulate work
+ *     co_return value * 2;
+ * }
+ *
+ * Job<int> parent_work()
+ * {
+ *     // Dispatch child and co_await result
+ *     auto child = child_work(21);
+ *     int child_result = co_await child; // Suspends parent, child executes, parent resumes with result
+ *     co_return child_result; // Returns 42
+ * }
+ *
+ * auto final = scheduler.wait_for_job(parent_work());
+ * @endcode
+ *
+ * Example (Fork-Join Parallelism):
+ * @code
+ * Job<void> process_chunk(int chunk_id)
+ * {
+ *     // Process chunk...
+ *     co_return;
+ * }
+ *
+ * Job<void> parallel_process()
+ * {
+ *     Counter counter{};
+ *
+ *     // Dispatch 4 jobs in parallel
+ *     for (int i = 0; i < 4; i++)
+ *         scheduler.dispatch_job(process_chunk(i), JobPriority::Normal, &counter); // Counter is automatically incremented
+ *
+ *     // Wait for all chunks to complete
+ *     scheduler.wait_for_counter(&counter);
+ *
+ *     co_return;
+ * }
+ * @endcode
+ *
+ * @see jobs::Scheduler for dispatch methods
+ * @see jobs::Counter for fork-join synchronization
+ * @see Task for lightweight coroutines without scheduler overhead
  */
 template <typename Result = void>
 class [[nodiscard]] Job final : public JobBase

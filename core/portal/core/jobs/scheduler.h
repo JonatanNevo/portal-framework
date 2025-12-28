@@ -23,8 +23,27 @@ namespace portal::jobs
 /**
  * Synchronization primitive for fork-join parallelism.
  *
- * Tracks in-flight job count. Used with dispatch_jobs() and wait_for_counter()
- * for parallel work synchronization.
+ * Counter tracks the number of dispatched jobs to enable fork-join synchronization.
+ * When jobs are dispatched with a Counter, the counter is automatically incremented.
+ * When each job completes, the counter is decremented. wait_for_counter() blocks until
+ * the count reaches zero, indicating all jobs have completed.
+ *
+ *
+ * Example:
+ * @code
+ * Counter counter{};
+ *
+ * // Dispatch parallel jobs
+ * for (int i = 0; i < 10; i++)
+ *     scheduler.dispatch_job(process_item(i), JobPriority::Normal, &counter);
+ *
+ * // Wait for all jobs to complete
+ * scheduler.wait_for_counter(counter);
+ * @endcode
+ *
+ * @note Counter must outlive all jobs referencing it
+ * @see Scheduler::dispatch_job for job dispatch with counter
+ * @see Scheduler::wait_for_counter for synchronization
  */
 struct Counter
 {
@@ -45,8 +64,40 @@ enum class WorkerIterationState
 /**
  * Work-stealing scheduler for Job<T> coroutines.
  *
- * Manages worker threads, job queues, and work-stealing algorithm. Jobs are dispatched
- * to per-worker queues and can be stolen by idle workers for load balancing.
+ * The Scheduler manages a pool of worker threads that execute Job<T> coroutines in parallel.
+ * It implements a work-stealing algorithm where each worker has a local queue, and idle workers
+ * can steal jobs from busy workers to achieve load balancing.
+ *
+ * Dispatch vs Wait:
+ * - dispatch_job(s): Fire-and-forget async execution (returns immediately)
+ * - wait_for_job(s): Dispatch and block until complete, returning results
+ * - wait_for_counter: Block until counter reaches zero (fork-join sync)
+ *
+ * Job Priority:
+ * - High: Processed before Normal priority jobs
+ * - Normal: Standard execution priority
+ * - Low: Processed after Normal priority jobs
+ *
+ * @note Scheduler is not copyable or movable (owns worker threads)
+ * @note All jobs must complete before Scheduler destruction
+ *
+ * Example (Basic Usage):
+ * @code
+ * // Create scheduler with hardware_concurrency - 1 workers
+ * Scheduler scheduler(-1);
+ *
+ * // Wait for single job (blocking)
+ * int result = scheduler.wait_for_job(compute_value());
+ *
+ * // Dispatch multiple jobs async
+ * Counter counter{};
+ * for (int i = 0; i < 100; i++)
+ *     scheduler.dispatch_job(process_item(i), JobPriority::Normal, &counter);
+ * scheduler.wait_for_counter(counter);
+ * @endcode
+ *
+ * @see Job for the coroutine type
+ * @see Counter for fork-join synchronization
  */
 class Scheduler
 {
