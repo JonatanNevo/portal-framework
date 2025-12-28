@@ -34,6 +34,7 @@ function(portal_add_resources TARGET_NAME RESOURCE_PATH)
 
     list(APPEND EXISTING_RESOURCES "${ARG_OUTPUT_NAME}")
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_RESOURCES "${EXISTING_RESOURCES}")
+    set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_RESOURCES)
 endfunction()
 
 function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
@@ -91,6 +92,7 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
     endforeach ()
 
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_ADDITIONAL_RESOURCES "${EXISTING_ADDITIONAL_RESOURCES}")
+    set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_ADDITIONAL_RESOURCES)
 endfunction()
 
 function(portal_read_settings TARGET_NAME)

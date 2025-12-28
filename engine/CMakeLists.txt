@@ -49,6 +49,7 @@ portal_add_resources(portal-engine
 )
 
 set_target_properties(portal-engine PROPERTIES PORTAL_ENGINE_VERSION ${PROJECT_VERSION})
+set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_ENGINE_VERSION)
 
 #enable_testing()
 #portal_build_tests(tests)
