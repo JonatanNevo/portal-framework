@@ -4,6 +4,22 @@
 
 A modular cross-platform framework for creating C++ applications, with focus on graphics (3D) application.
 
+## Table of Contents
+
+- [Portal Framework](#portal-framework)
+  - [Supported Platforms](#supported-platforms)
+- [Usage](#usage)
+  - [Portal Tool (Recommended)](#portal-tool-recommended)
+- [Development](#development)
+  - [Cmake](#cmake)
+  - [External Toolchains](#external-toolchains)
+- [Modules](#modules)
+- [Architecture](#architecture)
+- [Examples](#examples)
+- [Roadmap](#roadmap)
+- [Generative AI Usage](#generative-ai-usage)
+- [License](#license)
+
 ## Supported Platforms
 > MSVC builds would have a slower start time due to my string hash implementation not being constexpr on MSVC
 - Windows 11
@@ -88,7 +104,9 @@ Detailed architecture documentation is available in the `docs/architecture/` dir
 - [**Core Systems Architecture**](docs/architecture/core-systems.md) - In-depth documentation of the job system, memory allocators, concurrency primitives, and string ID system
 
 # Examples
-TODO
+You can find a basic example of a rendered scene under `examples/engine_test`
+  
+If you follow the instructions of [development](#development) section, you'll also build the target `engine_test` which you can run to see the example
 
 # Roadmap
 ## Missing modules
