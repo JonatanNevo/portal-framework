@@ -145,6 +145,7 @@ function(portal_read_settings TARGET_NAME)
                 )
 
                 add_dependencies(${TARGET_NAME} ${RESOURCE_TARGET_NAME})
+                set_property(TARGET ${TARGET_NAME} APPEND PROPERTY PORTAL_RESOURCES ${RESOURCE_PATH})
             else ()
                 message(STATUS "Found absolute resource path, skipping... ${RESOURCE_PATH}")
             endif ()
@@ -152,6 +153,84 @@ function(portal_read_settings TARGET_NAME)
     endif()
 endfunction()
 
+function(portal_package_game TARGET_NAME)
+    set(options "")
+    set(oneValueArgs "")
+    set(multiValueArgs "")
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    install(
+            TARGETS ${TARGET_NAME}
+            COMPONENT ${TARGET_NAME}
+            RUNTIME_DEPENDENCY_SET ${TARGET_NAME}_deps
+            RUNTIME
+                DESTINATION .
+    )
+
+    install(
+            RUNTIME_DEPENDENCY_SET ${TARGET_NAME}_deps
+            PRE_EXCLUDE_REGEXES
+                # Windows API Set DLLs
+                "api-ms-win-.*" "ext-ms-.*"
+                # Common system libraries (all platforms)
+                "libc\\.so.*" "libm\\.so.*" "libpthread\\.so.*" "libdl\\.so.*"
+                "librt\\.so.*" "libgcc_s\\.so.*" "libstdc\\+\\+\\.so.*"
+                "ld-linux.*\\.so.*" "libSystem\\..*dylib" "libc\\+\\+\\..*dylib"
+            POST_EXCLUDE_REGEXES
+                # Windows system directories
+                ".*[Ss]ystem32/.*\\.dll" ".*[Ww]in[Ss]x[Ss]/.*\\.dll"
+                # Linux system directories
+                ".*/lib/.*\\.so.*" ".*/lib64/.*\\.so.*"
+                ".*/usr/lib/.*\\.so.*" ".*/usr/lib64/.*\\.so.*"
+                # macOS system directories
+                ".*/System/Library/.*" ".*/usr/lib/.*\\.dylib"
+            COMPONENT ${TARGET_NAME}
+            DESTINATION lib
+    )
+
+    set(FILES_TO_INSTALL "")
+
+    get_target_property(SETTINGS_PATH ${TARGET_NAME} PORTAL_SETTINGS_PATH)
+    if (SETTINGS_PATH)
+        list(APPEND FILES_TO_INSTALL "${CMAKE_CURRENT_SOURCE_DIR}/settings.json")
+    endif ()
+
+    if (FILES_TO_INSTALL)
+        install(
+            FILES ${FILES_TO_INSTALL}
+            COMPONENT ${TARGET_NAME}
+            DESTINATION .
+        )
+    endif ()
+
+
+    get_target_property(RESOURCES_FOLDERS ${TARGET_NAME} PORTAL_RESOURCES)
+    if (NOT RESOURCES_FOLDERS OR RESOURCES_FOLDERS STREQUAL "PORTAL_RESOURCES-NOTFOUND")
+        set(RESOURCES_FOLDERS "")
+    endif ()
+
+    foreach (RESOURCE_FOLDER IN LISTS RESOURCES_FOLDERS)
+        install(
+                DIRECTORY "$<TARGET_FILE_DIR:${TARGET_NAME}>/resources/${RESOURCE_FOLDER}"
+                COMPONENT ${TARGET_NAME}
+                DESTINATION resources
+        )
+    endforeach ()
+
+    get_target_property(ADDITIONAL_RESOURCES_FOLDERS ${TARGET_NAME} PORTAL_ADDITIONAL_RESOURCES)
+    if (NOT ADDITIONAL_RESOURCES_FOLDERS OR ADDITIONAL_RESOURCES_FOLDERS STREQUAL "PORTAL_ADDITIONAL_RESOURCES-NOTFOUND")
+        set(ADDITIONAL_RESOURCES_FOLDERS "")
+    endif ()
+
+    foreach (RESOURCE_FOLDER IN LISTS ADDITIONAL_RESOURCES_FOLDERS)
+        install(
+                DIRECTORY "$<TARGET_FILE_DIR:${TARGET_NAME}>/resources/${RESOURCE_FOLDER}"
+                COMPONENT ${TARGET_NAME}
+                DESTINATION resources
+        )
+    endforeach ()
+
+endfunction()
 function(portal_add_game TARGET_NAME)
     set(options "")
     set(oneValueArgs SETTINGS_FILE)
@@ -202,5 +281,6 @@ function(portal_add_game TARGET_NAME)
 
     portal_read_settings(${TARGET_NAME})
 
-    # TODO: add install + package targets
+    portal_package_game(${TARGET_NAME})
+    # TODO: package targets
 endfunction()

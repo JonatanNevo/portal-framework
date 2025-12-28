@@ -75,4 +75,18 @@ function(portal_install_module MODULE_NAME)
             COMPONENT ${ARG_COMPONENT}
             DESTINATION share/${TARGET_NAME}
     )
+
+
+    get_target_property(RESOURCES_FOLDERS ${TARGET_NAME} PORTAL_RESOURCES)
+    if (NOT RESOURCES_FOLDERS OR RESOURCES_FOLDERS STREQUAL "PORTAL_RESOURCES-NOTFOUND")
+        set(RESOURCES_FOLDERS "")
+    endif ()
+
+    foreach (RESOURCE_FOLDER IN LISTS RESOURCES_FOLDERS)
+        install(
+            DIRECTORY "$<TARGET_FILE_DIR:${TARGET_NAME}>/resources/${RESOURCE_FOLDER}"
+            COMPONENT ${ARG_COMPONENT}
+            DESTINATION resources
+        )
+    endforeach ()
 endfunction()
