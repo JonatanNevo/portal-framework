@@ -196,5 +196,6 @@ function(portal_add_game TARGET_NAME)
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_SETTINGS_PATH ${ARG_SETTINGS_FILE})
 
     portal_read_settings(${TARGET_NAME})
+
     # TODO: add install + package targets
 endfunction()

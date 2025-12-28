@@ -12,6 +12,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
 
+if (PORTAL_FIND_PACKAGE)
+    find_package(portal-core CONFIG REQUIRED)
+endif ()
+
 file(GLOB_RECURSE INPUT_SOURCES CONFIGURE_DEPENDS "portal/input/*.cpp")
 file(GLOB_RECURSE INPUT_HEADERS CONFIGURE_DEPENDS "portal/input/*.h")
 

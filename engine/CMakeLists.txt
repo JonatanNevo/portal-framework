@@ -18,6 +18,10 @@ file(GLOB_RECURSE ENGINE_HEADERS CONFIGURE_DEPENDS "portal/engine/*.h")
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF)
 
+if (PORTAL_FIND_PACKAGE)
+    find_package(portal-core CONFIG REQUIRED)
+endif ()
+
 portal_add_module(engine
         SOURCES ${ENGINE_SOURCES}
         HEADERS ${ENGINE_HEADERS}
