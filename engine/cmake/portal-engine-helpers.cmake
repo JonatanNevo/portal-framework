@@ -164,7 +164,9 @@ function(portal_package_game TARGET_NAME)
             COMPONENT ${TARGET_NAME}
             RUNTIME_DEPENDENCY_SET ${TARGET_NAME}_deps
             RUNTIME
-            DESTINATION .
+                DESTINATION .
+            BUNDLE
+                DESTINATION .
     )
 
     if (WIN32)
