@@ -1,4 +1,4 @@
-# Portal Framework
+# ![Portal Framework](docs/source/_static/portal_splash_dark.png)
 
 A modular cross-platform framework for creating C++ applications, with focus on graphics (3D) application.
 
@@ -96,6 +96,14 @@ TODO
 * scripting capabilities
 * networking
 * mods (based on web assembly)
+
+# Generative AI Usage
+As a personal project and a learning experience I tried to limit the usage of generative AI for the bulk of the programming.
+
+Generative AI was used in the following places:
+- Writing testing boilerplate code
+- Baseline for API documentation
+- Debugging
 
 # License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

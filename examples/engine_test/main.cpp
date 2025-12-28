@@ -7,17 +7,16 @@
 #include "portal/application/entry_point.h"
 
 #include "portal/core/files/file_system.h"
-#include "../../engine/portal/engine/settings.h"
+#include "portal/engine/settings.h"
 #include "glaze/core/reflect.hpp"
 #include "portal/core/strings/string_utils.h"
-#include "../../engine/portal/engine/engine.h"
-#include "../../engine/portal/engine/components/base.h"
-#include "../../engine/portal/engine/components/base_camera_controller.h"
-#include "../../engine/portal/engine/components/camera.h"
-#include "../../engine/portal/engine/ecs/registry.h"
-#include "../../engine/portal/engine/resources/resources/composite.h"
-#include "../../engine/portal/engine/systems/scene_rendering_system.h"
-#include "../../engine/portal/engine/systems/transform_hierarchy_system.h"
+#include "portal/engine/engine.h"
+#include "portal/engine/components/base.h"
+#include "portal/engine/components/base_camera_controller.h"
+#include "portal/engine/components/camera.h"
+#include "portal/engine/components/transform.h"
+#include "portal/engine/ecs/registry.h"
+#include "portal/engine/resources/resources/composite.h"
 
 using namespace portal;
 
