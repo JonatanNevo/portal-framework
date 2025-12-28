@@ -3,6 +3,19 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
+/**
+ * @file resource_registry.h
+ * @brief Central resource manager for asynchronous asset loading
+ *
+ * This file defines the ResourceRegistry, the central manager for all resource loading
+ * in the Portal Framework. It orchestrates async loading via the job system, manages
+ * resource lifetime, and provides the primary API for requesting resources.
+ *
+ * @see ResourceReference for the user-facing handle API
+ * @see ResourceDatabase for filesystem abstraction
+ * @see LoaderFactory for loader selection
+ */
+
 #pragma once
 
 #include <llvm/ADT/DenseMap.h>
@@ -30,9 +43,82 @@ namespace portal
 template <ResourceConcept T>
 class ResourceReference;
 
+/**
+ * @class ResourceRegistry
+ * @brief Central manager for asynchronous resource loading and lifetime management
+ *
+ * The ResourceRegistry is the core of the resource system. It provides the primary API for
+ * loading resources (textures, meshes, materials, etc.) with asynchronous job system integration.
+ *
+ * Architecture:
+ *
+ * The registry is a Module that depends on:
+ * - ReferenceManager: Tracks reference counts for future unloading support
+ * - ResourceDatabase: Provides filesystem abstraction and metadata
+ * - SchedulerModule: Job system for async loading
+ * - SystemOrchestrator: ECS integration
+ *
+ * Internal State:
+ *
+ * The registry maintains three key data structures:
+ * - `resources`: DenseMap of loaded resources (StringId → Reference<Resource>)
+ * - `pending_resources`: DenseSet of resources currently loading
+ * - `errored_resources`: DenseSet of resources that failed to load
+ *
+ * All access to these structures is protected by a SpinLock for thread safety.
+ *
+ * Loading Flow:
+ *
+ * 1. User calls load<T>(resource_id) → returns ResourceReference<T> immediately
+ * 2. Registry checks if resource exists/is pending → early return if so
+ * 3. Registry dispatches load_resource() coroutine to job system
+ * 4. Coroutine queries database for metadata → creates source → loads via loader
+ * 5. Resource moves from pending_resources to resources
+ * 6. ResourceReference lazily discovers loaded resource when queried
+ *
+ * Resource Identity:
+ *
+ * Resources are identified by StringId (hash of the resource path):
+ * - resource_id: The StringId used for lookups (e.g., STRING_ID("textures/albedo.png"))
+ * - resource_handle: Internal handle (currently same as resource_id)
+ *
+ * Current Limitations:
+ * - No unloading: Resources stay loaded forever (TODO at line 77)
+ * - No streaming: Large resources must fit in memory
+ * - No hot-reload: Changes require restart
+ *
+ * Usage Example (Async):
+ * @code
+ * // Request async load (returns immediately)
+ * auto texture_ref = registry.load<TextureResource>(STRING_ID("textures/albedo.png"));
+ *
+ * // Poll each frame until ready
+ * if (texture_ref.is_valid()) {
+ *     auto& texture = texture_ref.get();
+ *     renderer.bind_texture(texture);
+ * }
+ * @endcode
+ *
+ * Usage Example (Immediate):
+ * @code
+ * // Block until loaded (for startup resources)
+ * auto mesh_ref = registry.immediate_load<MeshResource>(STRING_ID("models/character.gltf"));
+ * // mesh_ref.is_valid() is guaranteed true here (or Error if failed)
+ * @endcode
+ *
+ * @see ResourceReference for the handle API
+ * @see ResourceDatabase for metadata and file access
+ * @see LoaderFactory for loader selection
+ * @see ReferenceManager for reference counting
+ */
 class ResourceRegistry final : public Module<ReferenceManager, ResourceDatabase, SchedulerModule, SystemOrchestrator>
 {
 public:
+    /**
+     * @brief Constructor
+     * @param stack Module dependency stack
+     * @param context Renderer context for GPU resource creation
+     */
     ResourceRegistry(ModuleStack& stack, const RendererContext& context);
     ~ResourceRegistry() noexcept override;
 
