@@ -18,5 +18,8 @@
   ],
   "overlay-ports": [
     "cmake/vcpkg-overlay-ports"
+  ],
+  "overlay-triplets": [
+    "cmake/overlay-triplets"
   ]
 }
