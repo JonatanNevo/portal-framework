@@ -11,7 +11,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include "portal/core/debug/profile.h"
-#include "portal/engine/settings.h"
+#include "../../../../../application/portal/application/settings.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/shaders/shader_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"

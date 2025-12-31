@@ -4,10 +4,10 @@
 //
 
 
-#include "portal/engine/settings.h"
+#include "portal/application/settings.h"
 
-#include <iostream>
 #include <fmt/ranges.h>
+#include <fmt/std.h>
 
 #include "portal/core/files/file_system.h"
 #include "portal/serialization/archive/json_archive.h"
@@ -16,15 +16,47 @@ namespace portal
 {
 static std::unique_ptr<Settings> g_settings;
 
-void Settings::init(SettingsArchiveType type, const std::filesystem::path& path)
+constexpr auto NAME_ENTRY = "name";
+constexpr auto LOG_LEVEL_ENTRY = "log-level";
+
+void Settings::init(const SettingsArchiveType type, const std::filesystem::path& settings_file_name)
 {
     if (g_settings)
     {
         throw std::runtime_error("Settings already initialized");
     }
 
-    // TODO: have some default sane values
-    g_settings = std::unique_ptr<Settings>(new Settings(type, path));
+    if (!FileSystem::exists(settings_file_name))
+    {
+        throw std::runtime_error("Local settings file does not exist");
+    }
+
+    const auto local_settings_path = std::filesystem::current_path() / "settings.json";
+    auto local_settings = Settings(type, local_settings_path);
+
+    const auto program_name = local_settings.get_setting<std::string>(NAME_ENTRY);
+
+    std::filesystem::path program_data_path = "portal";
+    if (program_name.has_value())
+        program_data_path /= program_name.value();
+
+    auto mutable_settings_path = FileSystem::get_data_home() / program_data_path / settings_file_name;
+    if (!FileSystem::exists(mutable_settings_path))
+    {
+        LOG_INFO("Mutable settings is missing, copying from installed settings to: {}", mutable_settings_path);
+        if (!FileSystem::copy(local_settings_path, mutable_settings_path))
+            throw std::runtime_error("Failed to copy settings file");
+    }
+    g_settings = std::unique_ptr<Settings>(new Settings(type, mutable_settings_path));
+
+    auto log_level_string = g_settings->get_setting<std::string>(LOG_LEVEL_ENTRY);
+    if (log_level_string)
+    {
+        const auto log_level = portal::from_string<Log::LogLevel>(*log_level_string);
+        Log::set_default_log_level(log_level);
+    }
+
+    get().debug_print();
 }
 
 void Settings::shutdown()

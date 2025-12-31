@@ -56,7 +56,7 @@ std::filesystem::path validate_and_create_path(const std::filesystem::path& base
     if (base_path.is_absolute())
         output = base_path;
     else
-        output = std::filesystem::absolute("resources") / base_path;
+        output = std::filesystem::current_path() / "resources" / base_path;
 
     if (!FileSystem::is_directory(output) && !FileSystem::create_directory(output))
     {
