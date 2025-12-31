@@ -228,22 +228,22 @@ struct std::hash<portal::StringId>
 };
 
 /**
- * std::formatter specialization for StringId.
+ * fmt::formatter specialization for StringId.
  *
- * Enables formatted output with C++20 std::format and spdlog. Formats StringId
+ * Enables formatted output with C++20 fmt::format and spdlog. Formats StringId
  * as: id("string_value")
  *
  * Example: LOG_INFO("Entity created: {}", entity_id); // Prints: Entity created: id("player")
  */
 template <>
-struct std::formatter<portal::StringId>
+struct fmt::formatter<portal::StringId>
 {
     /**
      * Parses format specification (no custom format specs supported).
      * @param ctx Parse context
      * @return Iterator to end of parsed format spec
      */
-    static constexpr auto parse(const std::format_parse_context& ctx) -> decltype(ctx.begin())
+    static constexpr auto parse(const fmt::format_parse_context& ctx) -> decltype(ctx.begin())
     {
         return ctx.begin();
     }
@@ -258,6 +258,6 @@ struct std::formatter<portal::StringId>
     template <typename FormatContext>
     auto format(const portal::StringId& id, FormatContext& ctx) const
     {
-        return std::format_to(ctx.out(), "id(\"{}\")", id.string);
+        return fmt::format_to(ctx.out(), "id(\"{}\")", id.string);
     }
 };

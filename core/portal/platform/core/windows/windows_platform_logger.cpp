@@ -56,7 +56,7 @@ bool print_assert_dialog(std::string_view file, int line, std::string_view funct
                 {
                     res = MessageBoxA(
                         nullptr,
-                        std::format(
+                        fmt::format(
                             "Assert failed at:\n{}({})\n{}()\n{}\nTry again to debug, Cancel to ignore this assert in the future",
                             file,
                             line,

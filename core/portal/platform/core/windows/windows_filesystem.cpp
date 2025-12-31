@@ -19,7 +19,7 @@ bool FileSystem::show_file_in_explorer(const std::filesystem::path& path)
     if (!exists(absolute_path))
         return false;
 
-    const std::string cmd = std::format("explorer.exe /select,\"{}\"", absolute_path.string());
+    const std::string cmd = fmt::format("explorer.exe /select,\"{}\"", absolute_path.string());
     system(cmd.c_str());
     return true;
 }

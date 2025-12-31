@@ -28,7 +28,7 @@ T from_string(const std::string_view& str)
 }
 
 template <typename T> requires std::is_enum_v<T>
-struct std::formatter<T>
+struct fmt::formatter<T>
 {
     static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
     {

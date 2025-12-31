@@ -47,7 +47,7 @@ public:
                 filename = full_path.substr(last_slash + 1);
             }
 
-            std::string location = std::format("{}:{}", filename, msg.source.line);
+            std::string location = fmt::format("{}:{}", filename, msg.source.line);
 
             // Pad to specified width, left-aligned
             if (location.length() < width_)
@@ -220,7 +220,7 @@ bool Log::print_assert_message(
         spdlog::source_loc{file.data(), line, function.data()},
         LogLevel::Error,
         "assertion",
-        std::format("assert ({}) failed", message)
+        fmt::format("assert ({}) failed", message)
     );
 
     return platform::print_assert_dialog(file, line, function, message);

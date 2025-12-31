@@ -28,14 +28,14 @@ std::string format_property(reflection::Property prop)
     case reflection::PropertyContainerType::scalar:
         return std::string(to_string(prop.type));
     case reflection::PropertyContainerType::array:
-        return std::format("{}[{}]", prop.type, prop.elements_number);
+        return fmt::format("{}[{}]", prop.type, prop.elements_number);
     case reflection::PropertyContainerType::string:
     case reflection::PropertyContainerType::null_term_string:
         return "string";
     case reflection::PropertyContainerType::vector:
-        return std::format("vec{}<{}>", prop.elements_number, prop.type);
+        return fmt::format("vec{}<{}>", prop.elements_number, prop.type);
     case reflection::PropertyContainerType::matrix:
-        return std::format("mat{0}x{0}<{1}>", floor(sqrt(prop.elements_number)), prop.type);
+        return fmt::format("mat{0}x{0}<{1}>", floor(sqrt(prop.elements_number)), prop.type);
     case reflection::PropertyContainerType::object:
     case reflection::PropertyContainerType::invalid:
         break;
@@ -656,7 +656,7 @@ void ShaderCompiler::process_buffer_uniforms(
             continue;
         }
 
-        const auto uniform_name = STRING_ID(std::format("{}.{}", buffer_name.string, member_name));
+        const auto uniform_name = STRING_ID(fmt::format("{}.{}", buffer_name.string, member_name));
         const auto size = field_layout->getSize();
         const auto offset = field->getOffset() - buffer_offset;
 
@@ -781,7 +781,7 @@ void ShaderCompiler::process_parameter_block_parameter(
             if ((resource_shape & SLANG_TEXTURE_COMBINED_FLAG) != 0)
             {
                 // Combined texture sampler
-                const auto resource_name_id = STRING_ID(std::format("{}.{}", name, field_name));
+                const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
 
                 shader_reflection::ImageSamplerDescriptor image_sampler;
                 image_sampler.type = DescriptorType::CombinedImageSampler;
@@ -812,7 +812,7 @@ void ShaderCompiler::process_parameter_block_parameter(
             else
             {
                 // Separate texture/sampler
-                const auto resource_name_id = STRING_ID(std::format("{}.{}", name, field_name));
+                const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
 
                 shader_reflection::ImageSamplerDescriptor image;
                 image.type = DescriptorType::SampledImage;

@@ -7,7 +7,7 @@
 #include "connection_manager.h"
 #include "portal/core/log.h"
 
-#include <format>
+#include <fmt/format.h>
 #include <steam/isteamnetworkingutils.h>
 #include <steam/steamnetworkingsockets.h>
 #ifndef STEAMNETWORKINGSOCKETS_OPENSOURCE

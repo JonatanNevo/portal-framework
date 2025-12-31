@@ -21,7 +21,7 @@ constexpr auto RESOURCE_METADATA_EXTENSION = ".pmeta";
 constexpr auto DATABASE_METADATA_EXTENSION = ".podb";
 constexpr std::array IGNORED_EXTENSIONS = {".bin"sv};
 
-const auto ROOT_DATABASE_METADATA_FILENAME = std::format("root{}", DATABASE_METADATA_EXTENSION);
+const auto ROOT_DATABASE_METADATA_FILENAME = fmt::format("root{}", DATABASE_METADATA_EXTENSION);
 
 static auto logger = Log::get_logger("Resources");
 
@@ -152,7 +152,7 @@ DatabaseError FolderResourceDatabase::add(StringId resource_id, SourceMetadata m
 
 
     const auto source_path = std::filesystem::path(meta.source.string);
-    const auto metadata_path = root_path / std::format("{}{}", source_path.generic_string(), RESOURCE_METADATA_EXTENSION);
+    const auto metadata_path = root_path / fmt::format("{}{}", source_path.generic_string(), RESOURCE_METADATA_EXTENSION);
     meta.full_source_path = STRING_ID((root_path / source_path).generic_string());
 
     const resources::FileSource source(root_path / source_path);
@@ -178,7 +178,7 @@ DatabaseError FolderResourceDatabase::remove(const StringId resource_id)
 
     auto meta = resources.at(resource_id);
 
-    FileSystem::remove(root_path / std::format("{}{}", meta.source.string, RESOURCE_METADATA_EXTENSION));
+    FileSystem::remove(root_path / fmt::format("{}{}", meta.source.string, RESOURCE_METADATA_EXTENSION));
     // TODO: remove resource file as well?
 
     resources.erase(resource_id);
@@ -305,7 +305,7 @@ DatabaseError FolderResourceDatabase::validate_metadata(const SourceMetadata& me
         return DatabaseErrorBit::MissingResource;
 
     const auto expected_resource_id = STRING_ID(
-        std::format("{}/{}", get_name().string, std::filesystem::path(meta.source.string).replace_extension("").generic_string())
+        fmt::format("{}/{}", get_name().string, std::filesystem::path(meta.source.string).replace_extension("").generic_string())
     );
 
     if (meta.resource_id != expected_resource_id)
@@ -351,7 +351,7 @@ void FolderResourceDatabase::mend(const DatabaseError error)
 
                     // TODO: calculate dependencies?
                     auto resource_id = STRING_ID(
-                        std::format("{}/{}", get_name().string, relative_path.replace_extension("").generic_string())
+                        fmt::format("{}/{}", get_name().string, relative_path.replace_extension("").generic_string())
                     );
                     SourceMetadata meta{
                         .resource_id = resource_id,
@@ -388,7 +388,7 @@ void FolderResourceDatabase::mend(const DatabaseError error)
                         remove(meta.resource_id);
 
                         meta.resource_id = STRING_ID(
-                            std::format("{}/{}", get_name().string, relative_path.replace_extension("").generic_string())
+                            fmt::format("{}/{}", get_name().string, relative_path.replace_extension("").generic_string())
                         );
 
                         add(meta.resource_id, meta);

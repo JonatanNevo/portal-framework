@@ -190,7 +190,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
         auto& [image, image_view, last_used_frame] = images_data[i];
         image = swap_chain_images[i];
         image_view = device.get_handle().createImageView(view_info);
-        device.set_debug_name(image_view, std::format("swapchain_image_view_{}", i).c_str());
+        device.set_debug_name(image_view, fmt::format("swapchain_image_view_{}", i).c_str());
     }
 }
 
