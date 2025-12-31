@@ -257,8 +257,8 @@ function(portal_package_game TARGET_NAME)
 endfunction()
 
 function(portal_add_game TARGET_NAME)
-    set(options "")
-    set(oneValueArgs SETTINGS_FILE)
+    set(options MAKE_BUNDLE)
+    set(oneValueArgs SETTINGS_FILE STATIC_ICON DISPLAY_NAME)
     set(multiValueArgs
             SOURCES
             RESOURCE_PATHS
@@ -266,15 +266,21 @@ function(portal_add_game TARGET_NAME)
     )
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    if (NOT ARG_MAKE_BUNDLE)
+        set(ARG_MAKE_BUNDLE ON)
+    endif ()
+
     # TODO: add editor target
-    if (APPLE)
-        # TODO: get these as arguments
-        add_executable(${TARGET_NAME} MACOSX_BUNDLE ${ARG_SOURCES})
+    if (APPLE AND ARG_MAKE_BUNDLE)
+        cmake_path(GET ARG_STATIC_ICON FILENAME BUNDLE_ICON_FILE)
+        set_source_files_properties(${ARG_STATIC_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+        add_executable(${TARGET_NAME} MACOSX_BUNDLE ${ARG_SOURCES} ${ARG_STATIC_ICON})
         set_target_properties(${TARGET_NAME} PROPERTIES
                 MACOSX_BUNDLE TRUE
                 MACOSX_BUNDLE_IDENTIFIER com.portal.${TARGET_NAME}
-                MACOSX_BUNDLE_BUNDLE_NAME "Engine Test"
-                MACOSX_BUNDLE_ICON_FILE resources/portal_icon_64x64.icns
+                MACOSX_BUNDLE_BUNDLE_NAME ${ARG_DISPLAY_NAME}
+                MACOSX_BUNDLE_ICON_FILE ${BUNDLE_ICON_FILE}
                 MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
                 MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
         )

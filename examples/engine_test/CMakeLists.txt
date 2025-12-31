@@ -7,4 +7,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 portal_add_game(engine_test
         SOURCES main.cpp
+        STATIC_ICON resources/portal_icon_64x64_icns.icns
+        DISPLAY_NAME "Engine Test"
 )
