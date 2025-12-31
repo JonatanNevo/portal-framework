@@ -6,6 +6,7 @@
 #pragma once
 
 #include <filesystem>
+#include <span>
 
 #include "portal/core/buffer.h"
 
@@ -85,10 +86,125 @@ public:
     static bool open_directory_in_explorer(const std::filesystem::path& path);
     static bool open_externally(const std::filesystem::path& path);
 
-    static std::filesystem::path get_persistent_storage_path();
-
     static bool has_environment_variable(const std::string& name);
     static bool set_environment_variable(const std::string& name, const std::string& value);
     static std::string get_environment_variable(const std::string& name);
+
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////// Program Data Paths /////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Sets the relative program path for system file retrival.
+     * For example,
+     *
+     * @code
+     * portal::FileSystem::set_program_path("game_name");
+     *
+     * auto data_path = portal::FileSystem::get_data_home(); // Will return <Platform Data Home>/game_name
+     * @endcode
+     *
+     * @param program_path A relative path to append to the system paths.
+     */
+    static void set_program_path(std::filesystem::path program_path);
+
+    /**
+     * Retrieves the base folder for storing data files.
+     *
+     * On Windows this defaults to %APPDATA% (Roaming profile)
+     * On Linux this defaults to ~/.local/share but can be configured by the user
+     *
+     * @return The base folder for storing program data.
+     */
+    static std::filesystem::path get_data_home();
+
+
+    /**
+     * Retrieves the base folder for storing config files.
+     *
+     * On Windows this defaults to %APPDATA% (Roaming profile)
+     * On Linux this defaults to ~/.config but can be configured by the user
+     *
+     * @return The base folder for storing config data.
+     */
+    static std::filesystem::path get_config_home();
+
+    /**
+     * Retrieves the base folder for storing cache files.
+     *
+     * On Windows this defaults to %APPDATALOCAL%
+     * On Linux this defaults to ~/.cache but can be configured by the user
+     *
+     * Note that it is recommended to append "cache" after the program name to prevent conflicting with "StateDir" under Windows
+     * @return The base folder for storing data that do not need to be backed up and might be deleted.
+     */
+    static std::filesystem::path get_cache_dir();
+
+    /**
+     * Retrieves the base folder used for state files.
+     *
+     * On Windows this defaults to %APPDATALOCAL%
+     * On Linux this defaults to ~/.local/state but can be configured by the user
+     * On OS X this is the same as getDataHome()
+     *
+     * @return The base folder for storing data that do not need to be backed up but should not be regularly deleted either.
+     */
+    static std::filesystem::path get_state_dir();
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////// Global Platform Paths //////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * The folder that represents the desktop.
+     * Normally you should try not to use this folder.
+     *
+     * @return Absolute path to the user's desktop
+     */
+    static std::filesystem::path get_desktop_folder();
+
+    /**
+     * The folder to store user documents to
+     *
+     * @return Absolute path to the "Documents" folder
+     */
+    static std::filesystem::path get_documents_folder();
+
+    /**
+     * The folder where files are downloaded.
+     *
+     * @return Absolute path to the folder where files are downloaded to.
+     */
+    static std::filesystem::path get_download_folder();
+
+    /**
+     * The folder for storing the user's pictures.
+     *
+     * @return Absolute path to the "Picture" folder
+     */
+    static std::filesystem::path get_pictures_folder();
+
+    /**
+     * This returns the folder that can be used for sharing files with other users on the same system.
+     *
+     * @return Absolute path to the "Public" folder
+     */
+    static std::filesystem::path get_public_folder();
+
+    /**
+     * The folder where music is stored
+     *
+     * @return Absolute path to the music folder
+     */
+    static std::filesystem::path get_music_folder();
+
+    /**
+     * The folder where video is stored
+     *
+     * @return Absolute path to the video folder
+     */
+    static std::filesystem::path get_video_folder();
 };
 } // portal

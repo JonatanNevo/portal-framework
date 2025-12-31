@@ -13,6 +13,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
 if (PORTAL_FIND_PACKAGE)
     find_package(portal-core CONFIG REQUIRED)
+    find_package(portal-serialization)
 endif ()
 
 file(GLOB_RECURSE APP_SOURCES CONFIGURE_DEPENDS "portal/application/*.cpp")
@@ -24,6 +25,7 @@ portal_add_module(application
 
         PORTAL_DEPENDENCIES
             core
+            serialization
 )
 
 target_include_directories(portal-application PRIVATE ${Stb_INCLUDE_DIR})

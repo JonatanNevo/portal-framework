@@ -8,8 +8,8 @@
 #include <filesystem>
 #include <ranges>
 
+#include "portal/core/log.h"
 #include "portal/core/concurrency/reentrant_spin_lock.h"
-#include "portal/core/concurrency/spin_lock.h"
 #include "portal/serialization/archive.h"
 
 namespace portal
@@ -26,7 +26,7 @@ enum class SettingsArchiveType
 class Settings final : public ArchiveObject
 {
 public:
-    static void init(SettingsArchiveType type, const std::filesystem::path& path);
+    static void init(SettingsArchiveType type, const std::filesystem::path& settings_file_name);
     static void shutdown();
     static Settings& get();
 

@@ -7,11 +7,70 @@
 
 #include <Windows.h>
 #include <Shlobj.h>
+#include <stringapiset.h>
 
 namespace portal
 {
-// TODO: Move from here to asset manager
-static std::filesystem::path s_persistent_storage_path;
+static std::filesystem::path s_program_path;
+
+
+static std::string utf16_to_utf8(const wchar_t* w_str)
+{
+    std::string res;
+
+    // If the 6th parameter is 0 then WideCharToMultiByte returns the number of bytes needed to store the result.
+    int size = WideCharToMultiByte(CP_UTF8, 0, w_str, -1, nullptr, 0, nullptr, nullptr);
+    if (size > 0)
+    {
+        //If the converted UTF-8 string could not be in the initial buffer. Allocate one that can hold it.
+        std::vector<char> buffer(size);
+        size = WideCharToMultiByte(CP_UTF8, 0, w_str, -1, &buffer[0], static_cast<int>(buffer.size()), nullptr, nullptr);
+        res = buffer.data();
+    }
+    if (size == 0)
+    {
+        // WideCharToMultiByte return 0 for errors.
+        throw std::runtime_error("UTF16 to UTF8 failed with error code: " + std::to_string(GetLastError()));
+    }
+    return res;
+}
+
+class FreeCoTaskMemory
+{
+    LPWSTR pointer = nullptr;
+
+public:
+    explicit FreeCoTaskMemory(const LPWSTR pointer) : pointer(pointer) {};
+
+    ~FreeCoTaskMemory()
+    {
+        CoTaskMemFree(pointer);
+    }
+};
+
+static std::filesystem::path get_known_windows_folder(REFKNOWNFOLDERID folder_id, const char* error_msg)
+{
+    LPWSTR windows_path = nullptr;
+    const HRESULT result = SHGetKnownFolderPath(folder_id, KF_FLAG_CREATE, nullptr, &windows_path);
+    FreeCoTaskMemory scopeBoundMemory(windows_path);
+
+    if (!SUCCEEDED(result))
+    {
+        throw std::runtime_error(error_msg);
+    }
+
+    return utf16_to_utf8(windows_path);
+}
+
+static std::filesystem::path get_appdata()
+{
+    return get_known_windows_folder(FOLDERID_RoamingAppData, "RoamingAppData could not be found");
+}
+
+static std::filesystem::path get_appdata_local()
+{
+    return get_known_windows_folder(FOLDERID_LocalAppData, "RoamingAppData could not be found");
+}
 
 bool FileSystem::show_file_in_explorer(const std::filesystem::path& path)
 {
@@ -42,23 +101,6 @@ bool FileSystem::open_externally(const std::filesystem::path& path)
 
     ShellExecute(nullptr, reinterpret_cast<LPCSTR>(L"open"), reinterpret_cast<LPCSTR>(absolute_path.c_str()), nullptr, nullptr, SW_SHOWNORMAL);
     return true;
-}
-
-std::filesystem::path FileSystem::get_persistent_storage_path()
-{
-    if (!s_persistent_storage_path.empty())
-        return s_persistent_storage_path;
-
-    PWSTR roaming_file_path;
-    [[maybe_unused]] const HRESULT result = SHGetKnownFolderPath(FOLDERID_RoamingAppData, KF_FLAG_DEFAULT, nullptr, &roaming_file_path);
-    PORTAL_ASSERT(result == S_OK, "Failed to get Roaming App Data path");
-    s_persistent_storage_path = roaming_file_path;
-    s_persistent_storage_path /= "portal"; // TODO: allow multiple folders
-
-    if (!exists(s_persistent_storage_path))
-        create_directory(s_persistent_storage_path);
-
-    return s_persistent_storage_path;
 }
 
 bool FileSystem::has_environment_variable(const std::string& name)
@@ -118,5 +160,66 @@ std::string FileSystem::get_environment_variable(const std::string& name)
         return result;
     }
     return {};
+}
+
+void FileSystem::set_program_path(std::filesystem::path program_path)
+{
+    PORTAL_ASSERT(program_path.is_relative(), "Program path must be relative");
+    s_program_path = std::move(program_path);
+}
+
+std::filesystem::path FileSystem::get_data_home()
+{
+    return get_appdata() / s_program_path;
+}
+
+std::filesystem::path FileSystem::get_config_home()
+{
+    return get_appdata() / s_program_path / "config";
+}
+
+std::filesystem::path FileSystem::get_cache_dir()
+{
+    return get_appdata_local() / s_program_path / "cache";
+}
+
+std::filesystem::path FileSystem::get_state_dir()
+{
+    return get_appdata_local() / s_program_path;
+}
+
+std::filesystem::path FileSystem::get_desktop_folder()
+{
+    return get_known_windows_folder(FOLDERID_Desktop, "Desktop folder could not be found");
+}
+
+std::filesystem::path FileSystem::get_documents_folder()
+{
+    return get_known_windows_folder(FOLDERID_Documents, "Documents folder could not be found");
+}
+
+std::filesystem::path FileSystem::get_download_folder()
+{
+    return get_known_windows_folder(FOLDERID_Downloads, "Downloads folder could not be found");
+}
+
+std::filesystem::path FileSystem::get_pictures_folder()
+{
+    return get_known_windows_folder(FOLDERID_Pictures, "Pictures folder could not be found");
+}
+
+std::filesystem::path FileSystem::get_public_folder()
+{
+    return get_known_windows_folder(FOLDERID_Public, "Public folder could not be found");
+}
+
+std::filesystem::path FileSystem::get_music_folder()
+{
+    return get_known_windows_folder(FOLDERID_Music, "Music folder could not be found");
+}
+
+std::filesystem::path FileSystem::get_video_folder()
+{
+    return get_known_windows_folder(FOLDERID_Videos, "Videos folder could not be found");
 }
 }

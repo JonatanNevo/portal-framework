@@ -7,6 +7,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include "settings.h"
 #include "portal/application/modules/base_module.h"
 #include "portal/core/log.h"
 #include "portal/core/debug/profile.h"
@@ -17,6 +18,21 @@ class WindowResizeEvent;
 class WindowCloseEvent;
 
 static auto logger = Log::get_logger("Application");
+
+ApplicationProperties ApplicationProperties::from_settings()
+{
+    auto& settings = Settings::get();
+
+    const auto name = settings.get_setting<std::string>("name");
+    const auto width = settings.get_setting<size_t>("application.window.width");
+    const auto height = settings.get_setting<size_t>("application.window.height");
+
+    return ApplicationProperties{
+        .name = STRING_ID(name.value()),
+        .width = width.value(),
+        .height = height.value()
+    };
+}
 
 Application::Application(const ApplicationProperties& properties) : properties(properties)
 {}

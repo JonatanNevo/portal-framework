@@ -25,7 +25,7 @@ bool FileSystem::create_directory(const std::filesystem::path& path)
 {
     std::error_code ec;
     const auto abs_path = std::filesystem::absolute(path);
-    std::filesystem::create_directory(abs_path, ec);
+    std::filesystem::create_directories(abs_path, ec);
     if (ec)
         LOG_ERROR_TAG("Filesystem", "{}: Failed to create directory: {}", abs_path.string(), ec.message());
     return !ec;
@@ -79,6 +79,11 @@ bool FileSystem::copy(const std::filesystem::path& from, const std::filesystem::
 {
     if (FileSystem::exists(to))
         return false;
+
+    if (std::filesystem::is_directory(to) && !exists(to))
+        create_directory(to);
+    else if (!std::filesystem::is_directory(to) && !exists(to.parent_path()))
+        create_directory(to.parent_path());
 
     std::error_code ec;
     std::filesystem::copy(from, to, ec);

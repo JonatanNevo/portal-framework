@@ -5,12 +5,11 @@
 
 #include "engine.h"
 
-#include "settings.h"
+#include "portal/application/settings.h"
 #include "editor/editor_module.h"
 #include "modules/system_orchestrator.h"
 #include "portal/engine/imgui/imgui_module.h"
 #include "portal/engine/modules/scheduler_module.h"
-#include "portal/engine/resources/database/folder_resource_database.h"
 #include "portal/engine/resources/resources/composite.h"
 #include "portal/engine/window/glfw_window.h"
 #include "resources/database/resource_database_facade.h"
