@@ -30,10 +30,12 @@ void init(const vk::Instance& instance, const vk::PhysicalDevice& physical_devic
         .device = device,
         .pVulkanFunctions = &vma_vulkan_functions,
         .instance = instance,
+        .vulkanApiVersion = VK_API_VERSION_1_4
     };
 
     if (!created)
     {
+        LOG_DEBUG_TAG("Vulkan", "Creating VMA allocator");
         const auto result = vmaCreateAllocator(&allocator_create_info, &memory_allocator);
         if (result != VK_SUCCESS)
         {
