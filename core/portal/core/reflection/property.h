@@ -130,7 +130,7 @@ constexpr size_t get_property_size(const Property& prop)
 }
 
 template <>
-struct std::formatter<portal::reflection::Property>
+struct fmt::formatter<portal::reflection::Property>
 {
     static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
     {
@@ -141,7 +141,7 @@ struct std::formatter<portal::reflection::Property>
     auto format(const portal::reflection::Property& prop, FormatContext& ctx) const
     {
         if (prop.value.data == nullptr)
-            return std::format_to(
+            return fmt::format_to(
                 ctx.out(),
                 "Property(.type={}, .container_type={}, .elements_number={})",
                 prop.type,
@@ -149,7 +149,7 @@ struct std::formatter<portal::reflection::Property>
                 prop.elements_number
             );
 
-        return std::format_to(
+        return fmt::format_to(
             ctx.out(),
             "Property(.value=Buffer(.size={}), .type={}, .container_type={}, .elements_number={})",
             prop.value.size,

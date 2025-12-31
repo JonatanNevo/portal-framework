@@ -234,7 +234,7 @@ bool Log::print_assert_message(
     Args&&... args
 )
 {
-    const std::string formatted = std::vformat(format, std::make_format_args(args...));
+    const std::string formatted = fmt::vformat(format, fmt::make_format_args(args...));
     return print_assert_message(file, line, function, formatted);
 }
 } // namespace portal

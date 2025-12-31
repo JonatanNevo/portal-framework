@@ -121,7 +121,7 @@ void VulkanImage::reallocate()
         }
     };
     image_info.view = device.create_image_view(view_info);
-    device.set_debug_name(image_info.view, std::format("default_image_view_{}", properties.name.string).c_str());
+    device.set_debug_name(image_info.view, fmt::format("default_image_view_{}", properties.name.string).c_str());
 
     if (properties.create_sampler)
     {
@@ -141,7 +141,7 @@ void VulkanImage::reallocate()
         }
 
         image_info.sampler = make_reference<VulkanSampler>(
-            STRING_ID(std::format("default_sampler_{}", properties.name.string)),
+            STRING_ID(fmt::format("default_sampler_{}", properties.name.string)),
             sampler_prop,
             device
         );
@@ -304,7 +304,7 @@ void VulkanImage::create_per_layer_image_view()
             }
         };
         per_layer_image_views.emplace_back(device.create_image_view(view_info));
-        device.set_debug_name(per_layer_image_views[i], std::format("{}_layer_view_{}", properties.name.string, i).c_str());
+        device.set_debug_name(per_layer_image_views[i], fmt::format("{}_layer_view_{}", properties.name.string, i).c_str());
     }
 }
 
@@ -333,7 +333,7 @@ vk::ImageView VulkanImage::get_mip_image_view(size_t mip_level)
             }
         };
         per_mip_image_views.emplace(mip_level, device.create_image_view(view_info));
-        device.set_debug_name(per_mip_image_views.at(mip_level), std::format("{}_mip_view_{}", properties.name.string, mip_level).c_str());
+        device.set_debug_name(per_mip_image_views.at(mip_level), fmt::format("{}_mip_view_{}", properties.name.string, mip_level).c_str());
     }
     return per_mip_image_views.at(mip_level);
 }

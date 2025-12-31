@@ -11,6 +11,7 @@
 #include <limits>
 #include <cassert>
 #include <bit>
+#include <fmt/format.h>
 
 
 /* Compiler Specification */

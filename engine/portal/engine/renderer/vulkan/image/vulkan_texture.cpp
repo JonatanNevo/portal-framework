@@ -264,7 +264,7 @@ void VulkanTexture::recreate()
     if (properties.sampler_prop.has_value())
     {
         auto& sampler_prop = properties.sampler_prop.value();
-        info.sampler = make_reference<VulkanSampler>(STRING_ID(std::format("{}-sampler", id)), sampler_prop, device);
+        info.sampler = make_reference<VulkanSampler>(STRING_ID(fmt::format("{}-sampler", id)), sampler_prop, device);
         image->update_descriptor();
     }
 
@@ -286,7 +286,7 @@ void VulkanTexture::recreate()
             },
         };
         info.view = device.create_image_view(view_info);
-        device.set_debug_name(info.view, std::format("texture_view_{}", id.string).c_str());
+        device.set_debug_name(info.view, fmt::format("texture_view_{}", id.string).c_str());
         image->update_descriptor();
     }
 }

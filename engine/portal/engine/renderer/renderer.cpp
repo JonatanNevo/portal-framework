@@ -245,11 +245,11 @@ void Renderer::init_frame_resources()
             vulkan::DescriptorAllocator{context.get_device().get_handle(), 1000, frame_sizes}
         );
 
-        device.set_debug_name(data.command_pool, std::format("swapchain_command_pool_{}", i).c_str());
-        device.set_debug_name(data.command_buffer, std::format("swapchain_command_buffer_{}", i).c_str());
-        device.set_debug_name(data.image_available_semaphore, std::format("swapchain_image_available_semaphore_{}", i).c_str());
-        device.set_debug_name(data.render_finished_semaphore, std::format("swapchain_render_finished_semaphore_{}", i).c_str());
-        device.set_debug_name(data.wait_fence, std::format("swapchain_wait_fence_{}", i).c_str());
+        device.set_debug_name(data.command_pool, fmt::format("swapchain_command_pool_{}", i).c_str());
+        device.set_debug_name(data.command_buffer, fmt::format("swapchain_command_buffer_{}", i).c_str());
+        device.set_debug_name(data.image_available_semaphore, fmt::format("swapchain_image_available_semaphore_{}", i).c_str());
+        device.set_debug_name(data.render_finished_semaphore, fmt::format("swapchain_render_finished_semaphore_{}", i).c_str());
+        device.set_debug_name(data.wait_fence, fmt::format("swapchain_wait_fence_{}", i).c_str());
     }
 
     {

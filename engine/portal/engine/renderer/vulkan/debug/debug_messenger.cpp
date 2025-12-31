@@ -84,25 +84,25 @@ vk::Bool32 renderer::vulkan::DebugMessenger::log(
     std::string objects;
     if (callback_data->cmdBufLabelCount)
     {
-        labels = std::format("\tLabels({}): \n", callback_data->cmdBufLabelCount);
+        labels = fmt::format("\tLabels({}): \n", callback_data->cmdBufLabelCount);
         for (uint32_t i = 0; i < callback_data->cmdBufLabelCount; ++i)
         {
             const auto& label = callback_data->pCmdBufLabels[i];
-            const std::string color_str = std::format("[ {}, {}, {}, {} ]", label.color[0], label.color[1], label.color[2], label.color[3]);
+            const std::string color_str = fmt::format("[ {}, {}, {}, {} ]", label.color[0], label.color[1], label.color[2], label.color[3]);
             labels.append(
-                std::format("\t\t- Command Buffer Label[{0}]: name: {1}, color: {2}\n", i, label.pLabelName ? label.pLabelName : "NULL", color_str)
+                fmt::format("\t\t- Command Buffer Label[{0}]: name: {1}, color: {2}\n", i, label.pLabelName ? label.pLabelName : "NULL", color_str)
             );
         }
     }
 
     if (callback_data->objectCount)
     {
-        objects = std::format("\tObjects({}): \n", callback_data->objectCount);
+        objects = fmt::format("\tObjects({}): \n", callback_data->objectCount);
         for (uint32_t i = 0; i < callback_data->objectCount; ++i)
         {
             const auto& object = callback_data->pObjects[i];
             objects.append(
-                std::format(
+                fmt::format(
                     "\t\t- Object[{0}] name: {1}, type: {2}, handle: {3:#x}\n",
                     i,
                     object.pObjectName ? object.pObjectName : "NULL",

@@ -100,7 +100,7 @@ std::vector<SteamNetworkingIPAddr> resolve_address(std::string_view address)
         auto& ip_address = result.emplace_back();
         if (has_port)
         {
-            [[maybe_unused]] const bool success = ip_address.ParseString(std::format("{}:{}", ip, port).c_str());
+            [[maybe_unused]] const bool success = ip_address.ParseString(fmt::format("{}:{}", ip, port).c_str());
             PORTAL_ASSERT(success, "Failed to parse IP address {}:{}", ip, port);
         }
         else

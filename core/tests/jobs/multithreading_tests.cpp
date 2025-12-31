@@ -46,7 +46,7 @@ Job<std::thread::id> get_thread_id()
 //         thread_appearances[tid]++;
 //
 //     for (auto& [tid, count] : thread_appearances)
-//         LOG_INFO("Thread {} ran {} jobs ", std::format("{}", tid), count);
+//         LOG_INFO("Thread {} ran {} jobs ", fmt::format("{}", tid), count);
 //
 //     // With 2 worker threads + main thread, we should see 3 distinct thread IDs
 //     EXPECT_EQ(thread_appearances.size(), 3) << "Expected 3 distinct threads (main + 2 workers)";
@@ -78,7 +78,7 @@ Job<std::thread::id> get_thread_id()
 //     {
 //         LOG_INFO(
 //             "  Thread {} executed {} jobs ({:.1f}%)",
-//             std::format("{}", tid),
+//             fmt::format("{}", tid),
 //             count,
 //             (count * 100.0) / jobs.size()
 //         );

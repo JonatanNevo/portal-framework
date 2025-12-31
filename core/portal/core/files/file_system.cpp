@@ -173,10 +173,10 @@ std::filesystem::path FileSystem::get_unique_file_name(const std::filesystem::pa
                 return std::to_string(counter);
         }();
 
-        std::string new_file_name = std::format("{} ({})", path.stem().string(), counter_str);
+        std::string new_file_name = fmt::format("{} ({})", path.stem().string(), counter_str);
 
         if (path.has_extension())
-            new_file_name = std::format("{}{}", new_file_name, path.extension().string());
+            new_file_name = fmt::format("{}{}", new_file_name, path.extension().string());
 
         if (!FileSystem::exists(path.parent_path() / new_file_name))
             return path.parent_path() / new_file_name;

@@ -7,6 +7,7 @@
 #include "portal/engine/settings.h"
 
 #include <iostream>
+#include <fmt/ranges.h>
 
 #include "portal/core/files/file_system.h"
 #include "portal/serialization/archive/json_archive.h"
@@ -176,7 +177,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             llvm::SmallVector<char> buffer;
             buffer.resize(prop.elements_number);
             format_array<llvm::SmallVector<char>, char>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
     case reflection::PropertyType::integer8:
@@ -184,7 +185,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             llvm::SmallVector<uint8_t> buffer;
             buffer.resize(prop.elements_number);
             format_array<llvm::SmallVector<uint8_t>, uint8_t>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
     case reflection::PropertyType::integer16:
@@ -192,7 +193,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             llvm::SmallVector<uint16_t> buffer;
             buffer.resize(prop.elements_number);
             format_array<llvm::SmallVector<uint16_t>, uint16_t>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
     case reflection::PropertyType::integer32:
@@ -200,7 +201,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             llvm::SmallVector<uint32_t> buffer;
             buffer.resize(prop.elements_number);
             format_array<llvm::SmallVector<uint32_t>, uint32_t>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
     case reflection::PropertyType::integer64:
@@ -208,7 +209,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             llvm::SmallVector<uint64_t> buffer;
             buffer.resize(prop.elements_number);
             format_array<llvm::SmallVector<uint64_t>, uint64_t>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
     case reflection::PropertyType::integer128:
@@ -216,7 +217,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             llvm::SmallVector<uint128_t> buffer;
             buffer.resize(prop.elements_number);
             format_array<llvm::SmallVector<uint128_t>, uint128_t>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
     case reflection::PropertyType::floating32:
@@ -224,7 +225,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             llvm::SmallVector<float> buffer;
             buffer.resize(prop.elements_number);
             format_array<llvm::SmallVector<float>, float>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
     case reflection::PropertyType::floating64:
@@ -232,7 +233,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             llvm::SmallVector<double> buffer;
             buffer.resize(prop.elements_number);
             format_array<llvm::SmallVector<double>, double>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
     case reflection::PropertyType::boolean:
@@ -240,7 +241,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             llvm::SmallVector<bool> buffer;
             buffer.resize(prop.elements_number);
             format_array<llvm::SmallVector<bool>, bool>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
 
@@ -250,7 +251,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             std::vector<std::string> buffer;
             buffer.resize(prop.elements_number);
             format_array<std::vector<std::string>, std::string>(name, prop, buffer);
-            LOG_DEBUG("{}: {}", name, buffer);
+            LOG_DEBUG("{}: [{}]", name, fmt::join(buffer, ", "));
             break;
         }
     case reflection::PropertyType::object:
@@ -258,7 +259,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
             auto* objects = prop.value.as<ArchiveObject*>();
             for (size_t i = 0; i < prop.elements_number; ++i)
             {
-                std::string element_name = std::format("{}[{}]", name, i);
+                std::string element_name = fmt::format("{}[{}]", name, i);
                 debug_print(element_name, objects[i]);
             }
             break;
@@ -276,7 +277,7 @@ void Settings::debug_print(std::string base_name, const ArchiveObject& object) c
         if (base_name.empty())
             name = key;
         else
-            name = std::format("{}.{}", base_name, std::string_view(key));
+            name = fmt::format("{}.{}", base_name, std::string_view(key));
 
         switch (prop.container_type)
         {

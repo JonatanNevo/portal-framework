@@ -22,7 +22,7 @@ Job<> inner_coroutine(int i, int j, ExecutionTracker* tracker = nullptr)
 {
     if (tracker)
     {
-        tracker->record(std::format("inner_{}_{}", i, j));
+        tracker->record(fmt::format("inner_{}_{}", i, j));
     }
 
     co_await SuspendJob();
@@ -33,7 +33,7 @@ Job<> outer_coroutine(int i, jobs::Scheduler& scheduler, ExecutionTracker* track
 {
     if (tracker)
     {
-        tracker->record(std::format("outer_{}", i));
+        tracker->record(fmt::format("outer_{}", i));
     }
 
     std::vector<Job<>> jobs;
@@ -69,7 +69,7 @@ TEST_CASE("Nested Jobs Basic", "[jobs][nested]")
         // Verify all outer coroutines executed
         for (int i = 0; i < 20; ++i)
         {
-            REQUIRE(tracker.was_executed(std::format("outer_{}", i)));
+            REQUIRE(tracker.was_executed(fmt::format("outer_{}", i)));
         }
 
         // Verify all inner coroutines executed (20 outer * 5 inner each = 100)
@@ -77,7 +77,7 @@ TEST_CASE("Nested Jobs Basic", "[jobs][nested]")
         {
             for (int j = 0; j < 5; ++j)
             {
-                REQUIRE(tracker.was_executed(std::format("inner_{}_{}", i, j)));
+                REQUIRE(tracker.was_executed(fmt::format("inner_{}_{}", i, j)));
             }
         }
 
@@ -91,8 +91,8 @@ TEST_CASE("Nested Jobs Basic", "[jobs][nested]")
             {
                 REQUIRE(
                     tracker.executed_before(
-                        std::format("outer_{}", i),
-                        std::format("inner_{}_{}", i, j))
+                        fmt::format("outer_{}", i),
+                        fmt::format("inner_{}_{}", i, j))
                 );
             }
         }
@@ -107,14 +107,14 @@ TEST_CASE("Nested Jobs Basic", "[jobs][nested]")
 
 Job<> level3_job(int i, int j, int k, ExecutionTracker* tracker)
 {
-    tracker->record(std::format("level3_{}_{}_{}", i, j, k));
+    tracker->record(fmt::format("level3_{}_{}_{}", i, j, k));
     co_await SuspendJob();
     co_return;
 }
 
 Job<> level2_job(int i, int j, jobs::Scheduler& scheduler, ExecutionTracker* tracker)
 {
-    tracker->record(std::format("level2_{}_{}", i, j));
+    tracker->record(fmt::format("level2_{}_{}", i, j));
 
     std::vector<Job<>> jobs;
     for (int k = 0; k < 3; ++k)
@@ -129,7 +129,7 @@ Job<> level2_job(int i, int j, jobs::Scheduler& scheduler, ExecutionTracker* tra
 
 Job<> level1_job(int i, jobs::Scheduler& scheduler, ExecutionTracker* tracker)
 {
-    tracker->record(std::format("level1_{}", i));
+    tracker->record(fmt::format("level1_{}", i));
 
     std::vector<Job<>> jobs;
     for (int j = 0; j < 2; ++j)
@@ -162,7 +162,7 @@ TEST_CASE("Deep Nesting", "[jobs][nested]")
         // Verify all level1 jobs executed (2)
         for (int i = 0; i < 2; ++i)
         {
-            REQUIRE(tracker.was_executed(std::format("level1_{}", i)));
+            REQUIRE(tracker.was_executed(fmt::format("level1_{}", i)));
         }
 
         // Verify all level2 jobs executed (2 * 2 = 4)
@@ -170,7 +170,7 @@ TEST_CASE("Deep Nesting", "[jobs][nested]")
         {
             for (int j = 0; j < 2; ++j)
             {
-                REQUIRE(tracker.was_executed(std::format("level2_{}_{}", i, j)));
+                REQUIRE(tracker.was_executed(fmt::format("level2_{}_{}", i, j)));
             }
         }
 
@@ -181,7 +181,7 @@ TEST_CASE("Deep Nesting", "[jobs][nested]")
             {
                 for (int k = 0; k < 3; ++k)
                 {
-                    REQUIRE(tracker.was_executed(std::format("level3_{}_{}_{}", i, j, k)));
+                    REQUIRE(tracker.was_executed(fmt::format("level3_{}_{}_{}", i, j, k)));
                 }
             }
         }
@@ -195,7 +195,7 @@ TEST_CASE("Deep Nesting", "[jobs][nested]")
 
 Job<> multilevel_spawner(int level, int max_level, jobs::Scheduler& scheduler, ExecutionTracker* tracker)
 {
-    tracker->record(std::format("level_{}", level));
+    tracker->record(fmt::format("level_{}", level));
 
     if (level < max_level)
     {
@@ -304,7 +304,7 @@ TEST_CASE("Nested Job Edge Cases", "[jobs][nested]")
 
 Job<> recursive_spawner(int depth, jobs::Scheduler& scheduler, ExecutionTracker* tracker)
 {
-    tracker->record(std::format("recursive_{}", depth));
+    tracker->record(fmt::format("recursive_{}", depth));
 
     if (depth > 0)
     {
@@ -350,23 +350,23 @@ TEST_CASE("Recursive Job Spawning", "[jobs][nested]")
 
 Job<> nested_with_suspension_level3(int id, ExecutionTracker* tracker)
 {
-    tracker->record(std::format("suspend_l3_{}_before", id));
+    tracker->record(fmt::format("suspend_l3_{}_before", id));
     co_await SuspendJob();
-    tracker->record(std::format("suspend_l3_{}_after", id));
+    tracker->record(fmt::format("suspend_l3_{}_after", id));
     co_return;
 }
 
 Job<> nested_with_suspension_level2(int id, jobs::Scheduler& scheduler, ExecutionTracker* tracker)
 {
-    tracker->record(std::format("suspend_l2_{}_before", id));
+    tracker->record(fmt::format("suspend_l2_{}_before", id));
     co_await SuspendJob();
-    tracker->record(std::format("suspend_l2_{}_middle", id));
+    tracker->record(fmt::format("suspend_l2_{}_middle", id));
 
     std::vector<Job<>> jobs;
     jobs.push_back(nested_with_suspension_level3(id, tracker));
     scheduler.wait_for_jobs(std::span{jobs});
 
-    tracker->record(std::format("suspend_l2_{}_after", id));
+    tracker->record(fmt::format("suspend_l2_{}_after", id));
     co_return;
 }
 
