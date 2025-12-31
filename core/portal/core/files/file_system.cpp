@@ -137,14 +137,12 @@ FileStat FileSystem::stat_file(const std::filesystem::path& path)
 
 bool FileSystem::is_file(const std::filesystem::path& path)
 {
-    const auto stat = stat_file(path);
-    return stat.is_file;
+    return std::filesystem::is_regular_file(path);
 }
 
 bool FileSystem::is_directory(const std::filesystem::path& path)
 {
-    const auto stat = stat_file(path);
-    return stat.is_directory;
+    return std::filesystem::is_directory(path);
 }
 
 bool FileSystem::is_newer(const std::filesystem::path& path_a, const std::filesystem::path& path_b)
