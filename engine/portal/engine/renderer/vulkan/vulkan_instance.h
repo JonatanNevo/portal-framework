@@ -18,7 +18,7 @@ namespace portal::renderer::vulkan
 {
 constexpr std::array REQUIRED_DEVICE_EXTENSIONS = {
     vk::KHRSwapchainExtensionName,
-#if !define(PORTAL_DIST)
+#if !defined(PORTAL_DIST)
     vk::KHRCalibratedTimestampsExtensionName,
 #endif
 #if defined(PORTAL_PLATFORM_MACOS)
