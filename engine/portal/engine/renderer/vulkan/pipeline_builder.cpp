@@ -7,6 +7,7 @@
 
 #include <ranges>
 
+#include "vulkan_instance.h"
 #include "portal/engine/renderer/render_target/render_target.h"
 #include "portal/engine/renderer/vulkan/vulkan_common.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
@@ -271,15 +272,18 @@ vk::raii::Pipeline PipelineBuilder::build(const vk::raii::Device& device, const 
 
     auto&& pipeline = device.createGraphicsPipeline(pipeline_cache, pipeline_info);
 
-    if (name != INVALID_STRING_ID)
+    if constexpr (ENABLE_VALIDATION_LAYERS)
     {
-        device.setDebugUtilsObjectNameEXT(
-            vk::DebugUtilsObjectNameInfoEXT{
-                .objectType = vk::ObjectType::ePipeline,
-                .objectHandle = VK_HANDLE_CAST(pipeline),
-                .pObjectName = name.string.data()
-            }
-        );
+        if (name != INVALID_STRING_ID)
+        {
+            device.setDebugUtilsObjectNameEXT(
+                vk::DebugUtilsObjectNameInfoEXT{
+                    .objectType = vk::ObjectType::ePipeline,
+                    .objectHandle = VK_HANDLE_CAST(pipeline),
+                    .pObjectName = name.string.data()
+                }
+            );
+        }
     }
     return pipeline;
 }

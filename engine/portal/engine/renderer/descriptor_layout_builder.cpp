@@ -6,6 +6,7 @@
 #include "descriptor_layout_builder.h"
 
 #include "vulkan/vulkan_common.h"
+#include "vulkan/vulkan_instance.h"
 
 namespace portal::renderer::vulkan
 {
@@ -53,15 +54,18 @@ vk::raii::DescriptorSetLayout DescriptorLayoutBuilder::build(const vk::raii::Dev
     auto set = device.createDescriptorSetLayout(info);
     clear();
 
-    if (name != INVALID_STRING_ID)
+    if constexpr (ENABLE_VALIDATION_LAYERS)
     {
-        device.setDebugUtilsObjectNameEXT(
-            {
-                .objectType = vk::ObjectType::eDescriptorSetLayout,
-                .objectHandle = VK_HANDLE_CAST(set),
-                .pObjectName = name.string.data()
-            }
-        );
+        if (name != INVALID_STRING_ID)
+        {
+            device.setDebugUtilsObjectNameEXT(
+                {
+                    .objectType = vk::ObjectType::eDescriptorSetLayout,
+                    .objectHandle = VK_HANDLE_CAST(set),
+                    .pObjectName = name.string.data()
+                }
+            );
+        }
     }
     return set;
 }

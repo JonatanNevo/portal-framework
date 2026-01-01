@@ -24,7 +24,14 @@ constexpr std::array REQUIRED_DEVICE_EXTENSIONS = {
 #if defined(PORTAL_PLATFORM_MACOS)
     vk::KHRPortabilitySubsetExtensionName
 #endif
+
 };
+
+#ifndef PORTAL_DIST
+constexpr bool ENABLE_VALIDATION_LAYERS = true;
+#else
+constexpr bool ENABLE_VALIDATION_LAYERS = false;
+#endif
 
 class VulkanInstance
 {

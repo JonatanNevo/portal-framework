@@ -19,11 +19,6 @@ constexpr std::array VALIDATION_LAYERS = {
     "VK_LAYER_KHRONOS_validation"
 };
 
-#ifndef PORTAL_DIST
-constexpr bool ENABLE_VALIDATION_LAYERS = true;
-#else
-constexpr bool ENABLE_VALIDATION_LAYERS = false;
-#endif
 const auto logger = Log::get_logger("Vulkan");
 
 uint32_t rate_device_suitability(const VulkanPhysicalDevice& device)
