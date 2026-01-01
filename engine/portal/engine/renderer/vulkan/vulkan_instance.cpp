@@ -260,6 +260,7 @@ VulkanPhysicalDevice& VulkanInstance::get_suitable_gpu() const
 
 
     std::multimap<uint32_t, std::reference_wrapper<VulkanPhysicalDevice>> candidates;
+    LOGGER_TRACE("Testing {} physical devices", physical_devices.size());
     for (const auto& dev : physical_devices)
     {
         uint32_t score = rate_device_suitability(*dev);

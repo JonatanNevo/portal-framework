@@ -10,8 +10,6 @@
 
 #include "portal/core/debug/assert.h"
 
-#define PORTAL_HAS_CONSOLE !PORTAL_DIST
-
 
 namespace portal::platform
 {
@@ -22,9 +20,7 @@ const std::vector<spdlog::sink_ptr>& get_platform_sinks()
     {
         sinks = {
             std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/portal.log", true),
-#if PORTAL_HAS_CONSOLE
             std::make_shared<spdlog::sinks::stdout_color_sink_mt>()
-#endif
         };
     }
 
