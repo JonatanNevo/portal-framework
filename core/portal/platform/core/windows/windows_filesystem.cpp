@@ -162,6 +162,21 @@ std::string FileSystem::get_environment_variable(const std::string& name)
     return {};
 }
 
+std::filesystem::path FileSystem::get_binary_path()
+{
+    return std::filesystem::current_path();
+}
+
+std::filesystem::path FileSystem::get_resource_path()
+{
+    return std::filesystem::current_path();
+}
+
+std::filesystem::path FileSystem::get_root_path()
+{
+    return std::filesystem::current_path();
+}
+
 void FileSystem::set_program_path(std::filesystem::path program_path)
 {
     PORTAL_ASSERT(program_path.is_relative(), "Program path must be relative");
