@@ -8,7 +8,6 @@
 #include "vulkan_utils.h"
 #include "portal/engine/renderer/descriptor_layout_builder.h"
 #include "portal/engine/renderer/vulkan/pipeline_builder.h"
-#include "portal/engine/renderer/vulkan/vulkan_init.h"
 #include "device/vulkan_physical_device.h"
 #include "llvm/ADT/SmallVector.h"
 #include "portal/engine/renderer/vulkan/vulkan_instance.h"
