@@ -4,6 +4,7 @@
 //
 
 #pragma once
+
 #include <vulkan/vulkan_raii.hpp>
 
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
@@ -18,10 +19,10 @@ public:
     VulkanContext();
     ~VulkanContext();
 
-    const vk::raii::Instance& get_instance() const;
-    const VulkanDevice& get_device() const;
+    [[nodiscard]] const vk::raii::Instance& get_instance() const;
+    [[nodiscard]] const VulkanDevice& get_device() const;
     VulkanDevice& get_device();
-    const VulkanPhysicalDevice& get_physical_device() const;
+    [[nodiscard]] const VulkanPhysicalDevice& get_physical_device() const;
 
 private:
     vk::raii::Context context{};
