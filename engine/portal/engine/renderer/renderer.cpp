@@ -14,13 +14,11 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "vulkan/vulkan_init.h"
 #include "vulkan/vulkan_utils.h"
 
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
 #include "portal/engine/renderer/descriptor_layout_builder.h"
-#include "portal/engine/renderer/pipelines.h"
 
 #include <imgui.h>
 #include <imgui_impl_vulkan.h>

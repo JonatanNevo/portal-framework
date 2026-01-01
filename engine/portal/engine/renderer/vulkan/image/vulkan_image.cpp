@@ -63,6 +63,10 @@ void VulkanImage::resize(const size_t width, const size_t height)
 
 void VulkanImage::reallocate()
 {
+    if (image_info.image.get_handle() != nullptr)
+    {
+        device.wait_idle();
+    }
     release();
 
     ImageBuilder builder(properties.width, properties.height, 1);
