@@ -23,7 +23,7 @@ void DatabaseDescription::archive(ArchiveObject& archive) const
 DatabaseDescription DatabaseDescription::dearchive(ArchiveObject& archive)
 {
     std::string name;
-    DatabaseType type;
+    DatabaseType type{};
     archive.get_property("type", type);
     DatabaseDescription description{.type = type};
 
