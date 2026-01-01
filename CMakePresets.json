@@ -17,21 +17,6 @@
       "generator": "Ninja Multi-Config"
     },
     {
-      "name": "ninja-multi-linux",
-      "inherits": "base",
-      "generator": "Ninja Multi-Config",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Linux"
-      },
-      "environment": {
-        "CC": "clang",
-        "CXX": "clang++",
-        "VCPKG_KEEP_ENV_VARS": "CC;CXX"
-      }
-    },
-    {
       "name": "xcode",
       "inherits": "base",
       "generator": "Xcode",
@@ -82,7 +67,7 @@
       "configuration": "RelWithDebInfo"
     },
     {
-      "name": "release",
+      "name": "dist",
       "configurePreset": "ninja-multi",
       "configuration": "Release"
     },

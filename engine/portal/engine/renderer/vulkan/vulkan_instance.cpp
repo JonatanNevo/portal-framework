@@ -56,7 +56,8 @@ uint32_t rate_device_suitability(const VulkanPhysicalDevice& device)
 
     if (!features.samplerAnisotropy)
     {
-        LOGGER_TRACE("Candidate: {} does not support sampler anisotropy", properties.deviceName.data());
+        LOGGER_TRACE("Candidate: {} does not support sampler anisotropy", properties.deviceNa    LOGGER_DEBUG("Gpu candidate: {} with score {}", properties.deviceName.data(), score);
+me.data());
         return 0;
     }
 
@@ -69,7 +70,6 @@ uint32_t rate_device_suitability(const VulkanPhysicalDevice& device)
     // Maximum possible size of textures affects graphics quality
     score += properties.limits.maxImageDimension2D;
 
-    LOGGER_DEBUG("Gpu candidate: {} with score {}", properties.deviceName.data(), score);
     return score;
 }
 
