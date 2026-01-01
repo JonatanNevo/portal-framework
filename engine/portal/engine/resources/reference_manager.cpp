@@ -15,7 +15,7 @@ ReferenceManager::ReferenceManager(ModuleStack& stack) : Module<>(stack, STRING_
 
 ReferenceManager::~ReferenceManager()
 {
-    bool ok = true;
+    [[maybe_unused]] bool ok = true;
     for (auto& [ref, set] : references)
     {
         if (!set.empty())

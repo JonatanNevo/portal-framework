@@ -83,8 +83,7 @@ void VulkanPipeline::initialize()
 
         if (utils::is_depth_format(attachment_prop.format))
         {
-            if (depth_format != ImageFormat::None)
-                PORTAL_ASSERT(depth_format == attachment_prop.format, "Multiple depth formats not supported");
+            PORTAL_ASSERT(depth_format == ImageFormat::None || depth_format == attachment_prop.format, "Multiple depth formats not supported");
             depth_format = attachment_prop.format;
             continue;
         }

@@ -313,8 +313,8 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
     const fastgltf::Texture& texture
 )
 {
-    std::unique_ptr<ResourceSource> image_source;
-    SourceMetadata image_source_meta;
+    std::unique_ptr<ResourceSource> image_source = nullptr;
+    SourceMetadata image_source_meta{};
 
     auto image_index = texture.imageIndex;
     PORTAL_ASSERT(image_index.has_value(), "Texture references invalid image: {}", texture.name);
@@ -433,7 +433,9 @@ Job<> GltfLoader::load_texture(
     if (registry.get<renderer::vulkan::VulkanTexture>(texture_name).get_state() == ResourceState::Loaded)
         co_return;
 
-    auto [image_meta, source] = find_image_source(base_name, parent_path, asset, texture);
+    const auto result = find_image_source(base_name, parent_path, asset, texture);
+    auto& image_meta = result.first;
+    auto& source = result.second;
     if (!source)
         co_return;
 

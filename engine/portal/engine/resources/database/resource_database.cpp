@@ -44,9 +44,9 @@ void TextureMetadata::archive(ArchiveObject& archive) const
 TextureMetadata TextureMetadata::dearchive(ArchiveObject& archive)
 {
     auto* child = archive.get_object("texture");
-    bool hdr;
-    size_t width, height;
-    std::string format;
+    bool hdr{};
+    size_t width{}, height{};
+    std::string format{};
     child->get_property<bool>("hdr", hdr);
     child->get_property<size_t>("width", width);
     child->get_property<size_t>("height", height);

@@ -365,7 +365,7 @@ uint8_t* Allocated<HandleType>::map()
 {
     if (!persistent && !mapped())
     {
-        const auto result = vmaMapMemory(get_vma_allocator(), allocation, reinterpret_cast<void**>(&mapped_data));
+        [[maybe_unused]] const auto result = vmaMapMemory(get_vma_allocator(), allocation, reinterpret_cast<void**>(&mapped_data));
         PORTAL_ASSERT(result == VK_SUCCESS, "Failed to map memory");
     }
     else

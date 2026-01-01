@@ -37,7 +37,7 @@ DatabaseMetadata DatabaseMetadata::dearchive(ArchiveObject& archive)
 {
     std::string name;
     DatabaseMetadata metadata;
-    ResourceDirtyFlags::MaskType dirty;
+    ResourceDirtyFlags::MaskType dirty{};
 
     archive.get_property("version", metadata.version);
     archive.get_property("name", name);

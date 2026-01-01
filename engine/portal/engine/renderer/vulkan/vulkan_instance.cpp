@@ -56,8 +56,7 @@ uint32_t rate_device_suitability(const VulkanPhysicalDevice& device)
 
     if (!features.samplerAnisotropy)
     {
-        LOGGER_TRACE("Candidate: {} does not support sampler anisotropy", properties.deviceNa    LOGGER_DEBUG("Gpu candidate: {} with score {}", properties.deviceName.data(), score);
-me.data());
+        LOGGER_TRACE("Candidate: {} does not support sampler anisotropy", properties.deviceName.data());
         return 0;
     }
 
@@ -70,6 +69,7 @@ me.data());
     // Maximum possible size of textures affects graphics quality
     score += properties.limits.maxImageDimension2D;
 
+    LOGGER_DEBUG("Gpu candidate: {} with score {}", properties.deviceName.data(), score);
     return score;
 }
 
@@ -184,8 +184,7 @@ VulkanInstance::VulkanInstance(vk::raii::Context& context) : context(context)
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     auto instance_extensions = get_required_instance_extensions(ENABLE_VALIDATION_LAYERS);
-    if (instance_extensions.empty())
-        PORTAL_ASSERT(false, "Incompatible instance extension!"); // TODO: exit?
+    PORTAL_ASSERT(!instance_extensions.empty(), "Incompatible instance extension!"); // TODO: exit?
 
     vk::ValidationFeatureEnableEXT validation_features[] = {
         vk::ValidationFeatureEnableEXT::eBestPractices
