@@ -9,9 +9,10 @@
 #include <fastgltf/glm_element_traits.hpp>
 #include <fastgltf/tools.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "portal/core/debug/profile.h"
-#include "../../../../../application/portal/application/settings.h"
+#include "portal/application/settings.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/shaders/shader_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
@@ -679,8 +680,7 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
                 [&node_description](fastgltf::math::fmat4x4 matrix) mutable
                 {
                     TransformSceneComponent transform_component;
-                    // Copy data as is
-                    std::memcpy(&transform_component.transform, matrix.data(), sizeof(matrix));
+                    transform_component.transform = glm::make_mat4(matrix.data());
                     node_description.components.emplace_back(transform_component);
                 },
 

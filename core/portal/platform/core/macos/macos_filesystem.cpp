@@ -158,7 +158,7 @@ std::filesystem::path FileSystem::get_root_path()
     return bundle_path;
 }
 
-void FileSystem::set_program_path(std::filesystem::path program_path)
+void FileSystem::set_program_data_path(std::filesystem::path program_path)
 {
     PORTAL_ASSERT(program_path.is_relative(), "Program path must be relative");
     s_program_path = std::move(program_path);

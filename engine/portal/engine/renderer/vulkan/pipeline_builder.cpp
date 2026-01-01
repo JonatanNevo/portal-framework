@@ -79,8 +79,8 @@ PipelineBuilder& PipelineBuilder::enable_depth_stencil(const bool depth_write_en
     depth_stencil.depthCompareOp = to_compare_op(depth_compare_op);
     depth_stencil.depthBoundsTestEnable = false;
     depth_stencil.stencilTestEnable = false;
-    depth_stencil.front = {};
-    depth_stencil.back = {};
+    depth_stencil.front = vk::StencilOpState{};
+    depth_stencil.back = vk::StencilOpState{};
     depth_stencil.minDepthBounds = 0.0f;
     depth_stencil.maxDepthBounds = 1.0f;
     return *this;
@@ -93,8 +93,8 @@ PipelineBuilder& PipelineBuilder::disable_depth_stencil()
     depth_stencil.depthCompareOp = vk::CompareOp::eNever;
     depth_stencil.depthBoundsTestEnable = false;
     depth_stencil.stencilTestEnable = false;
-    depth_stencil.front = {};
-    depth_stencil.back = {};
+    depth_stencil.front = vk::StencilOpState{};
+    depth_stencil.back = vk::StencilOpState{};
     depth_stencil.minDepthBounds = 0.0f;
     depth_stencil.maxDepthBounds = 1.0f;
     return *this;
@@ -161,6 +161,7 @@ PipelineBuilder& PipelineBuilder::set_blend(const size_t index, const bool enabl
         attachment.dstColorBlendFactor = vk::BlendFactor::eOne;
         attachment.srcAlphaBlendFactor = vk::BlendFactor::eOne;
         attachment.dstAlphaBlendFactor = vk::BlendFactor::eZero;
+        break;
     case BlendMode::OneZero:
         attachment.srcColorBlendFactor = vk::BlendFactor::eOne;
         attachment.dstColorBlendFactor = vk::BlendFactor::eZero;
