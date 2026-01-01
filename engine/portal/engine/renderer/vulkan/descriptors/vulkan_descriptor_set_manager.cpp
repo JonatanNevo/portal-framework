@@ -429,6 +429,7 @@ void VulkanDescriptorSetManager::bake()
 
                         write_descriptor.pImageInfo = &image->get_descriptor_image_info();
                         stored_write_descriptor.resource_handles[0] = write_descriptor.pImageInfo->imageView;
+                        break;
                     }
                 default:
                     LOGGER_ERROR("Invalid input type");
@@ -561,6 +562,7 @@ void VulkanDescriptorSetManager::invalidate_and_update(const size_t frame_index)
                     auto buffer = reference_cast<VulkanUniformBuffer>(input.input[0]);
                     write_descriptor_set.pBufferInfo = &buffer->get_descriptor_buffer_info();
                     resource_handles[0] = write_descriptor_set.pBufferInfo->buffer;
+                    break;
                 }
             case DescriptorResourceType::UniformBufferSet:
                 {

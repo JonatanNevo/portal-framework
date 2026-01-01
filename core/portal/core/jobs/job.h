@@ -181,7 +181,7 @@ public:
         }
 
     private:
-        std::coroutine_handle<JobPromise> handle;
+        std::coroutine_handle<JobPromise> handle{};
     };
 
 public:
@@ -536,6 +536,11 @@ template <typename Result>
 class ResultPromise : public JobPromise
 {
 public:
+    static Job<Result> get_return_object_on_allocation_failure() noexcept
+    {
+        return Job<Result>{nullptr};
+    }
+
     Job<Result> get_return_object()
     {
         const auto handle = std::coroutine_handle<ResultPromise>::from_promise(*this);
@@ -558,6 +563,11 @@ template <>
 class ResultPromise<void> : public JobPromise
 {
 public:
+    static Job<void> get_return_object_on_allocation_failure() noexcept
+    {
+        return Job<void>{nullptr};
+    }
+
     Job<void> get_return_object()
     {
         const auto handle = std::coroutine_handle<ResultPromise>::from_promise(*this);

@@ -60,7 +60,7 @@ void VulkanUniformBuffer::init()
     [[maybe_unused]] const auto written = buffer.update(local_storage, 0);
     PORTAL_ASSERT(written == size, "Failed to update buffer");
 
-    descriptor_buffer_info = {
+    descriptor_buffer_info = vk::DescriptorBufferInfo{
         .buffer = buffer.get_handle(),
         .offset = 0,
         .range = size

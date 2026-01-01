@@ -76,7 +76,7 @@ void VulkanStorageBuffer::init()
     buffer = device.create_buffer(builder);
 
     local_storage = Buffer::allocate(properties.size);
-    descriptor_buffer_info = {
+    descriptor_buffer_info = vk::DescriptorBufferInfo{
         .buffer = buffer.get_handle(),
         .offset = 0,
         .range = properties.size

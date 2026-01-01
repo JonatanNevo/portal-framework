@@ -123,6 +123,9 @@ if (MSVC)
 else ()
     target_compile_options(portal-core PUBLIC
             "$<$<CONFIG:Release>:-g>"
+
+            "$<$<CXX_COMPILER_ID:GNU>:-Wno-missing-field-initializers>"
+            "$<$<C_COMPILER_ID:GNU>:-Wno-missing-field-initializers>"
     )
 endif ()
 
