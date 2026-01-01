@@ -292,13 +292,17 @@ const VulkanQueue& VulkanDevice::get_present_queue() const
 
 void VulkanDevice::set_debug_name(const vk::ObjectType type, const uint64_t handle, const char* name) const
 {
-    get_handle().setDebugUtilsObjectNameEXT(
-        vk::DebugUtilsObjectNameInfoEXT{
-            .objectType = type,
-            .objectHandle = handle,
-            .pObjectName = name
-        }
-    );
+    if constexpr (ENABLE_VALIDATION_LAYERS)
+    {
+        get_handle().setDebugUtilsObjectNameEXT(
+                vk::DebugUtilsObjectNameInfoEXT{
+                    .objectType = type,
+                    .objectHandle = handle,
+                    .pObjectName = name
+                }
+            );
+    }
+
 }
 
 void VulkanDevice::initialize_immediate_commands()
