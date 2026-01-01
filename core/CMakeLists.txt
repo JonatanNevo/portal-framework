@@ -13,7 +13,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 option(PORTAL_DEBUG_ALLOCATIONS "Enable debug allocations (for debug only)" OFF)
 option(PORTAL_PROFILE "Enable profiling with Tracy" OFF)
-option(PORTAL_BUILD_DIST "Build the distribution package" OFF)
 
 include(cmake/portal-test-helpers.cmake)
 include(cmake/portal-install-helpers.cmake)
@@ -93,19 +92,15 @@ else ()
     message(FATAL_ERROR "Unsupported platform")
 endif ()
 
-if (NOT PORTAL_BUILD_DIST)
-    target_compile_definitions(portal-core PUBLIC
-            $<$<CONFIG:Debug>:PORTAL_DEBUG>
-            $<$<CONFIG:RelWithDebInfo>:PORTAL_DEVELOPMENT>
-            $<$<CONFIG:Release>:PORTAL_RELEASE>
-    )
-else ()
-    target_compile_definitions(portal-core PUBLIC PORTAL_DIST)
-endif ()
+target_compile_definitions(portal-core PUBLIC
+        $<$<CONFIG:Debug>:PORTAL_DEBUG>
+        $<$<CONFIG:RelWithDebInfo>:PORTAL_DEVELOPMENT>
+        $<$<CONFIG:Release>:PORTAL_DIST>
+)
 
-if (PORTAL_PROFILE AND NOT PORTAL_BUILD_DIST)
-    target_compile_definitions(portal-core PUBLIC $<$<CONFIG:RelWithDebInfo>:TRACY_ENABLE>)
-    target_link_libraries(portal-core PUBLIC Tracy::TracyClient)
+if (PORTAL_PROFILE)
+    target_compile_definitions(portal-core PUBLIC $<$<AND:$<CONFIG:RelWithDebInfo>,$<NOT:$<CONFIG:Release>>>:TRACY_ENABLE>)
+    target_link_libraries(portal-core PUBLIC $<$<NOT:$<CONFIG:Release>>:Tracy::TracyClient>)
 endif ()
 
 if (MSVC)

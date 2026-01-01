@@ -169,6 +169,8 @@ function(portal_package_game TARGET_NAME)
                 DESTINATION .
     )
 
+    message(STATUS "Vcpkg Installed Dir ${VCPKG_INSTALLED_DIR}")
+
     if (WIN32)
         install(
                 RUNTIME_DEPENDENCY_SET ${TARGET_NAME}_deps
@@ -178,6 +180,10 @@ function(portal_package_game TARGET_NAME)
                 POST_EXCLUDE_REGEXES
                 # Windows system directories
                 ".*[Ss]ystem32/.*\\.dll" ".*[Ww]in[Ss]x[Ss]/.*\\.dll"
+                DIRECTORIES
+                $<TARGET_FILE_DIR:${TARGET_NAME}>
+                ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib
+                ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin
                 COMPONENT ${TARGET_NAME}
                 DESTINATION .
         )
@@ -190,7 +196,8 @@ function(portal_package_game TARGET_NAME)
         elseif (UNIX)
             set_target_properties(${TARGET_NAME} PROPERTIES
                     INSTALL_RPATH "$ORIGIN/lib"
-                    BUILD_WITH_INSTALL_RPATH TRUE
+                    BUILD_RPATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib"
+                    BUILD_WITH_INSTALL_RPATH FALSE
             )
         endif ()
 
@@ -203,10 +210,14 @@ function(portal_package_game TARGET_NAME)
                 "ld-linux.*\\.so.*" "libSystem\\..*dylib" "libc\\+\\+\\..*dylib"
                 POST_EXCLUDE_REGEXES
                 # Linux system directories
-                ".*/lib/.*\\.so.*" ".*/lib64/.*\\.so.*"
+                "^/lib/.*\\.so.*" "^/lib64/.*\\.so.*"
                 ".*/usr/lib/.*\\.so.*" ".*/usr/lib64/.*\\.so.*"
                 # macOS system directories
                 ".*/System/Library/.*" ".*/usr/lib/.*\\.dylib"
+                DIRECTORIES
+                $<TARGET_FILE_DIR:${TARGET_NAME}>
+                ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib
+                ${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin
                 COMPONENT ${TARGET_NAME}
                 DESTINATION lib
         )
