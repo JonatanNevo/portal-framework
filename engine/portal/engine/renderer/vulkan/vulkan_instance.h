@@ -41,7 +41,7 @@ public:
     [[nodiscard]] const vk::raii::Instance& get_instance() const;
     [[nodiscard]] const DebugMessenger& get_debug_messenger() const;
 
-    VulkanPhysicalDevice& get_suitable_gpu() const;
+    [[nodiscard]] VulkanPhysicalDevice& get_suitable_gpu() const;
 
 private:
     void query_physical_devices();

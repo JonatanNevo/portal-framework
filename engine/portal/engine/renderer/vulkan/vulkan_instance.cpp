@@ -5,6 +5,7 @@
 
 #include "vulkan_instance.h"
 
+#include <volk.h>
 #include <GLFW/glfw3.h>
 
 #include "vulkan_utils.h"
@@ -217,7 +218,8 @@ VulkanInstance::VulkanInstance(vk::raii::Context& context) : context(context)
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     instance = context.createInstance(instance_create_info);
-    //TODO: call vulkan loader?
+    volkLoadInstance(*instance);
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*instance);
 
     if constexpr (ENABLE_VALIDATION_LAYERS)
     {

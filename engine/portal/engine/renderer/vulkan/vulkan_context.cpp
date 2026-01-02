@@ -18,10 +18,25 @@
 #include "portal/engine/renderer/vulkan/base/allocated.h"
 #include "portal/engine/renderer/vulkan/debug/debug_messenger.h"
 
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 namespace portal::renderer::vulkan
 {
 const auto logger = Log::get_logger("Vulkan");
 
+std::unique_ptr<VulkanContext> VulkanContext::create()
+{
+    const VkResult result = volkInitialize();
+    if (result != VK_SUCCESS)
+    {
+        PORTAL_ASSERT(false, "Failed to initialize volk!");
+        throw std::runtime_error("Failed to initialize volk!");
+    }
+
+    VULKAN_HPP_DEFAULT_DISPATCHER.init();
+
+    return std::unique_ptr<VulkanContext>(new VulkanContext());
+}
 
 VulkanContext::VulkanContext() :
     instance(context),

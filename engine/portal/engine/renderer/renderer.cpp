@@ -21,9 +21,9 @@
 #include "portal/engine/renderer/descriptor_layout_builder.h"
 
 #include <imgui.h>
-#include <imgui_impl_vulkan.h>
-#include <imgui_impl_glfw.h>
 #include <ranges>
+
+#include "portal/engine/imgui/backends/imgui_impl_vulkan.h"
 
 #include "llvm/Support/MemoryBuffer.h"
 #include "portal/core/debug/profile.h"

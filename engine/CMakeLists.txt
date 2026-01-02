@@ -37,9 +37,10 @@ portal_add_module(engine
             slang
             glaze
             EnTT
+            volk
 
         COMPLEX_DEPENDENCIES
-            Vulkan|FIND_PACKAGE_ARGS|REQUIRED
+            VulkanHeaders|LINK|Vulkan::Headers
             VulkanMemoryAllocator|LINK|GPUOpen::VulkanMemoryAllocator
 )
 portal_add_resources(portal-engine
@@ -55,8 +56,11 @@ set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_ENGI
 #portal_build_tests(tests)
 
 target_compile_definitions(portal-engine PUBLIC
+        VK_NO_PROTOTYPES
         VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
         VK_ENABLE_BETA_EXTENSIONS
+        VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
+        IMGUI_IMPL_VULKAN_USE_VOLK
 )
 
 portal_install_module(engine

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <volk.h>
 #include <vulkan/vulkan_raii.hpp>
 
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
@@ -16,7 +17,7 @@ namespace portal::renderer::vulkan
 class VulkanContext final
 {
 public:
-    VulkanContext();
+    static std::unique_ptr<VulkanContext> create();
     ~VulkanContext();
 
     [[nodiscard]] const vk::raii::Instance& get_instance() const;
@@ -25,7 +26,9 @@ public:
     [[nodiscard]] const VulkanPhysicalDevice& get_physical_device() const;
 
 private:
-    vk::raii::Context context{};
+    VulkanContext();
+
+    vk::raii::Context context;
     VulkanInstance instance;
 
     VulkanPhysicalDevice& physical_device;

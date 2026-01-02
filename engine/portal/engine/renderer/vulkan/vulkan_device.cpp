@@ -5,6 +5,8 @@
 
 #include "vulkan_device.h"
 
+#include <volk.h>
+
 #include "vulkan_utils.h"
 #include "portal/engine/renderer/descriptor_layout_builder.h"
 #include "portal/engine/renderer/vulkan/pipeline_builder.h"
@@ -97,6 +99,8 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& physical_device, const Vu
     };
 
     device = physical_device.get_handle().createDevice(create_info);
+    volkLoadDevice(*device);
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(*device);
 
     queues.emplace(QueueType::Graphics, VulkanQueue{*this, static_cast<size_t>(graphics), queue_family_properties[graphics], 0, false});
     set_debug_name(queues.at(QueueType::Graphics).get_handle(), "graphics queue");
