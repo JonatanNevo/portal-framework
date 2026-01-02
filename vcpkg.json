@@ -20,6 +20,7 @@
     "version>=" : "2024-07-29#1"
   }, {
     "name" : "glfw3",
+    "features": ["wayland"],
     "version>=" : "3.4#1"
   }, {
     "name" : "nlohmann-json",

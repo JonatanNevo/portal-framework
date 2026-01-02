@@ -13,10 +13,21 @@
 #include "portal/engine/resources/resources/composite.h"
 #include "portal/engine/window/glfw_window.h"
 #include "resources/database/resource_database_facade.h"
+#include "portal/engine/resources/source/resource_source.h"
 
 namespace portal
 {
 static auto logger = Log::get_logger("Engine");
+
+std::unique_ptr<resources::ResourceSource> Engine::find_icon_source(Settings& settings, ResourceDatabaseFacade& resource_database)
+{
+    std::unique_ptr<resources::ResourceSource> icon_source;
+    auto icon_id = STRING_ID(settings.get_setting<std::string>("application.icon").value_or("engine/portal_icon_64x64"));
+    auto icon_result = resource_database.find(icon_id);
+    if (icon_result.has_value())
+        icon_source = resource_database.create_source(icon_id, icon_result.value());
+    return icon_source;
+}
 
 Engine::Engine(const ApplicationProperties& properties) : Application(properties)
 {
@@ -28,18 +39,28 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
         }
     );
 
+    auto& resource_database = modules.add_module<ResourceDatabaseFacade>();
+    if (settings.get_setting<bool>("engine.include_engine_resources").value_or(true))
+    {
+        resource_database.register_database({DatabaseType::Folder, "engine"});
+    }
+
+    std::unique_ptr<resources::ResourceSource> icon_source = find_icon_source(settings, resource_database);
+
+    const WindowProperties window_properties{
+        .title = properties.name,
+        .extent = {properties.width, properties.height},
+        .icon_source = icon_source.get(),
+        .requested_frames_in_flight = properties.frames_in_flight,
+    };
+    window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, input});
+
     vulkan_context = std::make_unique<renderer::vulkan::VulkanContext>();
     auto& renderer = modules.add_module<Renderer>(*vulkan_context);
 
     modules.add_module<SchedulerModule>(settings.get_setting<int32_t>("application.scheduler-threads").value_or(0));
     modules.add_module<ReferenceManager>();
     auto& system_orchestrator = modules.add_module<SystemOrchestrator>();
-
-    auto& resource_database = modules.add_module<ResourceDatabaseFacade>();
-    if (settings.get_setting<bool>("engine.include_engine_resources").value_or(true))
-    {
-        resource_database.register_database({DatabaseType::Folder, "engine"});
-    }
 
     const auto descriptions = settings.get_setting<std::vector<DatabaseDescription>>("engine.resources");
     for (auto& description : descriptions.value_or(std::vector<DatabaseDescription>{}))
@@ -48,18 +69,6 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     }
 
     auto& registry = modules.add_module<ResourceRegistry>(renderer.get_renderer_context());
-
-    auto icon_ref = registry.immediate_load<renderer::Texture>(
-        STRING_ID(settings.get_setting<std::string>("application.icon").value_or("engine/portal_icon_64x64"))
-    );
-
-    const WindowProperties window_properties{
-        .title = properties.name,
-        .extent = {properties.width, properties.height},
-        .icon = icon_ref.get(),
-        .requested_frames_in_flight = properties.frames_in_flight,
-    };
-    window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, input});
 
     auto surface = window->create_surface(*vulkan_context);
     // TODO: find better surface control
