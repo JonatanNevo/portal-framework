@@ -5,6 +5,8 @@
 
 #include "allocated.h"
 
+#include <volk.h>
+
 #include "portal/engine/renderer/vulkan/vulkan_common.h"
 
 namespace portal::renderer::vulkan::allocation

@@ -113,7 +113,9 @@ if (MSVC)
     )
 
     target_link_options(portal-core PUBLIC
-            "$<$<CONFIG:Release>:/DEBUG /OPT:REF /OPT:ICF>"
+            $<$<CONFIG:Release>:/OPT:REF>
+            $<$<CONFIG:Release>:/OPT:ICF>
+
     )
 else ()
     target_compile_options(portal-core PUBLIC

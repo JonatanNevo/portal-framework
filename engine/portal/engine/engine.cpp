@@ -55,7 +55,7 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     };
     window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, input});
 
-    vulkan_context = std::make_unique<renderer::vulkan::VulkanContext>();
+    vulkan_context = renderer::vulkan::VulkanContext::create();
     auto& renderer = modules.add_module<Renderer>(*vulkan_context);
 
     modules.add_module<SchedulerModule>(settings.get_setting<int32_t>("application.scheduler-threads").value_or(0));

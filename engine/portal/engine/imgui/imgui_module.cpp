@@ -7,8 +7,8 @@
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
 
+#include "portal/engine/imgui/backends/imgui_impl_vulkan.h"
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_render_target.h"

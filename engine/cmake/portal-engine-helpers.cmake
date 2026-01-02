@@ -268,7 +268,7 @@ function(portal_package_game TARGET_NAME)
 endfunction()
 
 function(portal_add_game TARGET_NAME)
-    set(options MAKE_BUNDLE)
+    set(options MAKE_STANDALONE)
     set(oneValueArgs SETTINGS_FILE STATIC_ICON DISPLAY_NAME)
     set(multiValueArgs
             SOURCES
@@ -277,12 +277,8 @@ function(portal_add_game TARGET_NAME)
     )
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT ARG_MAKE_BUNDLE)
-        set(ARG_MAKE_BUNDLE ON)
-    endif ()
-
     # TODO: add editor target
-    if (APPLE AND ARG_MAKE_BUNDLE)
+    if (APPLE AND ARG_MAKE_STANDALONE)
         cmake_path(GET ARG_STATIC_ICON FILENAME BUNDLE_ICON_FILE)
         set_source_files_properties(${ARG_STATIC_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
@@ -295,8 +291,14 @@ function(portal_add_game TARGET_NAME)
                 MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
                 MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
         )
+    elseif (WIN32 AND ARG_MAKE_STANDALONE)
+        add_executable(${TARGET_NAME} WIN32 ${ARG_SOURCES})
     else ()
         add_executable(${TARGET_NAME} ${ARG_SOURCES})
+    endif ()
+
+    if (ARG_MAKE_STANDALONE)
+        target_compile_definitions(${TARGET_NAME} PRIVATE PORTAL_STANDALONE_EXE)
     endif ()
 
     target_link_libraries(

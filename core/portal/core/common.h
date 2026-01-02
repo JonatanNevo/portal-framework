@@ -26,6 +26,9 @@
 #endif
 
 #ifdef PORTAL_COMPILER_MSVC
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #define PORTAL_FORCE_INLINE __forceinline
 #define PORTAL_EXPLICIT_STATIC static
 #elif defined(__GNUC__)
