@@ -15,6 +15,12 @@ class ShaderVariant;
 
 namespace portal::renderer
 {
+/**
+ * @enum PrimitiveTopology
+ * @brief Vertex assembly primitive topology
+ *
+ * Defines how vertices are assembled into primitives (points, lines, triangles).
+ */
 enum class PrimitiveTopology
 {
     None,
@@ -26,6 +32,12 @@ enum class PrimitiveTopology
     TriangleFan
 };
 
+/**
+ * @enum DepthCompareOperator
+ * @brief Depth test comparison function
+ *
+ * Determines when fragments pass the depth test.
+ */
 enum class DepthCompareOperator
 {
     None,
@@ -39,7 +51,12 @@ enum class DepthCompareOperator
     Always,
 };
 
-
+/**
+ * @enum PipelineStage
+ * @brief Pipeline execution stages
+ *
+ * Identifies stages in the graphics/compute/transfer pipeline for synchronization.
+ */
 enum class PipelineStage
 {
     None,
@@ -65,6 +82,12 @@ enum class PipelineStage
     MeshShader
 };
 
+/**
+ * @enum ResourceAccessFlags
+ * @brief Memory access types for pipeline barriers
+ *
+ * Specifies how resources are accessed during pipeline stages for synchronization.
+ */
 enum class ResourceAccessFlags
 {
     None,

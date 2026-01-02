@@ -72,7 +72,16 @@ struct RenderObject
     }
 };
 
-// Per frame resource, owned by the renderer
+/**
+ * @struct FrameResources
+ * @brief Per-frame resources for N-frames-in-flight rendering
+ *
+ * Contains all per-frame GPU resources needed for N-buffered rendering.
+ * Each frame has independent command pool/buffer, synchronization primitives, descriptor allocator,
+ * and deletion queue to prevent conflicts between in-flight frames.
+ *
+ * Destructor flushes deletion queue and destroys descriptor pools.
+ */
 struct FrameResources
 {
     vk::raii::CommandPool command_pool = nullptr;
@@ -98,11 +107,9 @@ struct FrameResources
         frame_descriptors(std::move(descriptors))
     {}
 
-    // Delete copy operations
     FrameResources(const FrameResources&) = delete;
     FrameResources& operator=(const FrameResources&) = delete;
 
-    // Default move operations
     FrameResources(FrameResources&&) = default;
     FrameResources& operator=(FrameResources&&) = default;
 

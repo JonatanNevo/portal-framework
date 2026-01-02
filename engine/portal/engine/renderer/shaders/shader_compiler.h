@@ -12,15 +12,30 @@
 
 namespace portal::renderer
 {
+/**
+ * @struct CompiledShader
+ * @brief Compiled shader bytecode and reflection data
+ */
 struct CompiledShader
 {
     Buffer code = nullptr;
     ShaderReflection reflection{};
 };
 
+/**
+ * @class ShaderCompiler
+ * @brief Compiles shaders using Slang and extracts reflection metadata
+ *
+ * Processes shader source with defines, compiles to bytecode, and reflects
+ * descriptor sets, push constants, and resource bindings.
+ */
 class ShaderCompiler
 {
 public:
+    /**
+     * @struct CompileRequest
+     * @brief Shader compilation request parameters
+     */
     struct CompileRequest
     {
         StringId name;
@@ -31,14 +46,28 @@ public:
 
 public:
     ShaderCompiler();
+
+    /**
+     * @brief Compiles shader and extracts reflection
+     * @param request Compilation parameters
+     * @return Compiled bytecode and reflection data
+     */
     CompiledShader compile(const CompileRequest& request);
 
 private:
+    /** @brief Extracts reflection from Slang program layout */
     ShaderReflection reflect_shader(slang::ProgramLayout* layout);
 
+    /** @brief Processes variable layout reflection */
     void process_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout);
+
+    /** @brief Processes parameters from variable layout */
     void process_parameters_from_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout);
+
+    /** @brief Processes entry point parameters */
     void process_entry_point_parameters(ShaderReflection& reflection, slang::EntryPointLayout* entry_point_layout);
+
+    /** @brief Processes constant buffer parameter */
     void process_constant_buffer_parameter(
         ShaderReflection& reflection,
         const char* name,
@@ -46,6 +75,8 @@ private:
         int space,
         size_t binding_index
     );
+
+    /** @brief Processes parameter block parameter */
     void process_parameter_block_parameter(
         ShaderReflection& reflection,
         const char* name,
@@ -53,6 +84,8 @@ private:
         int space,
         size_t binding_index
     );
+
+    /** @brief Processes combined texture-sampler parameter */
     void process_combined_texture_sampler_parameter(
         ShaderReflection& reflection,
         const char* name,
@@ -61,6 +94,8 @@ private:
         size_t binding_index,
         unsigned int base_shape
     ) const;
+
+    /** @brief Processes resource parameter (texture, image, buffer) */
     void process_resource_parameter(
         ShaderReflection& reflection,
         const char* name,
@@ -69,15 +104,25 @@ private:
         size_t binding_index,
         unsigned int resource_shape
     );
+
+    /** @brief Processes push constant parameter */
     void process_push_constant_parameter(ShaderReflection& reflection, const char* name, slang::TypeLayoutReflection* type_layout, size_t offset);
+
+    /** @brief Processes buffer uniforms */
     void process_buffer_uniforms(
         shader_reflection::BufferDescriptor& buffer,
         slang::TypeLayoutReflection* type_layout,
         StringId buffer_name,
         size_t buffer_offset
     );
+
+    /** @brief Gets image dimensions from type layout */
     static size_t get_image_dimensions(slang::TypeLayoutReflection* type_layout);
+
+    /** @brief Gets image dimensions from resource shape */
     static size_t get_image_dimensions_from_shape(unsigned int base_shape);
+
+    /** @brief Gets array size from type layout */
     static size_t get_array_size(slang::TypeLayoutReflection* type_layout);
 
 private:

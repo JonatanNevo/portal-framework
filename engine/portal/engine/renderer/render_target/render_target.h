@@ -3,6 +3,11 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
+/**
+ * @file render_target.h
+ * @brief Render target abstraction
+ */
+
 #pragma once
 
 #include <glaze/reflection/get_name.hpp>
@@ -12,22 +17,40 @@
 
 namespace portal::renderer
 {
+/**
+ * @enum BlendMode
+ * @brief Attachment blending modes
+ *
+ * Defines color blending for render target attachments.
+ */
 enum class BlendMode
 {
-    None,
-    OneZero,
-    SrcAlphaOneMinusSrcAlpha,
-    Additive,
-    ZeroSrcColor
+    None,                           ///< No blending
+    OneZero,                        ///< Replace (src, no blending)
+    SrcAlphaOneMinusSrcAlpha,      ///< Standard alpha blending
+    Additive,                       ///< Additive blending
+    ZeroSrcColor                    ///< Multiply (dest * src)
 };
 
+/**
+ * @enum AttachmentLoadOperator
+ * @brief Attachment load operation
+ *
+ * Controls how attachment contents are initialized at render pass start.
+ */
 enum class AttachmentLoadOperator
 {
-    Inherit,
-    Clear,
-    Load
+    Inherit,    ///< Preserve existing contents
+    Clear,      ///< Clear to specified value
+    Load        ///< Load previous contents
 };
 
+/**
+ * @struct AttachmentTextureProperty
+ * @brief Render target attachment configuration
+ *
+ * Defines format, blending, and load behavior for a single attachment.
+ */
 struct AttachmentTextureProperty
 {
     ImageFormat format{};
@@ -36,20 +59,28 @@ struct AttachmentTextureProperty
     AttachmentLoadOperator load_operator = AttachmentLoadOperator::Inherit;
 };
 
+/**
+ * @struct AttachmentProperties
+ * @brief Render target attachment list
+ *
+ * Depth attachment is always last in attachment_images.
+ */
 struct AttachmentProperties
 {
-    // A list of attachments, depth attachment is always last
     std::vector<AttachmentTextureProperty> attachment_images;
 
     // TODO: move depth attachment out of the vector as an optional member?
 
-    // Master switch (individual attachments can be disabled in RenderTargetTextureProperties)
-    bool blend = true;
-    // None means use BlendMode in RenderTargetTextureProperties
-    BlendMode blend_mode = BlendMode::None;
+    bool blend = true;                      ///< Master blend switch
+    BlendMode blend_mode = BlendMode::None; ///< None uses per-attachment blend mode
 };
 
-
+/**
+ * @struct RenderTargetProperties
+ * @brief Render target configuration
+ *
+ * Defines dimensions, attachments, clear values, multisampling, and transfer support.
+ */
 struct RenderTargetProperties
 {
     float scale = 1.f;
@@ -61,27 +92,40 @@ struct RenderTargetProperties
     bool clear_depth_on_load = true;
 
     AttachmentProperties attachments;
-    uint32_t samples = 1; // multisampling
+    uint32_t samples = 1; ///< MSAA sample count
 
-    // Will it be used for transfer ops?
-    bool transfer = false;
+    bool transfer = false; ///< Enable transfer operations
 
     StringId name;
 };
 
+/**
+ * @class RenderTarget
+ * @brief Abstract render target interface
+ *
+ * Framebuffer with color and optional depth attachments.
+ */
 class RenderTarget
 {
 public:
     virtual ~RenderTarget() = default;
 
+    /** @brief Resizes render target */
     virtual void resize(size_t width, size_t height, bool force_recreate) = 0;
 
+    /** @brief Gets render target width */
     [[nodiscard]] virtual size_t get_width() const = 0;
+
+    /** @brief Gets render target height */
     [[nodiscard]] virtual size_t get_height() const = 0;
 
+    /** @brief Gets color attachment count */
     [[nodiscard]] virtual size_t get_color_attachment_count() const = 0;
+
+    /** @brief Checks if render target has depth attachment */
     [[nodiscard]] virtual bool has_depth_attachment() const = 0;
 
+    /** @brief Gets render target properties */
     [[nodiscard]] virtual const RenderTargetProperties& get_properties() const = 0;
 };
 } // portal

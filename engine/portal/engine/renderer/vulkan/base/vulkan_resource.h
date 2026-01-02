@@ -14,15 +14,24 @@ namespace portal::renderer::vulkan
 {
 class VulkanDevice;
 
-/// Inherit this for any Vulkan object with a handle of type `Handle`.
-///
-/// This allows the derived class to store a Vulkan handle, and also a pointer to the parent device.
-/// It also allows to set a debug name for any Vulkan object.
-///
+/**
+ * @class VulkanResource
+ * @brief CRTP base class for all Vulkan resource wrappers
+ *
+ * Provides handle storage, device back-references, debug naming, and move-only semantics.
+ * Uses CRTP to avoid virtual function overhead while providing common functionality.
+ *
+ * @tparam Handle The Vulkan handle type (vk::Buffer, vk::Image, vk::Pipeline, etc.)
+ */
 template <typename Handle>
 class VulkanResource
 {
 public:
+    /**
+     * @brief Constructs a Vulkan resource wrapper
+     * @param handle The Vulkan handle to wrap
+     * @param device Pointer to the creating device
+     */
     explicit VulkanResource(Handle handle, const VulkanDevice* device) : device(device), handle(handle) {}
     VulkanResource(const VulkanResource&) = delete;
     VulkanResource& operator=(const VulkanResource&) = delete;
@@ -40,17 +49,29 @@ public:
 
     virtual ~VulkanResource() = default;
 
+    /** @brief Gets the debug name assigned to this resource */
     [[nodiscard]] const std::string& get_debug_name() const { return debug_name; }
 
+    /**
+     * @brief Gets the device that created this resource
+     * @return Reference to the VulkanDevice
+     */
     [[nodiscard]] const VulkanDevice& get_device() const
     {
         PORTAL_ASSERT(device != nullptr, "Device is nullptr");
         return *device;
     }
 
+    /** @brief Gets mutable reference to the Vulkan handle */
     Handle& get_handle() { return handle; }
+
+    /** @brief Gets const reference to the Vulkan handle */
     const Handle& get_handle() const { return handle; }
 
+    /**
+     * @brief Converts handle to uint64_t for debug APIs
+     * @return Handle as uint64_t (handles 32-bit non-dispatchable handles on 32-bit platforms)
+     */
     [[nodiscard]] uint64_t get_handle_u64() const
     {
         // See https://github.com/KhronosGroup/Vulkan-Docs/issues/368.
@@ -66,12 +87,25 @@ public:
         }
     }
 
+    /** @brief Gets the Vulkan object type from the handle */
     [[nodiscard]] vk::ObjectType get_object_type() const { return Handle::objectType; }
+
+    /** @brief Checks if device pointer is valid */
     [[nodiscard]] bool has_device() const { return device != nullptr; }
+
+    /** @brief Checks if handle is valid (non-null) */
     [[nodiscard]] bool has_handle() const { return handle != nullptr; }
 
+    /**
+     * @brief Sets the Vulkan handle
+     * @param hdl The new handle value
+     */
     void set_handle(Handle hdl) { handle = hdl; }
 
+    /**
+     * @brief Sets debug name and propagates to GPU debuggers
+     * @param name The debug name (appears in RenderDoc, NSight, etc.)
+     */
     void set_debug_name(const std::string& name)
     {
         debug_name = name;

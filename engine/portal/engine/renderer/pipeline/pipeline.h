@@ -11,6 +11,12 @@
 
 namespace portal::renderer
 {
+/**
+ * @struct PipelineProperties
+ * @brief Graphics pipeline configuration
+ *
+ * Defines shader, render targets, topology, depth testing, culling, and wireframe mode.
+ */
 struct PipelineProperties
 {
     Reference<ShaderVariant> shader;
@@ -29,6 +35,12 @@ struct PipelineProperties
     StringId debug_name = INVALID_STRING_ID;
 };
 
+/**
+ * @struct PipelineStatistics
+ * @brief Pipeline execution statistics
+ *
+ * Counters for vertices, primitives, and shader invocations.
+ */
 struct PipelineStatistics
 {
     size_t vertices = 0;
@@ -40,14 +52,24 @@ struct PipelineStatistics
     size_t compute_shader_invocations = 0;
 };
 
+/**
+ * @class Pipeline
+ * @brief Abstract graphics pipeline interface
+ *
+ * Encapsulates shader and rasterization state for rendering.
+ */
 class Pipeline
 {
 public:
     virtual ~Pipeline() = default;
 
+    /** @brief Gets pipeline properties (mutable) */
     [[nodiscard]] virtual PipelineProperties& get_properties() = 0;
+
+    /** @brief Gets pipeline properties */
     [[nodiscard]] virtual const PipelineProperties& get_properties() const = 0;
 
+    /** @brief Gets pipeline shader */
     [[nodiscard]] virtual Reference<ShaderVariant> get_shader() const = 0;
 };
 } // portal
