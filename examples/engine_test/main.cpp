@@ -8,8 +8,6 @@
 
 #include "portal/core/files/file_system.h"
 #include "portal/application/settings.h"
-#include "glaze/core/reflect.hpp"
-#include "portal/core/strings/string_utils.h"
 #include "portal/engine/engine.h"
 #include "portal/engine/components/base.h"
 #include "portal/engine/components/base_camera_controller.h"
@@ -20,6 +18,12 @@
 
 using namespace portal;
 
+struct MyStupidStruct
+{
+    int a;
+    float pie;
+    std::string name;
+};
 
 
 std::unique_ptr<Application> portal::create_application(int, char**)

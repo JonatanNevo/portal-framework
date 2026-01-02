@@ -29,6 +29,7 @@ portal_add_module(serialization
 
         DEPENDENCIES
         nlohmann_json
+        glaze
 )
 
 enable_testing()

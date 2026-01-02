@@ -10,6 +10,7 @@
 #include <variant>
 
 #include <llvm/ADT/StringMap.h>
+#include <glaze/core/reflect.hpp>
 #include <portal/core/buffer.h>
 #include <portal/core/reflection/property.h>
 #include <portal/core/reflection/property_concepts.h>
@@ -23,27 +24,17 @@ namespace portal
 class ArchiveObject;
 
 /**
- * @brief Concept for types that can be serialized into an ArchiveObject.
- *
- * A type satisfies the Archiveable concept if it provides a method to serialize
- * itself into an ArchiveObject using the visitor pattern.
+ * @brief Concept for types with an archive() method that writes named properties to an ArchiveObject.
  *
  * Example:
  * @code
- * struct PlayerData {
- *     std::string name;
- *     int level;
- *     glm::vec3 position;
- *
+ * struct Config {
  *     void archive(ArchiveObject& ar) const {
  *         ar.add_property("name", name);
- *         ar.add_property("level", level);
- *         ar.add_property("position", position);
+ *         ar.add_property("value", value);
  *     }
  * };
  * @endcode
- *
- * @tparam T The type to check for archiveability.
  */
 template <typename T>
 concept Archiveable = requires(T t, ArchiveObject& s) {
@@ -51,25 +42,19 @@ concept Archiveable = requires(T t, ArchiveObject& s) {
 };
 
 /**
- * @brief Concept for types that can be deserialized from an ArchiveObject.
- *
- * A type satisfies the Dearchiveable concept if it provides a static method to
- * construct itself from an ArchiveObject using the visitor pattern.
+ * @brief Concept for types with a static dearchive() method that reads named properties from an ArchiveObject.
  *
  * Example:
  * @code
- * struct PlayerData {
- *     static PlayerData dearchive(ArchiveObject& ar) {
- *         PlayerData p;
- *         ar.get_property("name", p.name);
- *         ar.get_property("level", p.level);
- *         ar.get_property("position", p.position);
- *         return p;
+ * struct Config {
+ *     static Config dearchive(ArchiveObject& ar) {
+ *         Config c;
+ *         ar.get_property("name", c.name);
+ *         ar.get_property("value", c.value);
+ *         return c;
  *     }
  * };
  * @endcode
- *
- * @tparam T The type to check for dearchiveability.
  */
 template <typename T>
 concept Dearchiveable = requires(T t, ArchiveObject& d) {
@@ -77,73 +62,35 @@ concept Dearchiveable = requires(T t, ArchiveObject& d) {
 };
 
 /**
- * @brief Container for named properties in the Archive/Visitor serialization pattern.
+ * @brief Format-agnostic named-property serialization using the visitor pattern.
  *
- * ArchiveObject is the core abstraction of Portal's format-agnostic serialization system.
- * It acts as an intermediate object graph representation that can be populated by user
- * types (via the archive() method) and then serialized to various formats like JSON, XML,
- * or binary. Think of it as a hierarchical property tree where each node can contain
- * named properties (scalars, arrays, vectors, strings) or child ArchiveObjects.
+ * Intermediate object graph that can be serialized to JSON, XML, binary, etc. Uses named
+ * properties instead of ordered streams (see Serializer for stream-based alternative).
  *
- * ## Supported Types
+ * **Use for**: Config files, save games, human-readable formats, flexible schemas
+ * **Avoid for**: Network packets, performance-critical paths (use Serializer instead)
  *
- * ArchiveObject automatically handles:
- * - **Scalars**: All integral types (int8_t through uint128_t), floating-point (float, double), bool
- * - **Strings**: std::string, std::string_view, C-strings, std::filesystem::path
- * - **GLM vectors**: glm::vec1/2/3/4 and their variants (ivec, dvec, etc.)
- * - **Containers**: std::vector, llvm::SmallVector of any supported type
- * - **Maps**: std::unordered_map, std::map with string-convertible keys
- * - **Enums**: Serialized as strings via portal::to_string() for human readability
- * - **Custom types**: Any type implementing the Archiveable/Dearchiveable concepts
- * - **Binary data**: Raw byte buffers via add_binary_block()
- *
- * ## Error Handling
- *
- * - **Type mismatches**: Debug builds assert when deserializing the wrong type. Release builds
- *   may produce undefined behavior, so ensure serialization/deserialization symmetry.
- * - **Missing properties**: get_property() returns false if a property doesn't exist, allowing
- *   callers to provide defaults or handle optional properties gracefully.
- *
- * ## Usage Example
+ * **Supported types**: Scalars, strings, GLM vectors, std::vector, std::map, enums (as strings),
+ * custom types, binary data
  *
  * @code
  * struct Config {
- *     std::string name;
- *     int value;
- *     glm::vec3 position;
- *     std::vector<std::string> tags;
- *
  *     void archive(ArchiveObject& ar) const {
  *         ar.add_property("name", name);
  *         ar.add_property("value", value);
- *         ar.add_property("position", position);
- *         ar.add_property("tags", tags);
  *     }
- *
  *     static Config dearchive(ArchiveObject& ar) {
  *         Config c;
  *         ar.get_property("name", c.name);
  *         ar.get_property("value", c.value);
- *         ar.get_property("position", c.position);
- *         ar.get_property("tags", c.tags);
  *         return c;
  *     }
  * };
  *
- * // Serialize to JSON - Config as root object
  * JsonArchive archive;
  * config.archive(archive);
  * archive.dump("config.json");
- *
- * // Deserialize from JSON - Config as root object
- * JsonArchive loaded;
- * loaded.read("config.json");
- * Config restored = Config::dearchive(loaded);
  * @endcode
- *
- * @see JsonArchive for JSON format implementation
- * @see Archiveable concept for making custom types serializable
- * @see Dearchiveable concept for making custom types deserializable
  */
 class ArchiveObject
 {
@@ -386,15 +333,6 @@ public:
     }
 
     /**
-     * @brief Deleted template to catch unsupported types at compile time.
-     *
-     * If compilation fails here, the type doesn't satisfy any supported concept.
-     * Implement Archiveable concept or add a specialized add_property overload.
-     */
-    template <typename T>
-    void add_property(const PropertyName&, const T&) = delete;
-
-    /**
      * @brief Adds a C-string property.
      * @param name Property name identifier
      * @param t Null-terminated C-string
@@ -449,6 +387,35 @@ public:
     }
 
     /**
+     * @brief Adds a property using glaze reflection for types with reflection metadata.
+     *
+     * Automatically serializes types that have glaze reflection metadata defined. Uses
+     * compile-time reflection to extract field names and values, creating a nested
+     * ArchiveObject with each field as a named property. Fallback overload for types
+     * that don't implement archive() but have glaze metadata.
+     *
+     * @tparam T Type with glaze reflection metadata (glz::reflect)
+     * @param name Property name identifier
+     * @param t The object to serialize
+     */
+    template <typename T>
+    void add_property(const PropertyName& name, const T& t)
+    {
+        constexpr auto N = glz::reflect<T>::size;
+        if constexpr (N > 0)
+        {
+            auto* child = create_child(name);
+
+            glz::for_each<N>(
+                [&]<size_t I>()
+                {
+                    child->add_property(glz::reflect<T>::keys[I], glz::get_member(t, glz::get<I>(glz::to_tie(t))));
+                }
+            );
+        }
+    }
+
+    /**
      * @brief Retrieves an enum property deserialized from its string representation.
      *
      * Reads the property as a string and converts it back to the enum using portal::from_string().
@@ -469,15 +436,6 @@ public:
         out = portal::from_string<T>(out_string);
         return true;
     }
-
-    /**
-     * @brief Deleted template to catch unsupported types at compile time during deserialization.
-     *
-     * If compilation fails here, the type doesn't satisfy any supported concept.
-     * Implement Dearchiveable concept or add a specialized get_property overload.
-     */
-    template <typename T>
-    bool get_property(const PropertyName& name, T& t) = delete;
 
     /**
      * @brief Retrieves an integral property value.
@@ -813,6 +771,42 @@ public:
 
         data.assign(property.value.as<const std::byte*>(), property.value.as<const std::byte*>() + property.value.size);
         return true;
+    }
+
+    /**
+     * @brief Retrieves a property using glaze reflection for types with reflection metadata.
+     *
+     * Automatically deserializes types that have glaze reflection metadata defined. Uses
+     * compile-time reflection to extract field names and populate each field from the nested
+     * ArchiveObject. Fallback overload for types that don't implement dearchive() but have
+     * glaze metadata.
+     *
+     * @tparam T Type with glaze reflection metadata (glz::reflect)
+     * @param name Property name identifier
+     * @param t Output parameter to populate with deserialized values
+     * @return true if property exists and all fields were read, false otherwise
+     */
+    template <typename T>
+    bool get_property(const PropertyName& name, T& t)
+    {
+        constexpr auto N = glz::reflect<T>::size;
+        if constexpr (N > 0)
+        {
+            auto* child = get_object(name);
+            if (child == nullptr)
+                return false;
+
+            glz::for_each<N>(
+                [&]<size_t I>()
+                {
+                    child->get_property(glz::reflect<T>::keys[I], glz::get_member(t, glz::get<I>(glz::to_tie(t))));
+                }
+            );
+
+            return true;
+        }
+
+        return false;
     }
 
     /**

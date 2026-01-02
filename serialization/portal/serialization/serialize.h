@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <glaze/core/reflect.hpp>
+
 #include <portal/core/log.h>
 #include <portal/core/reflection/property.h>
 
@@ -14,21 +16,14 @@
 namespace portal
 {
 class Serializer;
-class Deserializer;
 
 /**
- * @brief Concept for types that can be serialized using the stream pattern.
- *
- * A type satisfies Serializable if it provides a serialize() method that writes
- * its data sequentially to a Serializer stream.
- *
- * Requirements:
- * - Must have a member function `void serialize(Serializer& s) const`
+ * @brief Concept for types with a serialize() method that writes data sequentially to a Serializer.
  *
  * Example:
  * @code
- * struct NetworkPacket {
- *     uint32_t sequence_id;
+ * struct Packet {
+ *     size_t sequence_id;
  *     std::string payload;
  *
  *     void serialize(Serializer& s) const {
@@ -37,9 +32,6 @@ class Deserializer;
  *     }
  * };
  * @endcode
- *
- * @tparam T The type to check for serializability.
- * @see Archiveable for the visitor pattern alternative
  */
 template <typename T>
 concept Serializable = requires(const T t, Serializer& s) {
@@ -47,29 +39,22 @@ concept Serializable = requires(const T t, Serializer& s) {
 };
 
 /**
- * @brief Concept for types that can be deserialized using the stream pattern.
- *
- * A type satisfies Deserializable if it provides a static deserialize() method
- * that reads data sequentially from a Deserializer stream. The read order must
- * exactly match the write order from serialize().
- *
- * Requirements:
- * - Must have a static member function `T deserialize(Deserializer& d)`
+ * @brief Concept for types with a static deserialize() method that reads data from a Deserializer.
  *
  * Example:
  * @code
- * struct NetworkPacket {
- *     static NetworkPacket deserialize(Deserializer& d) {
- *         NetworkPacket p;
+ * struct Packet {
+ *     size_t sequence_id;
+ *     std::string payload;
+ *
+ *     static Packet deserialize(Deserializer& d) {
+ *         Packet p;
  *         d.get_value(p.sequence_id);
  *         d.get_value(p.payload);
  *         return p;
  *     }
  * };
  * @endcode
- *
- * @tparam T The type to check for deserializability.
- * @see Dearchiveable for the visitor pattern alternative
  */
 template <typename T>
 concept Deserializable = requires(T t, Deserializer& d) {
@@ -77,50 +62,24 @@ concept Deserializable = requires(T t, Deserializer& d) {
 };
 
 /**
- * @brief Abstract base class for sequential binary serialization (stream-based pattern).
+ * @brief Base class for sequential binary serialization (stream-based).
  *
- * Serializer is Portal's performance-focused alternative to ArchiveObject. Unlike the visitor
- * pattern (ArchiveObject) which builds an intermediate property tree, Serializer writes values
- * directly to a stream in a specific order, minimizing allocations and enabling efficient
- * network/cache serialization.
+ * Performance-focused alternative to ArchiveObject. Writes values directly to a stream
+ * in order without intermediate property trees.
  *
- * ## When to Use Serializer vs ArchiveObject
+ * **Use for**: Network packets, cache files, performance-critical paths, fixed schemas
+ * **Avoid for**: Config files, save games, human-readable formats (use ArchiveObject instead)
  *
- * - **Use Serializer**: Network packets, cache files, performance-critical paths, fixed schemas
- * - **Use ArchiveObject**: Config files, save games, human-readable formats, flexible schemas
- *
- * ## Supported Types
- *
- * Serializer handles:
- * - Scalars: All integral types, float, double, bool
- * - Strings: std::string, C-strings (with length prefix)
- * - GLM vectors: vec1/2/3/4 variants
- * - Containers: std::vector, std::map (serializes size followed by elements)
- * - Enums: Stored as their underlying integer type
- * - Custom types: Any type implementing the Serializable concept
- * - StringId: Special handling to preserve both hash and string
- *
- * ## Usage Pattern
+ * **Supported types**: Scalars, strings, GLM vectors, std::vector, std::map, enums, custom types
  *
  * @code
  * BinarySerializer serializer(output_stream);
  * serializer.add_value(42);
  * serializer.add_value("hello");
  * serializer.add_value(glm::vec3(1, 2, 3));
- *
- * // For custom Serializable types, both approaches work:
- * serializer.add_value(my_custom_object);  // Automatically calls serialize()
- * // Or explicitly:
- * my_custom_object.serialize(serializer);
  * @endcode
  *
- * ## Critical Note
- *
- * Write and read order must match **exactly**. There are no property names to match against.
- *
  * @see Deserializer for reading data back
- * @see BinarySerializer for the default implementation
- * @see ArchiveObject for named-property serialization
  */
 class Serializer
 {
@@ -137,8 +96,7 @@ public:
      * @tparam T Scalar type (integral or floating-point, excluding bool which has its own overload)
      * @param t The value to serialize
      */
-    template <typename T>
-        requires std::integral<std::remove_const_t<T>> || std::floating_point<std::remove_const_t<T>>
+    template <typename T> requires std::integral<std::remove_const_t<T>> || std::floating_point<std::remove_const_t<T>>
     void add_value(const T& t)
     {
         add_property(
@@ -146,7 +104,9 @@ public:
                 Buffer{const_cast<void*>(static_cast<const void*>(&t)), sizeof(T)},
                 reflection::get_property_type<std::remove_const_t<T>>(),
                 reflection::PropertyContainerType::scalar,
-                1});
+                1
+            }
+        );
     }
 
     /**
@@ -156,8 +116,7 @@ public:
      *
      * @param t The 128-bit integer to serialize
      */
-    template <typename T>
-        requires std::is_same_v<T, uint128_t>
+    template <typename T> requires std::is_same_v<T, uint128_t>
     void add_value(const T& t)
     {
         add_property(
@@ -165,7 +124,9 @@ public:
                 Buffer{const_cast<void*>(static_cast<const void*>(&t)), sizeof(T)},
                 reflection::PropertyType::integer128,
                 reflection::PropertyContainerType::scalar,
-                1});
+                1
+            }
+        );
     }
 
     /**
@@ -177,8 +138,7 @@ public:
      * @tparam T Vector type with non-Serializable elements
      * @param t The vector to serialize
      */
-    template <reflection::Vector T>
-        requires(!Serializable<typename T::value_type>)
+    template <reflection::Vector T> requires(!Serializable<typename T::value_type>)
     void add_value(const T& t)
     {
         add_property(
@@ -186,7 +146,9 @@ public:
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), t.size() * sizeof(typename T::value_type)},
                 reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::array,
-                t.size()});
+                t.size()
+            }
+        );
     }
 
     /**
@@ -206,7 +168,9 @@ public:
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), (t.size() * sizeof(typename T::value_type)) + 1},
                 reflection::PropertyType::character,
                 reflection::PropertyContainerType::null_term_string,
-                t.size() + 1});
+                t.size() + 1
+            }
+        );
     }
 
     /**
@@ -222,10 +186,13 @@ public:
             reflection::Property{
                 Buffer{
                     const_cast<void*>(static_cast<const void*>(string_view.data())),
-                    (string_view.size() * sizeof(typename std::string_view::value_type)) + 1},
+                    (string_view.size() * sizeof(typename std::string_view::value_type)) + 1
+                },
                 reflection::PropertyType::character,
                 reflection::PropertyContainerType::null_term_string,
-                string_view.size() + 1});
+                string_view.size() + 1
+            }
+        );
     }
 
     /**
@@ -242,7 +209,9 @@ public:
                 Buffer{&t.x, sizeof(typename T::value_type)},
                 reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::vector,
-                1});
+                1
+            }
+        );
     }
 
     /**
@@ -259,7 +228,9 @@ public:
                 Buffer{&t.x, 2 * sizeof(typename T::value_type)},
                 reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::vector,
-                2});
+                2
+            }
+        );
     }
 
     /**
@@ -276,7 +247,9 @@ public:
                 Buffer{&t.x, 3 * sizeof(typename T::value_type)},
                 reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::vector,
-                3});
+                3
+            }
+        );
     }
 
     /**
@@ -293,7 +266,9 @@ public:
                 Buffer{&t.x, 4 * sizeof(typename T::value_type)},
                 reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::vector,
-                4});
+                4
+            }
+        );
     }
 
     /**
@@ -330,8 +305,7 @@ public:
      * @tparam T Vector type with Serializable elements
      * @param t The vector to serialize
      */
-    template <reflection::Vector T>
-        requires Serializable<typename T::value_type>
+    template <reflection::Vector T> requires Serializable<typename T::value_type>
     void add_value(const T& t)
     {
         const size_t size = t.size();
@@ -353,8 +327,7 @@ public:
      * @tparam T Enum type
      * @param t The enum value to serialize
      */
-    template <typename T>
-        requires std::is_enum_v<T>
+    template <typename T> requires std::is_enum_v<T>
     void add_value(const T& t)
     {
         add_value<std::underlying_type_t<T>>(static_cast<std::underlying_type_t<T>>(t));
@@ -376,6 +349,28 @@ public:
     }
 
     /**
+     * @brief Serializes types with glaze reflection metadata.
+     *
+     * Fallback overload for types with glaze compile-time reflection. Automatically
+     * serializes all reflected fields in order. Use this for types that don't implement
+     * serialize() but have glaze metadata.
+     *
+     * @tparam T Type with glaze reflection metadata (glz::reflect)
+     * @param t The object to serialize
+     */
+    template <typename T>
+    void add_value(const T& t)
+    {
+        glz::for_each_field(
+            t,
+            [&](auto&& field)
+            {
+                add_value(field);
+            }
+        );
+    }
+
+    /**
      * @brief Serializes a C-string.
      *
      * Writes the string with null terminator. Calculates length using strlen().
@@ -390,7 +385,9 @@ public:
                 Buffer{const_cast<void*>(static_cast<const void*>(t)), (length * sizeof(char)) + 1},
                 reflection::PropertyType::character,
                 reflection::PropertyContainerType::null_term_string,
-                length + 1});
+                length + 1
+            }
+        );
     }
 
     /**
@@ -421,72 +418,27 @@ public:
         add_value(string_id.id);
     }
 
-    /**
-     * @brief Pure virtual method for derived classes to implement stream writing.
-     *
-     * Concrete implementations (like BinarySerializer) encode the Property metadata
-     * and value into their specific binary format.
-     *
-     * @param property Property containing value buffer, type metadata, and element count
-     */
+protected:
     virtual void add_property(reflection::Property property) = 0;
 };
 
 /**
- * @brief Abstract base class for sequential binary deserialization (stream-based pattern).
+ * @brief Base class for sequential binary deserialization (stream-based).
  *
- * Deserializer is the reading counterpart to Serializer. It reads values sequentially
- * from a binary stream, with **absolutely critical requirement**: the read order must
- * match the write order exactly, as there are no property names to identify fields.
- *
- * ## Read Order Requirement
- *
- * @code
- * // Serialization
- * serializer.add_value(player_health);
- * serializer.add_value(player_position);
- * serializer.add_value(player_name);
- *
- * // Deserialization - MUST match order
- * deserializer.get_value(player_health);    // OK
- * deserializer.get_value(player_position);  // OK
- * deserializer.get_value(player_name);      // OK
- *
- * // Deserialization - WRONG order = corruption
- * deserializer.get_value(player_name);      // WRONG!
- * deserializer.get_value(player_health);    // WRONG!
- * @endcode
- *
- * ## Error Handling
- *
- * - **Type mismatches**: Caught in debug builds via assertions. Release builds may produce
- *   undefined behavior if types don't match. Ensure your serialize/deserialize code stays
- *   perfectly synchronized.
- * - **Stream errors**: Not automatically detected. Check the input stream state after
- *   deserialization completes:
- *   @code
- *   deserializer.get_value(data);
- *   if (input_stream.fail() || input_stream.eof()) {
- *       // Handle malformed data or premature end of stream
- *   }
- *   @endcode
- *   Premature stream end or read errors will cause undefined behavior or crashes without
- *   diagnostic information.
- *
- * ## Usage Pattern
+ * Counterpart to Serializer. Reads values from a binary stream in the exact order they
+ * were written. The read order must match the write order precisely.
  *
  * @code
  * BinaryDeserializer deserializer(input_stream);
  * int value;
  * std::string text;
- * glm::vec3 position;
  * deserializer.get_value(value);
  * deserializer.get_value(text);
- * deserializer.get_value(position);
  * @endcode
  *
+ * **Critical**: Read order must match write order exactly. No property names to match against.
+ *
  * @see Serializer for writing data
- * @see BinaryDeserializer for the default implementation
  */
 class Deserializer
 {
@@ -502,8 +454,7 @@ public:
      * @tparam T Scalar type (integral or floating-point, excluding bool)
      * @param t Output parameter to store the deserialized value
      */
-    template <typename T>
-        requires std::integral<T> || std::floating_point<T>
+    template <typename T> requires std::integral<T> || std::floating_point<T>
     void get_value(T& t)
     {
         auto property = get_property();
@@ -522,8 +473,7 @@ public:
      *
      * @param t Output parameter to store the 128-bit integer
      */
-    template <typename T>
-        requires std::is_same_v<T, uint128_t>
+    template <typename T> requires std::is_same_v<T, uint128_t>
     void get_value(T& t)
     {
         auto property = get_property();
@@ -544,8 +494,7 @@ public:
      * @tparam T Vector type with non-Serializable elements
      * @param t Output parameter to store the deserialized vector
      */
-    template <reflection::Vector T>
-        requires(!Serializable<typename T::value_type>)
+    template <reflection::Vector T> requires(!Serializable<typename T::value_type>)
     void get_value(T& t)
     {
         auto property = get_property();
@@ -698,8 +647,7 @@ public:
      * @tparam T Vector type with Serializable elements
      * @param t Output parameter to store the deserialized vector
      */
-    template <reflection::Vector T>
-        requires Serializable<typename T::value_type>
+    template <reflection::Vector T> requires Serializable<typename T::value_type>
     void get_value(T& t)
     {
         size_t size;
@@ -727,8 +675,7 @@ public:
      * @tparam T Enum type
      * @param t Output parameter to store the deserialized enum value
      */
-    template <typename T>
-        requires std::is_enum_v<T>
+    template <typename T> requires std::is_enum_v<T>
     void get_value(T& t)
     {
         std::underlying_type_t<T> underlying;
@@ -740,7 +687,7 @@ public:
      * @brief Deserializes a custom Deserializable type.
      *
      * Calls the type's static deserialize() method, which should read its members
-     * sequentially from this Deserializer and construct an instance.
+     * sequentially from this Serializer and construct an instance.
      *
      * @tparam T Type satisfying the Deserializable concept
      * @param t Output parameter to store the deserialized object
@@ -752,20 +699,34 @@ public:
     }
 
     /**
-     * @brief Template helper to deserialize and return a value by type.
+     * @brief Deserializes types with glaze reflection metadata (return-type version).
      *
-     * Convenience method that creates a default-constructed instance and deserializes
-     * into it, then returns the value.
+     * Fallback overload for types with glaze compile-time reflection. Automatically
+     * deserializes all reflected fields and returns a new instance. Use this for types
+     * that don't implement deserialize() but have glaze metadata.
      *
-     * @tparam T Type to deserialize
-     * @return The deserialized value
+     * @tparam T Type with glaze reflection metadata (glz::reflect)
+     * @return The deserialized object
      */
     template <typename T>
     T get_value()
     {
-        T t;
-        get_value<T>(t);
-        return t;
+        T output;
+
+        constexpr auto N = glz::reflect<T>::size;
+
+        if constexpr (N > 0)
+        {
+            glz::for_each<N>(
+                [&]<size_t I>()
+                {
+                    auto& field = glz::get_member(output, glz::get<I>(glz::to_tie(output)));
+                    field = get_value<std::remove_cvref_t<decltype(field)>>();
+                }
+            );
+        }
+
+        return output;
     }
 
     /**
@@ -826,8 +787,7 @@ portal::Serializer& operator<<(portal::Serializer& s, T& t)
     return s;
 }
 
-template <typename T>
-    requires std::is_enum_v<T>
+template <typename T> requires std::is_enum_v<T>
 portal::Serializer& operator<<(portal::Serializer& s, const T& value)
 {
     return s << static_cast<std::underlying_type_t<T>>(value);
@@ -860,8 +820,7 @@ portal::Deserializer& operator>>(portal::Deserializer& d, T& t)
     return d;
 }
 
-template <typename T>
-    requires std::is_enum_v<T>
+template <typename T> requires std::is_enum_v<T>
 portal::Deserializer& operator>>(portal::Deserializer& d, T& t)
 {
     std::underlying_type_t<T> underlying;
