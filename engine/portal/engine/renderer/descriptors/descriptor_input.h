@@ -22,6 +22,13 @@ class StorageBuffer;
 class Image;
 class ImageView;
 
+/**
+ * @struct DescriptorInput
+ * @brief Type-safe descriptor resource container
+ *
+ * Stores renderer resources (buffers, textures, images) for descriptor binding.
+ * Supports both single resources and arrays.
+ */
 struct DescriptorInput
 {
     DescriptorResourceType type = DescriptorResourceType::Unknown;

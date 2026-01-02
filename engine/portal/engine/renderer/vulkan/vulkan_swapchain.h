@@ -21,12 +21,18 @@ namespace portal::renderer::vulkan
 {
 class VulkanRenderTarget;
 
+/**
+ * @struct SwapchainImageData
+ * @brief Per-swapchain-image data including image handle, view, and last frame index
+ *
+ * Tracks which frame-in-flight last rendered to this swapchain image. This prevents
+ * rendering to an image that's still in-flight from a previous frame, which is critical
+ * when frames_in_flight != swapchain_image_count.
+ */
 struct SwapchainImageData
 {
     vk::Image image = nullptr;
     vk::raii::ImageView image_view = nullptr;
-
-    // Track which frame last used this image
     size_t last_used_frame = std::numeric_limits<size_t>::max();
 
     // Semaphore signaled when this specific image finishes rendering
@@ -34,25 +40,89 @@ struct SwapchainImageData
 };
 
 
+/**
+ * @class VulkanSwapchain
+ * @brief Vulkan swapchain for presentation with per-image tracking and vsync support
+ *
+ * Manages swapchain creation, acquisition, and presentation. Maintains per-image data
+ * (SwapchainImageData) to track which frame-in-flight last used each image, preventing
+ * rendering to in-flight images.
+ *
+ * ## Frame Synchronization
+ *
+ * begin_frame() acquires next image and returns SwapchainImageData for that image.
+ * If that image was used by a previous frame, the caller must wait for that frame's
+ * fence before rendering.
+ *
+ * present() submits the image for presentation, waiting on the frame's render_finished_semaphore.
+ *
+ * ## Resize Handling
+ *
+ * on_resize() recreates the swapchain with new dimensions, destroying old resources
+ * and creating new image views.
+ */
 class VulkanSwapchain
 {
 public:
+    /**
+     * @brief Constructs swapchain (does not create yet)
+     * @param context Vulkan context
+     * @param surface Presentation surface
+     */
     VulkanSwapchain(const VulkanContext& context, const Reference<Surface>& surface);
 
+    /**
+     * @brief Creates swapchain with requested dimensions and vsync
+     * @param request_width Requested width (may be adjusted to surface capabilities)
+     * @param request_height Requested height (may be adjusted to surface capabilities)
+     * @param new_vsync Whether vsync is enabled
+     */
     void create(uint32_t* request_width, uint32_t* request_height, bool new_vsync);
+
+    /**
+     * @brief Destroys swapchain and image views
+     */
     void destroy();
 
+    /**
+     * @brief Recreates swapchain with new dimensions
+     * @param new_width New width
+     * @param new_height New height
+     */
     void on_resize(size_t new_width, size_t new_height);
 
+    /**
+     * @brief Acquires next swapchain image for rendering
+     * @param frame Frame context with semaphore to signal when image is ready
+     * @return SwapchainImageData for the acquired image
+     */
     SwapchainImageData& begin_frame(const FrameContext& frame);
+
+    /**
+     * @brief Presents rendered image to surface
+     * @param frame Frame context with semaphore to wait on before presenting
+     */
     void present(const FrameContext& frame);
 
+    /** @brief Gets number of swapchain images */
     [[nodiscard]] size_t get_image_count() const { return images_data.size(); }
+
+    /** @brief Gets swapchain width */
     [[nodiscard]] size_t get_width() const { return width; }
+
+    /** @brief Gets swapchain height */
     [[nodiscard]] size_t get_height() const { return height; }
+
+    /** @brief Gets swapchain color format */
     [[nodiscard]] const vk::Format& get_color_format() const { return color_format; }
+
+    /** @brief Gets swapchain color space */
     [[nodiscard]] vk::ColorSpaceKHR get_color_space() const { return color_space; }
 
+    /**
+     * @brief Sets vsync enabled/disabled
+     * @param new_vsync Whether vsync is enabled
+     */
     void set_vsync(const bool new_vsync) { vsync = new_vsync; }
 
 private:

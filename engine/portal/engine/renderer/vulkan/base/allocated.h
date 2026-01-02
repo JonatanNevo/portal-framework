@@ -36,13 +36,42 @@ void shutdown();
 
 
 /**
- * The `Allocated` class serves as a base class for wrappers around Vulkan that require memory allocation
- * (`VkImage` and `VkBuffer`).  This class mostly ensures proper behavior for a RAII pattern, preventing double-release by
- * preventing copy assignment and copy construction in favor of move semantics, as well as preventing default construction
- * in favor of explicit construction with a pre-existing handle or a populated create info struct.
+ * @class Allocated
+ * @brief CRTP base class for VMA-backed Vulkan resources (buffers and images)
  *
- * @note Constants used in this documentation in the form of `HOST_COHERENT` are shorthand for
- * `VK_MEMORY_PROPERTY_HOST_COHERENT_BIT` used for the sake of brevity.
+ * Extends VulkanResource with Vulkan Memory Allocator (VMA) integration, providing memory mapping,
+ * updates, and automatic memory management. Supports two operation modes:
+ *
+ * 1. **VMA-allocated mode**: Creates and owns both the Vulkan handle and backing memory
+ * 2. **Wrapper mode**: Wraps pre-existing handles (e.g., swapchain images) without ownership
+ *
+ * ## Memory Mapping
+ *
+ * - map(): Maps memory to host-visible pointer (no-op if persistently mapped)
+ * - unmap(): Unmaps memory (no-op if persistently mapped)
+ * - update(): Copies data to persistently-mapped memory
+ * - flush(): Flushes writes if memory is not HOST_COHERENT
+ *
+ * ## Persistent vs Temporary Mapping
+ *
+ * If VMA_ALLOCATION_CREATE_MAPPED_BIT is set, memory remains mapped for the allocation's
+ * lifetime. Otherwise, use map()/unmap() pairs for temporary access.
+ *
+ * Usage Example:
+ * @code
+ * // Create persistently-mapped staging buffer
+ * auto buffer = BufferBuilder(1024)
+ *     .with_usage(vk::BufferUsageFlagBits::eTransferSrc)
+ *     .with_vma_flags(VMA_ALLOCATION_CREATE_MAPPED_BIT)
+ *     .build(device);
+ *
+ * buffer.update(data_ptr, data_size);  // Direct write to mapped memory
+ * buffer.flush();  // Only needed if not HOST_COHERENT
+ * @endcode
+ *
+ * @tparam HandleType The Vulkan handle type (vk::Buffer or vk::Image)
+ *
+ * @note Constants like HOST_COHERENT are shorthand for VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
  */
 template <typename HandleType>
 class Allocated : public VulkanResource<HandleType>

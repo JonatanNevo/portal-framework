@@ -31,19 +31,34 @@ namespace vulkan
 }
 
 
+/**
+ * @class ShaderVariant
+ * @brief Compiled shader variant with reflection metadata
+ *
+ * Represents a single compiled shader permutation with specific defines.
+ * Provides access to reflection data and shader resources.
+ */
 class ShaderVariant
 {
 public:
     virtual ~ShaderVariant() = default;
 
+    /** @brief Gets variant name */
     [[nodiscard]] virtual StringId get_name() const = 0;
 
+    /** @brief Gets shader resource declarations */
     virtual const std::unordered_map<StringId, shader_reflection::ShaderResourceDeclaration>& get_shader_resources() const = 0;
+
+    /** @brief Gets shader reflection data */
     virtual const ShaderReflection& get_reflection() const = 0;
 };
 
 /**
- * Generates and caches `ShaderVariant` resource for multiple materials per shader.
+ * @class Shader
+ * @brief Manages shader variants with different permutations
+ *
+ * Compiles and caches shader variants for different sets of defines,
+ * allowing multiple materials to share shader code with different configurations.
  */
 class Shader : public Resource
 {
@@ -52,19 +67,33 @@ public:
 
     explicit Shader(const StringId& id);
 
+    /**
+     * @brief Loads shader source code
+     * @param new_source Shader source buffer
+     * @param shader_path Source file path
+     */
     void load_source(Buffer&& new_source, const std::filesystem::path& shader_path);
 
     /**
-     * Compiles the shader with a given list of permutations (defines)
-     *
-     * @param permutations A list of permutations (name, value)
-     * @return The hash to fetch the shader code with.
+     * @brief Compiles shader with given defines
+     * @param permutations List of shader defines
+     * @return Hash to retrieve compiled variant
      */
     uint64_t compile_with_permutations(const std::vector<ShaderDefine>& permutations);
 
+    /**
+     * @brief Gets compiled shader variant
+     * @param shader_hash Permutation hash
+     * @return Shader variant reference
+     */
     virtual WeakReference<ShaderVariant> get_shader(uint64_t shader_hash) = 0;
 
 protected:
+    /**
+     * @brief Calculates hash from permutations
+     * @param permutations Shader defines
+     * @return Unique hash for permutation set
+     */
     uint64_t calculate_permutations_hash(const std::vector<ShaderDefine>& permutations) const;
 
 protected:

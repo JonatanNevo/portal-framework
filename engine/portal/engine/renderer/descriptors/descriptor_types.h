@@ -8,6 +8,12 @@
 
 namespace portal::renderer
 {
+/**
+ * @enum DescriptorType
+ * @brief Vulkan descriptor types for shader bindings
+ *
+ * Maps to vk::DescriptorType. Includes buffers, images, samplers, and acceleration structures.
+ */
 enum class DescriptorType : uint8_t
 {
     Unknown,
@@ -26,6 +32,12 @@ enum class DescriptorType : uint8_t
     InlineUniformBlock,
 };
 
+/**
+ * @enum DescriptorResourceType
+ * @brief High-level descriptor resource categories
+ *
+ * Categorizes renderer resources for descriptor binding (buffers, textures, images).
+ */
 enum class DescriptorResourceType: uint8_t
 {
     Unknown,

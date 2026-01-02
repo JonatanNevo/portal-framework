@@ -14,6 +14,13 @@ namespace portal::renderer
 {
 class Image;
 
+/**
+ * @enum ImageFormat
+ * @brief Pixel formats for images and render targets
+ *
+ * Supports normalized, integer, and floating-point formats in R/RG/RGB/RGBA configurations,
+ * plus depth/stencil formats for render targets.
+ */
 enum class ImageFormat
 {
     None,
@@ -73,6 +80,10 @@ enum class ImageFormat
     Depth = Depth_32Float_Stencil_8UInt
 };
 
+/**
+ * @enum ImageUsage
+ * @brief Image usage modes
+ */
 enum class ImageUsage
 {
     None,
@@ -82,6 +93,10 @@ enum class ImageUsage
     HostRead
 };
 
+/**
+ * @enum TextureWrap
+ * @brief Texture coordinate wrapping modes
+ */
 enum class TextureWrap
 {
     None,
@@ -89,6 +104,10 @@ enum class TextureWrap
     Repeat
 };
 
+/**
+ * @enum TextureFilter
+ * @brief Texture sampling filter modes
+ */
 enum class TextureFilter
 {
     None,
@@ -97,6 +116,10 @@ enum class TextureFilter
     Cubic
 };
 
+/**
+ * @enum SamplerMipmapMode
+ * @brief Mipmap sampling modes
+ */
 enum class SamplerMipmapMode
 {
     None,
@@ -104,6 +127,10 @@ enum class SamplerMipmapMode
     Nearest
 };
 
+/**
+ * @enum TextureType
+ * @brief Texture dimensionality types
+ */
 enum class TextureType
 {
     None,
@@ -111,6 +138,10 @@ enum class TextureType
     TextureCube
 };
 
+/**
+ * @struct SamplerProperties
+ * @brief Sampler configuration
+ */
 struct SamplerProperties
 {
     TextureWrap wrap = TextureWrap::Repeat;
@@ -123,12 +154,20 @@ struct SamplerProperties
 
 namespace image
 {
+    /**
+     * @enum Flags
+     * @brief Image creation flags
+     */
     enum class Flags
     {
         None,
         CubeCompatible
     };
 
+    /**
+     * @struct Properties
+     * @brief Image creation parameters
+     */
     struct Properties
     {
         ImageFormat format = ImageFormat::RGBA8_UNorm;
@@ -148,6 +187,10 @@ namespace image
         StringId name;
     };
 
+    /**
+     * @struct SubresourceRange
+     * @brief Image subresource selection (mip/layer ranges)
+     */
     struct SubresourceRange
     {
         size_t base_mip = 0;
@@ -156,6 +199,10 @@ namespace image
         size_t layer_count = std::numeric_limits<size_t>::max();
     };
 
+    /**
+     * @struct ClearValue
+     * @brief Clear values for different image formats
+     */
     struct ClearValue
     {
         glm::vec4 float_values;
@@ -164,6 +211,10 @@ namespace image
     };
 }
 
+/**
+ * @struct TextureProperties
+ * @brief Texture creation parameters with mipmap and storage options
+ */
 struct TextureProperties
 {
     ImageFormat format = ImageFormat::RGBA8_UNorm;
@@ -181,18 +232,33 @@ struct TextureProperties
 
 namespace utils
 {
+    /**
+     * @brief Checks if format is a depth format
+     * @param format Image format to check
+     * @return True if format contains depth component
+     */
     inline bool is_depth_format(const ImageFormat format)
     {
         return format == ImageFormat::Depth_32Float || format == ImageFormat::Depth_32Float_Stencil_8UInt || format ==
             ImageFormat::Depth_24UNorm_Stencil_8UInt || format == ImageFormat::Depth_16UNorm_Stencil_8UInt || format == ImageFormat::Depth_16UNorm;
     }
 
+    /**
+     * @brief Checks if format is a stencil format
+     * @param format Image format to check
+     * @return True if format contains stencil component
+     */
     inline bool is_stencil_format(const ImageFormat format)
     {
         return format == ImageFormat::Depth_32Float_Stencil_8UInt || format == ImageFormat::Depth_24UNorm_Stencil_8UInt || format ==
             ImageFormat::Depth_16UNorm_Stencil_8UInt;
     }
 
+    /**
+     * @brief Checks if format is an integer format
+     * @param format Image format to check
+     * @return True if format is integer (not normalized or floating-point)
+     */
     inline bool is_integer_format(const ImageFormat format)
     {
         switch (format)
