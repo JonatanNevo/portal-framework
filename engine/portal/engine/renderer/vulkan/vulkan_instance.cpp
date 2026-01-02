@@ -152,7 +152,6 @@ VulkanInstance::VulkanInstance(vk::raii::Context& context) : context(context)
     PORTAL_PROF_ZONE();
 
     LOGGER_INFO("Initializing vulkan instance");
-    glfwInit();
     PORTAL_ASSERT(glfwVulkanSupported(), "glfw must support vulkan");
 
     if (!check_driver_api_version_support(vk::ApiVersion14))
@@ -295,6 +294,9 @@ std::vector<const char*> VulkanInstance::get_required_instance_extensions(const 
     // ask glfw for its required extension (surface plus platform-specific extensions)
     uint32_t glfw_extension_count = 0;
     const auto glfw_extensions = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+
+    if (glfw_extension_count == 0)
+        throw std::runtime_error("Failed to get required glfw extensions!, a valid vulkan driver might not be installed");
 
     std::vector<const char*> extensions = {glfw_extensions, glfw_extensions + glfw_extension_count};
 #ifdef PORTAL_PLATFORM_MACOS

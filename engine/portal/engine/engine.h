@@ -7,9 +7,11 @@
 #include <portal/application/application.h>
 
 #include "ecs/registry.h"
+#include "portal/application/settings.h"
 #include "portal/engine/engine_context.h"
 #include "portal/engine/renderer/renderer.h"
 #include "portal/engine/window/window_event_consumer.h"
+#include "resources/database/resource_database_facade.h"
 
 namespace portal
 {
@@ -28,6 +30,9 @@ public:
     void on_close() override;
 
     [[nodiscard]] EngineContext& get_engine_context() const { return *engine_context; }
+
+protected:
+    static std::unique_ptr<resources::ResourceSource> find_icon_source(Settings& settings, ResourceDatabaseFacade& resource_database);
 
 private:
     ecs::Registry ecs_registry{};

@@ -13,6 +13,7 @@
 #include "portal/engine/renderer/image/texture.h"
 #include "portal/engine/renderer/vulkan/surface/vulkan_surface.h"
 #include "portal/engine/resources/resource_reference.h"
+#include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/window/window_event_consumer.h"
 #include "portal/input/input_event_consumer.h"
 #include "portal/input/input_events.h"
@@ -315,12 +316,12 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
     }
 
     // Setup icon
-    if (properties.icon)
+    if (properties.icon_source != nullptr)
     {
+        auto icon_buffer = properties.icon_source->load();
+
         GLFWimage icon;
-        icon.pixels = properties.icon->get_buffer().as<unsigned char*>();
-        icon.width = static_cast<int>(properties.icon->get_width());
-        icon.height = static_cast<int>(properties.icon->get_height());
+        icon.pixels = stbi_load_from_memory(icon_buffer.as<unsigned char*>(), static_cast<int>(icon_buffer.size), &icon.width, &icon.height, 0, 4);
         if (!icon.pixels)
         {
             const char* reason = stbi_failure_reason();
