@@ -50,7 +50,7 @@ portal_add_module(core
             spdlog
             enchantum
             frozen
-        concurrentqueue
+            concurrentqueue
 
         COMPLEX_DEPENDENCIES
             llvm-adt|LINK|llvm::adt
