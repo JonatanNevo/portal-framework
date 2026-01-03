@@ -111,7 +111,6 @@ jobs:
           testPreset: 'test-release'
 
   build_linux:
-    if: false # TODO: fix ubuntu build
     name: Build Linux ${{ matrix.os_name }} ${{ matrix.c_compiler }}
     runs-on: ${{ matrix.os }}
     strategy:
