@@ -59,7 +59,7 @@ jobs:
         with:
           configurePreset: 'ninja-multi'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}', '-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
-          buildPreset: 'release'
+          buildPreset: 'dist'
           testPreset: 'test-release'
 
   build_macos:
@@ -107,7 +107,7 @@ jobs:
         with:
           configurePreset: 'ninja-multi'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=clang++', '-DCMAKE_C_COMPILER=clang']"
-          buildPreset: 'release'
+          buildPreset: 'dist'
           testPreset: 'test-release'
 
   build_linux:
@@ -181,5 +181,5 @@ jobs:
         with:
           configurePreset: 'ninja-multi'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=clang++', '-DCMAKE_C_COMPILER=clang']"
-          buildPreset: 'release'
+          buildPreset: 'dist'
           testPreset: 'test-release'

@@ -30,15 +30,16 @@
     {
       "name": "glfw3",
       "version>=": "3.4#1",
-      "platform": "windows"
-    },
-    {
-      "name": "glfw3",
       "features": [
         "wayland"
       ],
+      "platform": "linux"
+    },
+    {
+      "name": "glfw3",
+
       "version>=": "3.4#1",
-      "platform": "!windows"
+      "platform": "!linux"
     },
     {
       "name": "nlohmann-json",

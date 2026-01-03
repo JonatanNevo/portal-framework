@@ -61,7 +61,7 @@ Build the new project
 ```shell
 cd <project-name>
 cmake --preset ninja-multi
-cmake --build --preset debug/development/release
+cmake --build --preset debug/development/dist
 ```
 
 # Development
@@ -72,7 +72,7 @@ cmake --preset ninja-multi
 ```
 
 ```shell
-cmake --build --preset debug/development/release
+cmake --build --preset debug/development/dist
 ```
 
 ## External Toolchains
