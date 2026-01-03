@@ -601,7 +601,7 @@ public:
     template <reflection::IsMatrix T>
     bool get_value(T& out)
     {
-        constexpr auto element_number = T::length() * T::col_type::length();
+        [[maybe_unused]] constexpr auto element_number = T::length() * T::col_type::length();
 
         const auto& property = get_property();
         if (property.type == reflection::PropertyType::invalid)
