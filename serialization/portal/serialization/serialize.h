@@ -164,10 +164,6 @@ public:
     template <reflection::Vector T> requires reflection::IsFundamental<typename T::value_type>
     void add_value(const T& t)
     {
-        constexpr auto property_type = (reflection::String<typename T::value_type>)
-                                           ? reflection::PropertyType::null_term_string
-                                           : reflection::get_property_type<typename T::value_type>();
-
         add_property(
             reflection::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), t.size() * sizeof(typename T::value_type)},

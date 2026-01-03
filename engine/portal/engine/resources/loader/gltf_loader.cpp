@@ -737,25 +737,23 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
 
     for (const auto& [nodeIndices, name] : asset.scenes)
     {
+        auto& scene_metadata = composite_meta.children.at(create_name(name.c_str(), ResourceType::Scene));
+        // TODO: filter nodes per `nodeIndices`
+        SceneDescription scene_description;
+        scene_description.nodes = nodes;
+        scene_description.scene_nodes_ids = std::vector(nodeIndices.begin(), nodeIndices.end());
+
         scene_jobs.emplace_back(
-            [&]() -> Job<>
+            [this, &scene_metadata](SceneDescription scene_description) -> Job<>
             {
-                auto scene_metadata = composite_meta.children.at(create_name(name.c_str(), ResourceType::Scene));
-
-                // TODO: filter nodes per `nodeIndices`
-
-                SceneDescription scene_description;
-                scene_description.nodes = nodes;
-                scene_description.scene_nodes_ids = std::vector(nodeIndices.begin(), nodeIndices.end());
-
                 std::stringstream ss;
                 BinarySerializer serializer{ss};
                 serializer.add_value(scene_description);
 
-                auto data = ss.str();
-                MemorySource source{Buffer(data.data(), data.size())};
+                auto serial_data = ss.str();
+                MemorySource source{Buffer(serial_data.data(), serial_data.size())};
                 co_await registry.load_direct(scene_metadata, source);
-            }()
+            }(scene_description)
         );
     }
     registry.wait_all(scene_jobs);

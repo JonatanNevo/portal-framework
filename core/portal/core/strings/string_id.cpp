@@ -39,6 +39,7 @@ void StringId::serialize(Serializer& serializer) const
 StringId StringId::deserialize(Deserializer& deserializer)
 {
     HashType id = 0;
+    std::string string;
     deserializer.get_value(id);
     return StringId{id};
 }
