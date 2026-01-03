@@ -37,6 +37,9 @@ struct NodeDescription
     std::optional<StringId> parent = std::nullopt;
 
     std::vector<std::variant<TransformSceneComponent, MeshSceneComponent>> components{};
+
+    void serialize(Serializer& serializer) const;
+    static NodeDescription deserialize(Deserializer& deserializer);
 };
 
 struct SceneDescription

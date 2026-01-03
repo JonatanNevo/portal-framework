@@ -5,16 +5,81 @@
 
 #include "scene_loader.h"
 
+#include "portal/core/buffer_stream.h"
+#include "portal/core/variant.h"
 #include "portal/engine/components/mesh.h"
 #include "portal/engine/components/transform.h"
-#include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/resources/database/resource_database.h"
 #include "portal/engine/resources/resources/mesh_geometry.h"
 #include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/scene/scene.h"
+#include "portal/serialization/serialize.h"
+#include "portal/serialization/serialize/binary_serialization.h"
 
 namespace portal::resources
 {
+void NodeDescription::serialize(Serializer& serializer) const
+{
+    serializer.add_value(name);
+    serializer.add_value(children);
+    serializer.add_value(parent);
+
+    serializer.add_value<size_t>(components.size());
+    for (auto component : components)
+    {
+        match(component,
+            [&](const TransformSceneComponent& transform)
+            {
+                serializer.add_value("TransformSceneComponent");
+                serializer.add_value(transform.transform);
+            },
+            [&](const MeshSceneComponent& mesh)
+            {
+                serializer.add_value("MeshSceneComponent");
+                serializer.add_value(mesh.mesh_id);
+                serializer.add_value(mesh.materials);
+            }
+            );
+    }
+}
+
+NodeDescription NodeDescription::deserialize(Deserializer& deserializer)
+{
+    NodeDescription description;
+    deserializer.get_value(description.name);
+    deserializer.get_value(description.children);
+    deserializer.get_value(description.parent);
+
+    size_t component_count;
+    deserializer.get_value(component_count);
+    description.components.reserve(component_count);
+
+    for (size_t i = 0; i < component_count; ++i)
+    {
+        std::string component_type;
+        deserializer.get_value(component_type);
+
+        if (component_type == "TransformSceneComponent")
+        {
+            auto& variant = description.components.emplace_back(TransformSceneComponent());
+            auto& transform = std::get<TransformSceneComponent>(variant);
+
+            deserializer.get_value<glm::mat4>(transform.transform);
+        }
+
+        else if (component_type == "MeshSceneComponent")
+        {
+            auto& variant = description.components.emplace_back(MeshSceneComponent());
+            auto& mesh = std::get<MeshSceneComponent>(variant);
+
+            deserializer.get_value(mesh.mesh_id);
+            deserializer.get_value(mesh.materials);
+        }
+    }
+
+    return description;
+}
+
 SceneLoader::SceneLoader(ResourceRegistry& registry) : ResourceLoader(registry)
 {}
 
@@ -103,7 +168,12 @@ SceneDescription SceneLoader::load_scene_description(const SourceMetadata& meta,
     {
         // TODO: Properly serialize scene description instead of loading vectors directly from memory
         auto data = source.load();
-        return data.read<SceneDescription>();
+        BufferStreamReader reader{data};
+
+        SceneDescription description{};
+        BinaryDeserializer deserializer{reader};
+        deserializer.get_value(description);
+        return description;
     }
 
     throw std::runtime_error("Unknown scene format");

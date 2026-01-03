@@ -16,11 +16,14 @@ namespace details
     {
         using Ts::operator()...;
     };
+
+    template <class... Ts>
+    visitor(Ts...) -> visitor<Ts...>;
 }
 
 template <typename Variant, class... Matchers>
-decltype(auto) match(Variant&& variant, Matchers&&... matchers)
+void match(Variant&& variant, Matchers&&... matchers)
 {
-    return std::visit(details::visitor<Matchers>(matchers)..., std::forward<Variant>(variant));
+    std::visit(details::visitor{std::forward<Matchers>(matchers)...}, std::forward<Variant>(variant));
 }
 }

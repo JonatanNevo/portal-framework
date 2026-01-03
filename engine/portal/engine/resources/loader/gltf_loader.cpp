@@ -27,6 +27,7 @@
 #include "portal/engine/resources/loader/mesh_loader.h"
 #include "portal/engine/resources/loader/scene_loader.h"
 #include "portal/engine/resources/resources/composite.h"
+#include "portal/serialization/serialize/binary_serialization.h"
 
 
 namespace portal::resources
@@ -730,24 +731,29 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
     // In my implementation, each node exists only in one scene (as it does not hold data, only pointers to components),
     // While glTF's allows multiple scenes to hold the same node.
 
-    llvm::SmallVector<SceneDescription> descriptions;
     llvm::SmallVector<Job<>> scene_jobs;
     scene_jobs.reserve(asset.scenes.size());
     auto composite_meta = std::get<CompositeMetadata>(meta.meta);
 
     for (const auto& [nodeIndices, name] : asset.scenes)
     {
-        auto scene_metadata = composite_meta.children.at(create_name(name.c_str(), ResourceType::Scene));
-
-        // TODO: filter nodes per `nodeIndices`
-        SceneDescription& scene_description = descriptions.emplace_back();
-        scene_description.nodes = nodes;
-        scene_description.scene_nodes_ids = std::vector(nodeIndices.begin(), nodeIndices.end());
-
-        MemorySource source{Buffer(&scene_description, sizeof(SceneDescription))};
         scene_jobs.emplace_back(
-            [this, scene_metadata, &source]() -> Job<>
+            [&]() -> Job<>
             {
+                auto scene_metadata = composite_meta.children.at(create_name(name.c_str(), ResourceType::Scene));
+
+                // TODO: filter nodes per `nodeIndices`
+
+                SceneDescription scene_description;
+                scene_description.nodes = nodes;
+                scene_description.scene_nodes_ids = std::vector(nodeIndices.begin(), nodeIndices.end());
+
+                std::stringstream ss;
+                BinarySerializer serializer{ss};
+                serializer.add_value(scene_description);
+
+                auto data = ss.str();
+                MemorySource source{Buffer(data.data(), data.size())};
                 co_await registry.load_direct(scene_metadata, source);
             }()
         );

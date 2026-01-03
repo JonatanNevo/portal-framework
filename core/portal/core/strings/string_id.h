@@ -137,6 +137,9 @@ struct StringId
      * @return true if hashes match, false otherwise
      */
     bool operator==(const StringId& other) const;
+
+    void serialize(Serializer& serializer) const;
+    static StringId deserialize(Deserializer& deserializer);
 };
 
 /**

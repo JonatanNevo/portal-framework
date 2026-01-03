@@ -129,8 +129,31 @@ public:
         );
     }
 
+
     /**
-     * @brief Serializes a std::vector of non-Serializable elements.
+     * @brief Serializes a std::vector of complex elements. (not fundamental)
+     *
+     * Writes the vector size followed by each element. Each element's serialize() method
+     * is called to write its data sequentially.
+     *
+     * @tparam T Vector type with complex elements
+     * @param t The vector to serialize
+     */
+    template <reflection::Vector T> requires (!reflection::IsFundamental<typename T::value_type>)
+    void add_value(const T& t)
+    {
+        const size_t size = t.size();
+        add_value(size);
+
+        for (const auto& value : t)
+        {
+            using ValueType = std::remove_cvref_t<typename T::value_type>;
+            add_value<ValueType>(value);
+        }
+    }
+
+    /**
+     * @brief Serializes a std::vector of basic fundamental (ints, floats, etc...)
      *
      * Writes the vector's data contiguously without size prefix. For vectors of
      * Serializable types, see the overload that writes size followed by elements.
@@ -138,9 +161,13 @@ public:
      * @tparam T Vector type with non-Serializable elements
      * @param t The vector to serialize
      */
-    template <reflection::Vector T> requires(!Serializable<typename T::value_type>)
+    template <reflection::Vector T> requires reflection::IsFundamental<typename T::value_type>
     void add_value(const T& t)
     {
+        constexpr auto property_type = (reflection::String<typename T::value_type>)
+                                           ? reflection::PropertyType::null_term_string
+                                           : reflection::get_property_type<typename T::value_type>();
+
         add_property(
             reflection::Property{
                 Buffer{const_cast<void*>(static_cast<const void*>(t.data())), t.size() * sizeof(typename T::value_type)},
@@ -202,7 +229,7 @@ public:
      * @param t The vector to serialize
      */
     template <reflection::GlmVec1 T>
-    void add_value(T& t)
+    void add_value(const T& t)
     {
         add_property(
             reflection::Property{
@@ -221,7 +248,7 @@ public:
      * @param t The vector to serialize
      */
     template <reflection::GlmVec2 T>
-    void add_value(T& t)
+    void add_value(const T& t)
     {
         add_property(
             reflection::Property{
@@ -240,7 +267,7 @@ public:
      * @param t The vector to serialize
      */
     template <reflection::GlmVec3 T>
-    void add_value(T& t)
+    void add_value(const T& t)
     {
         add_property(
             reflection::Property{
@@ -259,7 +286,7 @@ public:
      * @param t The vector to serialize
      */
     template <reflection::GlmVec4 T>
-    void add_value(T& t)
+    void add_value(const T& t)
     {
         add_property(
             reflection::Property{
@@ -267,6 +294,25 @@ public:
                 reflection::get_property_type<typename T::value_type>(),
                 reflection::PropertyContainerType::vector,
                 4
+            }
+        );
+    }
+
+    /**
+     * TODO ADD DOCSTRING
+     */
+    template <reflection::IsMatrix T>
+    void add_value(const T& t)
+    {
+        constexpr auto element_number = T::length() * T::col_type::length();
+        constexpr auto value_size = sizeof(typename T::value_type);
+
+        add_property(
+            reflection::Property{
+                Buffer{&t[0][0], element_number * value_size},
+                reflection::get_property_type<typename T::value_type>(),
+                reflection::PropertyContainerType::matrix,
+                element_number
             }
         );
     }
@@ -292,28 +338,6 @@ public:
             using ValueType = std::remove_const_t<typename T::mapped_type>;
 
             add_value<KeyType>(key);
-            add_value<ValueType>(value);
-        }
-    }
-
-    /**
-     * @brief Serializes a std::vector of Serializable elements.
-     *
-     * Writes the vector size followed by each element. Each element's serialize() method
-     * is called to write its data sequentially.
-     *
-     * @tparam T Vector type with Serializable elements
-     * @param t The vector to serialize
-     */
-    template <reflection::Vector T> requires Serializable<typename T::value_type>
-    void add_value(const T& t)
-    {
-        const size_t size = t.size();
-        add_value(size);
-
-        for (const auto& value : t)
-        {
-            using ValueType = std::remove_const_t<typename T::value_type>;
             add_value<ValueType>(value);
         }
     }
@@ -349,6 +373,17 @@ public:
     }
 
     /**
+     * TODO ADD DOCSTRING
+     */
+    template <typename T>
+    void add_value(const std::optional<T>& optional_t)
+    {
+        add_value(optional_t.has_value());
+        if (optional_t.has_value())
+            add_value(optional_t.value());
+    }
+
+    /**
      * @brief Serializes types with glaze reflection metadata.
      *
      * Fallback overload for types with glaze compile-time reflection. Automatically
@@ -358,7 +393,7 @@ public:
      * @tparam T Type with glaze reflection metadata (glz::reflect)
      * @param t The object to serialize
      */
-    template <typename T>
+    template <typename T> requires glz::reflectable<T> && (!Serializable<T>)
     void add_value(const T& t)
     {
         glz::for_each_field(
@@ -401,21 +436,6 @@ public:
     void add_value(void* t, const size_t length)
     {
         add_property(reflection::Property{Buffer{t, length}, reflection::PropertyType::binary, reflection::PropertyContainerType::string, length});
-    }
-
-    /**
-     * @brief Serializes a StringId preserving both hash and string.
-     *
-     * Writes both the string content and the hash ID to enable debug information
-     * to survive serialization round-trips.
-     *
-     * @param string_id The StringId to serialize
-     * @note TODO: Consider using a string map to deduplicate strings and store only IDs
-     */
-    void add_value(const StringId& string_id)
-    {
-        add_value(string_id.string);
-        add_value(string_id.id);
     }
 
 protected:
@@ -486,15 +506,42 @@ public:
     }
 
     /**
-     * @brief Deserializes a std::vector of non-Serializable elements.
+     * @brief Deserializes a std::vector of complex elements.
      *
-     * Reads contiguous array data from the stream and constructs a vector from it.
-     * For vectors of Serializable types, see the overload that reads size first.
+     * Reads the vector size followed by each element. Each element is deserialized in order.
      *
-     * @tparam T Vector type with non-Serializable elements
+     * @tparam T Vector type with complex elements
      * @param t Output parameter to store the deserialized vector
      */
-    template <reflection::Vector T> requires(!Serializable<typename T::value_type>)
+    template <reflection::Vector T> requires (!reflection::IsFundamental<typename T::value_type>)
+    void get_value(T& t)
+    {
+        size_t size;
+        get_value<size_t>(size);
+
+        if constexpr (requires { t.reserve(size); })
+        {
+            t.reserve(size);
+        }
+
+        for (size_t i = 0; i < size; ++i)
+        {
+            typename T::value_type value;
+            get_value<typename T::value_type>(value);
+            t.push_back(std::move(value));
+        }
+    }
+
+    /**
+     * @brief Deserializes a std::vector of fundamental elements.
+     *
+     * Reads contiguous array data from the stream and constructs a vector from it.
+     * For vectors of fundamental types, see the overload that reads size first.
+     *
+     * @tparam T Vector type with fundamental elements
+     * @param t Output parameter to store the deserialized vector
+     */
+    template <reflection::Vector T> requires reflection::IsFundamental<typename T::value_type>
     void get_value(T& t)
     {
         auto property = get_property();
@@ -533,78 +580,43 @@ public:
     }
 
     /**
-     * @brief Deserializes a GLM vec1 (single-component vector).
+     * @brief Deserializes GLM vectors
      *
-     * @tparam T GLM vec1 type (glm::vec1, glm::ivec1, etc.)
+     * @tparam T GLM vecB type (glm::vecN, glm::ivecB, etc.)
      * @param t Output parameter to store the deserialized vector
      */
-    template <reflection::GlmVec1 T>
+    template <reflection::IsVec T>
     void get_value(T& t)
     {
+        constexpr auto element_number = T::length();
+
         auto property = get_property();
 
         PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
         PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
-        PORTAL_ASSERT(property.elements_number == 1, "Property elements number mismatch");
+        PORTAL_ASSERT(property.elements_number == element_number, "Property elements number mismatch");
 
-        t = T(*property.value.as<typename T::value_type*>());
+        t = T(*property.value.as<T*>());
     }
 
     /**
-     * @brief Deserializes a GLM vec2 (two-component vector).
-     *
-     * @tparam T GLM vec2 type (glm::vec2, glm::ivec2, glm::dvec2, etc.)
-     * @param t Output parameter to store the deserialized vector
+     * TODO ADD DOCSTRING
      */
-    template <reflection::GlmVec2 T>
-    void get_value(T& t)
+    template <reflection::IsMatrix T>
+    bool get_value(T& out)
     {
-        auto property = get_property();
+        constexpr auto element_number = T::length() * T::col_type::length();
+
+        const auto& property = get_property();
+        if (property.type == reflection::PropertyType::invalid)
+            return false;
 
         PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
-        PORTAL_ASSERT(property.elements_number == 2, "Property elements number mismatch");
+        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::matrix, "Property container type mismatch");
+        PORTAL_ASSERT(property.elements_number == element_number, "Property elements number mismatch");
 
-        const auto* data = property.value.as<const typename T::value_type*>();
-        t = T(data[0], data[1]);
-    }
-
-    /**
-     * @brief Deserializes a GLM vec3 (three-component vector).
-     *
-     * @tparam T GLM vec3 type (glm::vec3, glm::ivec3, glm::dvec3, etc.)
-     * @param t Output parameter to store the deserialized vector
-     */
-    template <reflection::GlmVec3 T>
-    void get_value(T& t)
-    {
-        auto property = get_property();
-
-        PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
-        PORTAL_ASSERT(property.elements_number == 3, "Property elements number mismatch");
-
-        const auto* data = property.value.as<const typename T::value_type*>();
-        t = T(data[0], data[1], data[2]);
-    }
-
-    /**
-     * @brief Deserializes a GLM vec4 (four-component vector).
-     *
-     * @tparam T GLM vec4 type (glm::vec4, glm::ivec4, glm::dvec4, etc.)
-     * @param t Output parameter to store the deserialized vector
-     */
-    template <reflection::GlmVec4 T>
-    void get_value(T& t)
-    {
-        auto property = get_property();
-
-        PORTAL_ASSERT(property.type == reflection::get_property_type<typename T::value_type>(), "Property type mismatch");
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property container type mismatch");
-        PORTAL_ASSERT(property.elements_number == 4, "Property elements number mismatch");
-
-        const auto* data = property.value.as<const typename T::value_type*>();
-        t = T(data[0], data[1], data[2], data[3]);
+        out = T(*property.value.as<T*>());
+        return true;
     }
 
     /**
@@ -638,33 +650,6 @@ public:
         }
     }
 
-    /**
-     * @brief Deserializes a std::vector of Serializable elements.
-     *
-     * Reads the vector size followed by each element. Each element's deserialize()
-     * static method is called to reconstruct it from the stream.
-     *
-     * @tparam T Vector type with Serializable elements
-     * @param t Output parameter to store the deserialized vector
-     */
-    template <reflection::Vector T> requires Serializable<typename T::value_type>
-    void get_value(T& t)
-    {
-        size_t size;
-        get_value<size_t>(size);
-
-        if constexpr (requires { t.reserve(size); })
-        {
-            t.reserve(size);
-        }
-
-        for (size_t i = 0; i < size; ++i)
-        {
-            typename T::value_type value;
-            get_value<typename T::value_type>(value);
-            t.push_back(std::move(value));
-        }
-    }
 
     /**
      * @brief Deserializes an enum from its underlying integer type.
@@ -695,7 +680,27 @@ public:
     template <Deserializable T>
     void get_value(T& t)
     {
-        t = T::deserialize(*this);
+        auto temp = T::deserialize(*this);
+        t = temp;
+    }
+
+    /**
+     * TODO ADD DOCSTRING
+     */
+    template <typename T>
+    void get_value(std::optional<T>& optional_t)
+    {
+        bool has_value;
+        get_value<bool>(has_value);
+
+        if (has_value)
+        {
+            T underlying;
+            get_value<T>(underlying);
+            optional_t = std::optional<T>{std::move(underlying)};
+        }
+        else
+            optional_t = std::nullopt;
     }
 
     /**
@@ -708,11 +713,9 @@ public:
      * @tparam T Type with glaze reflection metadata (glz::reflect)
      * @return The deserialized object
      */
-    template <typename T>
-    T get_value()
+    template <typename T> requires glz::reflectable<T> && (!Deserializable<T>)
+    void get_value(T& output)
     {
-        T output;
-
         constexpr auto N = glz::reflect<T>::size;
 
         if constexpr (N > 0)
@@ -721,12 +724,10 @@ public:
                 [&]<size_t I>()
                 {
                     auto& field = glz::get_member(output, glz::get<I>(glz::to_tie(output)));
-                    field = get_value<std::remove_cvref_t<decltype(field)>>();
+                    get_value<std::remove_cvref_t<decltype(field)>>(field);
                 }
             );
         }
-
-        return output;
     }
 
     /**
@@ -751,18 +752,6 @@ public:
 protected:
     virtual reflection::Property get_property() = 0;
 };
-
-template <>
-inline StringId Deserializer::get_value<StringId>()
-{
-    std::string string;
-    uint64_t id;
-
-    get_value(string);
-    get_value(id);
-
-    return StringId{id, string};
-}
 } // namespace portal
 
 template <portal::Serializable T>
