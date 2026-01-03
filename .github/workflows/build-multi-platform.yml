@@ -166,15 +166,17 @@ jobs:
       - name: Add NuGet sources
         shell: bash
         run: |
-          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
-            sources add `
-            -Source "${{ env.FEED_URL }}" `
-            -StorePasswordInClearText `
-            -Name GitHubPackages `
-            -UserName "${{ env.USERNAME }}" `
-            -Password "${{ secrets.GITHUB_TOKEN }}"
-          .$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget) `
-            setapikey "${{ secrets.GITHUB_TOKEN }}" `
+          echo "Fetching nuget..."
+          NUGET_PATH=$(${{ env.VCPKG_ROOT }}/vcpkg fetch nuget | tail -n 1)
+          
+          mono "$NUGET_PATH" sources add \
+            -Source "${{ env.FEED_URL }}" \
+            -StorePasswordInClearText \
+            -Name GitHubPackages \
+            -UserName "${{ env.USERNAME }}" \
+            -Password "${{ secrets.GITHUB_TOKEN }}" || true
+          
+          mono "$NUGET_PATH" setapikey "${{ secrets.GITHUB_TOKEN }}" \
             -Source "${{ env.FEED_URL }}"
 
       - uses: lukka/run-cmake@v10
