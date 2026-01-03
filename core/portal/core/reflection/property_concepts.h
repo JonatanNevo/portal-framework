@@ -95,10 +95,10 @@ concept Map = requires(T t) {
 };
 
 template <typename T>
-concept PropertyConcept = requires(T t) {
-    requires Vector<T> || String<T> || GlmVec1<T> || GlmVec2<T> || GlmVec3<T> || GlmVec4<T> || Map<T> || std::integral<T> ||
-    std::floating_point<T>;
-};
+concept IsFundamental = IsMatrix<T> || IsVec<T> || std::integral<T> || std::floating_point<T>;;
+
+template <typename T>
+concept PropertyConcept = Vector<T> || String<T> || Map<T> || IsFundamental<T>;
 
 template <typename T>
 consteval reflection::PropertyType get_property_type()

@@ -4,6 +4,8 @@
 //
 
 #include "portal/core/strings/string_id.h"
+
+#include "../../../../serialization/portal/serialization/serialize.h"
 #include "portal/core/strings/string_registry.h"
 
 namespace portal
@@ -27,5 +29,17 @@ StringId::StringId(const uint64_t id, const std::string& string) : StringId(id, 
 bool StringId::operator==(const StringId& other) const
 {
     return id == other.id;
+}
+
+void StringId::serialize(Serializer& serializer) const
+{
+    serializer.add_value(id);
+}
+
+StringId StringId::deserialize(Deserializer& deserializer)
+{
+    HashType id = 0;
+    deserializer.get_value(id);
+    return StringId{id};
 }
 } // portal

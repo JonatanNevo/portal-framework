@@ -49,6 +49,17 @@ constexpr uint8_t element_number_size(const BinarySerializationParams& params)
 }
 
 
+bool should_encode_element_number(const BinarySerializationParams& params, const reflection::PropertyContainerType& type)
+{
+    if (type == reflection::PropertyContainerType::scalar)
+        return false;
+
+    if (type == reflection::PropertyContainerType::vector || type == reflection::PropertyContainerType::matrix)
+        return !params.pack_elements;
+
+    return true;
+}
+
 struct Header
 {
     using HeaderSizeT = uint32_t;
@@ -138,8 +149,7 @@ void BinarySerializer::add_property(const reflection::Property property)
 {
     output.write(reinterpret_cast<const char*>(&property.container_type), 1);
     output.write(reinterpret_cast<const char*>(&property.type), 1);
-    if (property.container_type != reflection::PropertyContainerType::scalar &&
-        !(property.container_type == reflection::PropertyContainerType::vector && params.pack_elements))
+    if (should_encode_element_number(params, property.container_type))
     {
         output.write(reinterpret_cast<const char*>(&property.elements_number), element_number_size(params));
     }
@@ -186,7 +196,7 @@ reflection::Property BinaryDeserializer::get_property()
     size_t elements_number = 1;
     if (container_type != reflection::PropertyContainerType::scalar)
     {
-        if (container_type == reflection::PropertyContainerType::vector && params.pack_elements)
+        if (!should_encode_element_number(params, container_type))
             elements_number = 0; // Ignoring element number in packed elements
         else
             input.read(reinterpret_cast<char*>(&elements_number), element_number_size(params));

@@ -18,14 +18,6 @@
 
 using namespace portal;
 
-struct MyStupidStruct
-{
-    int a;
-    float pie;
-    std::string name;
-};
-
-
 std::unique_ptr<Application> portal::create_application(int, char**)
 {
     Settings::init(SettingsArchiveType::Json, "settings.json");

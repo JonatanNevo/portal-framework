@@ -109,6 +109,7 @@ if (MSVC)
             "/Zc:preprocessor"
             "/permissive-"
             "/volatile:iso"
+            "/bigobj"
             "$<$<CONFIG:Release>:/Zi>"
     )
 
