@@ -24,7 +24,7 @@
 using namespace portal;
 using namespace Catch::Matchers;
 
-struct TestObject
+struct TestObject1
 {
     int id = 0;
     std::string name{};
@@ -37,16 +37,16 @@ struct TestObject
         s.add_value(position);
     }
 
-    static TestObject deserialize(Deserializer& d)
+    static TestObject1 deserialize(Deserializer& d)
     {
-        TestObject obj{};
+        TestObject1 obj{};
         d.get_value(obj.id);
         d.get_value(obj.name);
         d.get_value(obj.position);
         return obj;
     }
 
-    bool operator==(const TestObject& other) const
+    bool operator==(const TestObject1& other) const
     {
         return id == other.id && name == other.name && position == other.position; //
     }
@@ -344,10 +344,10 @@ SCENARIO("BinarySerializer can serialize custom objects")
 
         THEN("Custom object with serialization functions is round-tripped")
         {
-            TestObject original{42, "Player1", {10.0f, 20.0f, 0.0f}};
+            TestObject1 original{42, "Player1", {10.0f, 20.0f, 0.0f}};
             serializer.add_value(original);
 
-            TestObject deserialized;
+            TestObject1 deserialized;
             BinaryDeserializer deserializer(ss);
             deserializer.get_value(deserialized);
 
@@ -356,43 +356,17 @@ SCENARIO("BinarySerializer can serialize custom objects")
 
         THEN("Vector of custom objects serialization functions is round-tripped")
         {
-            LOG_INFO("sizeof(glm::vec3): {}", sizeof(glm::vec3));
-            LOG_INFO("alignof(glm::vec3): {}", alignof(glm::vec3));
-            LOG_INFO("sizeof(TestObject): {}", sizeof(TestObject));
-            LOG_INFO("sizeof(std::string): {}", sizeof(std::string));
-            LOG_INFO("offsetof id: {}", offsetof(TestObject, id));
-            LOG_INFO("offsetof name: {}", offsetof(TestObject, name));
-            LOG_INFO("offsetof position: {}", offsetof(TestObject, position));
+            std::vector<TestObject1> original{{1, "A", {1.0f, 0.0f, 0.0f}}, {2, "B", {0.0f, 2.0f, 0.0f}}};
 
-            TestObject a{1, "A", {1.0f, 0.0f, 0.0f}};
-            TestObject b{2, "B", {0.0f, 2.0f, 0.0f}};
-            std::vector<TestObject> original(2);
-            static_assert(sizeof(decltype(original)::value_type) == 64);
-            LOG_INFO("capacity: {}", original.capacity());
-            LOG_INFO("data span: {}", (reinterpret_cast<char*>(&original[1]) - reinterpret_cast<char*>(&original[0])));
+            serializer.add_value(original);
 
-            auto sizeof_test = sizeof(TestObject);
-            auto sizeof_value_type = sizeof(std::allocator<TestObject>::value_type);
-            auto sizeof_value_type_vec = sizeof(std::vector<TestObject>::value_type);
-            auto alignment = alignof(TestObject);
-            auto capacity = original.capacity() * sizeof(std::vector<TestObject>::value_type);
+            std::vector<TestObject1> deserialized;
+            BinaryDeserializer deserializer(ss);
+            deserializer.get_value(deserialized);
 
-            original[0].id = a.id;
-            original[0].name = a.name;
-            original[0].position = a.position;
-            original[1].id = b.id;
-            original[1].name = b.name;
-            original[1].position = b.position;
-
-            // serializer.add_value(original);
-            //
-            // std::vector<TestObject> deserialized;
-            // BinaryDeserializer deserializer(ss);
-            // deserializer.get_value(deserialized);
-            //
-            // REQUIRE(original.size() == deserialized.size());
-            // REQUIRE(original[0] == deserialized[0]);
-            // REQUIRE(original[1] == deserialized[1]);
+            REQUIRE(original.size() == deserialized.size());
+            REQUIRE(original[0] == deserialized[0]);
+            REQUIRE(original[1] == deserialized[1]);
         }
 
 

@@ -680,8 +680,7 @@ public:
     template <Deserializable T>
     void get_value(T& t)
     {
-        auto temp = T::deserialize(*this);
-        t = temp;
+        t = T::deserialize(*this);
     }
 
     /**
