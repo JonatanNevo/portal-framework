@@ -49,7 +49,7 @@ Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const Resou
         throw std::runtime_error("Unknown material format");
 
 
-    const auto material = make_reference<renderer::vulkan::VulkanMaterial>(properties, context.get_gpu_context());
+    const auto material = make_reference<renderer::vulkan::VulkanMaterial>(properties, context);
 
     // TODO: make this generic
     material->set(STRING_ID("material_data.color_factors"), details.color_factors);
