@@ -45,7 +45,7 @@ uint32_t rate_device_suitability(const VulkanPhysicalDevice& device)
     {
         if (!device.is_extension_supported(extension))
         {
-            LOGGER_TRACE("Candidate: {} does not support extension {}", extension, extension);
+            LOGGER_TRACE("Candidate: {} does not support extension {}", properties.deviceName.data(), extension);
             return 0;
         }
     }

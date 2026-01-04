@@ -37,6 +37,24 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& physical_device, const Vu
         debug_marker_enabled = true;
     }
 
+#if !defined(PORTAL_DIST)
+    // Try to enable calibrated timestamps extension (prefer KHR, fallback to EXT)
+    if (physical_device.is_extension_supported(vk::KHRCalibratedTimestampsExtensionName))
+    {
+        device_extensions.push_back(vk::KHRCalibratedTimestampsExtensionName);
+        LOGGER_DEBUG("Using VK_KHR_calibrated_timestamps extension");
+    }
+    else if (physical_device.is_extension_supported(vk::EXTCalibratedTimestampsExtensionName))
+    {
+        device_extensions.push_back(vk::EXTCalibratedTimestampsExtensionName);
+        LOGGER_DEBUG("Using VK_EXT_calibrated_timestamps extension");
+    }
+    else
+    {
+        LOGGER_WARN("Calibrated timestamps extension not available");
+    }
+#endif
+
 
     // Get queue family indices for the requested queue family types
     // Note that the indices may overlap depending on the implementation
