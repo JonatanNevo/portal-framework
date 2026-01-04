@@ -115,17 +115,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        c_compiler: [ gcc ]
-#        c_compiler: [ clang, gcc ]
+        c_compiler: [ clang, gcc ]
         include:
           - os: ubuntu-latest
             os_name: Ubuntu
             c_compiler: gcc
             cpp_compiler: g++
-#          - os: ubuntu-latest
-#            os_name: Ubuntu
-#            c_compiler: clang
-#            cpp_compiler: clang++
+          - os: ubuntu-latest
+            os_name: Ubuntu
+            c_compiler: clang
+            cpp_compiler: clang++
 
     steps:
       - uses: actions/checkout@v4
