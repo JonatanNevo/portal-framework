@@ -84,6 +84,11 @@ VulkanSurface::VulkanSurface(const VulkanContext& context, const SurfaceProperti
         current_extent = {width, height};
     }
 
+    if (vulkan_capabilities.maxImageCount == 0)
+    {
+        vulkan_capabilities.maxImageCount = std::numeric_limits<uint32_t>::max();
+    }
+
     capabilities = SurfaceCapabilities{
         .min_swapchain_images = static_cast<size_t>(vulkan_capabilities.minImageCount),
         .max_swapchain_images = static_cast<size_t>(vulkan_capabilities.maxImageCount),

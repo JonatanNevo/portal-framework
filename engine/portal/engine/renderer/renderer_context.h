@@ -35,6 +35,9 @@ public:
         return global_descriptor_set_layout | std::ranges::views::transform([](const auto& layout) { return *layout; });
     }
 
+public:
+    size_t frames_in_flight = 0;
+
 protected:
     // TODO: use baseclasses here
     renderer::vulkan::VulkanContext& gpu_context;

@@ -79,7 +79,7 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     this->properties.frames_in_flight = swapchain->get_image_count();
 
 
-    modules.add_module<ImGuiModule>(*window);
+    modules.add_module<ImGuiModule>(*window, *swapchain);
     modules.add_module<EditorModule>();
 
     // TODO: find a better way of subscribing to this
