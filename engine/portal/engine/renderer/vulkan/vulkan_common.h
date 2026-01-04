@@ -7,13 +7,29 @@
 
 namespace portal
 {
+/**
+ * @concept VkRaiiObject
+ * @brief Vulkan RAII object type
+ *
+ * Matches vk::raii:: types (e.g., vk::raii::Instance).
+ */
 template <typename T>
 concept VkRaiiObject = requires { typename std::remove_reference_t<T>::CType; typename std::remove_reference_t<T>::CppType; };
 
+/**
+ * @concept VkCppHandle
+ * @brief Vulkan C++ handle wrapper
+ *
+ * Matches vk:: types (e.g., vk::Instance, vk::Buffer).
+ */
 template <typename T>
 concept VkCppHandle = requires { typename std::remove_reference_t<T>::CType; } && (!VkRaiiObject<T>);
 
-// vk::raii:: types (e.g., vk::raii::Instance)
+/**
+ * @brief Converts vk::raii object to uint64
+ * @param obj RAII Vulkan object
+ * @return Handle as uint64
+ */
 template <VkRaiiObject T>
 uint64_t to_uint64(T& obj)
 {
@@ -21,7 +37,11 @@ uint64_t to_uint64(T& obj)
     return reinterpret_cast<uint64_t>(static_cast<CType>(*obj));
 }
 
-// vk:: handle wrappers (e.g., vk::Instance, vk::Buffer)
+/**
+ * @brief Converts vk:: handle to uint64
+ * @param obj Vulkan C++ handle
+ * @return Handle as uint64
+ */
 template <VkCppHandle T>
 uint64_t to_uint64(T obj)
 {
@@ -29,8 +49,11 @@ uint64_t to_uint64(T obj)
     return reinterpret_cast<uint64_t>(static_cast<CType>(obj));
 }
 
-// Raw C handles (VkInstance, VkBuffer, VmaAllocation, etc.) and generic fallback.
-// No introspection of incomplete types – just cast pointer or integral.
+/**
+ * @brief Converts raw C handle to uint64
+ * @param obj Vulkan C handle or pointer
+ * @return Handle as uint64
+ */
 template <typename T> requires (!VkRaiiObject<T> && !VkCppHandle<T>)
 uint64_t to_uint64(T obj)
 {
@@ -43,4 +66,5 @@ uint64_t to_uint64(T obj)
 }
 }
 
+/** @brief Converts Vulkan handle to uint64 for debugging */
 #define VK_HANDLE_CAST(raii_obj) portal::to_uint64(raii_obj)

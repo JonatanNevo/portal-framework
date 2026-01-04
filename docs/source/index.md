@@ -14,7 +14,7 @@ The Portal Framework provides a comprehensive set of systems for building modern
 
 * **Core Systems**: Memory management, job scheduling, string handling, and concurrency primitives
 * **Entity Component System (ECS)**: High-performance, cache-friendly entity management
-* **Rendering**: Modern graphics pipeline with support for various rendering backends
+* **Rendering**: Modern Vulkan-based graphics pipeline with RAII wrappers, builder patterns, and complete Doxygen API reference documentation (60+ files covering queues, images, shaders, descriptors, materials, pipelines, render targets, device abstraction, and utilities)
 * **Input**: Cross-platform input handling for keyboard, mouse, and gamepad
 * **Networking**: Robust networking layer for multiplayer games
 * **Serialization**: Efficient data serialization and deserialization
