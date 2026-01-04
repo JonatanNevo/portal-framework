@@ -11,7 +11,7 @@
 
 #include "portal/core/buffer.h"
 
-#define REQUIRE_BUFFER(buffer, ...) REQUIRE_THAT(std::vector(buffer.as<uint8_t*>(), buffer.as<uint8_t*>() + buffer.size), __VA_ARGS__)
+#define REQUIRE_BUFFER(buffer, ...) REQUIRE_THAT(std::vector(buffer.as<int8_t*>(), buffer.as<int8_t*>() + buffer.size), __VA_ARGS__)
 
 using namespace Catch::Matchers;
 
