@@ -159,9 +159,9 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
-      - name: Install mono
+      - name: Install deps
         shell: bash
-        run: sudo apt-get install -y mono-complete
+        run: sudo apt-get install -y mono-complete libx11-dev xorg-dev libglu1-mesa-dev libltdl-dev
 
       - name: Add NuGet sources
         shell: bash
