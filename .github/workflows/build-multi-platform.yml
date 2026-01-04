@@ -105,7 +105,6 @@ jobs:
       - uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=clang++', '-DCMAKE_C_COMPILER=clang']"
           buildPreset: 'dist'
           testPreset: 'test-release'
 
@@ -152,6 +151,19 @@ jobs:
           clang --version
           clang++ --version
 
+      - name: Install GCC
+        if: matrix.c_compiler == 'gcc'
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          sudo apt-get install gcc-15 g++-15 -y
+          
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 --slave /usr/bin/g++ g++ /usr/bin/g++-15
+          sudo update-alternatives --set gcc /usr/bin/gcc-15
+          sudo update-alternatives --set g++ /usr/bin/g++-15
+          gcc --version
+          g++ --version
+
       - run: pip install portal_tool
       - run: python -m portal_tool install -y --only-dependencies
 
@@ -182,6 +194,6 @@ jobs:
       - uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=clang++', '-DCMAKE_C_COMPILER=clang']"
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}', '-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
           buildPreset: 'dist'
           testPreset: 'test-release'
