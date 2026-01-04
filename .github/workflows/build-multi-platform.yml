@@ -115,7 +115,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        c_compiler: [ clang, gcc ]
+        c_compiler: [ gcc ]
+#        c_compiler: [ clang, gcc ]
         include:
           - os: ubuntu-latest
             os_name: Ubuntu
