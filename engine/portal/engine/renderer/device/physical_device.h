@@ -11,6 +11,12 @@ namespace portal::renderer
 {
 class Surface;
 
+/**
+ * @struct DriverVersion
+ * @brief GPU driver version
+ *
+ * Semantic version (major.minor.patch) for driver identification.
+ */
 struct DriverVersion
 {
     uint16_t major;
@@ -18,27 +24,36 @@ struct DriverVersion
     uint16_t patch;
 };
 
+/**
+ * @class PhysicalDevice
+ * @brief Abstract physical GPU device
+ *
+ * Queries device capabilities, extensions, and surface presentation support.
+ */
 class PhysicalDevice
 {
 public:
     virtual ~PhysicalDevice() = default;
 
     /**
-     * @return The vendor's driver version
+     * @brief Gets driver version
+     * @return Vendor driver version
      */
     [[nodiscard]] virtual DriverVersion get_driver_version() const = 0;
 
     /**
-     * Checks if the device supports a specific extension by name
+     * @brief Checks extension support
+     * @param extensions_name Extension name
+     * @return True if extension is supported
      */
     [[nodiscard]] virtual bool is_extension_supported(std::string_view extensions_name) const = 0;
 
     /**
-     * Checks of the device is able to present to a given surface using a queue family
-     * TODO: is this api agnostic?
+     * @brief Checks presentation support
+     * @param surface Target surface
+     * @param queue_family_index Queue family to check
+     * @return True if queue family can present to surface
      */
     [[nodiscard]] virtual bool supports_present(Surface& surface, uint32_t queue_family_index) const = 0;
-
-    // TODO: should I add a api agnostic feature get/set?
 };
 } // portal

@@ -90,7 +90,8 @@ This will generate a Visual Studio solution in the `build/vs2022` directory.
 
 
 # Modules
- - [**Portal Core**](docs/core.md) - The core module, provides common functionalities and libraries 
+ - [**Portal Core**](docs/core.md) - The core module, provides common functionalities and libraries
+ - [**Portal Engine**](docs/engine.md) - Provides Vulkan-based rendering, resource management, ECS, and scene systems with comprehensive Doxygen API reference documentation (60+ renderer files fully documented)
  - [**Portal Serialization**](docs/serialization.md) - Provides serialization (ordered) and archiving (named) for C++ objects to various formats
  - [**Portal Networking**](docs/networking.md) - Provides networking capabilities for C++ applications (aimed at game networking, lacks http)
  - [**Portal Application**](docs/application.md) - Provides a base application class for creating C++ applications (non graphical applications)

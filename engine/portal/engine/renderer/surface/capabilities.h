@@ -11,22 +11,34 @@
 
 namespace portal::renderer
 {
+/**
+ * @enum SurfaceTransformBits
+ * @brief Surface transformation flags
+ *
+ * Pre-transform operations for display rotation and mirroring.
+ */
 enum class SurfaceTransformBits: uint16_t
 {
-    Emtpy           = 0b000000000,
-    Identity        = 0b000000001,
-    Rotate90        = 0b000000010,
-    Rotate180       = 0b000000100,
-    Rotate270       = 0b000001000,
-    Mirror          = 0b000010000,
-    MirrorRotate90  = 0b000100000, // TODO: is `MirrorRotate` is a different flag from `Mirror | Rotate` ?
-    MirrorRotate180 = 0b001000000,
-    MirrorRotate270 = 0b010000000,
-    Inherit         = 0b100000000
+    Emtpy           = 0b000000000,  ///< No transform
+    Identity        = 0b000000001,  ///< No rotation
+    Rotate90        = 0b000000010,  ///< 90° clockwise
+    Rotate180       = 0b000000100,  ///< 180° rotation
+    Rotate270       = 0b000001000,  ///< 270° clockwise
+    Mirror          = 0b000010000,  ///< Horizontal flip
+    MirrorRotate90  = 0b000100000,  ///< Mirror + 90° rotation
+    MirrorRotate180 = 0b001000000,  ///< Mirror + 180° rotation
+    MirrorRotate270 = 0b010000000,  ///< Mirror + 270° rotation
+    Inherit         = 0b100000000   ///< Use current transform
 };
 
 using SurfaceTransform = Flags<SurfaceTransformBits>;
 
+/**
+ * @struct SurfaceCapabilities
+ * @brief Surface limits and supported features
+ *
+ * Swapchain image count, extent limits, layers, and transform support.
+ */
 struct SurfaceCapabilities
 {
     size_t min_swapchain_images;

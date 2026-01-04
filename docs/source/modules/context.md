@@ -67,9 +67,9 @@ Contains all data needed to render a single frame. Contains:
 
 This context is built by the scene graph during culling and consumed by the renderer.
 
-### VulkanContext  
-**Lifetime**: GPU initialization to shutdown  
-**Instance Count**: Singleton  
+### VulkanContext
+**Lifetime**: GPU initialization to shutdown
+**Instance Count**: Singleton
 **Location**: `portal/engine/renderer/vulkan/vulkan_context.h`
 
 Manages the Vulkan graphics API state. Contains:
@@ -78,6 +78,8 @@ Manages the Vulkan graphics API state. Contains:
 - **LogicalDevice**: Vulkan logical device and queue families
 
 This is the lowest-level graphics context, wrapping the Vulkan API.
+
+**API Documentation**: The complete Vulkan renderer subsystem now has comprehensive Doxygen API reference documentation covering all 60+ header files across 13 subsystems (queues, images & textures, shaders, descriptors, materials, pipelines, render targets, core renderer, device abstraction, surface, Vulkan debug, Vulkan surface, and utilities). All public classes, structs, enums, and C++20 concepts include @brief descriptions, complete @param/@return tags, GPU memory layout context, and Vulkan synchronization semantics. See the API Reference section for detailed documentation.
 
 ## Usage Example
 
