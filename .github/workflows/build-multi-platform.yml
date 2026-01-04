@@ -19,7 +19,7 @@ jobs:
     name: Build Windows ${{ matrix.c_compiler }}
     runs-on: windows-latest
     strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
       matrix:
         c_compiler: [ clang, cl ]
         include:
@@ -113,6 +113,7 @@ jobs:
     name: Build Linux ${{ matrix.os_name }} ${{ matrix.c_compiler }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
         c_compiler: [ clang, gcc ]

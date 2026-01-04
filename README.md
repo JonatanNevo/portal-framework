@@ -23,12 +23,12 @@ A modular cross-platform framework for creating C++ applications, with focus on 
 ## Supported Platforms
 > MSVC builds would have a slower start time due to my string hash implementation not being constexpr on MSVC
 - Windows 11
-  - Clang 19 or later [recommended]
+  - Clang 20 or later [recommended]
   - MSVC 17 or later
 - macOS 15 (Sequoia) or later
 > Linux build still have some issues with vcpkg
 - Linux
-  - Clang 19 or later
+  - Clang 20 or later
   - GCC 15 or later 
 
 # Usage
