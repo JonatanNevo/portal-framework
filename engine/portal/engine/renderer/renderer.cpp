@@ -192,6 +192,7 @@ void Renderer::init_frame_resources()
 
     // TODO: have different amount of frames in flight based on some config?
     frames_in_flight = swapchain->get_image_count();
+    renderer_context.frames_in_flight = frames_in_flight;
 
     frames.clear();
     frames.reserve(frames_in_flight);

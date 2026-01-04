@@ -17,7 +17,7 @@
 
 namespace portal
 {
-ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window) : TaggedModule(stack, STRING_ID("ImGUI Module"))
+ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window, const renderer::vulkan::VulkanSwapchain& swapchain) : TaggedModule(stack, STRING_ID("ImGUI Module"))
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -80,8 +80,8 @@ ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window) : TaggedModul
         .QueueFamily = static_cast<uint32_t>(vulkan_context.get_device().get_graphics_queue().get_family_index()),
         .Queue = vulkan_context.get_device().get_graphics_queue().get_handle(),
         .DescriptorPool = *imgui_pool,
-        .MinImageCount = 3,
-        .ImageCount = 3,
+        .MinImageCount = static_cast<uint32_t>(swapchain.get_image_count()),
+        .ImageCount = static_cast<uint32_t>(swapchain.get_image_count()),
         .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
         .UseDynamicRendering = true,
         .PipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfoKHR{

@@ -23,7 +23,7 @@ class VulkanContext;
 class VulkanMaterial final : public Material
 {
 public:
-    VulkanMaterial(const MaterialProperties& properties, const VulkanContext& context);
+    VulkanMaterial(const MaterialProperties& properties, const RendererContext& context);
     ~VulkanMaterial() override;
 
     void set_pipeline(const Reference<VulkanPipeline>& new_pipeline);

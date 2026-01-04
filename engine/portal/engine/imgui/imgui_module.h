@@ -12,7 +12,7 @@ namespace portal
 class ImGuiModule : public TaggedModule<Tag<ModuleTags::FrameLifecycle, ModuleTags::GuiUpdate>, Renderer>
 {
 public:
-    ImGuiModule(ModuleStack& stack, const Window& window);
+    ImGuiModule(ModuleStack& stack, const Window& window, const renderer::vulkan::VulkanSwapchain& swapchain);
     ~ImGuiModule() override;
 
     void begin_frame(FrameContext& frame) override;
