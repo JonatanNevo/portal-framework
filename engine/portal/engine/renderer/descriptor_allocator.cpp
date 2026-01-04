@@ -13,7 +13,7 @@ DescriptorAllocator::DescriptorAllocator(const vk::raii::Device& device, const u
     : sets_per_pool(static_cast<uint32_t>(max_sets * 1.5)),
       device(device)
 {
-    ratios.append_range(pool_ratios);
+    ratios.insert(ratios.end(), pool_ratios.begin(), pool_ratios.end());
 
     auto new_pool = create_pool(max_sets, pool_ratios);
     ready_pools.push_back(std::move(new_pool));

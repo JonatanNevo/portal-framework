@@ -22,7 +22,7 @@ VulkanDevice::VulkanDevice(const VulkanPhysicalDevice& physical_device, const Vu
     : physical_device(physical_device)
 {
     std::vector<const char*> device_extensions;
-    device_extensions.append_range(REQUIRED_DEVICE_EXTENSIONS);
+    device_extensions.insert(device_extensions.end(), REQUIRED_DEVICE_EXTENSIONS.begin(), REQUIRED_DEVICE_EXTENSIONS.end());
 
     if (physical_device.is_extension_supported(vk::NVDeviceDiagnosticCheckpointsExtensionName))
         device_extensions.push_back(vk::NVDeviceDiagnosticCheckpointsExtensionName);
@@ -299,14 +299,13 @@ void VulkanDevice::set_debug_name(const vk::ObjectType type, const uint64_t hand
     if constexpr (ENABLE_VALIDATION_LAYERS)
     {
         get_handle().setDebugUtilsObjectNameEXT(
-                vk::DebugUtilsObjectNameInfoEXT{
-                    .objectType = type,
-                    .objectHandle = handle,
-                    .pObjectName = name
-                }
-            );
+            vk::DebugUtilsObjectNameInfoEXT{
+                .objectType = type,
+                .objectHandle = handle,
+                .pObjectName = name
+            }
+        );
     }
-
 }
 
 void VulkanDevice::initialize_immediate_commands()

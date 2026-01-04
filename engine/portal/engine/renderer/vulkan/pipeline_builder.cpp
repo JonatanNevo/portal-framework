@@ -18,7 +18,7 @@ namespace portal::renderer::vulkan
 PipelineBuilder& PipelineBuilder::add_shader(const VulkanShaderVariant& shader)
 {
     const std::vector<vk::PipelineShaderStageCreateInfo>& shader_create_infos = shader.get_shader_stage_create_infos();
-    shader_stages.append_range(shader_create_infos);
+    shader_stages.insert(shader_stages.end(), shader_create_infos.begin(), shader_create_infos.end());
     return *this;
 }
 
