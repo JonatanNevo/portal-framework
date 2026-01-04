@@ -77,7 +77,10 @@ elseif (APPLE)
     set(PORTAL_PLATFORM_MACOS ON)
     set(PORTAL_PLATFORM MACOS)
 
-    target_compile_options(portal-core PUBLIC -fexperimental-library -stdlib=libc++)
+    target_compile_options(portal-core PUBLIC
+            $<BUILD_INTERFACE:-fexperimental-library>
+            $<BUILD_INTERFACE:-stdlib=libc++>
+    )
     if (PORTAL_PROFILE)
         target_compile_definitions(portal-core PUBLIC MI_TRACK_VALGRIND=1)
     endif ()
@@ -105,25 +108,25 @@ endif ()
 
 if (MSVC)
     target_compile_options(portal-core PUBLIC
-            "/Zc:__cplusplus"
-            "/Zc:preprocessor"
-            "/permissive-"
-            "/volatile:iso"
-            "/bigobj"
-            "$<$<CONFIG:Release>:/Zi>"
+            $<BUILD_INTERFACE:/Zc:__cplusplus>
+            $<BUILD_INTERFACE:/Zc:preprocessor>
+            $<BUILD_INTERFACE:/permissive->
+            $<BUILD_INTERFACE:/volatile:iso>
+            $<BUILD_INTERFACE:/bigobj>
+            $<BUILD_INTERFACE:$<$<CONFIG:Release>:/Zi>>
     )
 
     target_link_options(portal-core PUBLIC
-            $<$<CONFIG:Release>:/OPT:REF>
-            $<$<CONFIG:Release>:/OPT:ICF>
+            $<BUILD_INTERFACE:$<$<CONFIG:Release>:/OPT:REF>>
+            $<BUILD_INTERFACE:$<$<CONFIG:Release>:/OPT:ICF>>
 
     )
 else ()
     target_compile_options(portal-core PUBLIC
-            "$<$<CONFIG:Release>:-g>"
+            $<BUILD_INTERFACE:$<$<CONFIG:Release>:-g>>
 
-            "$<$<CXX_COMPILER_ID:GNU>:-Wno-missing-field-initializers>"
-            "$<$<C_COMPILER_ID:GNU>:-Wno-missing-field-initializers>"
+            $<BUILD_INTERFACE:$<$<CXX_COMPILER_ID:GNU>:-Wno-missing-field-initializers>>
+            $<BUILD_INTERFACE:$<$<C_COMPILER_ID:GNU>:-Wno-missing-field-initializers>>
     )
 endif ()
 
