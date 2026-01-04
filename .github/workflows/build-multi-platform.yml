@@ -59,7 +59,7 @@ jobs:
           configurePreset: 'ninja-multi'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}', '-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
           buildPreset: 'dist'
-          testPreset: 'test-release'
+          testPreset: 'test-ci'
 
   build_macos:
     name: Build MacOS
@@ -106,7 +106,7 @@ jobs:
         with:
           configurePreset: 'ninja-multi'
           buildPreset: 'dist'
-          testPreset: 'test-release'
+          testPreset: 'test-ci'
 
   build_linux:
     name: Build Linux ${{ matrix.os_name }} ${{ matrix.c_compiler }}
@@ -156,11 +156,11 @@ jobs:
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
           sudo apt-get update
-          sudo apt-get install gcc-15 g++-15 -y
+          sudo apt-get install gcc-14 g++14 -y
           
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-15 100 --slave /usr/bin/g++ g++ /usr/bin/g++-15
-          sudo update-alternatives --set gcc /usr/bin/gcc-15
-          sudo update-alternatives --set g++ /usr/bin/g++-15
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100 --slave /usr/bin/g++ g++ /usr/bin/g++-14
+          sudo update-alternatives --set gcc /usr/bin/gcc-14
+          sudo update-alternatives --set g++ /usr/bin/g++-14
           gcc --version
           g++ --version
 
@@ -196,4 +196,4 @@ jobs:
           configurePreset: 'ninja-multi'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}', '-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
           buildPreset: 'dist'
-          testPreset: 'test-release'
+          testPreset: 'test-ci'

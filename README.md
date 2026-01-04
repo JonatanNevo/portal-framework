@@ -29,7 +29,7 @@ A modular cross-platform framework for creating C++ applications, with focus on 
 > Linux build still have some issues with vcpkg
 - Linux
   - Clang 20 or later
-  - GCC 15 or later 
+  - GCC 14 or later 
 
 # Usage
 ## Portal Tool (Recommended)
