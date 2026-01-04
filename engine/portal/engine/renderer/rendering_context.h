@@ -78,9 +78,9 @@ struct FrameResources
     vk::raii::CommandPool command_pool = nullptr;
     vk::raii::CommandBuffer command_buffer = nullptr;
 
-    // Semaphores to signal that images are available for rendering and that rendering has finished
+    // Semaphore signaled when an image is acquired
     vk::raii::Semaphore image_available_semaphore = nullptr;
-    vk::raii::Semaphore render_finished_semaphore = nullptr;
+
     // Fence to signal that command buffers are ready to be reused
     vk::raii::Fence wait_fence = nullptr;
 
@@ -90,11 +90,10 @@ struct FrameResources
     vulkan::AllocatedBuffer scene_data_buffer = nullptr;
     vulkan::DescriptorAllocator frame_descriptors;
 
-    FrameResources(auto&& command_pool, auto&& command_buffer, auto&& image_sema, auto&& render_sema, auto&& wait_fence, auto&& descriptors) :
+    FrameResources(auto&& command_pool, auto&& command_buffer, auto&& image_available_sema, auto&& wait_fence, auto&& descriptors) :
         command_pool(std::move(command_pool)),
         command_buffer(std::move(command_buffer)),
-        image_available_semaphore(std::move(image_sema)),
-        render_finished_semaphore(std::move(render_sema)),
+        image_available_semaphore(std::move(image_available_sema)),
         wait_fence(std::move(wait_fence)),
         frame_descriptors(std::move(descriptors))
     {}

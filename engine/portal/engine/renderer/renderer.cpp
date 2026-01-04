@@ -122,7 +122,7 @@ void Renderer::begin_frame(FrameContext& frame)
 
     auto rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
 
-    const auto& [image, image_view, last_used_frame] = swapchain->begin_frame(frame);
+    const auto& [image, image_view, last_used_frame, render_sema] = swapchain->begin_frame(frame);
 
     rendering_context->draw_image = image;
     rendering_context->draw_image_view = image_view;
@@ -234,7 +234,6 @@ void Renderer::init_frame_resources()
             std::move(command_pool),
             std::move(device.get_handle().allocateCommandBuffers(alloc_info).front()),
             device.get_handle().createSemaphore({}),
-            device.get_handle().createSemaphore({}),
             device.get_handle().createFence(
                 {
                     .flags = vk::FenceCreateFlagBits::eSignaled
@@ -246,7 +245,6 @@ void Renderer::init_frame_resources()
         device.set_debug_name(data.command_pool, fmt::format("swapchain_command_pool_{}", i).c_str());
         device.set_debug_name(data.command_buffer, fmt::format("swapchain_command_buffer_{}", i).c_str());
         device.set_debug_name(data.image_available_semaphore, fmt::format("swapchain_image_available_semaphore_{}", i).c_str());
-        device.set_debug_name(data.render_finished_semaphore, fmt::format("swapchain_render_finished_semaphore_{}", i).c_str());
         device.set_debug_name(data.wait_fence, fmt::format("swapchain_wait_fence_{}", i).c_str());
     }
 
@@ -270,9 +268,9 @@ void Renderer::post_update(FrameContext& frame)
         1,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
-        vk::AccessFlagBits2::eMemoryWrite,
+        vk::AccessFlagBits2::eNone,
         vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
-        vk::PipelineStageFlagBits2::eTopOfPipe,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::ImageAspectFlagBits::eColor
     );
@@ -282,9 +280,9 @@ void Renderer::post_update(FrameContext& frame)
         1,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthAttachmentOptimal,
-        vk::AccessFlagBits2::eMemoryWrite,
+        vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
         vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
-        vk::PipelineStageFlagBits2::eTopOfPipe,
+        vk::PipelineStageFlagBits2::eLateFragmentTests,
         vk::PipelineStageFlagBits2::eEarlyFragmentTests,
         vk::ImageAspectFlagBits::eDepth
     );

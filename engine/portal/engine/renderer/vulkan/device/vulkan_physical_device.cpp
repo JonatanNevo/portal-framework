@@ -7,44 +7,50 @@
 #include <ranges>
 
 #include "portal/core/log.h"
-#include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "portal/engine/renderer/vulkan/surface/vulkan_surface.h"
+#include "portal/engine/renderer/vulkan/vulkan_device.h"
 
 namespace portal::renderer::vulkan
 {
 const auto logger = Log::get_logger("Vulkan");
 
-VulkanPhysicalDevice::VulkanPhysicalDevice(vk::raii::PhysicalDevice&& physical_device) : handle(
-    physical_device
-)
+VulkanPhysicalDevice::VulkanPhysicalDevice(vk::raii::PhysicalDevice&& physical_device) :
+    handle(physical_device)
 {
     const auto available_features = physical_device.getFeatures();
-    features_chain = {
-        {
-            .features = {
-                .independentBlend = available_features.independentBlend,
-                .sampleRateShading = available_features.sampleRateShading,
-                .fillModeNonSolid = available_features.fillModeNonSolid,
-                .wideLines = available_features.wideLines,
-                .samplerAnisotropy = available_features.samplerAnisotropy,
-                .pipelineStatisticsQuery = available_features.pipelineStatisticsQuery,
-                .shaderStorageImageReadWithoutFormat = available_features.shaderStorageImageReadWithoutFormat,
-            }
-        },
-        {
-            .shaderDrawParameters = true
-        },
-        {
-            .bufferDeviceAddress = true
-        },
-        {
-            .synchronization2 = true,
-            .dynamicRendering = true
-        },
-        {
-            .extendedDynamicState = true
-        }
+
+    vk::PhysicalDeviceFeatures requested_features{
+        .independentBlend = available_features.independentBlend,
+        .sampleRateShading = available_features.sampleRateShading,
+        .fillModeNonSolid = available_features.fillModeNonSolid,
+        .wideLines = available_features.wideLines,
+        .samplerAnisotropy = available_features.samplerAnisotropy,
+        .pipelineStatisticsQuery = available_features.pipelineStatisticsQuery,
+        .shaderStorageImageReadWithoutFormat = available_features.shaderStorageImageReadWithoutFormat,
     };
+
+    vk::PhysicalDeviceVulkan12Features vulkan12_features{
+        .bufferDeviceAddress = true,
+    };
+
+    if constexpr (ENABLE_VALIDATION_LAYERS)
+    {
+        requested_features.fragmentStoresAndAtomics = available_features.fragmentStoresAndAtomics;
+        requested_features.vertexPipelineStoresAndAtomics = available_features.vertexPipelineStoresAndAtomics;
+        requested_features.shaderInt64 = available_features.shaderInt64;
+
+        vulkan12_features.timelineSemaphore = true;
+        vulkan12_features.vulkanMemoryModel = true;
+        vulkan12_features.vulkanMemoryModelDeviceScope = true;
+        vulkan12_features.storageBuffer8BitAccess = true;
+    }
+
+    features_chain = {
+        {.features = requested_features},
+        {.shaderDrawParameters = true},
+        vulkan12_features,
+        {.synchronization2 = true, .dynamicRendering = true},
+        {.extendedDynamicState = true}};
 
     properties = physical_device.getProperties();
     memory_properties = physical_device.getMemoryProperties();
@@ -52,13 +58,19 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(vk::raii::PhysicalDevice&& physical_d
 
     LOGGER_INFO("Initializing physical device: {}", properties.deviceName.data());
     auto device_extensions = physical_device.enumerateDeviceExtensionProperties();
-    LOGGER_TRACE("Physical device has {} extensions: ", device_extensions.size());
     for (auto& [extension_name, spec_version] : device_extensions)
     {
         supported_extensions.emplace(std::string{extension_name.data(), extension_name.size()});
-        LOGGER_TRACE("  {} [v{}]", extension_name.data(), spec_version);
     }
 
+    // Debug trace all available device extensions
+#if 0
+    LOGGER_TRACE("Physical device has {} extensions: ", device_extensions.size());
+    for (auto& [extension_name, spec_version] : device_extensions)
+    {
+        LOGGER_TRACE("  {} [v{}]", extension_name.data(), spec_version);
+    }
+#endif
     // depth_format = find_depth_format();
 }
 
@@ -67,12 +79,7 @@ vk::Format VulkanPhysicalDevice::find_depth_format() const
     // Since all depth formats may be optional, we need to find a suitable depth format to use
     // Start with the highest precision packed format
     std::vector possible_depth_formats = {
-        vk::Format::eD32SfloatS8Uint,
-        vk::Format::eD32Sfloat,
-        vk::Format::eD24UnormS8Uint,
-        vk::Format::eD16UnormS8Uint,
-        vk::Format::eD16Unorm
-    };
+        vk::Format::eD32SfloatS8Uint, vk::Format::eD32Sfloat, vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint, vk::Format::eD16Unorm};
 
     for (const auto& format : possible_depth_formats)
     {
@@ -115,9 +122,8 @@ DriverVersion VulkanPhysicalDevice::get_driver_version() const
 bool VulkanPhysicalDevice::is_extension_supported(std::string_view extensions_name) const
 {
     return std::ranges::find_if(
-        supported_extensions,
-        [extensions_name](const auto& ext) { return std::strcmp(ext.data(), extensions_name.data()) == 0; }
-    ) != supported_extensions.end();
+               supported_extensions, [extensions_name](const auto& ext) { return std::strcmp(ext.data(), extensions_name.data()) == 0; }) !=
+        supported_extensions.end();
 }
 
 bool VulkanPhysicalDevice::supports_present(Surface& surface, const uint32_t queue_family_index) const
@@ -126,20 +132,11 @@ bool VulkanPhysicalDevice::supports_present(Surface& surface, const uint32_t que
     return handle.getSurfaceSupportKHR(queue_family_index, vulkan_surface.get_vulkan_surface());
 }
 
-vk::PhysicalDeviceFeatures VulkanPhysicalDevice::get_features() const
-{
-    return handle.getFeatures();
-}
+vk::PhysicalDeviceFeatures VulkanPhysicalDevice::get_features() const { return handle.getFeatures(); }
 
-vk::FormatProperties VulkanPhysicalDevice::get_format_properties(const vk::Format format) const
-{
-    return handle.getFormatProperties(format);
-}
+vk::FormatProperties VulkanPhysicalDevice::get_format_properties(const vk::Format format) const { return handle.getFormatProperties(format); }
 
-const std::vector<vk::QueueFamilyProperties>& VulkanPhysicalDevice::get_queue_family_properties() const
-{
-    return queue_family_properties;
-}
+const std::vector<vk::QueueFamilyProperties>& VulkanPhysicalDevice::get_queue_family_properties() const { return queue_family_properties; }
 
 VulkanPhysicalDevice::QueueFamilyIndices VulkanPhysicalDevice::get_queue_family_indices(vk::QueueFlags queue_flags) const
 {
@@ -153,10 +150,8 @@ VulkanPhysicalDevice::QueueFamilyIndices VulkanPhysicalDevice::get_queue_family_
             {
                 return (
                     (prop.queueFlags & queue_type) != static_cast<vk::QueueFlags>(0) &&
-                    (prop.queueFlags & vk::QueueFlagBits::eGraphics) == static_cast<vk::QueueFlags>(0)
-                );
-            }
-        );
+                    (prop.queueFlags & vk::QueueFlagBits::eGraphics) == static_cast<vk::QueueFlags>(0));
+            });
 
         if (it == queue_family_properties.end())
             return -1;
@@ -202,4 +197,4 @@ VulkanPhysicalDevice::QueueFamilyIndices VulkanPhysicalDevice::get_queue_family_
 
     return indices;
 }
-} // portal
+} // namespace portal::renderer::vulkan

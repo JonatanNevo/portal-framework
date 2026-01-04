@@ -28,6 +28,9 @@ struct SwapchainImageData
 
     // Track which frame last used this image
     size_t last_used_frame = std::numeric_limits<size_t>::max();
+
+    // Semaphore signaled when this specific image finishes rendering
+    vk::raii::Semaphore render_finished_semaphore = nullptr;
 };
 
 

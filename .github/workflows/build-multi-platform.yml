@@ -20,7 +20,6 @@ jobs:
     runs-on: windows-latest
     strategy:
       # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
-      fail-fast: true
       matrix:
         c_compiler: [ clang, cl ]
         include:
@@ -114,7 +113,6 @@ jobs:
     name: Build Linux ${{ matrix.os_name }} ${{ matrix.c_compiler }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: true
       matrix:
         os: [ ubuntu-latest ]
         c_compiler: [ clang, gcc ]
@@ -141,14 +139,15 @@ jobs:
       - uses: lukka/get-cmake@latest
 
       - name: Install Clang
+        if: matrix.c_compiler == 'clang'
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
-          sudo ./llvm.sh 19 all
-          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-19 100
-          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-19 100
-          sudo update-alternatives --set clang /usr/bin/clang-19
-          sudo update-alternatives --set clang++ /usr/bin/clang++-19
+          sudo ./llvm.sh 20 all
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
+          sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+          sudo update-alternatives --set clang /usr/bin/clang-20
+          sudo update-alternatives --set clang++ /usr/bin/clang++-20
           clang --version
           clang++ --version
 
