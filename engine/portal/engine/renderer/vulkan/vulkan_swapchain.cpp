@@ -187,10 +187,13 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             },
         };
 
-        auto& [image, image_view, last_used_frame] = images_data[i];
+        auto& [image, image_view, last_used_frame, render_finished_semaphore] = images_data[i];
         image = swap_chain_images[i];
         image_view = device.get_handle().createImageView(view_info);
+        render_finished_semaphore = device.get_handle().createSemaphore({});
+
         device.set_debug_name(image_view, fmt::format("swapchain_image_view_{}", i).c_str());
+        device.set_debug_name(render_finished_semaphore, fmt::format("swapchain_render_finished_semaphore_{}", i).c_str());
     }
 }
 
@@ -239,7 +242,7 @@ void VulkanSwapchain::present(const FrameContext& frame)
     };
 
     const vk::SemaphoreSubmitInfo signal_semaphore_info{
-        .semaphore = *rendering_context->resources.render_finished_semaphore,
+        .semaphore = *images_data[current_image].render_finished_semaphore,
         .value = 0,
         // Assuming binary semaphores are used
         .stageMask = vk::PipelineStageFlagBits2::eAllCommands,
@@ -277,7 +280,7 @@ void VulkanSwapchain::present(const FrameContext& frame)
 
         const vk::PresentInfoKHR present_info{
             .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &*rendering_context->resources.render_finished_semaphore,
+            .pWaitSemaphores = &*images_data[current_image].render_finished_semaphore,
             .swapchainCount = 1,
             .pSwapchains = &*swapchain,
             .pImageIndices = reinterpret_cast<uint32_t*>(&current_image)

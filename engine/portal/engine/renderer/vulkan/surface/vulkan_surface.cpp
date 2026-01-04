@@ -72,10 +72,20 @@ VulkanSurface::VulkanSurface(const VulkanContext& context, const SurfaceProperti
 
     auto vulkan_capabilities = context.get_physical_device().get_handle().getSurfaceCapabilitiesKHR(*surface);
 
+    glm::ivec2 current_extent;
+    if (vulkan_capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+        current_extent.x = vulkan_capabilities.currentExtent.width;
+    else current_extent.x = properties.window.value().get().get_extent().width;
+
+    if (vulkan_capabilities.currentExtent.height != std::numeric_limits<uint32_t>::max())
+        current_extent.y = vulkan_capabilities.currentExtent.height;
+    else
+        current_extent.y = properties.window.value().get().get_extent().height;
+
     capabilities = SurfaceCapabilities{
         .min_swapchain_images = static_cast<size_t>(vulkan_capabilities.minImageCount),
         .max_swapchain_images = static_cast<size_t>(vulkan_capabilities.maxImageCount),
-        .current_extent = {vulkan_capabilities.currentExtent.width, vulkan_capabilities.currentExtent.height},
+        .current_extent = current_extent,
         .min_image_extent = {vulkan_capabilities.minImageExtent.width, vulkan_capabilities.minImageExtent.height},
         .max_image_extent = {vulkan_capabilities.maxImageExtent.width, vulkan_capabilities.maxImageExtent.height},
         .max_image_array_layers = vulkan_capabilities.maxImageArrayLayers,

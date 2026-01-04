@@ -260,7 +260,7 @@ static void glfw_cursor_pos_callback(GLFWwindow* handle, double x_pos, double y_
 
 GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsumers& consumers) : Window(properties, consumers)
 {
-    LOGGER_INFO("Creating window {} ({}x{})", properties.title.string, properties.extent.width, properties.extent.height);
+    LOGGER_INFO("Creating window \"{}\" ({}x{})", properties.title.string, properties.extent.width, properties.extent.height);
 
     if (!glfwInit())
     {

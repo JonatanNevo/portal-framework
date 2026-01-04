@@ -181,17 +181,7 @@ VulkanInstance::VulkanInstance(vk::raii::Context& context) : context(context)
     auto instance_extensions = get_required_instance_extensions(ENABLE_VALIDATION_LAYERS);
     PORTAL_ASSERT(!instance_extensions.empty(), "Incompatible instance extension!"); // TODO: exit?
 
-    vk::ValidationFeatureEnableEXT validation_features[] = {
-        vk::ValidationFeatureEnableEXT::eBestPractices
-    };
-
-    vk::ValidationFeaturesEXT validation_features_info = {
-        .enabledValidationFeatureCount = static_cast<uint32_t>(std::size(validation_features)),
-        .pEnabledValidationFeatures = validation_features
-    };
-
     vk::InstanceCreateInfo instance_create_info = {
-        .pNext = &validation_features_info,
 #ifdef PORTAL_PLATFORM_MACOS
         .flags = vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR,
 #endif
@@ -204,6 +194,18 @@ VulkanInstance::VulkanInstance(vk::raii::Context& context) : context(context)
     {
         if (check_validation_layer_support(std::span{VALIDATION_LAYERS}, context))
         {
+            vk::ValidationFeatureEnableEXT validation_features[] = {
+                vk::ValidationFeatureEnableEXT::eBestPractices,
+                vk::ValidationFeatureEnableEXT::eSynchronizationValidation,
+                vk::ValidationFeatureEnableEXT::eDebugPrintf
+            };
+
+            static vk::ValidationFeaturesEXT validation_features_info = {
+                .enabledValidationFeatureCount = static_cast<uint32_t>(std::size(validation_features)),
+                .pEnabledValidationFeatures = validation_features
+            };
+
+            instance_create_info.pNext = &validation_features_info;
             instance_create_info.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
             instance_create_info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
         }
@@ -307,7 +309,6 @@ std::vector<const char*> VulkanInstance::get_required_instance_extensions(const 
     if (enable_validation_layers)
     {
         extensions.push_back(vk::EXTDebugUtilsExtensionName);
-        extensions.push_back(vk::KHRGetPhysicalDeviceProperties2ExtensionName);
     }
 
     if (!check_instance_extension_support(extensions, context))
@@ -317,15 +318,15 @@ std::vector<const char*> VulkanInstance::get_required_instance_extensions(const 
 #if 0
     {
         const auto extension_props = context.enumerateInstanceExtensionProperties();
-        LOG_TRACE_TAG("Renderer", "Available instance extensions:");
+        LOG_TRACE_TAG("Vulkan", "Available instance extensions:");
         for (const auto& [extensionName, specVersion] : extension_props)
         {
             std::string extension_name = extensionName;
             auto has_extension = std::ranges::find(extensions, extension_name) != extensions.end() ? "x" : " ";
-            LOG_TRACE_TAG("Renderer", "  {} {}", has_extension, extension_name);
+            LOG_TRACE_TAG("Vulkan", "  {} {}", has_extension, extension_name);
         }
     }
-    LOG_TRACE_TAG("Renderer", "");
+    LOG_TRACE_TAG("Vulkan", "");
 #endif
 
     return extensions;
