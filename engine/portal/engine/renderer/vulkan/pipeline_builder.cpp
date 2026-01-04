@@ -203,12 +203,13 @@ PipelineBuilder& PipelineBuilder::disable_color_blending(const int index)
 
 PipelineBuilder& PipelineBuilder::set_color_attachment_formats(std::vector<ImageFormat>& formats)
 {
-    color_formats = formats | std::views::transform(
+    auto transformed_view = formats | std::views::transform(
         [](const ImageFormat format)
         {
             return to_format(format);
         }
-    ) | std::ranges::to<std::vector<vk::Format>>();
+    );
+    color_formats = std::ranges::to<std::vector<vk::Format>>(transformed_view);
 
     pipeline_rendering_create_info.colorAttachmentCount = static_cast<uint32_t>(color_formats.size());
     pipeline_rendering_create_info.pColorAttachmentFormats = color_formats.data();

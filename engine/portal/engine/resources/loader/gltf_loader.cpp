@@ -667,13 +667,13 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
             node_description.components.emplace_back(
                 MeshSceneComponent{
                     STRING_ID(create_name(mesh.name, ResourceType::Mesh)),
-                    mesh.primitives | std::views::transform(
+                    std::ranges::to<std::vector>(mesh.primitives | std::views::transform(
                         [&asset, &create_name](const auto& primitive)
                         {
                             auto& material = asset.materials[primitive.materialIndex.value()];
                             return STRING_ID(create_name(material.name, ResourceType::Material));
                         }
-                    ) | std::ranges::to<std::vector>()
+                    ))
                 }
             );
         }

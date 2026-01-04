@@ -85,7 +85,7 @@ vk::DescriptorSetLayout VulkanShaderVariant::get_descriptor_layout(const size_t 
 
 std::vector<vk::DescriptorSetLayout> VulkanShaderVariant::get_descriptor_layouts() const
 {
-    return descriptor_layouts | std::ranges::views::transform([](const auto& layout) { return *layout; }) | std::ranges::to<std::vector>();
+    return std::ranges::to<std::vector>(descriptor_layouts | std::ranges::views::transform([](const auto& layout) { return *layout; }));
 }
 
 const std::vector<vk::PushConstantRange>& VulkanShaderVariant::get_push_constant_ranges() const

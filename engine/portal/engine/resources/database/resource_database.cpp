@@ -81,7 +81,7 @@ void SourceMetadata::archive(ArchiveObject& archive) const
     archive.add_property("type", to_string(type));
     archive.add_property(
         "dependencies",
-        dependencies | std::ranges::views::transform([](const auto& id) { return id.string; }) | std::ranges::to<std::vector>()
+        std::ranges::to<std::vector>(dependencies | std::ranges::views::transform([](const auto& id) { return id.string; }))
     ); // TODO: support views
 
     archive.add_property("source", source.string);
@@ -116,7 +116,7 @@ SourceMetadata SourceMetadata::dearchive(ArchiveObject& archive)
     SourceMetadata metadata{
         STRING_ID(resource_name),
         from_string<ResourceType>(type_string),
-        string_id_view | std::ranges::to<llvm::SmallVector<StringId>>(),
+        std::ranges::to<llvm::SmallVector<StringId>>(string_id_view),
         STRING_ID(source),
         from_string<SourceFormat>(format_string)
     };
