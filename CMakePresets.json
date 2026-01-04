@@ -80,9 +80,12 @@
   ],
   "testPresets": [
     {
-      "name": "test-release",
+      "name": "test-ci",
       "configurePreset": "ninja-multi",
-      "configuration": "Release"
+      "configuration": "Release",
+      "output": {
+        "verbosity": "extra"
+      }
     }
   ],
   "workflowPresets": [
