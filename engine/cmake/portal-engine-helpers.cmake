@@ -10,8 +10,8 @@ namespace portal
 "
     )
 
-    set(INPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/config_pch.inc)
-    set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/config_pch.cpp)
+    set(INPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/config_impl.inc)
+    set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/config_impl.cpp)
     file(WRITE "${INPUT_PATH}" "${CONFIGURE_FILE}")
 
     configure_file(${INPUT_PATH} ${OUTPUT_PATH} @ONLY)
@@ -210,8 +210,8 @@ function(portal_package_game TARGET_NAME)
     else ()
         if (APPLE)
             set_target_properties(${TARGET_NAME} PROPERTIES
-                    INSTALL_RPATH "@executable_path/lib"
-                    BUILD_WITH_INSTALL_RPATH TRUE
+                    BUILD_RPATH "@executable_path/${TARGET_NAME}.app/Contents/Frameworks"
+                    BUILD_WITH_INSTALL_RPATH FALSE
             )
         elseif (UNIX)
             set_target_properties(${TARGET_NAME} PROPERTIES
