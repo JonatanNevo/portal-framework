@@ -18,35 +18,35 @@ To see the roadmap and the status of the project, see [Development Status](devel
 
 ---
 
-## Get Started
+## First Steps
 
 Learn how to get started with Portal Engine or browse the documentation for more in-depth information.
 
 ````{grid} 2
 :gutter: 3
 
-```{grid-item-card} Getting Started
+```{grid-item-card} Getting Started 🚀
 :link: getting-started/index
 :link-type: doc
 
-Install Portal Engine and render your first triangle in 10 minutes.
+Install Portal Engine and create you first project.
 ```
 
-```{grid-item-card} Tutorials
+```{grid-item-card} Tutorials 📖
 :link: tutorials/index
 :link-type: doc
 
   Step-by-step guides to learn engine fundamentals.
 ```
 
-```{grid-item-card} How-To Guides
+```{grid-item-card} How-To Guides 🎯
 :link: how-to/index
 :link-type: doc
 
 Task-oriented recipes for common problems.
 ```
 
-```{grid-item-card} API Reference
+```{grid-item-card} API Reference 🔧
 :link: api/index
 :link-type: doc
 

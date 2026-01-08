@@ -21,6 +21,13 @@ How the major systems work internally.
 - [Resource Management](resource-management.md) — Ownership, lifetimes, GPU resources
 
 
+## BuildSystem
+
+Overview of the build system, both for the Framework itself and for games built on it.
+
+- [BuildSystem Overview](buildsystem.md)
+
+
 ---
 
 ## Related
@@ -39,4 +46,5 @@ engine-architecture
 frame-lifecycle
 job-system
 resource-management
+buildsystem
 ```

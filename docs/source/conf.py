@@ -63,8 +63,8 @@ release = '1.0.0'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'breathe',
-    'exhale',
+    # 'breathe',
+    # 'exhale',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
@@ -170,5 +170,20 @@ html_theme_options = {
     "sidebar_hide_name": True,
     "navigation_with_keys": True,
 }
+
+# html_theme = 'shibuya'
+# html_static_path = ['_static']
+# html_title = "Portal Framework"
+# html_favicon = "_static/portal_icon_64x64.png"
+#
+# html_theme_options = {
+#     "light_logo": "_static/portal_banner_light_cropped.png",
+#     "dark_logo": "_static/portal_banner_dark_cropped.png",
+#     "og_image_url": "portal_splash_dark.png",
+#     "accent_color": "purple",
+#
+#     "github_url": "https://github.com/JonatanNevo/portal-framework",
+#     "linkedin_url": "https://www.linkedin.com/in/jonatan-nevo-488105217/"
+# }
 
 todo_include_todos = True

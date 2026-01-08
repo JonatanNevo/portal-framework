@@ -4,11 +4,16 @@ Get Portal Engine running on your machine.
 
 ---
 
-| Step | Page                              | Time      | Outcome                              |
-|------|-----------------------------------|-----------|--------------------------------------|
-| 1    | [Installation](installation.md)   | 10-15 min | Portal Engine built and installed    |
-| 2    | [Quickstart](quickstart.md)       | 10 min    | First window with rendered triangle  |
-| 3    | [Project Setup](project-setup.md) | 5 min     | Your own project using Portal Engine |
+## Table of Contents
+
+
+```{toctree}
+:maxdepth: 1
+
+installation
+project-setup
+```
+
 
 --- 
 
@@ -40,12 +45,3 @@ After completing setup:
 - [Understand the architecture](../concepts/engine-architecture.md) — Learn how it all fits together
 - 
 ---
-
-```{toctree}
-:maxdepth: 1
-:hidden:
-
-installation
-quickstart
-project-setup
-```
