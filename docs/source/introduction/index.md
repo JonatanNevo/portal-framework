@@ -19,5 +19,5 @@ architecture
 ## Quick Links
 
 - Ready to dive in? → [Getting Started](../getting-started/index.md)
-- Want to see code? → [Quickstart](../getting-started/quickstart.md)
+- Have a specific question? → [How-To](../how-to/index.md)
 - Looking for API docs? → [API Reference](../api/index.md)

@@ -6,7 +6,6 @@ Portal Framework is still in early development.
 
 ```{mermaid}
 ---
-config: {"theme": "dark"}
 zoom: true
 align: center
 caption: (you can zoom on the diagram)

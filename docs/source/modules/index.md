@@ -7,9 +7,6 @@ Portal Framework is organized into independent, layered modules.
 ## Dependency Graph
 
 ```{mermaid}
----
-config: {"theme": "dark"}
----
 
 flowchart TD
     Engine --> Input

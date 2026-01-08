@@ -2,128 +2,61 @@
 
 # Portal Framework
 
-A modular cross-platform framework for creating C++ applications, with focus on graphics (3D) application.
+A modular cross-platform C++ framework for creating 3D graphics applications using C++23 and Vulkan.
 
-## Table of Contents
+**[Full Documentation](https://jonatannevo.github.io/portal-framework/)**
 
-- [Portal Framework](#portal-framework)
-  - [Supported Platforms](#supported-platforms)
-- [Usage](#usage)
-  - [Portal Tool (Recommended)](#portal-tool-recommended)
-- [Development](#development)
-  - [Cmake](#cmake)
-  - [External Toolchains](#external-toolchains)
-- [Modules](#modules)
-- [Architecture](#architecture)
-- [Examples](#examples)
-- [Roadmap](#roadmap)
-- [Generative AI Usage](#generative-ai-usage)
-- [License](#license)
+## Platform Support
 
-## Supported Platforms
-> MSVC builds would have a slower start time due to my string hash implementation not being constexpr on MSVC
-- Windows 11
-  - Clang 20 or later [recommended]
-  - MSVC 17 or later
-- macOS 15 (Sequoia) or later
-> Linux build still have some issues with vcpkg
-- Linux
-  - Clang 20 or later
-  - GCC 14 or later 
+- **Windows 11** - Clang 20+ (recommended) or MSVC 17+
+- **macOS 15+** (Sequoia or later)
+- **Linux** - Clang 20+ or GCC 14+
 
-# Usage
-## Portal Tool (Recommended)
-> Currently `portal-tool` only works on Windows, linux has known issues and macos is not yet tested
-### Requirements
-- Python 3.12 or later
-- CMake 3.30 or later
-- Ninja build system
-- Git
-- C++ 23+ compiler
+## Getting Started
 
-### Installation
-Install the portal tool package
-```shell
-pip install portal-tool
-```
+### Quick Start with Portal Tool
 
-Install the platform specific dependencies
-```shell
-portal-tool install
-```
+The `portal-tool` is the recommended way to create new Portal Framework projects.
 
-Initialize a project using portal engine
-```shell
-portal-tool init
-```
+**Requirements:** Python 3.12+, CMake 3.30+, Ninja, Git, C++23 compiler
 
-Build the new project
-```shell
-cd <project-name>
-cmake --preset ninja-multi
-cmake --build --preset debug/development/dist
-```
-
-# Development
-
-## Cmake
-```shell
-cmake --preset ninja-multi
-```
-
-```shell
-cmake --build --preset debug/development/dist
-```
-
-## External Toolchains
-### xcode
-```shell
-cmake --preset xcode
-```
-This will generate an Xcode project in the `build/xcode` directory. You can open the project in Xcode and build it from there.
-### visual studio
 ```bash
-cmake --preset vs2022
+pip install portal-tool
+portal-tool install    # Install platform dependencies
+portal-tool init       # Create a new project
 ```
-This will generate a Visual Studio solution in the `build/vs2022` directory.
-> vs2026 is also supported, but cmake 4.2+ is required
 
+> **Note:** Currently `portal-tool` works on Windows only. Linux and macOS are untested.
 
-# Modules
- - [**Portal Core**](docs/core.md) - The core module, provides common functionalities and libraries
- - [**Portal Engine**](docs/engine.md) - Provides Vulkan-based rendering, resource management, ECS, and scene systems with comprehensive Doxygen API reference documentation (60+ renderer files fully documented)
- - [**Portal Serialization**](docs/serialization.md) - Provides serialization (ordered) and archiving (named) for C++ objects to various formats
- - [**Portal Networking**](docs/networking.md) - Provides networking capabilities for C++ applications (aimed at game networking, lacks http)
- - [**Portal Application**](docs/application.md) - Provides a base application class for creating C++ applications (non graphical applications)
- - [**Portal GUI**](docs/gui.md) - Provides a GUI framework for creating graphical applications (based on ImGui)
- - [**Portal Input**](docs/input.md) - Provides input handling for C++ applications (keyboard, mouse, gamepad)
+**[Full Installation Guide](https://jonatannevo.github.io/portal-framework/getting-started/installation.html)**
 
-# Architecture
+### Building from Source
 
-Detailed architecture documentation is available in the `docs/architecture/` directory:
+```bash
+cmake --preset ninja-multi
+cmake --build --preset debug
+```
 
+**[Complete Build Instructions](https://jonatannevo.github.io/portal-framework/contributing/building.html)**
 
-# Examples
-You can find a basic example of a rendered scene under `examples/engine_test`
-  
-If you follow the instructions of [development](#development) section, you'll also build the target `engine_test` which you can run to see the example
+## Contributing
 
-# Roadmap
-## Missing modules
-* audio system
-* animations
-* physics engine
-* scripting capabilities
-* networking
-* mods (based on web assembly)
+Contributions are welcome! Please see the **[Contributing Guide](https://jonatannevo.github.io/portal-framework/contributing/)** for:
 
-# Generative AI Usage
-As a personal project and a learning experience I tried to limit the usage of generative AI for the bulk of the programming.
+- Code style guidelines
+- Build and test instructions
+- Documentation standards
+- Pull request process
 
-Generative AI was used in the following places:
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Generative AI Usage
+
+As a personal project and a learning experience, I have limited the usage of generative AI for the bulk of the programming.
+
+Generative AI was used in the following areas:
 - Writing testing boilerplate code
 - Baseline for API documentation
-- Debugging
-
-# License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- Debugging assistance
