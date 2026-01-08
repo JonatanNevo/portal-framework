@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <map>
+#include <filesystem>
 #include <thread>
 
 #include <spdlog/mdc.h>
@@ -17,6 +17,8 @@
 
 namespace portal
 {
+using namespace std::string_view_literals;
+
 class ScopedLogContext
 {
 public:
@@ -76,15 +78,16 @@ public:
         Fatal = spdlog::level::critical,
     };
 
-    struct Settings
+    struct LoggerSettings
     {
         LogLevel default_log_level = LogLevel::Trace;
-        std::string default_logger_name = "default";
+        std::string_view default_logger_name = "default"sv;
+        std::string_view application_name;
     };
 
 public:
     static void init();
-    static void init(const Settings& settings);
+    static void init(const LoggerSettings& settings);
     static void shutdown();
 
     static std::shared_ptr<spdlog::logger> get_logger(const std::string& tag_name);
@@ -146,6 +149,7 @@ public:
     static bool print_assert_message(std::string_view file, int line, std::string_view function, std::string_view message);
 
 private:
+    static std::filesystem::path get_log_directory();
     static std::unordered_map<std::string, std::shared_ptr<spdlog::logger>>& get_loggers();
 };
 } // namespace portal

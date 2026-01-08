@@ -135,9 +135,71 @@ function(portal_add_dependency MODULE_NAME DEPENDENCY)
     endif ()
 endfunction()
 
+function(portal_setup_config_pch MODULE_NAME)
+    set(options GAME)
+    set(oneValueArgs COMPILE_CONFIG_FILE)
+    set(multiValueArgs DEPENDENT_CONFIG_HEADERS)
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    set(TARGET_NAME portal-${MODULE_NAME})
+    set(PCH_PATH ${CMAKE_CURRENT_BINARY_DIR}/portal/${MODULE_NAME}/config_pch.h)
+
+    if (ARG_GAME)
+        set(TARGET_NAME ${MODULE_NAME})
+        set(PCH_PATH ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}/config_pch.h)
+    endif ()
+
+    set_property(TARGET ${TARGET_NAME} APPEND PROPERTY PORTAL_CONFIG_HEADERS ${ARG_DEPENDENT_CONFIG_HEADERS})
+    if (ARG_COMPILE_CONFIG_FILE)
+        set_property(TARGET ${TARGET_NAME} APPEND PROPERTY PORTAL_CONFIG_HEADERS ${ARG_COMPILE_CONFIG_FILE})
+    endif ()
+
+    get_target_property(COMPLETE_CONFIGs ${TARGET_NAME} PORTAL_CONFIG_HEADERS)
+
+    if (COMPLETE_CONFIGs)
+        set(PCH_HEADER_CONTENT "// This is an auto generated file\n#pragma once\n")
+        foreach (HEADER ${COMPLETE_CONFIGs})
+            string(APPEND PCH_HEADER_CONTENT "#include <${HEADER}>\n")
+        endforeach ()
+
+        file(WRITE "${PCH_PATH}" "${PCH_HEADER_CONTENT}")
+
+        target_precompile_headers(${TARGET_NAME} PUBLIC "${PCH_PATH}")
+    endif ()
+
+
+endfunction()
+
+macro(portal_configure_pch TARGET_NAME PRECOMPILED_HEADERS)
+    set(options CONFIGURE)
+    set(oneValueArgs "")
+    set(multiValueArgs "")
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    foreach(header ${PRECOMPILED_HEADERS})
+        if (ARG_CONFIGURE)
+            string(REGEX REPLACE "\\.inc$" "" header_out "${header}")
+            set(header_path "${CMAKE_CURRENT_BINARY_DIR}/${header_out}")
+            configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${header}" ${header_path})
+        else()
+            set(header_path "${CMAKE_CURRENT_SOURCE_DIR}/${header}")
+        endif()
+
+        target_precompile_headers(${TARGET_NAME} PUBLIC "${header_path}")
+
+        target_sources(${TARGET_NAME} PUBLIC
+                FILE_SET additional_headers
+                TYPE HEADERS
+                BASE_DIRS ${CMAKE_CURRENT_BINARY_DIR}
+                FILES ${header_path}
+        )
+    endforeach ()
+endmacro()
+
+
 function(portal_add_module MODULE_NAME)
     set(options "")
-    set(oneValueArgs "")
+    set(oneValueArgs COMPILE_CONFIG_FILE)
     set(multiValueArgs
             SOURCES
             HEADERS
@@ -205,13 +267,20 @@ function(portal_add_module MODULE_NAME)
         target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -Wno-missing-designated-field-initializers)
     endif ()
 
-    foreach (dep ${ARG_PORTAL_DEPENDENCIES})
-        portal_add_dependency(${MODULE_NAME} ${dep} PORTAL)
-    endforeach ()
-
     foreach (dep ${ARG_DEPENDENCIES})
         portal_add_dependency(${MODULE_NAME} ${dep})
     endforeach ()
+
+    set(DEPENDENT_CONFIG_HEADERS "")
+    foreach (dep ${ARG_PORTAL_DEPENDENCIES})
+        portal_add_dependency(${MODULE_NAME} ${dep} PORTAL)
+
+        get_target_property(CONFIG_FILES portal-${dep} PORTAL_CONFIG_HEADERS)
+        if (CONFIG_FILES)
+            list(APPEND DEPENDENT_CONFIG_HEADERS ${CONFIG_FILES})
+        endif ()
+    endforeach ()
+    list(REMOVE_DUPLICATES DEPENDENT_CONFIG_HEADERS)
 
     foreach (dep_spec ${ARG_COMPLEX_DEPENDENCIES})
         string(REPLACE "|" " " dep_args "${dep_spec}")
@@ -221,8 +290,15 @@ function(portal_add_module MODULE_NAME)
 
         portal_add_dependency(${MODULE_NAME} ${dep_name} ${dep_args})
     endforeach ()
-
     unset(PORTAL_FIND_PACKAGE CACHE)
+
+    portal_setup_config_pch(
+            ${MODULE_NAME}
+            COMPILE_CONFIG_FILE
+                ${ARG_COMPILE_CONFIG_FILE}
+            DEPENDENT_CONFIG_HEADERS
+                ${DEPENDENT_CONFIG_HEADERS}
+    )
 
     if (PORTAL_BUILD_DOCS)
         portal_register_docs(${MODULE_NAME})

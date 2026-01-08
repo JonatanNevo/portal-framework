@@ -830,7 +830,7 @@ public:
      * @param name Property name of the child object
      * @return Pointer to the child ArchiveObject, or nullptr if not found
      */
-    virtual ArchiveObject* get_object(PropertyName name);
+    virtual ArchiveObject* get_object(PropertyName name) const;
 
     // Iterator support for range-based for loops
     auto begin() { return property_map.begin(); }
@@ -870,7 +870,8 @@ protected:
         return true;
     }
 
-    virtual reflection::Property& get_property_from_map(PropertyName name);
+    [[nodiscard]] virtual reflection::Property& get_property_from_map(PropertyName name);
+    [[nodiscard]] virtual const reflection::Property& get_property_from_map(PropertyName name) const;
     virtual reflection::Property& add_property_to_map(PropertyName name, reflection::Property&& property);
 
 #ifdef PORTAL_DEBUG

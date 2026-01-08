@@ -11,8 +11,6 @@
 
 namespace portal
 {
-static std::filesystem::path s_program_path;
-
 
 static std::string utf16_to_utf8(const wchar_t* w_str)
 {
@@ -177,30 +175,24 @@ std::filesystem::path FileSystem::get_root_path()
     return std::filesystem::current_path();
 }
 
-void FileSystem::set_program_data_path(std::filesystem::path program_path)
-{
-    PORTAL_ASSERT(program_path.is_relative(), "Program path must be relative");
-    s_program_path = std::move(program_path);
-}
-
 std::filesystem::path FileSystem::get_data_home()
 {
-    return get_appdata() / s_program_path;
+    return get_appdata() / PORTAL_APPLICATION_NAME;
 }
 
 std::filesystem::path FileSystem::get_config_home()
 {
-    return get_appdata() / s_program_path / "config";
+    return get_appdata() / PORTAL_APPLICATION_NAME / "config";
 }
 
 std::filesystem::path FileSystem::get_cache_dir()
 {
-    return get_appdata_local() / s_program_path / "cache";
+    return get_appdata_local() / PORTAL_APPLICATION_NAME / "cache";
 }
 
 std::filesystem::path FileSystem::get_state_dir()
 {
-    return get_appdata_local() / s_program_path;
+    return get_appdata_local() / PORTAL_APPLICATION_NAME;
 }
 
 std::filesystem::path FileSystem::get_desktop_folder()

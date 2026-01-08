@@ -10,20 +10,39 @@ function(portal_install_module MODULE_NAME)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (NOT ARG_COMPONENT)
-        set(ARG_COMPONENT ${TARGET_NAME})
+        # Replace hyphens with underscores for NSIS compatibility
+        string(REPLACE "-" "_" ARG_COMPONENT ${TARGET_NAME})
     endif ()
 
     set(INSTALLATION_TARGET ${TARGET_NAME}-targets)
     set(VERSION_TARGET ${TARGET_NAME}-version)
     set(CONFIG_TARGET ${TARGET_NAME}-config)
 
-    install(
-            TARGETS ${TARGET_NAME}
-            EXPORT ${INSTALLATION_TARGET}
-            COMPONENT ${ARG_COMPONENT}
-            FILE_SET HEADERS
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
+
+    set (FILE_SETS HEADERS)
+    get_target_property(HAS_ADDITIONAL_HEADERS ${TARGET_NAME} HEADER_SET_additional_headers)
+    if (HAS_ADDITIONAL_HEADERS)
+        install(
+                TARGETS ${TARGET_NAME}
+                EXPORT ${INSTALLATION_TARGET}
+                COMPONENT ${ARG_COMPONENT}
+                FILE_SET HEADERS
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+                FILE_SET additional_headers
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        )
+    else ()
+        install(
+                TARGETS ${TARGET_NAME}
+                EXPORT ${INSTALLATION_TARGET}
+                COMPONENT ${ARG_COMPONENT}
+                FILE_SET HEADERS
+                DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+        )
+    endif ()
+
+
+
 
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(

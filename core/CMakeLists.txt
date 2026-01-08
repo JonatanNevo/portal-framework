@@ -55,6 +55,9 @@ portal_add_module(core
         COMPLEX_DEPENDENCIES
             llvm-adt|LINK|llvm::adt
             mimalloc|LINK|mimalloc-static
+
+        COMPILE_CONFIG_FILE
+            portal/core/config.h
 )
 
 target_compile_definitions(portal-core PUBLIC
@@ -124,14 +127,12 @@ if (MSVC)
 else ()
     target_compile_options(portal-core PUBLIC
             $<BUILD_INTERFACE:$<$<CONFIG:Release>:-g>>
-
             $<BUILD_INTERFACE:$<$<CXX_COMPILER_ID:GNU>:-Wno-missing-field-initializers>>
             $<BUILD_INTERFACE:$<$<C_COMPILER_ID:GNU>:-Wno-missing-field-initializers>>
     )
 endif ()
 
-configure_file("portal/core/config.h.cmake" "portal/core/config.h")
-target_precompile_headers(portal-core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/portal/core/config.h)
+portal_configure_pch(portal-core portal/core/config.h.inc CONFIGURE)
 
 enable_testing()
 portal_build_tests(tests)

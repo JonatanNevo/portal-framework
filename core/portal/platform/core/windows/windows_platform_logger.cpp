@@ -12,21 +12,23 @@
 
 #include <windows.h>
 
-#define PORTAL_HAS_CONSOLE !PORTAL_DIST
+#include "portal/core/files/file_system.h"
+
+#define PORTAL_HAS_CONSOLE !PORTAL_STANDALONE_EXE
 
 namespace portal::platform
 {
-const std::vector<spdlog::sink_ptr>& get_platform_sinks()
+const std::vector<spdlog::sink_ptr>& get_platform_sinks(const std::filesystem::path& logging_folder)
 {
     static std::vector<spdlog::sink_ptr> sinks;
     if (sinks.empty())
     {
         sinks = {
-            std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/portal.log", true),
-#if defined(PORTAL_DEBUG) || defined(PORTAL_DEVELOPMENT)
+            std::make_shared<spdlog::sinks::basic_file_sink_mt>((logging_folder / "portal.log").generic_string(), true),
+#if PORTAL_HAS_CONSOLE
+#if !defined(PORTAL_DIST)
             std::make_shared<spdlog::sinks::msvc_sink_mt>(),
 #endif
-#if PORTAL_HAS_CONSOLE
             std::make_shared<spdlog::sinks::stdout_color_sink_mt>()
 #endif
         };

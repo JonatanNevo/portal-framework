@@ -1,3 +1,23 @@
+function(portal_setup_compile_configs TARGET_NAME APPLICATION_NAME SETTINGS_FILE)
+    set(CONFIGURE_FILE "
+// Auto generated file
+
+namespace portal
+{
+    constexpr std::string_view PORTAL_APPLICATION_NAME = \"@APPLICATION_NAME@\";
+    constexpr std::string_view PORTAL_SETTINGS_FILE_NAME = \"@SETTINGS_FILE@\";
+};
+"
+    )
+
+    set(INPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/config_pch.inc)
+    set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/config_pch.cpp)
+    file(WRITE "${INPUT_PATH}" "${CONFIGURE_FILE}")
+
+    configure_file(${INPUT_PATH} ${OUTPUT_PATH} @ONLY)
+    target_sources(${TARGET_NAME} PRIVATE "${OUTPUT_PATH}")
+endfunction()
+
 function(portal_add_resources TARGET_NAME RESOURCE_PATH)
     set(options "")
     set(oneValueArgs OUTPUT_NAME)
@@ -269,13 +289,21 @@ endfunction()
 
 function(portal_add_game TARGET_NAME)
     set(options MAKE_STANDALONE)
-    set(oneValueArgs SETTINGS_FILE STATIC_ICON DISPLAY_NAME)
+    set(oneValueArgs SETTINGS_FILE STATIC_ICON DISPLAY_NAME SETTINGS_FILE_NAME)
     set(multiValueArgs
             SOURCES
             RESOURCE_PATHS
             LINK_LIBRARIES
     )
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(NOT ARG_DISPLAY_NAME)
+        set(ARG_DISPLAY_NAME ${TARGET_NAME})
+    endif ()
+
+    if (NOT ARG_SETTINGS_FILE_NAME)
+        set(ARG_SETTINGS_FILE_NAME "settings.json")
+    endif ()
 
     # TODO: add editor target
     if (APPLE AND ARG_MAKE_STANDALONE)
@@ -291,8 +319,12 @@ function(portal_add_game TARGET_NAME)
                 MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
                 MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
         )
-    elseif (WIN32 AND ARG_MAKE_STANDALONE)
-        add_executable(${TARGET_NAME} WIN32 ${ARG_SOURCES})
+    elseif (WIN32)
+        if (ARG_MAKE_STANDALONE)
+            add_executable(${TARGET_NAME} WIN32 ${ARG_SOURCES})
+        else()
+            add_executable(${TARGET_NAME} ${ARG_SOURCES})
+        endif()
     else ()
         add_executable(${TARGET_NAME} ${ARG_SOURCES})
     endif ()
@@ -314,7 +346,7 @@ function(portal_add_game TARGET_NAME)
     endforeach ()
 
     if (NOT ARG_SETTINGS_FILE)
-        set(ARG_SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/settings.json")
+        set(ARG_SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SETTINGS_FILE_NAME}")
     endif ()
 
     if (NOT EXISTS ${ARG_SETTINGS_FILE})
@@ -322,6 +354,8 @@ function(portal_add_game TARGET_NAME)
     endif ()
 
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_SETTINGS_PATH ${ARG_SETTINGS_FILE})
+
+    portal_setup_compile_configs(${TARGET_NAME} ${ARG_DISPLAY_NAME} ${ARG_SETTINGS_FILE_NAME})
 
     portal_read_settings(${TARGET_NAME})
 

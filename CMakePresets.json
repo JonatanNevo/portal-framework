@@ -88,6 +88,13 @@
       }
     }
   ],
+  "packagePresets": [
+    {
+      "name": "pack",
+      "configurePreset": "ninja-multi",
+      "packageDirectory": "${sourceDir}/dist"
+    }
+  ],
   "workflowPresets": [
     {
       "name": "build-docs",

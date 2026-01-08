@@ -16,7 +16,6 @@ namespace portal
 {
 static std::unique_ptr<Settings> g_settings;
 
-constexpr auto NAME_ENTRY = "name";
 constexpr auto LOG_LEVEL_ENTRY = "log-level";
 
 void Settings::init(const SettingsArchiveType type, const std::filesystem::path& settings_file_name)
@@ -32,22 +31,14 @@ void Settings::init(const SettingsArchiveType type, const std::filesystem::path&
     }
 
     const auto local_settings_path = std::filesystem::current_path() / "settings.json";
-    auto local_settings = Settings(type, local_settings_path);
+    const auto mutable_settings_path = FileSystem::get_data_home() / settings_file_name;
 
-    const auto program_name = local_settings.get_setting<std::string>(NAME_ENTRY);
-
-    std::filesystem::path program_data_path = "portal";
-    if (program_name.has_value())
-        program_data_path /= program_name.value();
-
-    auto mutable_settings_path = FileSystem::get_data_home() / program_data_path / settings_file_name;
-    if (!FileSystem::exists(mutable_settings_path))
+    g_settings =  std::unique_ptr<Settings>(new Settings(type, local_settings_path));
+    if (FileSystem::exists(mutable_settings_path))
     {
-        LOG_INFO("Mutable settings is missing, copying from installed settings to: {}", mutable_settings_path);
-        if (!FileSystem::copy(local_settings_path, mutable_settings_path))
-            throw std::runtime_error("Failed to copy settings file");
+        auto user_settings = Settings(type, mutable_settings_path);
+        g_settings->update(user_settings);
     }
-    g_settings = std::unique_ptr<Settings>(new Settings(type, mutable_settings_path));
 
     auto log_level_string = g_settings->get_setting<std::string>(LOG_LEVEL_ENTRY);
     if (log_level_string)

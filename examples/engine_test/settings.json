@@ -1,6 +1,4 @@
 {
-    "name": "Engine Test",
-
     "application": {
         "fullscreen": false,
         "scheduler-threads": 0,
