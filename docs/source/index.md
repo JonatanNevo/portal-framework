@@ -10,16 +10,11 @@
 
 Welcome to the **Portal Framework** - a modular C++23 game engine framework designed for high-performance, data-oriented game development.
 
-<!-- Note about the fact this is a modular framework, built from seperate `modules` (core, application, input, serialization, networking, engine)-->
-<!-- Note about cross platform support -->
-
-
-<!-- Structure -->
-<!-- Tutorials ( Getting Started, etc...)-->
-<!-- How-To -->
-<!-- Explanations (design, architecture, etc...) -->
-<!-- API - Reference -->
-
+```{warning}
+Note that Portal Framework is still in **early development!**  
+Most of the features are subject to change. 
+To see the roadmap and the status of the project, see [Development Status](development-status.md).
+```
 
 ---
 
@@ -128,4 +123,5 @@ concepts/index
 modules/index
 api/index
 contributing/index
+development-status
 ```
