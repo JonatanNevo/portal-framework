@@ -2,7 +2,7 @@
 
 ## Using Portal Tool 
 
-If you don't have `portal-tool` insalled, please refer to [Installation](../portal-tool/installation.md)  
+If you don't have `portal-tool` insalled, please refer to [Installation](installation.md)  
 
 `portal-tool` has an interactive wizard to help you setup your project.  
 Simply run:

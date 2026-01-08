@@ -63,8 +63,8 @@ release = '1.0.0'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    # 'breathe',
-    # 'exhale',
+    'breathe',
+    'exhale',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
@@ -160,15 +160,31 @@ myst_enable_extensions = [
 html_theme = 'furo'
 html_static_path = ['_static']
 html_title = "Portal Framework"
+html_favicon = "_static/portal_icon_64x64.png"
+
+
+html_css_files = [
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/fontawesome.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/solid.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/brands.min.css",
+]
 
 html_theme_options = {
     "source_repository": "https://github.com/JonatanNevo/portal-framework",
     "source_branch": "main",
-    "source_directory": "docs/",
+    "source_directory": "docs/source",
     "light_logo": "portal_banner_light.png",
     "dark_logo": "portal_banner_dark.png",
     "sidebar_hide_name": True,
     "navigation_with_keys": True,
+    "footer_icons": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/JonatanNevo/portal-framework",
+            "html": "",
+            "class": "fa-brands fa-solid fa-github fa-2x",
+        },
+    ],
 }
 
 # html_theme = 'shibuya'

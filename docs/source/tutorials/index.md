@@ -23,7 +23,6 @@ Each tutorial builds on the previous one. Start with the first and work your way
 Before starting, make sure you have:
 
 - Completed the [Installation](../getting-started/installation.md)
-- Run the [Quickstart](../getting-started/quickstart.md) successfully
 - Basic C++ knowledge (classes, templates, lambdas)
 
 ---
