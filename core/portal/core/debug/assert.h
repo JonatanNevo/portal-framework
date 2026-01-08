@@ -30,6 +30,7 @@
 #define PORTAL_DEBUG_BREAK __builtin_trap()
 #endif
 
+
 #ifdef PORTAL_PLATFORM_WINDOWS
 #define PORTAL_DEBUG_BREAK_HELPER PORTAL_DEBUG_BREAK
 #else
@@ -39,7 +40,7 @@ inline void PORTAL_DEBUG_BREAK_HELPER()
 }
 #endif
 
-#ifndef PORTAL_DIST
+#if !defined(PORTAL_DIST) && !defined(PORTAL_TEST)
 #define PORTAL_ENABLE_ASSERTS
 #endif
 
