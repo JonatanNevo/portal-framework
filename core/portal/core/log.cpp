@@ -91,7 +91,8 @@ void Log::init(const LoggerSettings& settings)
     formatter->add_flag<source_location_flag_formatter>('*', 30);
     formatter->set_pattern(default_pattern);
 
-    auto& sinks = platform::get_platform_sinks(get_log_directory());
+    const auto& logger_path = get_log_directory();
+    auto& sinks = platform::get_platform_sinks(logger_path);
 
     for (const auto& sink : sinks)
     {
@@ -131,7 +132,8 @@ std::shared_ptr<spdlog::logger> Log::get_logger(const std::string& tag_name)
     if (loggers.contains(tag_name))
         return loggers[tag_name];
 
-    auto& sinks = platform::get_platform_sinks(get_log_directory());
+    const auto& logger_path = get_log_directory();
+    auto& sinks = platform::get_platform_sinks(logger_path);
 
     // Create a new logger if it doesn't exist
     const auto logger = std::make_shared<spdlog::logger>(tag_name, begin(sinks), end(sinks));

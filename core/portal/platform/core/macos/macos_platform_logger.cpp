@@ -34,7 +34,6 @@ const std::vector<spdlog::sink_ptr>& get_platform_sinks(const std::filesystem::p
 bool print_assert_dialog(std::string_view, int, std::string_view, std::string_view)
 {
     //TODO: use mac windowing system to popup an assert box
-    PORTAL_DEBUG_BREAK_HELPER();
-    return false;
+    return true;
 }
 }
