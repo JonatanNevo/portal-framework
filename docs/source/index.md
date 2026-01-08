@@ -1,8 +1,8 @@
+# 
 ```{image} _static/portal_splash_dark.png
     :align: center
     :class: only-dark
 ```
-
 ```{image} _static/portal_splash_light.png
     :align: center
     :class: only-light
@@ -10,54 +10,122 @@
 
 Welcome to the **Portal Framework** - a modular C++23 game engine framework designed for high-performance, data-oriented game development.
 
-The Portal Framework provides a comprehensive set of systems for building modern games and interactive applications:
+<!-- Note about the fact this is a modular framework, built from seperate `modules` (core, application, input, serialization, networking, engine)-->
+<!-- Note about cross platform support -->
 
-* **Core Systems**: Memory management, job scheduling, string handling, and concurrency primitives
-* **Entity Component System (ECS)**: High-performance, cache-friendly entity management
-* **Rendering**: Modern Vulkan-based graphics pipeline with RAII wrappers, builder patterns, and complete Doxygen API reference documentation (60+ files covering queues, images, shaders, descriptors, materials, pipelines, render targets, device abstraction, and utilities)
-* **Input**: Cross-platform input handling for keyboard, mouse, and gamepad
-* **Networking**: Robust networking layer for multiplayer games
-* **Serialization**: Efficient data serialization and deserialization
 
-```{toctree}
-:maxdepth: 1
-:caption: Architecture
+<!-- Structure -->
+<!-- Tutorials ( Getting Started, etc...)-->
+<!-- How-To -->
+<!-- Explanations (design, architecture, etc...) -->
+<!-- API - Reference -->
 
-architecture/core-systems
+
+---
+
+## Get Started
+
+Learn how to get started with Portal Engine or browse the documentation for more in-depth information.
+
+````{grid} 2
+:gutter: 3
+
+```{grid-item-card} Getting Started
+:link: getting-started/index
+:link-type: doc
+
+Install Portal Engine and render your first triangle in 10 minutes.
 ```
 
-```{toctree}
-:maxdepth: 1
-:caption: Modules
+```{grid-item-card} Tutorials
+:link: tutorials/index
+:link-type: doc
 
-modules/core
-modules/application
-modules/input
-modules/serialization
-modules/networking
-modules/gui
-modules/context
+  Step-by-step guides to learn engine fundamentals.
 ```
 
-```{toctree}
-:maxdepth: 1
-:caption: API Reference
+```{grid-item-card} How-To Guides
+:link: how-to/index
+:link-type: doc
 
-api/core/root.rst
-api/application/root.rst
-api/input/root.rst
-api/serialization/root.rst
-api/engine/root.rst
-api/networking/root.rst
-
+Task-oriented recipes for common problems.
 ```
 
-## Getting Started
+```{grid-item-card} API Reference
+:link: api/index
+:link-type: doc
 
-To get started with the Portal Framework, check out the [Core Systems Architecture](architecture/core-systems.md) documentation
-for an overview of the framework's architecture and design principles.
+Complete API documentation for all modules.
+```
 
-## Indices and Tables
+````
 
-* {ref}`genindex`
-* {ref}`search`
+---
+
+## Modules
+
+Portal Engine is organized into independent modules:
+
+````{grid} 3
+:gutter: 2
+
+```{grid-item-card} Core
+:link: modules/core
+:link-type: doc
+
+Logging, math, jobs, utilities.
+```
+
+```{grid-item-card} Application
+:link: modules/application
+:link-type: doc
+
+Application lifecycle, module system.
+```
+
+```{grid-item-card} Engine
+:link: modules/engine
+:link-type: doc
+
+Renderer, scene graph, resources.
+```
+
+```{grid-item-card} Input
+:link: modules/input
+:link-type: doc
+
+Keyboard, mouse, gamepad.
+```
+
+```{grid-item-card} Networking
+:link: modules/networking
+:link-type: doc
+
+Client-server communication.
+```
+
+```{grid-item-card} Serialization
+:link: modules/serialization
+:link-type: doc
+
+Binary serialization, save/load.
+```
+
+````
+
+---
+
+```{toctree}
+:maxdepth: 2
+:hidden:
+:includehidden:
+
+introduction/index
+getting-started/index
+tutorials/index
+how-to/index
+concepts/index
+modules/index
+api/index
+contributing/index
+```

@@ -55,7 +55,7 @@ exhale.environment_ready = exhale_environment_ready
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'Portal Framework'
-copyright = 'Copyright © 2025, Jonatan Nevo'
+copyright = 'Copyright © 2026, Jonatan Nevo'
 author = 'Jonatan Nevo'
 release = '0.1.6'
 
@@ -63,15 +63,17 @@ release = '0.1.6'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'breathe',
-    'exhale',
+    # 'breathe',
+    # 'exhale',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
     'sphinx.ext.todo',
     'myst_parser',
+    'sphinx_design',
     "sphinx_inline_tabs",
-    'sphinx_copybutton'
+    'sphinx_copybutton',
+    'sphinxcontrib.mermaid'
 ]
 
 templates_path = ['_templates']
@@ -166,6 +168,7 @@ html_theme_options = {
     "light_logo": "portal_banner_light.png",
     "dark_logo": "portal_banner_dark.png",
     "sidebar_hide_name": True,
+    "navigation_with_keys": True,
 }
 
 todo_include_todos = True

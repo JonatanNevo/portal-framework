@@ -9,14 +9,10 @@ dependencies = [
     "exhale>=0.3.7",
     "sphinx-copybutton>=0.5.2",
     "sphinx-inline-tabs>=2025.12.21.14",
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.7.1",
     "furo>=2025.12.19",
-]
-
-[project.optional-dependencies]
-dev = [
+    "sphinx-design>=0.6.1",
     "sphinx-autobuild>=2024.0.0",
+    "sphinxcontrib-mermaid>=1.2.3",
 ]
 
 [tool.uv.sources]
