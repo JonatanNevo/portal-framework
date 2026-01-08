@@ -57,14 +57,14 @@ exhale.environment_ready = exhale_environment_ready
 project = 'Portal Framework'
 copyright = 'Copyright © 2026, Jonatan Nevo'
 author = 'Jonatan Nevo'
-release = '0.1.6'
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    # 'breathe',
-    # 'exhale',
+    'breathe',
+    'exhale',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
