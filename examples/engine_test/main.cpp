@@ -18,10 +18,10 @@
 
 using namespace portal;
 
+constexpr std::string_view PORTAL_APPLICATION_NAME = "Engine Test";
+
 std::unique_ptr<Application> portal::create_application(int, char**)
 {
-    Settings::init(SettingsArchiveType::Json, "settings.json");
-
     const auto prop = ApplicationProperties::from_settings();
     auto engine = std::make_unique<Engine>(prop);
     // TODO: Should not be here

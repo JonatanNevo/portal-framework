@@ -23,12 +23,11 @@ ApplicationProperties ApplicationProperties::from_settings()
 {
     auto& settings = Settings::get();
 
-    const auto name = settings.get_setting<std::string>("name");
     const auto width = settings.get_setting<size_t>("application.window.width");
     const auto height = settings.get_setting<size_t>("application.window.height");
 
     return ApplicationProperties{
-        .name = STRING_ID(name.value()),
+        .name = STRING_ID(PORTAL_APPLICATION_NAME),
         .width = width.value(),
         .height = height.value()
     };

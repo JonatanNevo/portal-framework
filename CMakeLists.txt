@@ -21,10 +21,10 @@ endif()
 
 enable_testing()
 add_subdirectory(core)
-add_subdirectory(networking)
+add_subdirectory(serialization)
 add_subdirectory(application)
 add_subdirectory(input)
-add_subdirectory(serialization)
+add_subdirectory(networking)
 add_subdirectory(engine)
 
 add_subdirectory(examples/engine_test)
@@ -32,3 +32,5 @@ add_subdirectory(examples/engine_test)
 if(PORTAL_BUILD_DOCS)
     add_subdirectory(docs)
 endif()
+
+include(CPack)

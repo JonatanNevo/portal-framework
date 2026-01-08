@@ -26,6 +26,9 @@ portal_add_module(application
         PORTAL_DEPENDENCIES
             core
             serialization
+
+        COMPILE_CONFIG_FILE
+            portal/application/config.h
 )
 
 target_include_directories(portal-application PRIVATE ${Stb_INCLUDE_DIR})

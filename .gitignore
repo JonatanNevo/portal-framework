@@ -148,3 +148,6 @@ sessions/.archived/
 sessions/
 CLAUDE.md
 .claude/
+
+# Packaging
+dist/

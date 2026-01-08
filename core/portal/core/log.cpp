@@ -15,11 +15,12 @@
 #include <ranges>
 #include <utility>
 
+#include "files/file_system.h"
 #include "portal/platform/core/hal/platform_logger.h"
 
 namespace portal
 {
-Log::Settings g_settings;
+Log::LoggerSettings g_settings;
 
 // Format: [date] [#thread_id] [file:line function] [name] colored{[level] message} extra
 constexpr auto default_pattern = "[%Y-%m-%d %H:%M:%S.%f] [%t] [%*] [%-12n] %^[%=7l] %v%$ %&";
@@ -77,24 +78,20 @@ public:
 
 void Log::init()
 {
-    const Settings settings;
+    const LoggerSettings settings;
     init(settings);
 }
 
-void Log::init(const Settings& settings)
+void Log::init(const LoggerSettings& settings)
 {
     g_settings = settings;
-
-    const std::string log_directory = "logs";
-    if (!std::filesystem::exists(log_directory))
-        std::filesystem::create_directory(log_directory);
 
     // Create a custom formatter and register the custom flag
     const auto formatter = std::make_unique<spdlog::pattern_formatter>();
     formatter->add_flag<source_location_flag_formatter>('*', 30);
     formatter->set_pattern(default_pattern);
 
-    auto& sinks = platform::get_platform_sinks();
+    auto& sinks = platform::get_platform_sinks(get_log_directory());
 
     for (const auto& sink : sinks)
     {
@@ -108,7 +105,7 @@ void Log::init(const Settings& settings)
         logger->set_level(static_cast<spdlog::level::level_enum>(settings.default_log_level));
     }
 
-    const auto default_logger = std::make_shared<spdlog::logger>(settings.default_logger_name, begin(sinks), end(sinks));
+    const auto default_logger = std::make_shared<spdlog::logger>(std::string(settings.default_logger_name), begin(sinks), end(sinks));
     default_logger->set_level(static_cast<spdlog::level::level_enum>(settings.default_log_level));
 
     spdlog::set_default_logger(default_logger);
@@ -134,7 +131,7 @@ std::shared_ptr<spdlog::logger> Log::get_logger(const std::string& tag_name)
     if (loggers.contains(tag_name))
         return loggers[tag_name];
 
-    auto& sinks = platform::get_platform_sinks();
+    auto& sinks = platform::get_platform_sinks(get_log_directory());
 
     // Create a new logger if it doesn't exist
     const auto logger = std::make_shared<spdlog::logger>(tag_name, begin(sinks), end(sinks));
@@ -224,6 +221,16 @@ bool Log::print_assert_message(
     );
 
     return platform::print_assert_dialog(file, line, function, message);
+}
+
+std::filesystem::path Log::get_log_directory()
+{
+    auto log_directory = FileSystem::get_data_home() / "logs";
+
+    if (!FileSystem::exists(log_directory))
+        FileSystem::create_directory(log_directory);
+
+    return log_directory;
 }
 
 std::unordered_map<std::string, std::shared_ptr<spdlog::logger>>& Log::get_loggers()

@@ -6,7 +6,6 @@
 #pragma once
 
 #include <filesystem>
-#include <span>
 
 #include "portal/core/buffer.h"
 
@@ -98,21 +97,6 @@ public:
     static std::filesystem::path get_binary_path();
     static std::filesystem::path get_resource_path();
     static std::filesystem::path get_root_path();
-
-
-    /**
-     * Sets the relative program path for system file retrival.
-     * For example,
-     *
-     * @code
-     * portal::FileSystem::set_program_data_path("game_name");
-     *
-     * auto data_path = portal::FileSystem::get_data_home(); // Will return <Platform Data Home>/game_name
-     * @endcode
-     *
-     * @param program_path A relative path to append to the system paths.
-     */
-    static void set_program_data_path(std::filesystem::path program_path);
 
     /**
      * Retrieves the base folder for storing data files.

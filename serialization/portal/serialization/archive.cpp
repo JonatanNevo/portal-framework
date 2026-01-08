@@ -12,12 +12,63 @@ void ArchiveObject::update(const ArchiveObject& other)
 {
     for (auto& [name, prop] : other.property_map)
     {
-        property_map[name] = reflection::Property{
-            .value = Buffer::copy(prop.value),
-            .type = prop.type,
-            .container_type = prop.container_type,
-            .elements_number = prop.elements_number
-        };
+        if (prop.type == reflection::PropertyType::object)
+        {
+            if (prop.container_type == reflection::PropertyContainerType::object)
+            {
+                auto* other_object = other.get_object(name);
+                auto* child = get_object(name);
+                if (child)
+                    child->update(*other_object);
+                else
+                    create_child(name)->update(*other_object);
+            }
+            if (prop.container_type == reflection::PropertyContainerType::array)
+            {
+                auto* other_objects = prop.value.as<ArchiveObject*>();
+
+                // Check if we already have this property as an array
+                auto& existing_prop = get_property_from_map(name);
+                if (existing_prop.type == reflection::PropertyType::object &&
+                    existing_prop.container_type == reflection::PropertyContainerType::array &&
+                    existing_prop.elements_number == prop.elements_number)
+                {
+                    // Update each element in the existing array
+                    auto* our_objects = existing_prop.value.as<ArchiveObject*>();
+                    for (size_t i = 0; i < prop.elements_number; ++i)
+                    {
+                        our_objects[i].update(other_objects[i]);
+                    }
+                }
+                else
+                {
+                    // Create a new array by copying from other
+                    Buffer buffer = Buffer::allocate(prop.elements_number * sizeof(ArchiveObject));
+                    auto* new_objects = buffer.as<ArchiveObject*>();
+
+                    for (size_t i = 0; i < prop.elements_number; ++i)
+                    {
+                        new (new_objects + i) ArchiveObject(other_objects[i]);
+                    }
+
+                    property_map[name] = reflection::Property{
+                        .value = std::move(buffer),
+                        .type = reflection::PropertyType::object,
+                        .container_type = reflection::PropertyContainerType::array,
+                        .elements_number = prop.elements_number
+                    };
+                }
+            }
+        }
+        else
+        {
+            property_map[name] = reflection::Property{
+                .value = Buffer::copy(prop.value),
+                .type = prop.type,
+                .container_type = prop.container_type,
+                .elements_number = prop.elements_number
+            };
+        }
     }
 }
 
@@ -75,8 +126,17 @@ reflection::Property& ArchiveObject::add_property_to_map(PropertyName name, refl
     return prop;
 }
 
-ArchiveObject* ArchiveObject::get_object(PropertyName name)
+ArchiveObject* ArchiveObject::get_object(PropertyName name) const
 {
+#ifdef PORTAL_DEBUG
+    if (!property_map.contains(std::string{name}))
+        return nullptr;
+#else
+    if (!property_map.contains(name))
+        return nullptr;
+#endif
+
+
     const auto& prop = get_property_from_map(name);
     if (prop.type == reflection::PropertyType::invalid || prop.container_type != reflection::PropertyContainerType::object)
     {
@@ -91,6 +151,15 @@ reflection::Property& ArchiveObject::get_property_from_map(const PropertyName na
     return property_map[std::string{name}];
 #else
     return property_map[name];
+#endif
+}
+
+const reflection::Property& ArchiveObject::get_property_from_map(PropertyName name) const
+{
+#ifdef PORTAL_DEBUG
+    return property_map.at(std::string{name});
+#else
+    return property_map.at(name);
 #endif
 }
 }

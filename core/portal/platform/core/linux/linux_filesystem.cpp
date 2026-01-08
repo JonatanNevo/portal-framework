@@ -20,7 +20,6 @@
 
 namespace portal
 {
-static std::filesystem::path s_program_path;
 
 static void add_to_platform_folders_form_file(std::filesystem::path filename, std::unordered_map<std::string, std::filesystem::path>& folders)
 {
@@ -198,11 +197,6 @@ std::filesystem::path FileSystem::get_root_path()
     return std::filesystem::current_path();
 }
 
-void FileSystem::set_program_data_path(std::filesystem::path program_path)
-{
-    PORTAL_ASSERT(program_path.is_relative(), "Program path must be relative");
-    s_program_path = std::move(program_path);
-}
 
 std::filesystem::path FileSystem::get_data_home()
 {
