@@ -102,7 +102,6 @@ This will generate a Visual Studio solution in the `build/vs2022` directory.
 
 Detailed architecture documentation is available in the `docs/architecture/` directory:
 
-- [**Core Systems Architecture**](docs/architecture/core-systems.md) - In-depth documentation of the job system, memory allocators, concurrency primitives, and string ID system
 
 # Examples
 You can find a basic example of a rendered scene under `examples/engine_test`
