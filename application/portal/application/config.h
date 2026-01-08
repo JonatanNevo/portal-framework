@@ -11,6 +11,6 @@
 namespace portal
 {
 
-extern constexpr std::string_view PORTAL_SETTINGS_FILE_NAME;
+extern const std::string_view PORTAL_SETTINGS_FILE_NAME;
 
 }
