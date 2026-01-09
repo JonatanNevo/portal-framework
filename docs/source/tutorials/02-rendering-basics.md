@@ -1,5 +1,9 @@
 # Tutorial 2: Rendering Basics
 
+```{Warning}
+This section is still under construction, everything is subject to change and might be out of date!
+```
+
 **Time:** X minutes  
 **Prerequisites:** Tutorial N-1, Basic C++ Knowledge  
 **You will learn:** Stuff  

@@ -29,13 +29,6 @@
         {
           "name": "concurrentqueue",
           "version>=": "1.0.4"
-        },
-        {
-          "name": "mimalloc",
-          "features": [
-            "override"
-          ],
-          "version>=": "2.2.3#1"
         }
       ]
     },

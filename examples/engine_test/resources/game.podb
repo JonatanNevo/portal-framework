@@ -1,6 +1,8 @@
 {
     "dirty": 0,
     "name": "game",
+    "ignored_extensions": [".bin"],
+    "ignored_files": [],
     "resource_count": 34,
     "version": 1
 }

@@ -154,7 +154,7 @@ myst_enable_extensions = [
     "fieldlist",  # Field lists
 ]
 
-mermaid_version = None
+mermaid_version = ""
 mermaid_use_local = "https://example.com"
 mermaid_init_js = """import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs'
 

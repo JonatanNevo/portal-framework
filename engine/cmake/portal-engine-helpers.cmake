@@ -294,8 +294,53 @@ function(portal_package_game TARGET_NAME)
                 DESTINATION resources
         )
     endforeach ()
-
 endfunction()
+
+macro(_find_icon_files STATIC_ICON)
+    # Get the resource prefix from portal-engine for default icons
+    get_target_property(ENGINE_RESOURCE_PREFIX portal::engine PORTAL_RESOURCE_PREFIX)
+    if (NOT ENGINE_RESOURCE_PREFIX OR ENGINE_RESOURCE_PREFIX STREQUAL "ENGINE_RESOURCE_PREFIX-NOTFOUND")
+        # Fallback for local builds (not installed)
+        set(ENGINE_RESOURCE_PREFIX "${CMAKE_SOURCE_DIR}/engine/resources")
+    else()
+        # For installed targets, append the engine folder
+        set(ENGINE_RESOURCE_PREFIX "${ENGINE_RESOURCE_PREFIX}/engine")
+    endif()
+
+    if (STATIC_ICON)
+        cmake_path(REPLACE_EXTENSION STATIC_ICON "icns" OUTPUT_VARIABLE ICNS_FILE_CHECK)
+        cmake_path(REPLACE_EXTENSION STATIC_ICON "png" OUTPUT_VARIABLE PNG_FILE_CHECK)
+        cmake_path(REPLACE_EXTENSION STATIC_ICON "ico" OUTPUT_VARIABLE ICO_FILE_CHECK)
+    else()
+        set(ICNS_FILE_CHECK "")
+        set(PNG_FILE_CHECK "")
+        set(ICO_FILE_CHECK "")
+    endif()
+
+    if (EXISTS "${ICNS_FILE_CHECK}")
+        set(ICON_ICNS_FILE "${ICNS_FILE_CHECK}")
+        message(STATUS "Using MacOS Icon: ${ICON_ICNS_FILE}")
+    else()
+        set(ICON_ICNS_FILE "${ENGINE_RESOURCE_PREFIX}/portal_icon_64x64.icns")
+        message(STATUS "Missing MacOS Icon, defaulting to: ${ICON_ICNS_FILE}")
+    endif()
+
+    if (EXISTS "${PNG_FILE_CHECK}")
+        set(ICON_PNG_FILE "${PNG_FILE_CHECK}")
+        message(STATUS "Using Icon: ${ICON_PNG_FILE}")
+    else()
+        set(ICON_PNG_FILE "${ENGINE_RESOURCE_PREFIX}/portal_icon_64x64.png")
+        message(STATUS "Missing Icon, defaulting to: ${ICON_PNG_FILE}")
+    endif()
+
+    if (EXISTS "${ICO_FILE_CHECK}")
+        set(ICON_ICO_FILE "${ICO_FILE_CHECK}")
+        message(STATUS "Using Windows Icon: ${ICON_ICO_FILE}")
+    else()
+        set(ICON_ICO_FILE "${ENGINE_RESOURCE_PREFIX}/portal_icon_64x64.ico")
+        message(STATUS "Missing Windows Icon, defaulting to: ${ICON_ICO_FILE}")
+    endif()
+endmacro()
 
 function(portal_add_game TARGET_NAME)
     set(options MAKE_STANDALONE)
@@ -315,9 +360,11 @@ function(portal_add_game TARGET_NAME)
         set(ARG_SETTINGS_FILE_NAME "settings.json")
     endif ()
 
+    _find_icon_files(ARG_STATIC_ICON)
+
     # TODO: add editor target
     if (APPLE AND ARG_MAKE_STANDALONE)
-        cmake_path(GET ARG_STATIC_ICON FILENAME BUNDLE_ICON_FILE)
+        cmake_path(GET ICON_ICNS_FILE FILENAME BUNDLE_ICON_FILE)
         set_source_files_properties(${ARG_STATIC_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
         add_executable(${TARGET_NAME} MACOSX_BUNDLE ${ARG_SOURCES} ${ARG_STATIC_ICON})
@@ -338,6 +385,11 @@ function(portal_add_game TARGET_NAME)
     else ()
         add_executable(${TARGET_NAME} ${ARG_SOURCES})
     endif ()
+
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_DISPLAY_NAME ${ARG_DISPLAY_NAME})
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_WINDOWS_ICON ${ICON_ICO_FILE})
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_MACOS_ICON ${ICON_ICNS_FILE})
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_ICON ${ICON_PNG_FILE})
 
     if (ARG_MAKE_STANDALONE)
         target_compile_definitions(${TARGET_NAME} PRIVATE PORTAL_STANDALONE_EXE)
@@ -370,5 +422,4 @@ function(portal_add_game TARGET_NAME)
     portal_read_settings(${TARGET_NAME})
 
     portal_package_game(${TARGET_NAME})
-    # TODO: package targets
 endfunction()

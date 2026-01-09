@@ -18,6 +18,8 @@ struct DatabaseMetadata
     size_t version = CURRENT_DATABASE_VERSION;
     StringId name = STRING_ID("root");
     size_t resource_count = 0;
+    std::vector<std::string> ignored_extensions = {};
+    std::vector<std::string> ignored_files = {};
     ResourceDirtyFlags dirty = ResourceDirtyBits::DataChange;
 
     void archive(ArchiveObject& archive) const;

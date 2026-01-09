@@ -1,5 +1,13 @@
 # Installation
 
+## Platform Support
+
+| Platform                         | Compiler               |
+|----------------------------------|------------------------|
+| Windows                          | MSVC 2022+ / Clang 20+ |
+| Linux (Only Ubuntu24+ is tested) | GCC 14+ / Clang 20+    |
+| macOS                            | Clang 20+              |
+
 ## Prerequisites
 
 Before installing `portal-tool` and the engine, make sure you have the following installed:
@@ -11,6 +19,7 @@ Before installing `portal-tool` and the engine, make sure you have the following
 - Vulkan SDK version 1.4+
 - C++ 23+ compiler
 
+### Prerequisites Installation Steps
 ::::{tab-set}
 :sync-group: platform
 
@@ -70,7 +79,7 @@ winget install llvm
 
 #### Using Apt
 
-```shell
+```console
 sudo apt update
 sudo apt install git cmake ninja-build python3
 ```
@@ -81,7 +90,7 @@ If not:
 
 ##### Clang 20+
 Install clang from installer script:
-```shell
+```console
 wget https://apt.llvm.org/llvm.sh
 chmod +x llvm.sh
 sudo ./llvm.sh <version 20/21> all
@@ -97,14 +106,14 @@ sudo update-alternatives --set clang++ /usr/bin/clang++-<version>
 
 ##### GCC 14+
 Install GCC 14 from PPA:
-```shell
+```console
 sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
 sudo apt update
 sudo apt install gcc-<version> g++<version> -y
 ```
 
 Then update alternatives:
-```shell
+```console
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-<version> 100 
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-<version> 100
 sudo update-alternatives --set gcc /usr/bin/gcc-<version>
@@ -125,7 +134,7 @@ Portal Engine is not yet tested on other linux distros.
 Make sure you have brew installed, if not you can find an installation [here](https://brew.sh/).
 
 ### Using Brew
-```shell
+```console
 brew install git cmake ninja python llvm
 ```
 
@@ -143,13 +152,13 @@ You can download the Vulkan SDK from [here](https://vulkan.lunarg.com/sdk/home).
 Portal Tool is a companion tool for building and managing Portal Engine projects.  
 You can install it using pip:
 
-```shell
+```console
 pip install portal-tool
 ```
 
 It is recommended to install the completions for portal-tool.
 
-```shell
+```console
 portal-tool --install-completion
 ```
 
@@ -157,7 +166,7 @@ portal-tool --install-completion
 Some platforms require additional system packages to be installed before building Portal Engine.
 
 `portal-tool` can automatically install these packages and make sure you have the correct compilers installed.
-```shell
+```console
 portal-tool install
 ```
 

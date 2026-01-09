@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(cmake/portal-engine-helpers.cmake)
+include(cmake/portal-engine-package-helpers.cmake)
 
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS "portal/engine/*.cpp")
 file(GLOB_RECURSE ENGINE_HEADERS CONFIGURE_DEPENDS "portal/engine/*.h")
@@ -68,4 +69,5 @@ target_compile_definitions(portal-engine PUBLIC
 portal_install_module(engine
         FILES
         cmake/portal-engine-helpers.cmake
+        cmake/portal-engine-package-helpers.cmake
 )

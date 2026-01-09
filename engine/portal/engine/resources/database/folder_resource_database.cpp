@@ -19,7 +19,6 @@ using namespace std::literals;
 
 constexpr auto RESOURCE_METADATA_EXTENSION = ".pmeta";
 constexpr auto DATABASE_METADATA_EXTENSION = ".podb";
-constexpr std::array IGNORED_EXTENSIONS = {".bin"sv};
 
 const auto ROOT_DATABASE_METADATA_FILENAME = fmt::format("root{}", DATABASE_METADATA_EXTENSION);
 
@@ -31,6 +30,8 @@ void DatabaseMetadata::archive(ArchiveObject& archive) const
     archive.add_property("name", name.string);
     archive.add_property("resource_count", resource_count);
     archive.add_property("dirty", dirty.get());
+    archive.add_property("ignored_extensions", ignored_extensions);
+    archive.add_property("ignored_files", ignored_files);
 }
 
 DatabaseMetadata DatabaseMetadata::dearchive(ArchiveObject& archive)
@@ -45,6 +46,8 @@ DatabaseMetadata DatabaseMetadata::dearchive(ArchiveObject& archive)
     archive.get_property("resource_count", metadata.resource_count);
     archive.get_property("dirty", dirty);
     metadata.dirty = ResourceDirtyFlags(dirty);
+    archive.get_property("ignored_extensions", metadata.ignored_extensions);
+    archive.get_property("ignored_files", metadata.ignored_files);
 
     return metadata;
 }
@@ -250,7 +253,9 @@ DatabaseError FolderResourceDatabase::validate()
         if (entry.is_regular_file())
         {
             if (entry.path().extension() != RESOURCE_METADATA_EXTENSION && entry.path().extension() != DATABASE_METADATA_EXTENSION &&
-                std::ranges::none_of(IGNORED_EXTENSIONS, [&entry](const auto& ext) { return entry.path().extension() == ext; }))
+                std::ranges::none_of(metadata.ignored_extensions, [&entry](const auto& ext) { return entry.path().extension() == ext; }) &&
+                std::ranges::none_of(metadata.ignored_files, [&entry](const auto& file) { return entry.path().filename() == file; })
+            )
             {
                 auto relative_path = std::filesystem::relative(entry.path(), root_path);
                 auto file_as_string_id = STRING_ID(relative_path.generic_string());
@@ -336,7 +341,9 @@ void FolderResourceDatabase::mend(const DatabaseError error)
             if (entry.is_regular_file())
             {
                 if (entry.path().extension() != RESOURCE_METADATA_EXTENSION && entry.path().extension() != DATABASE_METADATA_EXTENSION &&
-                    std::ranges::none_of(IGNORED_EXTENSIONS, [&entry](const auto& ext) { return entry.path().extension() == ext; }))
+                    std::ranges::none_of(metadata.ignored_extensions, [&entry](const auto& ext) { return entry.path().extension() == ext; }) &&
+                    std::ranges::none_of(metadata.ignored_files, [&entry](const auto& file) { return entry.path().filename() == file; })
+                )
                 {
                     auto relative_path = std::filesystem::relative(entry.path(), root_path);
                     auto file_as_string_id = STRING_ID(relative_path.generic_string());

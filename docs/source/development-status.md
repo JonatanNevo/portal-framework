@@ -23,7 +23,7 @@ timeline
     Working Game : Basic Editor
                  : Animation System
                  : Audio System
-                 : PBR Shaders
+                 : Advanced Shaders
                  : Basic Networking
                  : UI System
                  : Scripting
@@ -62,10 +62,10 @@ Add an animation system, with all its dependencies.
 **Phase:**  `Working Game`  
 Add an audio system that supports both static audio and 3d dynamic audio.
 
-### PBR Shaders
+### Advanced Shaders
 
 **Phase:**  `Working Game`  
-Implement PBR shaders in slang, Using [Real Time Rendering](https://www.realtimerendering.com/) book as reference, and
+Implement advanced shaders (PBR, etc...) in slang, Using [Real Time Rendering](https://www.realtimerendering.com/) book as reference, and
 extending the shader system to support multiple and dynamic shaders.
 
 ### Basic Networking
