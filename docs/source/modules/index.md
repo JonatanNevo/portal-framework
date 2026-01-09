@@ -16,6 +16,7 @@ flowchart TD
     Serialization --> Core
     Networking --> Core
     Application --> Core
+    Application --> Serialization
 ```
 
 ---

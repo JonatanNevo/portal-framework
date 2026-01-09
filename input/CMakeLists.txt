@@ -27,9 +27,6 @@ portal_add_module(input
             core
             application
 
-        DEPENDENCIES
-            glaze
-
         COMPLEX_DEPENDENCIES
             glfw3|LINK|glfw
 )

@@ -8,43 +8,13 @@
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
         "CMAKE_CONFIGURATION_TYPES": "Debug;RelWithDebInfo;Release",
-        "VCPKG_MANIFEST_FEATURES": "dev"
+        "VCPKG_MANIFEST_FEATURES": "dev;portal-core;serialization;application;input;networking;engine"
       }
     },
     {
       "name": "ninja-multi",
       "inherits": "base",
       "generator": "Ninja Multi-Config"
-    },
-    {
-      "name": "xcode",
-      "inherits": "base",
-      "generator": "Xcode",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      }
-    },
-    {
-      "name": "vs2022",
-      "inherits": "base",
-      "generator": "Visual Studio 17 2022",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
-      "name": "vs2026",
-      "inherits": "base",
-      "generator": "Visual Studio 18 2026",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
     },
     {
       "name": "docs",
