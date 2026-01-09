@@ -67,6 +67,16 @@ function(portal_install_module MODULE_NAME)
         endforeach ()
     endif ()
 
+    # Set the resource prefix for installed targets
+    # This allows consumers to locate resources correctly when the target is imported
+    get_target_property(RESOURCES_FOLDERS ${TARGET_NAME} PORTAL_RESOURCES)
+    if (RESOURCES_FOLDERS AND NOT RESOURCES_FOLDERS STREQUAL "PORTAL_RESOURCES-NOTFOUND")
+        string(APPEND CONFIG_CONTENT "\n# Set resource prefix for portal::${MODULE_NAME}\n")
+        string(APPEND CONFIG_CONTENT "set_target_properties(portal::${MODULE_NAME} PROPERTIES\n")
+        string(APPEND CONFIG_CONTENT "    PORTAL_RESOURCE_PREFIX \"\${PACKAGE_PREFIX_DIR}/resources\"\n")
+        string(APPEND CONFIG_CONTENT ")\n")
+    endif ()
+
     string(APPEND CONFIG_CONTENT "\ncheck_required_components(${TARGET_NAME})\n")
 
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${CONFIG_TARGET}.cmake.in" "${CONFIG_CONTENT}")
