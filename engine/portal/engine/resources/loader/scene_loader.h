@@ -14,6 +14,10 @@
 
 namespace portal
 {
+
+class Serializer;
+class Deserializer;
+
 class RendererContext;
 }
 

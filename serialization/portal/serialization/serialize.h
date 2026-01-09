@@ -16,6 +16,7 @@
 namespace portal
 {
 class Serializer;
+class Deserializer;
 
 /**
  * @brief Concept for types with a serialize() method that writes data sequentially to a Serializer.
@@ -535,7 +536,10 @@ public:
         for (size_t i = 0; i < size; ++i)
         {
             typename T::value_type value;
-            get_value<typename T::value_type>(value);
+            if constexpr (std::is_same_v<typename T::value_type, StringId>)
+                get_value(value);
+            else
+                get_value<typename T::value_type>(value);
             t.push_back(std::move(value));
         }
     }
@@ -703,7 +707,10 @@ public:
         if (has_value)
         {
             T underlying;
-            get_value<T>(underlying);
+            if constexpr (std::is_same_v<T, StringId>)
+                get_value(underlying);
+            else
+                get_value<T>(underlying);
             optional_t = std::optional<T>{std::move(underlying)};
         }
         else
