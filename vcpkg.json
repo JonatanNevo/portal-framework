@@ -55,11 +55,6 @@
     "application": {
       "description": ["The application module for the Portal framework.", "depends: portal-core,portal-serialization"],
       "dependencies": [
-      ]
-    },
-    "input": {
-      "description": ["The input interface for the Portal framework", "depends: portal-core,portal-application"],
-      "dependencies": [
         {
           "name": "glfw3",
           "version>=": "3.4#1",
@@ -75,6 +70,10 @@
           "platform": "!linux"
         }
       ]
+    },
+    "input": {
+      "description": ["The input interface for the Portal framework", "depends: portal-core,portal-application"],
+      "dependencies": []
     },
     "networking": {
       "description": ["The networking interface for the Portal framework", "depends: portal-core"],
