@@ -27,6 +27,8 @@ portal_add_module(input
             core
             application
 
+        PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}
+
         COMPLEX_DEPENDENCIES
             glfw3|LINK|glfw
 )

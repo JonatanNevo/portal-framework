@@ -106,7 +106,7 @@ endfunction()
 
 function(portal_add_dependency MODULE_NAME DEPENDENCY)
     set(options PORTAL SKIP_LINK)
-    set(oneValueArgs LINK)
+    set(oneValueArgs LINK PORTAL_FIND_PACKAGE)
     set(multiValueArgs FIND_PACKAGE_ARGS)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -123,7 +123,7 @@ function(portal_add_dependency MODULE_NAME DEPENDENCY)
     endif ()
 
     if (ARG_PORTAL)
-        if (PORTAL_FIND_PACKAGE)
+        if (ARG_PORTAL_FIND_PACKAGE)
             find_package(portal-${DEPENDENCY} CONFIG REQUIRED)
         endif ()
     else ()
@@ -154,11 +154,11 @@ function(portal_setup_config_pch MODULE_NAME)
         set_property(TARGET ${TARGET_NAME} APPEND PROPERTY PORTAL_CONFIG_HEADERS ${ARG_COMPILE_CONFIG_FILE})
     endif ()
 
-    get_target_property(COMPLETE_CONFIGs ${TARGET_NAME} PORTAL_CONFIG_HEADERS)
+    get_target_property(COMPLETE_CONFIGS ${TARGET_NAME} PORTAL_CONFIG_HEADERS)
 
-    if (COMPLETE_CONFIGs)
+    if (COMPLETE_CONFIGS)
         set(PCH_HEADER_CONTENT "// This is an auto generated file\n#pragma once\n")
-        foreach (HEADER ${COMPLETE_CONFIGs})
+        foreach (HEADER ${COMPLETE_CONFIGS})
             string(APPEND PCH_HEADER_CONTENT "#include <${HEADER}>\n")
         endforeach ()
 
@@ -199,7 +199,7 @@ endmacro()
 
 function(portal_add_module MODULE_NAME)
     set(options "")
-    set(oneValueArgs COMPILE_CONFIG_FILE)
+    set(oneValueArgs COMPILE_CONFIG_FILE PORTAL_FIND_PACKAGE)
     set(multiValueArgs
             SOURCES
             HEADERS
@@ -273,7 +273,10 @@ function(portal_add_module MODULE_NAME)
 
     set(DEPENDENT_CONFIG_HEADERS "")
     foreach (dep ${ARG_PORTAL_DEPENDENCIES})
-        portal_add_dependency(${MODULE_NAME} ${dep} PORTAL)
+        portal_add_dependency(${MODULE_NAME} ${dep}
+                PORTAL
+                PORTAL_FIND_PACKAGE ${ARG_PORTAL_FIND_PACKAGE}
+        )
 
         get_target_property(CONFIG_FILES portal-${dep} PORTAL_CONFIG_HEADERS)
         if (CONFIG_FILES)

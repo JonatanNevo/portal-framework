@@ -27,6 +27,8 @@ portal_add_module(application
             core
             serialization
 
+        PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}
+
         COMPILE_CONFIG_FILE
             portal/application/config.h
 )

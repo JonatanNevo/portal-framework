@@ -26,6 +26,8 @@ portal_add_module(networking
         PORTAL_DEPENDENCIES
         core
 
+        PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}
+
         COMPLEX_DEPENDENCIES
         GameNetworkingSockets|LINK|GameNetworkingSockets::shared
 )

@@ -31,6 +31,8 @@ portal_add_module(engine
             networking
             serialization
 
+        PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}
+
         DEPENDENCIES
             imgui
             fastgltf

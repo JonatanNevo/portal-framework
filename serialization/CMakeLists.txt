@@ -27,6 +27,8 @@ portal_add_module(serialization
         PORTAL_DEPENDENCIES
         core
 
+        PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}
+
         DEPENDENCIES
         nlohmann_json
         glaze
