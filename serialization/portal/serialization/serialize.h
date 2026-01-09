@@ -149,7 +149,10 @@ public:
         for (const auto& value : t)
         {
             using ValueType = std::remove_cvref_t<typename T::value_type>;
-            add_value<ValueType>(value);
+            if constexpr (std::is_same_v<ValueType, StringId>)
+                add_value(value);
+            else
+                add_value<ValueType>(value);
         }
     }
 
