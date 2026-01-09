@@ -80,8 +80,8 @@ elseif (APPLE)
     set(PORTAL_PLATFORM MACOS)
 
     target_compile_options(portal-core PUBLIC
-            $<BUILD_INTERFACE:-fexperimental-library>
-            $<BUILD_INTERFACE:-stdlib=libc++>
+            -fexperimental-library
+            -stdlib=libc++
     )
     if (PORTAL_PROFILE)
         target_compile_definitions(portal-core PUBLIC MI_TRACK_VALGRIND=1)
@@ -113,10 +113,10 @@ endif ()
 
 if (MSVC)
     target_compile_options(portal-core PUBLIC
-            $<BUILD_INTERFACE:/Zc:__cplusplus>
-            $<BUILD_INTERFACE:/Zc:preprocessor>
-            $<BUILD_INTERFACE:/permissive->
-            $<BUILD_INTERFACE:/volatile:iso>
+            /Zc:__cplusplus
+            /Zc:preprocessor
+            /permissive-
+            /volatile:iso
             $<BUILD_INTERFACE:/bigobj>
             $<BUILD_INTERFACE:$<$<CONFIG:Release>:/Zi>>
     )

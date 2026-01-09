@@ -14,10 +14,9 @@ namespace portal::ecs
 {
 static auto logger = Log::get_logger("ECS Registry");
 
-Registry::Registry()
+Registry::Registry(): registry(), env_entity(registry.create())
 {
     // Entity that holds global values
-    env_entity = registry.create();
     registry.emplace<NameComponent>(env_entity, STRING_ID("env"));
     registry.emplace<RelationshipComponent>(env_entity);
 

@@ -397,7 +397,7 @@ private:
     }
 
 private:
-    entt::entity env_entity = entt::null;
     entt::registry registry;
+    entt::entity env_entity;
 };
 } // portal
