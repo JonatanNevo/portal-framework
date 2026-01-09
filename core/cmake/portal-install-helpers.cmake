@@ -41,9 +41,6 @@ function(portal_install_module MODULE_NAME)
         )
     endif ()
 
-
-
-
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(
             "${CMAKE_CURRENT_BINARY_DIR}/${VERSION_TARGET}.cmake"

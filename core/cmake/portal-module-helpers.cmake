@@ -153,6 +153,7 @@ function(portal_setup_config_pch MODULE_NAME)
     if (ARG_COMPILE_CONFIG_FILE)
         set_property(TARGET ${TARGET_NAME} APPEND PROPERTY PORTAL_CONFIG_HEADERS ${ARG_COMPILE_CONFIG_FILE})
     endif ()
+    set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_CONFIG_HEADERS)
 
     get_target_property(COMPLETE_CONFIGS ${TARGET_NAME} PORTAL_CONFIG_HEADERS)
 
@@ -278,7 +279,12 @@ function(portal_add_module MODULE_NAME)
                 PORTAL_FIND_PACKAGE ${ARG_PORTAL_FIND_PACKAGE}
         )
 
-        get_target_property(CONFIG_FILES portal-${dep} PORTAL_CONFIG_HEADERS)
+        if (${ARG_PORTAL_FIND_PACKAGE})
+            get_target_property(CONFIG_FILES portal::${dep} PORTAL_CONFIG_HEADERS)
+        else ()
+            get_target_property(CONFIG_FILES portal-${dep} PORTAL_CONFIG_HEADERS)
+        endif ()
+
         if (CONFIG_FILES)
             list(APPEND DEPENDENT_CONFIG_HEADERS ${CONFIG_FILES})
         endif ()
