@@ -2,7 +2,7 @@
   "registries": [
     {
       "kind": "git",
-      "baseline": "fc6dad99dbdef11a67457d2f55a1c6520c7a1d50",
+      "baseline": "5088b42710456e43fda314e6f826d814ac43d04e",
       "reference": "main",
       "repository": "https://github.com/JonatanNevo/portal-vcpkg-registry",
       "packages": [
@@ -12,12 +12,11 @@
         "portal-input",
         "portal-networking",
         "portal-serialization",
-        "llvm-adt"
+        "llvm-adt",
+        "enchantum",
+        "glaze"
       ]
     }
-  ],
-  "overlay-ports": [
-    "cmake/vcpkg-overlay-ports"
   ],
   "overlay-triplets": [
     "cmake/overlay-triplets"
