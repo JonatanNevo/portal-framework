@@ -336,11 +336,11 @@ macro(_find_icon_files STATIC_ICON LOGO_FILE)
     endif()
 
     if (EXISTS "${LOGO_FILE}")
-        set(LOGO_FILE "${LOGO_FILE}")
+        set(LOGO_PNG_FILE "${LOGO_FILE}")
         message(STATUS "Using Logo: ${LOGO_FILE}")
     else()
-        set(LOGO_FILE "${ENGINE_RESOURCE_PREFIX}/portal_logo_dark.png")
-        message(STATUS "Missing Logo, defaulting to: ${LOGO_FILE}")
+        set(LOGO_PNG_FILE "${ENGINE_RESOURCE_PREFIX}/portal_logo_dark.png")
+        message(STATUS "Missing Logo, defaulting to: ${LOGO_PNG_FILE}")
     endif()
 endmacro()
 
@@ -362,7 +362,15 @@ function(portal_add_game TARGET_NAME)
         set(ARG_SETTINGS_FILE_NAME "settings.json")
     endif ()
 
-    _find_icon_files(ARG_STATIC_ICON)
+    if (NOT ARG_STATIC_ICON)
+        set(ARG_STATIC_ICON "")
+    endif ()
+
+    if (NOT ARG_LOGO_FILE)
+        set(ARG_LOGO_FILE "")
+    endif ()
+
+    _find_icon_files(ARG_STATIC_ICON ARG_LOGO_FILE)
 
     # TODO: add editor target
     if (APPLE AND ARG_MAKE_STANDALONE)
@@ -391,7 +399,7 @@ function(portal_add_game TARGET_NAME)
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_DISPLAY_NAME ${ARG_DISPLAY_NAME})
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_WINDOWS_ICON ${ICON_ICO_FILE})
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_MACOS_ICON ${ICON_ICNS_FILE})
-    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_LOGO ${LOGO_FILE})
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_LOGO ${LOGO_PNG_FILE})
 
     if (ARG_MAKE_STANDALONE)
         target_compile_definitions(${TARGET_NAME} PRIVATE PORTAL_STANDALONE_EXE)
