@@ -214,8 +214,8 @@ html_theme_options = {
     "source_repository": "https://github.com/JonatanNevo/portal-framework",
     "source_branch": "main",
     "source_directory": "docs/source",
-    "light_logo": "portal_banner_light.png",
-    "dark_logo": "portal_banner_dark.png",
+    "light_logo": "portal_logo_light.png",
+    "dark_logo": "portal_logo_dark.png",
     "sidebar_hide_name": True,
     "navigation_with_keys": True,
     "footer_icons": [
