@@ -8,7 +8,6 @@ Portal Framework is still in early development.
 ---
 zoom: true
 align: center
-caption: (you can zoom on the diagram)
 ---
 timeline
     MVP : Build Infrastructure
