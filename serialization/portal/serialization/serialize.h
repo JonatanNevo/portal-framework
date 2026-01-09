@@ -434,6 +434,18 @@ public:
         add_property(reflection::Property{Buffer{t, length}, reflection::PropertyType::binary, reflection::PropertyContainerType::string, length});
     }
 
+    /**
+     * @brief Serializes a string id
+     *
+     * A specialization of `add_value` to serialize string id, serializes only the id part, without the string to save on space,
+     *
+     * @param id The string id to serialize
+     */
+    void add_value(const StringId& id)
+    {
+        add_value(id.id);
+    }
+
 protected:
     virtual void add_property(reflection::Property property) = 0;
 };
@@ -742,6 +754,20 @@ public:
 
         PORTAL_ASSERT(property.elements_number == length, "Value size mismatch, expected: {} got {}", length, property.elements_number);
         memcpy(t, property.value.data, (std::min)(length, property.elements_number));
+    }
+
+    /**
+     * @brief Deserializes a StringId.
+     *
+     * A specialization of `get_value` to return a string id, deserializes only the ID part and looks up the string in the registry
+     *
+     * @param out Output variable, the string id to deserialize to
+     */
+    void get_value(StringId& out)
+    {
+        StringId::HashType id = 0;
+        get_value(id);
+        out = StringId{id};
     }
 
 protected:

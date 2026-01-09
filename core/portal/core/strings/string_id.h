@@ -16,8 +16,6 @@
 
 namespace portal
 {
-class Deserializer;
-class Serializer;
 
 /**
  * Compile-time string identifier using 64-bit hash for efficient lookups.
@@ -137,9 +135,6 @@ struct StringId
      * @return true if hashes match, false otherwise
      */
     bool operator==(const StringId& other) const;
-
-    void serialize(Serializer& serializer) const;
-    static StringId deserialize(Deserializer& deserializer);
 };
 
 /**
