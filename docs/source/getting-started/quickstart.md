@@ -67,6 +67,10 @@ cmake --build build --preset <debug/development/dist>
 
 ### Packaging
 
+```{note}
+You don't need to run the configuration and building steps before packaging, you can directly run the packaging workflow!
+```
+
 #### Installer Package
 The installer requires the QT Installer Framework, you can download it [here](https://doc.qt.io/qtinstallerframework/index.html)
 
