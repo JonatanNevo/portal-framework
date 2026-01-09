@@ -85,6 +85,16 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
         endforeach ()
     endif ()
 
+    # Check if the target has a PORTAL_RESOURCE_PREFIX property (for installed targets)
+    get_target_property(RESOURCE_PREFIX ${TARGET_TO_FETCH} PORTAL_RESOURCE_PREFIX)
+    if (NOT RESOURCE_PREFIX OR RESOURCE_PREFIX STREQUAL "PORTAL_RESOURCE_PREFIX-NOTFOUND")
+        # For local targets, use TARGET_FILE_DIR
+        set(RESOURCE_BASE_PATH "$<TARGET_FILE_DIR:${TARGET_TO_FETCH}>/resources")
+    else()
+        # For installed/imported targets, use the PORTAL_RESOURCE_PREFIX property
+        set(RESOURCE_BASE_PATH "${RESOURCE_PREFIX}")
+    endif()
+
     foreach (RESOURCE_PATH ${RESOURCES_TO_COPY})
         list(APPEND EXISTING_ADDITIONAL_RESOURCES "${RESOURCE_PATH}")
 
@@ -97,7 +107,7 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
 
         add_custom_target(${FETCH_TARGET_NAME}
                 COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "$<TARGET_FILE_DIR:${TARGET_TO_FETCH}>/resources/${RESOURCE_PATH}"
+                "${RESOURCE_BASE_PATH}/${RESOURCE_PATH}"
                 "$<TARGET_FILE_DIR:${TARGET_NAME}>/resources/${RESOURCE_PATH}"
                 COMMENT "Fetching resources for ${TARGET_NAME}: ${TARGET_TO_FETCH}/resources/${RESOURCE_PATH} -> resources/${RESOURCE_PATH}"
                 VERBATIM
