@@ -9,4 +9,5 @@ input/root
 serialization/root
 engine/root
 networking/root
+cmake/root
 ```
