@@ -1,5 +1,9 @@
 # Concepts
 
+```{Warning}
+This section is still under construction, everything is subject to change and might be out of date!
+```
+
 Deep-dive explanations of Portal Engine's design and architecture.
 
 These articles explain the *why* behind design decisions. Read them to build a mental model of how the engine works.

@@ -62,7 +62,8 @@
     {
       "name": "pack",
       "configurePreset": "ninja-multi",
-      "packageDirectory": "${sourceDir}/dist"
+      "packageDirectory": "${sourceDir}/dist",
+      "generators": ["IFW"]
     }
   ],
   "workflowPresets": [

@@ -11,9 +11,9 @@ Get Portal Engine running on your machine.
 :maxdepth: 1
 
 installation
-project-setup
+quickstart
+advanced-project-setup
 ```
-
 
 --- 
 
@@ -24,15 +24,6 @@ project-setup
 | Windows  | MSVC 2022+ / Clang 20+ |
 | Linux    | GCC 14+ / Clang 20+    |
 | macOS    | Clang 20+              |
-
----
-
-## Requirements
-
-- **C++23** compatible compiler
-- **CMake** 3.25+
-- **Vulkan SDK** 1.4+
-- **vcpkg** (for dependencies)
 
 ---
 

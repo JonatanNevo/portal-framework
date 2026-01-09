@@ -1,6 +1,11 @@
 {
     "dirty": 0,
+    "ignored_extensions": [],
+    "ignored_files": [
+        "portal_icon_64x64.png",
+        "portal_icon_64x64.icns"
+    ],
     "name": "engine",
-    "resource_count": 3,
+    "resource_count": 1,
     "version": 1
 }

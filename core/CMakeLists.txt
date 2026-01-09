@@ -54,7 +54,6 @@ portal_add_module(core
 
         COMPLEX_DEPENDENCIES
             llvm-adt|LINK|llvm::adt
-            mimalloc|LINK|mimalloc-static
 
         COMPILE_CONFIG_FILE
             portal/core/config.h
