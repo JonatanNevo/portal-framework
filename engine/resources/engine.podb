@@ -3,7 +3,9 @@
     "ignored_extensions": [],
     "ignored_files": [
         "portal_icon_64x64.png",
-        "portal_icon_64x64.icns"
+        "portal_icon_64x64.icns",
+        "portal_icon_64x64.ico",
+        "portal_logo_dark.ico"
     ],
     "name": "engine",
     "resource_count": 1,

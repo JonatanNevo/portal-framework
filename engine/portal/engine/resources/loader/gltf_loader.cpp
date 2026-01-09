@@ -744,16 +744,16 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
         scene_description.scene_nodes_ids = std::vector(nodeIndices.begin(), nodeIndices.end());
 
         scene_jobs.emplace_back(
-            [this, &scene_metadata](SceneDescription scene_description) -> Job<>
+            [this](SceneDescription scene_desc, SourceMetadata scene_meta) -> Job<>
             {
                 std::stringstream ss;
                 BinarySerializer serializer{ss};
-                serializer.add_value(scene_description);
+                serializer.add_value(scene_desc);
 
                 auto serial_data = ss.str();
                 MemorySource source{Buffer(serial_data.data(), serial_data.size())};
-                co_await registry.load_direct(scene_metadata, source);
-            }(scene_description)
+                co_await registry.load_direct(scene_meta, source);
+            }(scene_description, scene_metadata)
         );
     }
     registry.wait_all(scene_jobs);
