@@ -12,6 +12,7 @@
         "portal-input",
         "portal-networking",
         "portal-serialization",
+        "portal-engine",
         "llvm-adt",
         "enchantum",
         "glaze"
