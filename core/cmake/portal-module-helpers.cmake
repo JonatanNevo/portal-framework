@@ -314,6 +314,8 @@ function(portal_add_module MODULE_NAME)
                 ${DEPENDENT_CONFIG_HEADERS}
     )
 
+    set_property(TARGET ${TARGET_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE FALSE)
+
     if (PORTAL_BUILD_DOCS)
         portal_register_docs(${MODULE_NAME})
     endif ()
