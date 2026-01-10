@@ -118,13 +118,12 @@ endif ()
 
 if (MSVC)
     target_compile_options(portal-core PUBLIC
-            $<$<CXX_COMPILER_ID:Clang>:-Wno-unused-command-line-argument> # suppress warnings about unused MSVC compatibility flags
-            /Zc:__cplusplus
-            /Zc:preprocessor
-            /permissive-
-            /volatile:iso
-            /bigobj
-            /utf-8
+            $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus>
+            $<$<CXX_COMPILER_ID:MSVC>:/Zc:preprocessor>
+            $<$<CXX_COMPILER_ID:MSVC>:/permissive->
+            $<$<CXX_COMPILER_ID:MSVC>:/volatile:iso>
+            $<$<CXX_COMPILER_ID:MSVC>:/bigobj>
+            $<$<CXX_COMPILER_ID:MSVC>:/utf-8>
     )
 else ()
     target_compile_options(portal-core PUBLIC
