@@ -225,7 +225,12 @@ function(portal_add_module MODULE_NAME)
             BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
             FILES ${ARG_HEADERS}
     )
-    set_target_properties(${TARGET_NAME} PROPERTIES EXPORT_NAME ${MODULE_NAME})
+    set_target_properties(${TARGET_NAME} PROPERTIES
+            EXPORT_NAME ${MODULE_NAME}
+            CXX_STANDARD 23
+            CXX_STANDARD_REQUIRED ON
+            CXX_EXTENSIONS OFF
+    )
     add_library(portal::${MODULE_NAME} ALIAS ${TARGET_NAME})
 
     if (WIN32)

@@ -100,10 +100,15 @@ else ()
     message(FATAL_ERROR "Unsupported platform")
 endif ()
 
-target_compile_definitions(portal-core PUBLIC
-        $<$<CONFIG:Debug>:PORTAL_DEBUG>
-        $<$<CONFIG:RelWithDebInfo>:PORTAL_DEVELOPMENT>
-        $<$<CONFIG:Release>:PORTAL_DIST>
+target_compile_definitions(portal-core
+        PUBLIC
+            $<BUILD_INTERFACE:$<$<CONFIG:Debug>:PORTAL_DEBUG>>
+            $<BUILD_INTERFACE:$<$<CONFIG:RelWithDebInfo>:PORTAL_DEVELOPMENT>>
+            $<BUILD_INTERFACE:$<$<CONFIG:Release>:PORTAL_DIST>>
+        INTERFACE
+            $<INSTALL_INTERFACE:$<$<CONFIG:Debug>:PORTAL_DEBUG>>
+            $<INSTALL_INTERFACE:$<$<CONFIG:RelWithDebInfo>:PORTAL_DEVELOPMENT>>
+            $<INSTALL_INTERFACE:$<$<CONFIG:Release>:PORTAL_DIST>>
 )
 
 if (PORTAL_PROFILE)
