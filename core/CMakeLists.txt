@@ -118,6 +118,7 @@ endif ()
 
 if (MSVC)
     target_compile_options(portal-core PUBLIC
+            $<$<CXX_COMPILER_ID:Clang>:-Wno-unused-command-line-argument> # suppress warnings about unused MSVC compatibility flags
             /Zc:__cplusplus
             /Zc:preprocessor
             /permissive-
