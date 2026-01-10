@@ -431,5 +431,7 @@ function(portal_add_game TARGET_NAME)
 
     portal_read_settings(${TARGET_NAME})
 
+    set_property(TARGET ${TARGET_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE FALSE)
+
     portal_package_game(${TARGET_NAME})
 endfunction()
