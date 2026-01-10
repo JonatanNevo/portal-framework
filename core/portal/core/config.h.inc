@@ -8,6 +8,10 @@
 #include <string_view>
 #include "portal/core/common.h"
 
+#if defined(PORTAL_DIST) && defined(PORTAL_DEVELOPMENT)
+#undef PORTAL_DIST
+#endif
+
 /* Platform Specification */
 #cmakedefine PORTAL_PLATFORM_WINDOWS
 #cmakedefine PORTAL_PLATFORM_MACOS
