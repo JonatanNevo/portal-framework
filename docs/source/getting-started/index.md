@@ -1,6 +1,12 @@
 # Getting Started
 
-Get Portal Engine running on your machine.
+Build your own application using Portal Framework.
+
+```{seealso}
+The following is a tutorial on how to use Portal Framework to make an application.  
+If you are looking on how to build the framework itself, see [Contributing](../contributing/index.md).
+```
+
 
 ---
 

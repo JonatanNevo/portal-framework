@@ -156,11 +156,13 @@ You can install it using pip:
 pip install portal-tool
 ```
 
-It is recommended to install the completions for portal-tool.
+````{tip}
+It is recommended to install shell completions for portal-tool.
 
 ```console
 portal-tool --install-completion
 ```
+````
 
 ### Installing Required System Packages
 Some platforms require additional system packages to be installed before building Portal Engine.
