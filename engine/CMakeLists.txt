@@ -45,6 +45,9 @@ portal_add_module(engine
         COMPLEX_DEPENDENCIES
             VulkanHeaders|LINK|Vulkan::Headers
             VulkanMemoryAllocator|LINK|GPUOpen::VulkanMemoryAllocator
+
+        COMPILE_CONFIG_FILE
+            portal/engine/config.h
 )
 portal_add_resources(portal-engine
         resources

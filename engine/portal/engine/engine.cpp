@@ -19,16 +19,6 @@ namespace portal
 {
 static auto logger = Log::get_logger("Engine");
 
-std::unique_ptr<resources::ResourceSource> Engine::find_icon_source(Settings& settings, ResourceDatabaseFacade& resource_database)
-{
-    std::unique_ptr<resources::ResourceSource> icon_source;
-    auto icon_id = STRING_ID(settings.get_setting<std::string>("application.icon").value_or("engine/portal_icon_64x64"));
-    auto icon_result = resource_database.find(icon_id);
-    if (icon_result.has_value())
-        icon_source = resource_database.create_source(icon_id, icon_result.value());
-    return icon_source;
-}
-
 Engine::Engine(const ApplicationProperties& properties) : Application(properties)
 {
     auto& settings = Settings::get();
@@ -45,12 +35,9 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
         resource_database.register_database({DatabaseType::Folder, "engine"});
     }
 
-    std::unique_ptr<resources::ResourceSource> icon_source = find_icon_source(settings, resource_database);
-
     const WindowProperties window_properties{
         .title = properties.name,
         .extent = {properties.width, properties.height},
-        .icon_source = icon_source.get(),
         .requested_frames_in_flight = properties.frames_in_flight,
     };
     window = make_reference<GlfwWindow>(window_properties, CallbackConsumers{*this, input});
