@@ -22,7 +22,7 @@ caption: Abstraction Levels with some examples
 flowchart TD
 
 Game --> Engine
-Engine --> Application
+Engine --> Applicatio
 Engine --> Renderer
 
 subgraph Game
@@ -63,7 +63,7 @@ The effort so far was to implement the layers below.
 ##### Usage Example
 ```{code-block} cpp
 // The entry point of the portal framework's application
-std::unique_ptr<Application> portal::create_application(int, char**)
+std::unique_ptr<Application> portal::create_application(int argc, char** argv)
 {
     // Configures basic settings
     const auto prop = ApplicationProperties::from_settings();
@@ -196,8 +196,6 @@ portal_add_module(application
         
     # There is an optional `DEPENDENCIES` argument to specify,
     # Non portal dependencies of the module.
-
-    PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}
     
     # Specifies a config file that should be filled out in compile time with the required settings
     # when attempting to build a binary with this module

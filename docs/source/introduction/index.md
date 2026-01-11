@@ -20,7 +20,7 @@ Currently, there are six modules:
 
 ---
 
-## What is Portal Engine?
+## What Is Portal Engine?
 
 Portal Engine is a game engine built on top of the Portal Framework.
 A big focus of the engine is to use and experiment with the latest technologies, such as **C++ 23**, **Slang Shader
@@ -28,10 +28,30 @@ language**, **Vulkan 1.4** and more.
 
 Learn more about the [Engine Architecture](architecture.md) and [Engine Features](features.md).
 
-### Why create an engine from scratch?
+---
+
+## Why Create An Engine From Scratch?
 Long story short: I wanted to learn more about game engines' architecture.  
 After studying various open source engines and examples, I identified opportunities to explore different design approaches and architectural decisions.  
 Building from scratch provides the freedom to experiment with modern technologies and establish patterns that align with my development philosophy.
+
+### What Quantifies As "From Scratch"?
+I tried to implement as much as I could myself.  
+Meaning writing the vulkan renderer from scratch, the resource management, the job system, etc...  
+  
+I did look and took inspiration from other engines and open-source libraries, such as [Hazel](https://github.com/StudioCherno), [Godot](https://godotengine.org/), [Unreal](https://www.unrealengine.com/en-US/ue-on-github) and [Ogre3D](https://www.ogre3d.org/).    
+Additionally, A main resource I used as a reference was the book [Game Engine Architecture](https://www.gameenginebook.com/) by Jason Gregory.  
+As well as other well-known books like [Real Time Rendering](https://www.realtimerendering.com/), [Ray Tracing In One Weekend](https://raytracing.github.io/) and [Physically Based Rendering From Theory To Implementation](https://www.pbr-book.org/).  
+  
+I must add that while this seems like a comprehensive list, in practice I managed to implement only a small part of the features I have planned.
+
+### Generative AI Usage
+As a personal project and a learning experience, I have limited the usage of generative AI for the bulk of the programming.
+
+Generative AI was used in the following areas:
+- Writing testing boilerplate code
+- Baseline for API documentation
+- Debugging assistance
 
 ---
 
