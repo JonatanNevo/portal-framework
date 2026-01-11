@@ -9,6 +9,8 @@
 #include <memory_resource>
 #include <stdexcept>
 
+#include "portal/core/log.h"
+
 namespace portal
 {
 std::string_view StringRegistry::store(uint64_t id, const std::string_view string)
@@ -30,7 +32,7 @@ std::string_view StringRegistry::store(uint64_t id, const std::string_view strin
 
 std::string_view StringRegistry::find(const uint64_t id)
 {
-    auto entries = get_entries();
+    auto& entries = get_entries();
     const auto it = entries.find(id);
     if (it != entries.end())
         return it->second;
