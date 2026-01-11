@@ -25,6 +25,14 @@ Learn how to get started with Portal Engine or browse the documentation for more
 ````{grid} 2
 :gutter: 3
 
+
+```{grid-item-card} Introduction 💡
+:link: introduction/index
+:link-type: doc
+
+An overview of Portal Framework, its design, architecture and goals.
+```
+
 ```{grid-item-card} Getting Started 🚀
 :link: getting-started/index
 :link-type: doc
@@ -44,13 +52,6 @@ Install Portal Engine and create you first project.
 :link-type: doc
 
 Task-oriented recipes for common problems.
-```
-
-```{grid-item-card} API Reference 🔧
-:link: api/index
-:link-type: doc
-
-Complete API documentation for all modules.
 ```
 
 ````
