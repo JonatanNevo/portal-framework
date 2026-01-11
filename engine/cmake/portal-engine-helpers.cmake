@@ -184,7 +184,7 @@ function(portal_read_settings TARGET_NAME)
     endif ()
 endfunction()
 
-function(portal_package_game TARGET_NAME)
+function(portal_install_game TARGET_NAME)
     set(options "")
     set(oneValueArgs "")
     set(multiValueArgs "")
@@ -297,6 +297,30 @@ function(portal_package_game TARGET_NAME)
     endforeach ()
 endfunction()
 
+function(portal_package_game TARGET_NAME DISPLAY_NAME)
+    set(options "")
+    set(oneValueArgs
+            VENDOR
+            CONTACT
+    )
+    set(multiValueArgs "")
+    cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+
+    include(CPack)
+    set(CPACK_PACKAGE_NAME ${DISPLAY_NAME})
+    set(CPACK_PACKAGE_VENDOR ${ARG_VENDOR})
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY ${CPACK_PACKAGE_NAME})
+    set(CPACK_VERBATIM_VARIABLES YES)
+
+    set(CPACK_COMPONENTS_GROUPING IGNORE)
+
+    cpack_add_component(${TARGET_NAME}
+            REQUIRED
+            DISPLAY_NAME ${CMAKE_PROJECT_NAME}
+    )
+endfunction()
+
 macro(_find_icon_files STATIC_ICON LOGO_FILE)
     # Get the resource prefix from portal-engine for default icons
     get_target_property(ENGINE_RESOURCE_PREFIX portal::engine PORTAL_RESOURCE_PREFIX)
@@ -357,7 +381,15 @@ endmacro()
 
 function(portal_add_game TARGET_NAME)
     set(options MAKE_STANDALONE)
-    set(oneValueArgs SETTINGS_FILE STATIC_ICON LOGO_FILE DISPLAY_NAME SETTINGS_FILE_NAME)
+    set(oneValueArgs
+            SETTINGS_FILE
+            STATIC_ICON
+            LOGO_FILE
+            DISPLAY_NAME
+            SETTINGS_FILE_NAME
+            VENDOR
+            CONTACT
+    )
     set(multiValueArgs
             SOURCES
             RESOURCE_PATHS
@@ -407,7 +439,6 @@ function(portal_add_game TARGET_NAME)
         add_executable(${TARGET_NAME} ${ARG_SOURCES})
     endif ()
 
-    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_DISPLAY_NAME ${ARG_DISPLAY_NAME})
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_WINDOWS_ICON ${ICON_ICO_FILE})
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_MACOS_ICON ${ICON_ICNS_FILE})
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_LOGO ${LOGO_PNG_FILE})
@@ -442,5 +473,12 @@ function(portal_add_game TARGET_NAME)
 
     portal_read_settings(${TARGET_NAME})
 
-    portal_package_game(${TARGET_NAME})
+    portal_install_game(${TARGET_NAME})
+
+    portal_package_game(
+            ${TARGET_NAME}
+            ${ARG_DISPLAY_NAME}
+            VENDOR ${ARG_VENDOR}
+            CONTACT ${ARG_CONTACT}
+    )
 endfunction()

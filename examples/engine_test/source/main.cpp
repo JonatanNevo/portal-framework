@@ -6,8 +6,6 @@
 #include "portal/application/application.h"
 #include "portal/application/entry_point.h"
 
-#include "portal/core/files/file_system.h"
-#include "portal/application/settings.h"
 #include "portal/engine/engine.h"
 #include "portal/engine/components/base.h"
 #include "portal/engine/components/base_camera_controller.h"
@@ -18,14 +16,12 @@
 
 using namespace portal;
 
-constexpr std::string_view PORTAL_APPLICATION_NAME = "Engine Test";
-
 std::unique_ptr<Application> portal::create_application(int, char**)
 {
     const auto prop = ApplicationProperties::from_settings();
     auto engine = std::make_unique<Engine>(prop);
-    // TODO: Should not be here
 
+    // TODO: Should not be here
     auto& engine_context = engine->get_engine_context();
     [[maybe_unused]] auto composite = engine_context.get_resource_registry().immediate_load<Composite>(STRING_ID("game/ABeautifulGame"));
     auto scene = engine_context.get_resource_registry().get<Scene>(STRING_ID("game/gltf-Scene-Scene"));
