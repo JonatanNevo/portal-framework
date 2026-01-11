@@ -31,9 +31,6 @@ public:
 
     [[nodiscard]] EngineContext& get_engine_context() const { return *engine_context; }
 
-protected:
-    static std::unique_ptr<resources::ResourceSource> find_icon_source(Settings& settings, ResourceDatabaseFacade& resource_database);
-
 private:
     ecs::Registry ecs_registry{};
     std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;

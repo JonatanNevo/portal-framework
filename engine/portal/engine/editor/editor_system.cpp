@@ -14,6 +14,64 @@
 
 namespace portal
 {
+
+void draw_node( Entity entity, int& node_id, const RelationshipComponent& relationship, const NameComponent& name, const TransformComponent& transform)
+{
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
+    if (relationship.children == 0)
+    {
+        flags |= ImGuiTreeNodeFlags_Leaf;
+    }
+
+    ImGui::PushID(node_id++);
+
+    const bool is_mesh = entity.has_component<StaticMeshComponent>();
+    if (is_mesh)
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
+    }
+
+    const bool open = ImGui::TreeNodeEx(name.name.string.data(), flags);
+
+    if (is_mesh)
+    {
+        ImGui::PopStyleColor();
+    }
+
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        const auto& translate = glm::vec3(transform.get_world_matrix()[3]);
+        ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
+
+        if (is_mesh)
+        {
+            auto& mesh = entity.get_component<StaticMeshComponent>();
+
+            ImGui::Text("Mesh: %s", mesh.mesh->get_id().string.data());
+            for (auto& material : mesh.materials)
+            {
+                ImGui::Text("Material: %s", material->get_id().string.data());
+            }
+        }
+        ImGui::EndTooltip();
+    }
+
+    if (open)
+    {
+        for (const auto& child : entity.children())
+        {
+            auto& child_rel = child.get_component<RelationshipComponent>();
+            auto& child_name = child.get_component<NameComponent>();
+            auto& child_transform = child.get_component<TransformComponent>();
+            draw_node(child, node_id, child_rel, child_name, child_transform);
+        }
+        ImGui::TreePop();
+    }
+
+    ImGui::PopID();
+}
+
 void EditorGuiSystem::execute(ecs::Registry& registry)
 {
     print_cameras(registry);
@@ -59,78 +117,19 @@ void EditorGuiSystem::print_scene_graph(ecs::Registry& registry)
         }
     );
 
-    auto draw_node = [](auto& self, Entity entity, int& node_id) -> void
-    {
-        auto& relationship = entity.get_component<RelationshipComponent>();
-        auto& name = entity.get_component<NameComponent>();
-
-        ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
-        if (relationship.children == 0)
-        {
-            flags |= ImGuiTreeNodeFlags_Leaf;
-        }
-
-        ImGui::PushID(node_id++);
-
-        const bool is_mesh = entity.has_component<StaticMeshComponent>();
-        if (is_mesh)
-        {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 1.0f, 0.6f, 1.0f));
-        }
-
-        const bool open = ImGui::TreeNodeEx(name.name.string.data(), flags);
-
-        if (is_mesh)
-        {
-            ImGui::PopStyleColor();
-        }
-
-        if (ImGui::IsItemHovered())
-        {
-            auto& transform = entity.get_component<TransformComponent>();
-
-            ImGui::BeginTooltip();
-            const auto& translate = glm::vec3(transform.get_world_matrix()[3]);
-            ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
-
-            if (is_mesh)
-            {
-                auto& mesh = entity.get_component<StaticMeshComponent>();
-
-                ImGui::Text("Mesh: %s", mesh.mesh->get_id().string.data());
-                for (auto& material : mesh.materials)
-                {
-                    ImGui::Text("Material: %s", material->get_id().string.data());
-                }
-            }
-            ImGui::EndTooltip();
-        }
-
-        if (open)
-        {
-            for (const auto& child : entity.children())
-            {
-                self(self, child, node_id);
-            }
-            ImGui::TreePop();
-        }
-
-        ImGui::PopID();
-    };
-
     ImGui::Begin("Scene");
 
     ImGui::Text("Scene Graph");
     ImGui::Separator();
     int node_id = 0;
 
-    for (auto&& [entity, _, relationship, __] : relationship_group.each())
+    for (auto&& [entity, name_comp, relationship, transform] : relationship_group.each())
     {
         // Iterating only on the root entities
         if (relationship.parent != null_entity)
             continue;
 
-        draw_node(draw_node, registry.entity_from_id(entity), node_id);
+        draw_node(registry.entity_from_id(entity), node_id, relationship, name_comp, transform);
     }
     ImGui::End();
 }

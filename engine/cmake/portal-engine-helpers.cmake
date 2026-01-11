@@ -1,4 +1,4 @@
-function(portal_setup_compile_configs TARGET_NAME APPLICATION_NAME SETTINGS_FILE)
+function(portal_setup_compile_configs TARGET_NAME APPLICATION_NAME SETTINGS_FILE ICON_FILE)
     set(CONFIGURE_FILE "
 // Auto generated file
 
@@ -6,6 +6,7 @@ namespace portal
 {
     constexpr std::string_view PORTAL_APPLICATION_NAME = \"@APPLICATION_NAME@\";
     constexpr std::string_view PORTAL_SETTINGS_FILE_NAME = \"@SETTINGS_FILE@\";
+    constexpr std::string_view PORTAL_ICON_FILE_NAME =  \"@ICON_FILE@\";
 };
 "
     )
@@ -310,9 +311,11 @@ macro(_find_icon_files STATIC_ICON LOGO_FILE)
     if (STATIC_ICON)
         cmake_path(REPLACE_EXTENSION STATIC_ICON "icns" OUTPUT_VARIABLE ICNS_FILE_CHECK)
         cmake_path(REPLACE_EXTENSION STATIC_ICON "ico" OUTPUT_VARIABLE ICO_FILE_CHECK)
+        cmake_path(REPLACE_EXTENSION STATIC_ICON "png" OUTPUT_VARIABLE PNG_FILE_CHECK)
     else()
         set(ICNS_FILE_CHECK "")
         set(ICO_FILE_CHECK "")
+        set(PNG_FILE_CHECK "")
     endif()
 
     if (NOT LOGO_FILE)
@@ -333,6 +336,14 @@ macro(_find_icon_files STATIC_ICON LOGO_FILE)
     else()
         set(ICON_ICO_FILE "${ENGINE_RESOURCE_PREFIX}/portal_icon_64x64.ico")
         message(STATUS "Missing Windows Icon, defaulting to: ${ICON_ICO_FILE}")
+    endif()
+
+    if (EXISTS "${PNG_FILE_CHECK}")
+        set(ICON_PNG_FILE "${PNG_FILE_CHECK}")
+        message(STATUS "Using png Icon: ${ICON_PNG_FILE}")
+    else()
+        set(ICON_PNG_FILE "${ENGINE_RESOURCE_PREFIX}/portal_icon_64x64.png")
+        message(STATUS "Missing png Icon, defaulting to: ${ICON_PNG_FILE}")
     endif()
 
     if (EXISTS "${LOGO_FILE}")
@@ -427,7 +438,7 @@ function(portal_add_game TARGET_NAME)
 
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_SETTINGS_PATH ${ARG_SETTINGS_FILE})
 
-    portal_setup_compile_configs(${TARGET_NAME} ${ARG_DISPLAY_NAME} ${ARG_SETTINGS_FILE_NAME})
+    portal_setup_compile_configs(${TARGET_NAME} ${ARG_DISPLAY_NAME} ${ARG_SETTINGS_FILE_NAME} ${ICON_PNG_FILE})
 
     portal_read_settings(${TARGET_NAME})
 

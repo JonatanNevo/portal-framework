@@ -9,6 +9,7 @@
 #include <stb_image.h>
 
 #include "portal/core/files/file_system.h"
+#include "portal/engine/config.h"
 #include "portal/engine/renderer/image/image.h"
 #include "portal/engine/renderer/image/texture.h"
 #include "portal/engine/renderer/vulkan/surface/vulkan_surface.h"
@@ -316,12 +317,12 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
     }
 
     // Setup icon
-    if (properties.icon_source != nullptr)
+    const std::filesystem::path icon_path = PORTAL_ICON_FILE_NAME;
+    // TODO: add an `platform::allows_window_icon` check before calling
+    if (std::filesystem::exists(icon_path))
     {
-        auto icon_buffer = properties.icon_source->load();
-
         GLFWimage icon;
-        icon.pixels = stbi_load_from_memory(icon_buffer.as<unsigned char*>(), static_cast<int>(icon_buffer.size), &icon.width, &icon.height, 0, 4);
+        icon.pixels = stbi_load(icon_path.generic_string().c_str(), &icon.width, &icon.height, 0, 4);
         if (!icon.pixels)
         {
             const char* reason = stbi_failure_reason();
@@ -331,7 +332,7 @@ GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsume
     }
     else
     {
-        LOGGER_WARN("Icon file does not exist");
+        LOGGER_WARN("Icon file {} does not exist", icon_path.generic_string());
     }
 
     glfwSetWindowUserPointer(handle, &this->consumers);
