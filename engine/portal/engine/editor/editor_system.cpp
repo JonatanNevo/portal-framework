@@ -76,6 +76,7 @@ void EditorGuiSystem::execute(ecs::Registry& registry)
 {
     print_cameras(registry);
     print_scene_graph(registry);
+    print_controls(registry);
 }
 
 void EditorGuiSystem::print_cameras(ecs::Registry& registry)
@@ -131,6 +132,21 @@ void EditorGuiSystem::print_scene_graph(ecs::Registry& registry)
 
         draw_node(registry.entity_from_id(entity), node_id, relationship, name_comp, transform);
     }
+    ImGui::End();
+}
+
+void EditorGuiSystem::print_controls(ecs::Registry&)
+{
+    // TODO: This A - should not exist B - Should not be here, A necessary evil for now
+    ImGui::Begin("Controls");
+    ImGui::Text("RMB - Enter Movement Mode");
+    ImGui::Separator();
+    ImGui::Text("W - Move Forwards");
+    ImGui::Text("S - Move Backwards");
+    ImGui::Text("A - Move Left");
+    ImGui::Text("D - Move Right");
+    ImGui::Text("E - Move Up");
+    ImGui::Text("Q - Move Down");
     ImGui::End();
 }
 } // portal
