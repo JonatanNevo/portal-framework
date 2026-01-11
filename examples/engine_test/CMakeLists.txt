@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.30)
-project(engine_test)
+project(engine_test VERSION 1.0.0)
 
 #find_package(portal-engine CONFIG REQUIRED)
 
