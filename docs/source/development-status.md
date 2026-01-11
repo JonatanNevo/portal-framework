@@ -28,6 +28,9 @@ timeline
                  : UI System
                  : Scripting
                  : AI System
+                 : Binary Resources Archive
+                 : C - Vars
+                 : Save System
 
     And Beyond   : Physics System
                  : Networked Physics
@@ -89,6 +92,15 @@ Currently the plan is to either use Lua, Python, C# or use WebAssembly to suppor
 **Phase:**  `Working Game`
 Add an AI system for creating intelligent game entities such as enemies and NPCs.
 This will include pathfinding, behavior trees, navigation meshes, and decision-making systems.
+
+### Binary Resources Archive
+...
+
+### C - Vars
+...
+
+### Save System
+...
 
 ### Physics System
 
