@@ -65,3 +65,9 @@ Generative AI was used in the following areas:
 - Writing testing boilerplate code
 - Baseline for API documentation
 - Debugging assistance
+
+
+## Related Repositories
+
+- [Portal Tool](https://github.com/JonatanNevo/portal-tool) – The repository for the `portal-tool` cli.
+- [Portal Vcpkg Registry](https://github.com/JonatanNevo/portal-vcpkg-registry) – The vcpkg registry for Portal Framework.

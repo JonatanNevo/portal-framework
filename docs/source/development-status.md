@@ -40,13 +40,14 @@ timeline
 
 ## Current State
 
-Currently portal engine is at the end of the `MVP` phase of the roadmap.
+Currently, portal engine is at the end of the `MVP` phase of the roadmap.
 The focus up until now has been on getting the basic infrastructure in place, and getting the engine to a point where it
-will be easy to add new features.
+will be straightforward to add new features.
 
 ## Detailed Roadmap
 
-Here is a detailed list of planned features and modules.
+Here is a detailed list of planned features and modules.  
+You can see more issues [here](https://github.com/JonatanNevo/portal-framework/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) and which issues are currently being worked on [here](https://github.com/users/JonatanNevo/projects/2).
 
 ### Basic Editor
 
