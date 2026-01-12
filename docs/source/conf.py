@@ -159,7 +159,10 @@ mermaid_use_local = "https://example.com"
 mermaid_init_js = """import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.esm.min.mjs'
 
 const make_config = () => {
-  let prefersDark = localStorage.getItem('theme') === 'dark' || (localStorage.getItem('theme') === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  let theme = localStorage.getItem('theme') || 'auto';
+  let prefersDark = theme === 'dark' ||
+                   (theme === 'auto' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
   return({
     startOnLoad:false,
     darkMode: prefersDark,
