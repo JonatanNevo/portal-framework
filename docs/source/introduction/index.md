@@ -1,6 +1,5 @@
 # Introduction
 
----
 
 ## What Is Portal Framework?
 

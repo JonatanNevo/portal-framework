@@ -1,6 +1,5 @@
 # Architecture
 
----
 
 ## Engine Architecture
 
@@ -206,7 +205,7 @@ portal_add_module(application
 # Tells cmake that we want to install this target, and configures all install rules.
 portal_install_module(application)
 ```
-To read more, see [CMake Module Helper](../api/cmake/portal-module-helpers.md)
+To read more, see [portal_add_module](../api/cmake/portal-add-module.rst)
 
 #### Making A Game With The Engine
 
@@ -230,5 +229,5 @@ portal_game_configure_installer(
         my-game
 )
 ```
-To read more, see [CMake Engine Helper](../api/cmake/portal-engine-helpers.md)
+To read more, see [portal_add_game](../api/cmake/portal-add-game.rst)
 

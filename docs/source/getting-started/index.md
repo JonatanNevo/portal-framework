@@ -40,5 +40,4 @@ After completing setup:
 - [Start the tutorials](../tutorials/index.md) — Learn the engine step-by-step
 - [Browse how-to guides](../how-to/index.md) — Find solutions to specific tasks
 - [Understand the architecture](../concepts/engine-architecture.md) — Learn how it all fits together
-- 
----
+-
