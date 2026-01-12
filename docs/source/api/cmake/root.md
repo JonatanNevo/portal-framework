@@ -1,4 +1,4 @@
-# CMake API Reference
+# CMake Functions API
 
 This section provides detailed documentation for the additional CMake API added in the portal framework.
 
@@ -8,11 +8,35 @@ This section is still under construction, everything is subject to change and mi
 
 
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
+:caption: Game Functions
 
-portal-engine-helpers
-portal-engine-package-helpers
-portal-module-helpers
-portal-install-helpers
-portal-test-helpers
+portal-add-game
+portal-game-configure-installer
+portal-add-resources
+portal-package-game
+portal-install-game
+portal-fetch-resources
+portal-read-settings
+portal-setup-compile-configs
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Module Functions
+
+portal-add-module
+portal-add-dependency
+portal-configure-pch
+portal-install-module
+portal-setup-config-pch
+portal-register-docs
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Test Functions
+
+portal-build-tests
+portal-add-test-target
 ```
