@@ -8,6 +8,7 @@
 
 #include "portal/engine/resources/loader/loader.h"
 #include "portal/core/strings/string_id.h"
+#include "portal/engine/renderer/vulkan/vulkan_context.h"
 
 namespace portal
 {
@@ -47,7 +48,7 @@ struct MaterialDetails
 class MaterialLoader final : public ResourceLoader
 {
 public:
-    MaterialLoader(ResourceRegistry& registry, const RendererContext& context);
+    MaterialLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
     Reference<Resource> load(const SourceMetadata&, const ResourceSource&) override;
     static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
@@ -58,7 +59,7 @@ protected:
     Reference<renderer::Pipeline> create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, bool depth);
 
 private:
-    const RendererContext& context;
+    const renderer::vulkan::VulkanContext& context;
 
     Reference<renderer::vulkan::VulkanPipeline> transparent_pipeline;
     Reference<renderer::vulkan::VulkanPipeline> color_pipeline;

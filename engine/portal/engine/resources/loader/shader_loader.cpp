@@ -19,7 +19,7 @@ namespace portal::resources
 {
 static auto logger = Log::get_logger("Resources");
 
-ShaderLoader::ShaderLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
+ShaderLoader::ShaderLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : ResourceLoader(registry), context(context)
 {}
 
 
@@ -36,7 +36,7 @@ Reference<Resource> ShaderLoader::load(const SourceMetadata& meta, const Resourc
 
 Reference<Resource> ShaderLoader::load_shader(const SourceMetadata& meta, const ResourceSource& source) const
 {
-    auto shader = make_reference<renderer::vulkan::VulkanShader>(meta.resource_id, context.get_gpu_context());
+    auto shader = make_reference<renderer::vulkan::VulkanShader>(meta.resource_id, context);
     // TODO: use global shader path somehow
     shader->load_source(source.load(), meta.source.string);
     return shader;

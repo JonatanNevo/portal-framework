@@ -71,7 +71,7 @@ std::string create_name_relative(const std::filesystem::path path, const auto& p
     return (path / fmt::format("gltf-{}-{}", to_string(type), part)).generic_string();
 }
 
-GltfLoader::GltfLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
+GltfLoader::GltfLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : ResourceLoader(registry), context(context)
 {
 }
 
@@ -466,7 +466,7 @@ Job<> GltfLoader::load_texture(
     const auto sampler_ref = make_reference<renderer::vulkan::VulkanSampler>(
         STRING_ID(fmt::format("{}-sampler", texture_meta.resource_id.string)),
         sampler_prop,
-        context.get_gpu_context().get_device()
+        context.get_device()
     );
     vulkan_texture->set_sampler(sampler_ref);
 }

@@ -30,7 +30,6 @@ struct ApplicationProperties
     size_t height = 900;
 
     bool resizeable = true;
-    size_t frames_in_flight = 3;
 
     static ApplicationProperties from_settings();
 };

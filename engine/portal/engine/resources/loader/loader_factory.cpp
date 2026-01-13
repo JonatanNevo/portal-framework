@@ -15,7 +15,7 @@
 
 namespace portal::resources
 {
-LoaderFactory::LoaderFactory(ResourceRegistry& registry, const RendererContext& context) : stub_loader(registry), context(context)
+LoaderFactory::LoaderFactory(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : stub_loader(registry), context(context)
 {
     loaders[ResourceType::Texture] = std::make_shared<TextureLoader>(registry, context);
     loaders[ResourceType::Shader] = std::make_shared<ShaderLoader>(registry, context);

@@ -43,6 +43,7 @@ Application::~Application()
 
 void Application::run()
 {
+    auto frames_in_flight = Settings::get().get_setting<size_t>("application.frames_in_flight", 3);
     try
     {
         should_stop.clear();
@@ -78,7 +79,7 @@ void Application::run()
                 global_stats = context.stats;
             }
 
-            current_frame = (current_frame + 1) % properties.frames_in_flight;
+            current_frame = (current_frame + 1) % frames_in_flight;
             // TODO: in headless application I wont have `glfwGetTime` use counter instead?
             const auto time = static_cast<float>(glfwGetTime());
             frame_time = time - last_frame_time;

@@ -117,9 +117,9 @@ public:
     /**
      * @brief Constructor
      * @param stack Module dependency stack
-     * @param context Renderer context for GPU resource creation
+     * @param context Vulkan context for resource creation
      */
-    ResourceRegistry(ModuleStack& stack, const RendererContext& context);
+    ResourceRegistry(ModuleStack& stack, const renderer::vulkan::VulkanContext& context);
     ~ResourceRegistry() noexcept override;
 
     /**

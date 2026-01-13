@@ -27,6 +27,7 @@ struct MaterialProperties
     StringId id;
     Reference<ShaderVariant> shader;
 
+    std::unordered_set<StringId> global_descriptor_sets;
     size_t set_start_index = 0;
     size_t set_end_index = std::numeric_limits<size_t>::max();
 

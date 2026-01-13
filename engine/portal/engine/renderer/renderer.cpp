@@ -49,26 +49,8 @@ using namespace renderer;
 
 Renderer::Renderer(ModuleStack& stack, vulkan::VulkanContext& context)
     : TaggedModule(stack, STRING_ID("Renderer")),
-      attachments(
-          {
-              .attachment_images = {
-                  // Present Image
-                  {
-                      .format = ImageFormat::None,
-                      .blend = false
-                  },
-                  // Depth Image
-                  {
-                      .format = ImageFormat::Depth_32Float,
-                      .blend = true,
-                      .blend_mode = BlendMode::Additive
-                  }
-              },
-              .blend = true,
-          }
-      ),
       context(context),
-      renderer_context(context, scene_descriptor_set_layouts, attachments)
+      renderer_context(context)
 {}
 
 Renderer::~Renderer()
@@ -81,8 +63,6 @@ void Renderer::set_swapchain(const Reference<vulkan::VulkanSwapchain>& new_swapc
     PORTAL_PROF_ZONE();
 
     swapchain = new_swapchain;
-    // TODO: is this the best way to do this?
-    attachments.attachment_images[0].format = vulkan::to_format(swapchain->get_color_format()),
 
     init_render_target();
     init_frame_resources();
@@ -170,7 +150,22 @@ void Renderer::init_render_target()
     RenderTargetProperties properties{
         .width = swapchain->get_width(),
         .height = swapchain->get_height(),
-        .attachments = attachments,
+        .attachments = { // TODO: Find a way to extract this from current swapchain
+            .attachment_images = {
+                // Present Image
+                {
+                    .format = renderer::ImageFormat::SRGBA,
+                    .blend = false
+                },
+                // Depth Image
+                {
+                    .format = renderer::ImageFormat::Depth_32Float,
+                    .blend = true,
+                    .blend_mode = renderer::BlendMode::Additive
+                }
+            },
+            .blend = true,
+        },
         .transfer = true,
         .name = STRING_ID("geometry-render-target"),
     };

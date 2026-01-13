@@ -7,6 +7,7 @@
 
 #include <ranges>
 
+#include "portal/application/settings.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/image/texture.h"
 #include "portal/engine/renderer/image/image.h"
@@ -19,9 +20,9 @@
 
 namespace portal::renderer::vulkan
 {
-VulkanMaterial::VulkanMaterial(const MaterialProperties& properties, const RendererContext& context) : Material(properties.id),
+VulkanMaterial::VulkanMaterial(const MaterialProperties& properties, const VulkanContext& context) : Material(properties.id),
     properties(properties),
-    device(context.get_gpu_context().get_device())
+    device(context.get_device())
 {
     shader_variant = reference_cast<VulkanShaderVariant, ShaderVariant>(properties.shader);
 
@@ -33,7 +34,7 @@ VulkanMaterial::VulkanMaterial(const MaterialProperties& properties, const Rende
         .start_set = properties.set_start_index,
         .end_set = properties.set_end_index,
         .default_texture = properties.default_texture,
-        .frame_in_flights = context.frames_in_flight
+        .frame_in_flights = Settings::get().get_setting<size_t>("application.frames_in_flight", 3)
     };
     descriptor_manager = VulkanDescriptorSetManager::create_unique(descriptor_prop, device);
 
@@ -196,6 +197,9 @@ void VulkanMaterial::allocate_storage()
 {
     for (const auto& resource : shader_variant->get_shader_resources() | std::views::values)
     {
+        if (properties.global_descriptor_sets.contains(resource.name))
+            continue;
+
         std::unordered_map<StringId, UniformPointer> buffer_uniforms;
 
         // TODO: skip if input is out of scope

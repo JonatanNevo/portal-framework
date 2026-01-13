@@ -59,7 +59,7 @@ public:
      * Get the resolved module dependencies.
      * @return Optional tuple of module references, empty if any dependency was not found
      */
-    [[nodiscard]] std::optional<ModulesTuple> get_modules() const { return modules.value(); }
+    [[nodiscard]] std::optional<ModulesTuple> get_modules() const { return modules; }
 
 private:
     /**
