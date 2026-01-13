@@ -35,6 +35,7 @@ private:
     ecs::Registry ecs_registry{};
     std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;
     Reference<Window> window = nullptr;
+    Reference<renderer::vulkan::VulkanSwapchain> swapchain = nullptr;
     std::unique_ptr<EngineContext> engine_context = nullptr;
 };
 } // portal

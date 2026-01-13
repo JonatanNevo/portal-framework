@@ -67,8 +67,8 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     vulkan_context->get_device().add_present_queue(*surface);
 
     auto& renderer = modules.add_module<Renderer>(*vulkan_context);
-    auto swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(*vulkan_context, surface);
-    renderer.set_swapchain(swapchain);
+    swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(*vulkan_context, surface);
+    renderer.set_render_target(swapchain->make_render_target());
 
     modules.add_module<ImGuiModule>(*window, *swapchain);
     modules.add_module<EditorModule>();
@@ -90,6 +90,7 @@ Engine::~Engine()
     LOGGER_INFO("Shutting down Engine");
     vulkan_context->get_device().wait_idle();
     engine_context->get_renderer().cleanup();
+    swapchain.reset();
     ecs_registry.clear();
     modules.clean();
 
@@ -115,6 +116,7 @@ void Engine::on_resize(const WindowExtent extent)
     const auto glfw_window = reference_cast<GlfwWindow>(window);
     auto [width, height] = glfw_window->resize(extent);
 
+    swapchain->on_resize(width, height);
     engine_context->get_renderer().on_resize(width, height);
 }
 

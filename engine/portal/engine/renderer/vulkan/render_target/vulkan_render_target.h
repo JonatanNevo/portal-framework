@@ -33,7 +33,7 @@ class VulkanImage;
  * Creates vk::RenderingInfo with color and depth attachments, clear values, and blending.
  * Supports dynamic rendering (no explicit framebuffer objects).
  */
-class VulkanRenderTarget final : public RenderTarget
+class VulkanRenderTarget : public RenderTarget
 {
 public:
     /**
@@ -80,16 +80,23 @@ public:
     [[nodiscard]] ImageFormat get_depth_format() const;
 
     /** @brief Gets color attachment formats */
-    [[nodiscard]] std::span<const ImageFormat> get_color_formats() const;
+    [[nodiscard]] std::span<const ImageFormat> get_color_formats() const override;
+
 
 protected:
     /** @brief Creates Vulkan attachments */
     void initialize();
 
+    virtual void inner_initialize() {};
+
     /** @brief Releases Vulkan resources */
     void release();
 
-private:
+    virtual void inner_release() {}
+
+protected:;
+
+protected:
     RenderTargetProperties prop;
     size_t width = 0, height = 0;
 

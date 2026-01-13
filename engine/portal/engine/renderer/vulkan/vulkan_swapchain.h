@@ -31,6 +31,7 @@ class VulkanRenderTarget;
  */
 struct SwapchainImageData
 {
+    image::Properties image_properties;
     vk::Image image = nullptr;
     vk::raii::ImageView image_view = nullptr;
     size_t last_used_frame = std::numeric_limits<size_t>::max();
@@ -119,11 +120,15 @@ public:
     /** @brief Gets swapchain color space */
     [[nodiscard]] vk::ColorSpaceKHR get_color_space() const { return color_space; }
 
+    [[nodiscard]] const VulkanContext& get_context() const { return context; }
+
     /**
      * @brief Sets vsync enabled/disabled
      * @param new_vsync Whether vsync is enabled
      */
     void set_vsync(const bool new_vsync) { vsync = new_vsync; }
+
+    Reference<RenderTarget> make_render_target();
 
 private:
     size_t acquire_next_image(const FrameContext& frame);

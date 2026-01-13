@@ -7,10 +7,12 @@
 
 #include <GLFW/glfw3.h>
 
+#include "image/vulkan_image.h"
 #include "portal/core/log.h"
 
 namespace portal::renderer::vulkan
 {
+class VulkanImage;
 static auto logger = Log::get_logger("Renderer");
 
 vk::SampleCountFlagBits get_max_usable_sample_count(vk::raii::PhysicalDevice& physical_device)
@@ -77,6 +79,23 @@ void transition_image_layout(
 
 void transition_image_layout(
     const vk::raii::CommandBuffer& command_buffer,
+    const Reference<Image>& image,
+    const uint32_t mip_level,
+    const vk::ImageLayout old_layout,
+    const vk::ImageLayout new_layout
+)
+{
+    transition_image_layout(
+        command_buffer,
+        reference_cast<VulkanImage>(image)->get_image().get_handle(),
+        mip_level,
+        old_layout,
+        new_layout
+    );
+}
+
+void transition_image_layout(
+    const vk::raii::CommandBuffer& command_buffer,
     const vk::Image& image,
     const uint32_t mip_level,
     const vk::ImageLayout old_layout,
@@ -111,6 +130,33 @@ void transition_image_layout(
 
 void transition_image_layout(
     const vk::raii::CommandBuffer& command_buffer,
+    const Reference<Image>& image,
+    const uint32_t mip_level,
+    const vk::ImageLayout old_layout,
+    const vk::ImageLayout new_layout,
+    const vk::AccessFlags2 src_access_mask,
+    const vk::AccessFlags2 dst_access_mask,
+    const vk::PipelineStageFlags2 src_stage_mask,
+    const vk::PipelineStageFlags2 dst_stage_mask,
+    const vk::ImageAspectFlags aspect_mask
+)
+{
+    transition_image_layout(
+        command_buffer,
+        reference_cast<VulkanImage>(image)->get_image().get_handle(),
+        mip_level,
+        old_layout,
+        new_layout,
+        src_access_mask,
+        dst_access_mask,
+        src_stage_mask,
+        dst_stage_mask,
+        aspect_mask
+    );
+}
+
+void transition_image_layout(
+    const vk::raii::CommandBuffer& command_buffer,
     const vk::Image& image,
     const vk::ImageSubresourceRange& subresource,
     const vk::ImageLayout old_layout,
@@ -140,6 +186,31 @@ void transition_image_layout(
         .pImageMemoryBarriers = &barrier
     };
     command_buffer.pipelineBarrier2(dependency_info);
+}
+
+void transition_image_layout(
+    const vk::raii::CommandBuffer& command_buffer,
+    const Reference<Image>& image,
+    const vk::ImageSubresourceRange& subresource,
+    const vk::ImageLayout old_layout,
+    const vk::ImageLayout new_layout,
+    const vk::AccessFlags2 src_access_mask,
+    const vk::AccessFlags2 dst_access_mask,
+    const vk::PipelineStageFlags2 src_stage_mask,
+    const vk::PipelineStageFlags2 dst_stage_mask
+)
+{
+    transition_image_layout(
+        command_buffer,
+        reference_cast<VulkanImage>(image)->get_image().get_handle(),
+        subresource,
+        old_layout,
+        new_layout,
+        src_access_mask,
+        dst_access_mask,
+        src_stage_mask,
+        dst_stage_mask
+    );
 }
 
 void copy_image_to_image(

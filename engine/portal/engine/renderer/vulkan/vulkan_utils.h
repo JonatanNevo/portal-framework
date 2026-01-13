@@ -7,6 +7,8 @@
 
 #include <vulkan/vulkan_raii.hpp>
 
+#include "portal/engine/renderer/image/image.h"
+
 
 namespace portal::renderer::vulkan
 {
@@ -28,6 +30,14 @@ vk::SampleCountFlagBits get_max_usable_sample_count(vk::raii::PhysicalDevice& ph
 void transition_image_layout(
     const vk::raii::CommandBuffer& command_buffer,
     const vk::Image& image,
+    uint32_t mip_level,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout
+);
+
+void transition_image_layout(
+    const vk::raii::CommandBuffer& command_buffer,
+    const Reference<Image>& image,
     uint32_t mip_level,
     vk::ImageLayout old_layout,
     vk::ImageLayout new_layout
@@ -59,6 +69,19 @@ void transition_image_layout(
     vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor
 );
 
+void transition_image_layout(
+    const vk::raii::CommandBuffer& command_buffer,
+    const Reference<Image>& image,
+    uint32_t mip_level,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout,
+    vk::AccessFlags2 src_access_mask,
+    vk::AccessFlags2 dst_access_mask,
+    vk::PipelineStageFlags2 src_stage_mask,
+    vk::PipelineStageFlags2 dst_stage_mask,
+    vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eColor
+);
+
 /**
  * @brief Transitions image layout with subresource range
  * @param command_buffer Command buffer
@@ -74,6 +97,18 @@ void transition_image_layout(
 void transition_image_layout(
     const vk::raii::CommandBuffer& command_buffer,
     const vk::Image& image,
+    const vk::ImageSubresourceRange& subresource,
+    vk::ImageLayout old_layout,
+    vk::ImageLayout new_layout,
+    vk::AccessFlags2 src_access_mask,
+    vk::AccessFlags2 dst_access_mask,
+    vk::PipelineStageFlags2 src_stage_mask,
+    vk::PipelineStageFlags2 dst_stage_mask
+);
+
+void transition_image_layout(
+    const vk::raii::CommandBuffer& command_buffer,
+    const Reference<Image>& image,
     const vk::ImageSubresourceRange& subresource,
     vk::ImageLayout old_layout,
     vk::ImageLayout new_layout,

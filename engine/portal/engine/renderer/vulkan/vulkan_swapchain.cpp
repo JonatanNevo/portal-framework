@@ -15,8 +15,9 @@
 #include "device/vulkan_physical_device.h"
 #include "portal/engine/renderer/rendering_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
-#include "portal/engine/renderer/vulkan/vulkan_render_target.h"
+#include "render_target/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
+#include "render_target/vulkan_swapchain_render_target.h"
 
 namespace portal::renderer::vulkan
 {
@@ -187,7 +188,19 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             },
         };
 
-        auto& [image, image_view, last_used_frame, render_finished_semaphore] = images_data[i];
+        auto& [image_props, image, image_view, last_used_frame, render_finished_semaphore] = images_data[i];
+        image_props = {
+            .format = to_format(color_format),
+            .usage = ImageUsage::Attachment,
+            .transfer = false,
+            .width = width,
+            .height = height,
+            .depth = 1,
+            .mips = 1,
+            .layers = 1,
+            .create_sampler = false,
+            .name = STRING_ID(fmt::format("swapchain_image_{}", i)),
+        };
         image = swap_chain_images[i];
         image_view = device.get_handle().createImageView(view_info);
         render_finished_semaphore = device.get_handle().createSemaphore({});
@@ -306,6 +319,34 @@ void VulkanSwapchain::present(const FrameContext& frame)
             on_resize(width, height);
         }
     }
+}
+
+Reference<RenderTarget> VulkanSwapchain::make_render_target()
+{
+    RenderTargetProperties properties{
+        .width = get_width(),
+        .height = get_height(),
+        .attachments = {
+            // TODO: Is this static? would this change based on settings? Do I need to recreate the render target on swapchain reset?
+            .attachment_images = {
+                // Present Image
+                {
+                    .format = vulkan::to_format(get_color_format()),
+                    .blend = false
+                },
+                // Depth Image
+                {
+                    .format = ImageFormat::Depth_32Float,
+                    .blend = true,
+                    .blend_mode = BlendMode::Additive
+                }
+            },
+            .blend = true,
+        },
+        .transfer = true,
+        .name = STRING_ID("geometry-render-target"),
+    };
+    return make_reference<VulkanSwapchainRenderTarget>(properties, *this);
 }
 
 size_t VulkanSwapchain::acquire_next_image(const FrameContext& frame)

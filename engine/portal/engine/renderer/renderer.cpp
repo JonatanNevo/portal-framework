@@ -26,6 +26,7 @@
 #include "portal/engine/imgui/backends/imgui_impl_vulkan.h"
 
 #include "llvm/Support/MemoryBuffer.h"
+#include "portal/application/settings.h"
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/descriptor_writer.h"
 #include "portal/engine/renderer/material/material.h"
@@ -35,7 +36,7 @@
 #include "portal/engine/renderer/vulkan/vulkan_material.h"
 #include "vulkan/device/vulkan_physical_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_pipeline.h"
-#include "portal/engine/renderer/vulkan/vulkan_render_target.h"
+#include "vulkan/render_target/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
@@ -58,13 +59,11 @@ Renderer::~Renderer()
     cleanup();
 }
 
-void Renderer::set_swapchain(const Reference<vulkan::VulkanSwapchain>& new_swapchain)
+void Renderer::set_render_target(const Reference<renderer::RenderTarget>& new_render_target)
 {
     PORTAL_PROF_ZONE();
+    render_target = new_render_target;
 
-    swapchain = new_swapchain;
-
-    init_render_target();
     init_frame_resources();
 
     is_initialized = true;
@@ -79,9 +78,8 @@ void Renderer::cleanup()
         frames.clear();
 
         deletion_queue.flush();
-        depth_image.reset();
         scene_descriptor_set_layouts.clear();
-        swapchain.reset();
+        render_target.reset();
     }
     is_initialized = false;
 }
@@ -93,26 +91,21 @@ void Renderer::begin_frame(FrameContext& frame)
 
     // TODO: pull the `RenderingContext` from some cache instead of allocating each frame
     frame.rendering_context = FrameRenderingContext{
-        .viewport_bounds = {0, 0, swapchain->get_width(), swapchain->get_height()},
-        .depth_image = depth_image->get_image_info().image.get_handle(),
-        .depth_image_view = depth_image->get_image_info().view,
+        .viewport_bounds = {0, 0, render_target->get_width(), render_target->get_height()},
         .command_buffer = frames[current_frame].command_buffer,
         .resources = frames[current_frame],
     };
+    const auto rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
 
-    auto rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+    render_target->begin_frame(frame);
 
-    const auto& [image, image_view, last_used_frame, render_sema] = swapchain->begin_frame(frame);
-
-    rendering_context->draw_image = image;
-    rendering_context->draw_image_view = image_view;
-
+    const auto& image_context = rendering_context->image_context;
 
     // If this image was used before, wait for the fence from the frame that last used it
-    if (last_used_frame != std::numeric_limits<size_t>::max())
+    if (image_context.last_used_frame_index != std::numeric_limits<size_t>::max())
     {
         PORTAL_PROF_ZONE("VulkanSwapchain::begin_frame - wait for image fence");
-        const auto& last_frame = frames[last_used_frame];
+        const auto& last_frame = frames[image_context.last_used_frame_index];
         context.get_device().wait_for_fences(std::span{&*last_frame.wait_fence, 1}, true);
     }
 
@@ -128,9 +121,7 @@ void Renderer::end_frame(FrameContext& frame)
     const auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
 
     rendering_context->command_buffer.end();
-    // TODO: should we submit to graphics queue here?
-
-    swapchain->present(frame);
+    render_target->end_frame(frame);
 
     current_frame = (current_frame + 1) % frames_in_flight;
 }
@@ -140,45 +131,9 @@ const RendererContext& Renderer::get_renderer_context() const
     return renderer_context;
 }
 
-const renderer::vulkan::VulkanSwapchain& Renderer::get_swapchain() const
+const RenderTarget& Renderer::get_render_target() const
 {
-    return *swapchain;
-}
-
-void Renderer::init_render_target()
-{
-    RenderTargetProperties properties{
-        .width = swapchain->get_width(),
-        .height = swapchain->get_height(),
-        .attachments = { // TODO: Find a way to extract this from current swapchain
-            .attachment_images = {
-                // Present Image
-                {
-                    .format = renderer::ImageFormat::SRGBA,
-                    .blend = false
-                },
-                // Depth Image
-                {
-                    .format = renderer::ImageFormat::Depth_32Float,
-                    .blend = true,
-                    .blend_mode = renderer::BlendMode::Additive
-                }
-            },
-            .blend = true,
-        },
-        .transfer = true,
-        .name = STRING_ID("geometry-render-target"),
-    };
-    render_target = make_reference<vulkan::VulkanRenderTarget>(properties);
-
-    image::Properties image_properties{
-        .format = render_target->get_depth_format(),
-        .usage = ImageUsage::Attachment,
-        .transfer = true,
-        .width = static_cast<size_t>(properties.width * properties.scale),
-        .height = static_cast<size_t>(properties.height * properties.scale)
-    };
-    depth_image = make_reference<vulkan::VulkanImage>(image_properties, context);
+    return *render_target;
 }
 
 void Renderer::init_frame_resources()
@@ -186,7 +141,7 @@ void Renderer::init_frame_resources()
     PORTAL_PROF_ZONE();
 
     // TODO: have different amount of frames in flight based on some config?
-    frames_in_flight = swapchain->get_image_count();
+    frames_in_flight = Settings::get().get_setting<size_t>("application.frames_in_flight", 3);
     renderer_context.frames_in_flight = frames_in_flight;
 
     frames.clear();
@@ -255,8 +210,8 @@ void Renderer::post_update(FrameContext& frame)
 {
     const auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
 
-    const auto draw_image = rendering_context->draw_image;
-    const auto depth_draw_image = rendering_context->depth_image;
+    const auto draw_image = rendering_context->image_context.draw_image;
+    const auto depth_draw_image = rendering_context->image_context.depth_image;
 
     vulkan::transition_image_layout(
         rendering_context->command_buffer,
@@ -334,7 +289,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
     }
 
     {
-        auto info = render_target->make_rendering_info(*rendering_context);
+        auto info = reference_cast<vulkan::VulkanRenderTarget>(render_target)->make_rendering_info(*rendering_context);
         command_buffer.beginRendering(info);
 
         rendering_context->resources.scene_data_buffer = vulkan::BufferBuilder(sizeof(vulkan::GPUSceneData))
@@ -387,8 +342,8 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
                         vk::Viewport(
                             0.0f,
                             0.0f,
-                            static_cast<float>(swapchain->get_width()),
-                            static_cast<float>(swapchain->get_height()),
+                            static_cast<float>(render_target->get_width()),
+                            static_cast<float>(render_target->get_height()),
                             0.0f,
                             1.0f
                         )
@@ -397,7 +352,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
                         0,
                         vk::Rect2D(
                             vk::Offset2D(0, 0),
-                            {static_cast<uint32_t>(swapchain->get_width()), static_cast<uint32_t>(swapchain->get_height())}
+                            {static_cast<uint32_t>(render_target->get_width()), static_cast<uint32_t>(render_target->get_height())}
                         )
                     );
                 }
@@ -461,8 +416,6 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer&
 
 void Renderer::on_resize(const size_t new_width, const size_t new_height) const
 {
-    swapchain->on_resize(new_width, new_height);
-    depth_image->resize(new_width, new_height);
     render_target->resize(new_width, new_height, false);
 }
 

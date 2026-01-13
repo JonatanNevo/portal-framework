@@ -15,7 +15,7 @@
 #include "portal/engine/renderer/descriptors/descriptor_set_manager.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_shader.h"
-#include "portal/engine/renderer/vulkan/vulkan_render_target.h"
+#include "render_target/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/descriptors/vulkan_storage_buffer.h"
 
 namespace portal::renderer::vulkan

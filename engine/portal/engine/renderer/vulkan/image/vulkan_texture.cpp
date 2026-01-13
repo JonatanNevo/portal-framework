@@ -270,23 +270,12 @@ void VulkanTexture::recreate()
 
     if (!properties.storage)
     {
-        const vk::ImageViewCreateInfo view_info{
-            .image = info.image.get_handle(),
-            .viewType = utils::get_view_type(properties),
-            .format = to_format(properties.format),
-            .components = {vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA},
-            // The subresource range describes the set of mip levels (and array layers) that can be accessed through this image view
-            // It's possible to create multiple image views for a single image referring to different (and/or overlapping) ranges of the image
-            .subresourceRange = {
-                .aspectMask = vk::ImageAspectFlagBits::eColor,
-                .baseMipLevel = 0,
-                .levelCount = mip_count,
-                .baseArrayLayer = 0,
-                .layerCount = layer_count
-            },
+        ImageViewProperties view_prop{
+            .image = image.get(),
+            .name = STRING_ID(fmt::format("texture_view_{}", id.string))
         };
-        info.view = device.create_image_view(view_info);
-        device.set_debug_name(info.view, fmt::format("texture_view_{}", id.string).c_str());
+
+        info.view = make_reference<VulkanImageView>(view_prop, context);
         image->update_descriptor();
     }
 }

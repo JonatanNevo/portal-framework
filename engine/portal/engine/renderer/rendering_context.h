@@ -100,17 +100,17 @@ struct FrameResources
     vulkan::DescriptorAllocator frame_descriptors;
 
     FrameResources(auto&& command_pool, auto&& command_buffer, auto&& image_available_sema, auto&& wait_fence, auto&& descriptors) :
-        command_pool(std::move(command_pool)),
-        command_buffer(std::move(command_buffer)),
-        image_available_semaphore(std::move(image_available_sema)),
-        wait_fence(std::move(wait_fence)),
-        frame_descriptors(std::move(descriptors))
+        command_pool(std::forward<decltype(command_pool)>(command_pool)),
+        command_buffer(std::forward<decltype(command_buffer)>(command_buffer)),
+        image_available_semaphore(std::forward<decltype(image_available_sema)>(image_available_sema)),
+        wait_fence(std::forward<decltype(wait_fence)>(wait_fence)),
+        frame_descriptors(std::forward<decltype(descriptors)>(descriptors))
     {}
 
     FrameResources(const FrameResources&) = delete;
     FrameResources& operator=(const FrameResources&) = delete;
 
-    FrameResources(FrameResources&&) = default;
+    FrameResources(FrameResources&&)  noexcept = default;
     FrameResources& operator=(FrameResources&&) = default;
 
     ~FrameResources()
@@ -124,6 +124,15 @@ struct FrameResources
     }
 };
 
+struct FrameDrawImageContext
+{
+    Reference<Image> draw_image;
+    Reference<ImageView> draw_image_view;
+    Reference<Image> depth_image;
+    Reference<ImageView> depth_image_view;
+
+    size_t last_used_frame_index = 0;
+};
 
 /**
  * Per frame rendering context (what to render and where)
@@ -135,11 +144,7 @@ struct FrameRenderingContext
     vulkan::GPUCameraData camera_data{};
     glm::uvec4 viewport_bounds;
 
-    // TODO: switch with generic `Image` class
-    vk::Image draw_image;
-    vk::ImageView draw_image_view;
-    vk::Image depth_image;
-    vk::ImageView depth_image_view;
+    FrameDrawImageContext image_context{};
 
     vk::raii::CommandBuffer& command_buffer;
     FrameResources& resources;
