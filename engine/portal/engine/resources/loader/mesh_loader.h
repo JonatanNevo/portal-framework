@@ -21,7 +21,7 @@ struct MeshData
 class MeshLoader final : public ResourceLoader
 {
 public:
-    MeshLoader(ResourceRegistry& registry, const RendererContext& context);
+    MeshLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
     Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
 
@@ -29,6 +29,6 @@ protected:
     MeshData load_mesh_data(const SourceMetadata& meta, const ResourceSource& source);
 
 private:
-    const RendererContext& context;
+    const renderer::vulkan::VulkanContext& context;
 };
 } // portal

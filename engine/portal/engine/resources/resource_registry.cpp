@@ -16,12 +16,12 @@ namespace portal
 static auto logger = Log::get_logger("Resources");
 
 
-ResourceRegistry::ResourceRegistry(ModuleStack& stack, const RendererContext& context)
+ResourceRegistry::ResourceRegistry(ModuleStack& stack, const renderer::vulkan::VulkanContext& context)
     : Module<ReferenceManager, ResourceDatabase, SchedulerModule, SystemOrchestrator>(stack, STRING_ID("Resource Registry")),
       loader_factory(
           *this,
           context
-      ) // TODO: this might not work :( {}
+      )
 {}
 
 ResourceRegistry::~ResourceRegistry() noexcept

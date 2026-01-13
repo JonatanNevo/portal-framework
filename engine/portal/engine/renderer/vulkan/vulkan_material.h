@@ -35,7 +35,7 @@ public:
      * @param properties Material configuration
      * @param context Renderer context
      */
-    VulkanMaterial(const MaterialProperties& properties, const RendererContext& context);
+    VulkanMaterial(const MaterialProperties& properties, const VulkanContext& context);
     ~VulkanMaterial() override;
 
     /**

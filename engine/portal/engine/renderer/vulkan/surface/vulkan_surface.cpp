@@ -7,6 +7,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include "portal/application/settings.h"
 #include "portal/engine/window/glfw_window.h"
 
 namespace portal::renderer::vulkan
@@ -99,6 +100,11 @@ VulkanSurface::VulkanSurface(const VulkanContext& context, const SurfaceProperti
         .supported_transforms = to_surface_transform(vulkan_capabilities.supportedTransforms),
         .current_transform = to_surface_transform(vulkan_capabilities.currentTransform)
     };
+
+    if (get_min_frames_in_flight() > properties.min_frames_in_flight)
+    {
+        Settings::get().set_setting("application.frames_in_flight", get_min_frames_in_flight());
+    }
 }
 
 const SurfaceCapabilities& VulkanSurface::get_capabilities() const

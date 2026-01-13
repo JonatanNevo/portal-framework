@@ -9,6 +9,7 @@
 
 #include "portal/core/strings/string_id.h"
 #include "loader.h"
+#include "portal/engine/renderer/vulkan/vulkan_context.h"
 
 
 namespace portal
@@ -21,7 +22,7 @@ namespace portal::resources
 class TextureLoader final : public ResourceLoader
 {
 public:
-    TextureLoader(ResourceRegistry& registry, const RendererContext& context);
+    TextureLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
     Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
     static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
@@ -38,6 +39,6 @@ protected:
     void create_standalone_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const;
 
 private:
-    const RendererContext& context;
+   const renderer::vulkan::VulkanContext& context;
 };
 } // portal

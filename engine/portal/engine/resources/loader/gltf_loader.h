@@ -17,6 +17,7 @@
 #include <filesystem>
 
 #include "portal/core/jobs/job.h"
+#include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/resources/loader/loader.h"
 #include "portal/engine/scene/scene.h"
 
@@ -107,9 +108,9 @@ public:
     /**
      * @brief Constructor
      * @param registry Reference to ResourceRegistry for loading child resources
-     * @param context Reference to RendererContext for creating GPU resources
+     * @param context Reference to VulkanContext
      */
-    GltfLoader(ResourceRegistry& registry, const RendererContext& context);
+    GltfLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
     /**
      * @brief Load a GLTF composite resource and all its children
@@ -160,7 +161,7 @@ protected:
     void load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) const;
 
 protected:
-    const RendererContext& context;
+    const renderer::vulkan::VulkanContext& context;
 
     Reference<renderer::vulkan::VulkanPipeline> g_transparent_pipeline;
     Reference<renderer::vulkan::VulkanPipeline> g_color_pipeline;

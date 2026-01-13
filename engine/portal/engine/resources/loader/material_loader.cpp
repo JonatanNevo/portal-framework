@@ -22,14 +22,14 @@ class VulkanMaterial;
 
 namespace portal::resources
 {
-MaterialLoader::MaterialLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
+MaterialLoader::MaterialLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : ResourceLoader(registry),
+    context(context)
 {
 }
 
 Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const ResourceSource& source)
 {
     auto material_meta = std::get<MaterialMetadata>(meta.meta);
-    auto global_descriptor_sets = context.get_global_descriptor_set_layout();
 
     auto shader = registry.immediate_load<renderer::vulkan::VulkanShader>(material_meta.shader);
     const auto hash = shader->compile_with_permutations({});
@@ -38,7 +38,10 @@ Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const Resou
     renderer::MaterialProperties properties{
         .id = meta.resource_id,
         .shader = variant,
-        .set_start_index = global_descriptor_sets.size(),
+        // TODO: get this based on the loaded project / pipeline?
+        .global_descriptor_sets = {STRING_ID("scene_data")},
+        // TODO: determine the amount of global descriptors based on loaded project
+        .set_start_index = 1,
         .default_texture = registry.get<renderer::Texture>(renderer::Texture::MISSING_TEXTURE_ID).underlying(),
     };
 
@@ -109,7 +112,22 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& na
     // TODO: add pipeline cache
     renderer::PipelineProperties pipeline_properties{
         .shader = shader,
-        .attachments = context.get_attachments(),
+        .attachments = { // TODO: Find a way to extract this from current swapchain
+            .attachment_images = {
+                // Present Image
+                {
+                    .format = renderer::ImageFormat::SRGBA,
+                    .blend = false
+                },
+                // Depth Image
+                {
+                    .format = renderer::ImageFormat::Depth_32Float,
+                    .blend = true,
+                    .blend_mode = renderer::BlendMode::Additive
+                }
+            },
+            .blend = true,
+        },
         .topology = renderer::PrimitiveTopology::Triangles,
         .depth_compare_operator = renderer::DepthCompareOperator::GreaterOrEqual,
         .backface_culling = false,
@@ -118,7 +136,7 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& na
         .wireframe = false,
         .debug_name = name
     };
-    auto pipeline = make_reference<renderer::vulkan::VulkanPipeline>(pipeline_properties, context.get_gpu_context());
+    auto pipeline = make_reference<renderer::vulkan::VulkanPipeline>(pipeline_properties, context);
 
     if (name == STRING_ID("color_pipeline"))
         color_pipeline = pipeline;

@@ -36,7 +36,7 @@ public:
 class LoaderFactory
 {
 public:
-    LoaderFactory(ResourceRegistry& registry, const RendererContext& context);
+    LoaderFactory(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
     ResourceLoader& get(const SourceMetadata& meta);
 
@@ -45,6 +45,6 @@ public:
 protected:
     StubLoader stub_loader;
     llvm::DenseMap<ResourceType, std::shared_ptr<ResourceLoader>> loaders;
-    const RendererContext& context;
+    const renderer::vulkan::VulkanContext& context;
 };
 } // portal

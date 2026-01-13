@@ -9,7 +9,7 @@
 
 namespace portal::resources
 {
-MeshLoader::MeshLoader(ResourceRegistry& registry, const RendererContext& context) : ResourceLoader(registry), context(context)
+MeshLoader::MeshLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : ResourceLoader(registry), context(context)
 {}
 
 Reference<Resource> MeshLoader::load(const SourceMetadata& meta, const ResourceSource& source)
@@ -41,8 +41,8 @@ Reference<Resource> MeshLoader::load(const SourceMetadata& meta, const ResourceS
                  )
                  .with_vma_usage(VMA_MEMORY_USAGE_GPU_ONLY);
 
-    geometry.index_buffer = context.get_gpu_context().get_device().create_buffer_shared(index_builder);
-    geometry.vertex_buffer = context.get_gpu_context().get_device().create_buffer_shared(vertex_builder);
+    geometry.index_buffer = context.get_device().create_buffer_shared(index_builder);
+    geometry.vertex_buffer = context.get_device().create_buffer_shared(vertex_builder);
     geometry.vertex_buffer_address = geometry.vertex_buffer->get_device_address();
 
     renderer::vulkan::BufferBuilder builder(vertex_buffer_size + index_buffer_size);
@@ -50,11 +50,11 @@ Reference<Resource> MeshLoader::load(const SourceMetadata& meta, const ResourceS
            .with_usage(vk::BufferUsageFlagBits::eTransferSrc)
            .with_vma_usage(VMA_MEMORY_USAGE_CPU_TO_GPU)
            .with_debug_name("staging");
-    auto staging_buffer = context.get_gpu_context().get_device().create_buffer(builder);
+    auto staging_buffer = context.get_device().create_buffer(builder);
     auto offset = staging_buffer.update(geometry.vertices.data(), vertex_buffer_size, 0);
     offset += staging_buffer.update(geometry.indices.data(), index_buffer_size, offset);
 
-    context.get_gpu_context().get_device().immediate_submit(
+    context.get_device().immediate_submit(
         [&](const vk::raii::CommandBuffer& command_buffer)
         {
             vk::BufferCopy vertex_copy{

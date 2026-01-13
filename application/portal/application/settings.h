@@ -36,6 +36,18 @@ public:
     void dump() const;
 
     template <typename T>
+    T get_setting(const PropertyName& name, const T& default_value)
+    {
+        auto optional_t = get_setting<T>(name);
+        if (!optional_t.has_value())
+        {
+            set_setting(name, default_value);
+            return default_value;
+        }
+        return *optional_t;
+    }
+
+    template <typename T>
     std::optional<T> get_setting(const PropertyName& name)
     {
         auto split_view = name | std::ranges::views::split('.');
@@ -64,6 +76,32 @@ public:
         }
 
         return std::nullopt;
+    }
+    
+    template <typename T>
+    void set_setting(const PropertyName& name, const T& value)
+    {
+        auto split_view = name | std::ranges::views::split('.');
+        auto split_size = std::ranges::distance(split_view);
+
+        ArchiveObject* current_node = root.get();
+        for (auto part : split_view)
+        {
+            std::string_view part_str{part};
+
+            if (--split_size == 0)
+            {
+                current_node->add_property(part_str, value);
+                return;
+            }
+
+            auto* next_node = current_node->get_object(part_str);
+            if (!next_node)
+            {
+                next_node = current_node->create_child(part_str);
+            }
+            current_node = next_node;
+        }
     }
 
     void debug_print() const;

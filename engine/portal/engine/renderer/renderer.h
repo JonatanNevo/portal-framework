@@ -121,7 +121,6 @@ private:
 
 private:
     Reference<renderer::vulkan::VulkanSwapchain> swapchain;
-    renderer::AttachmentProperties attachments;
     renderer::vulkan::VulkanContext& context;
 
     // TODO: move from here to some `g buffer` class
