@@ -38,6 +38,7 @@ void Settings::init(const SettingsArchiveType type, const std::filesystem::path&
     {
         auto user_settings = Settings(type, mutable_settings_path);
         g_settings->update(user_settings);
+        g_settings->settings_path = mutable_settings_path;
     }
 
     auto log_level_string = g_settings->get_setting<std::string>(LOG_LEVEL_ENTRY);

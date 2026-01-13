@@ -98,7 +98,9 @@ public:
      * @param info Image view create info
      * @return Image view handle
      */
-    [[nodiscard]] vk::raii::ImageView create_image_view(const vk::ImageViewCreateInfo& info) const;
+    [[nodiscard]] vk::ImageView create_image_view(const vk::ImageViewCreateInfo& info) const;
+
+    void destory_image_view(vk::ImageView image_view) const;
 
     /**
      * @brief Creates sampler

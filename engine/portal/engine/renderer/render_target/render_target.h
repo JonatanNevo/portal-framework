@@ -12,7 +12,10 @@
 
 #include <glaze/reflection/get_name.hpp>
 
+#include "portal/application/frame_context.h"
 #include "portal/engine/reference.h"
+#include "portal/engine/renderer/rendering_context.h"
+#include "portal/engine/renderer/image/image.h"
 #include "portal/engine/renderer/image/image_types.h"
 
 namespace portal::renderer
@@ -122,10 +125,20 @@ public:
     /** @brief Gets color attachment count */
     [[nodiscard]] virtual size_t get_color_attachment_count() const = 0;
 
+    [[nodiscard]] virtual std::span<const ImageFormat> get_color_formats() const = 0;
+
     /** @brief Checks if render target has depth attachment */
     [[nodiscard]] virtual bool has_depth_attachment() const = 0;
 
     /** @brief Gets render target properties */
     [[nodiscard]] virtual const RenderTargetProperties& get_properties() const = 0;
+
+    /**
+     * @brief Acquires next image for rendering and fills out the FrameRenderingContext
+     * @param frame The frame's context to begin
+     */
+    virtual void begin_frame(FrameContext& frame) = 0;
+
+    virtual void end_frame(const FrameContext& frame) = 0;
 };
 } // portal

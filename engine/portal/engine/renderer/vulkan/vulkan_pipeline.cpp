@@ -11,7 +11,7 @@
 #include "portal/engine/renderer/vulkan/vulkan_shader.h"
 
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
-#include "portal/engine/renderer/vulkan/vulkan_render_target.h"
+#include "render_target/vulkan_render_target.h"
 
 namespace portal::renderer::vulkan
 {

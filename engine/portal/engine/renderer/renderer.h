@@ -34,7 +34,7 @@ class Window;
  * @class Renderer
  * @brief Main renderer with N-frames-in-flight synchronization
  *
- * Manages frame pacing, swapchain, render targets, and per-frame resources.
+ * Manages frame pacing, render targets, and per-frame resources.
  *
  * ## Frame Synchronization Flow
  *
@@ -65,10 +65,10 @@ public:
     ~Renderer() override;
 
     /**
-     * @brief Sets swapchain reference
-     * @param new_swapchain Swapchain to use for presentation
+     * @brief Sets render target reference
+     * @param new_render_target The target to render to
      */
-    void set_swapchain(const Reference<renderer::vulkan::VulkanSwapchain>& new_swapchain);
+    void set_render_target(const Reference<renderer::RenderTarget>& new_render_target);
 
     /** @brief Cleans up renderer resources */
     void cleanup();
@@ -99,7 +99,7 @@ public:
     void draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer& command_buffer);
 
     /**
-     * @brief Handles swapchain resize
+     * @brief Handles render target resize
      * @param new_width New width
      * @param new_height New height
      */
@@ -108,11 +108,10 @@ public:
     /** @brief Gets renderer context */
     [[nodiscard]] const RendererContext& get_renderer_context() const;
 
-    /** @brief Gets swapchain */
-    [[nodiscard]] const renderer::vulkan::VulkanSwapchain& get_swapchain() const;
+    /** @brief Gets the render target */
+    [[nodiscard]] const renderer::RenderTarget& get_render_target() const;
 
 private:
-    void init_render_target();
     void init_frame_resources();
 
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
@@ -120,12 +119,10 @@ private:
     static void clean_frame(const FrameContext& frame);
 
 private:
-    Reference<renderer::vulkan::VulkanSwapchain> swapchain;
     renderer::vulkan::VulkanContext& context;
 
-    // TODO: move from here to some `g buffer` class
-    Reference<renderer::vulkan::VulkanImage> depth_image;
-    Reference<renderer::vulkan::VulkanRenderTarget> render_target;
+
+    Reference<renderer::RenderTarget> render_target;
 
     DeletionQueue deletion_queue = {};
 

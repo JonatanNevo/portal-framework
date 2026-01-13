@@ -27,4 +27,5 @@ template <typename To, typename From>
 {
     return std::dynamic_pointer_cast<To>(ref);
 }
+
 }

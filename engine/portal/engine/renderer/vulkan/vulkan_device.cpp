@@ -211,10 +211,14 @@ ImageAllocation VulkanDevice::create_image(const ImageBuilder& builder) const
     return builder.build(*this);
 }
 
-vk::raii::ImageView VulkanDevice::create_image_view(const vk::ImageViewCreateInfo& info) const
+vk::ImageView VulkanDevice::create_image_view(const vk::ImageViewCreateInfo& info) const
 {
-    auto image_view = device.createImageView(info);
-    return image_view;
+    return (*device).createImageView(info);
+}
+
+void VulkanDevice::destory_image_view(vk::ImageView image_view) const
+{
+    (*device).destroyImageView(image_view);
 }
 
 vk::raii::Sampler VulkanDevice::create_sampler(const vk::SamplerCreateInfo& info) const

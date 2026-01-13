@@ -112,6 +112,10 @@ private:
     void debug_print_array(const std::string& name, const reflection::Property& prop) const;
 
     explicit Settings(SettingsArchiveType type, const std::filesystem::path& path);
+    Settings(const Settings&) = delete;
+    Settings(Settings&&) = delete;
+    Settings& operator=(const Settings&) = delete;
+    Settings& operator=(Settings&&) = delete;
 
 protected:
     reflection::Property& get_property_from_map(PropertyName name) override;

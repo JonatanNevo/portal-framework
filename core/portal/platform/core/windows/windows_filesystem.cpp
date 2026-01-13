@@ -177,22 +177,22 @@ std::filesystem::path FileSystem::get_root_path()
 
 std::filesystem::path FileSystem::get_data_home()
 {
-    return get_appdata() / PORTAL_APPLICATION_NAME;
+    return get_appdata() / "portal" / PORTAL_APPLICATION_NAME;
 }
 
 std::filesystem::path FileSystem::get_config_home()
 {
-    return get_appdata() / PORTAL_APPLICATION_NAME / "config";
+    return get_appdata() / "portal" / PORTAL_APPLICATION_NAME / "config";
 }
 
 std::filesystem::path FileSystem::get_cache_dir()
 {
-    return get_appdata_local() / PORTAL_APPLICATION_NAME / "cache";
+    return get_appdata_local() / "portal" / PORTAL_APPLICATION_NAME / "cache";
 }
 
 std::filesystem::path FileSystem::get_state_dir()
 {
-    return get_appdata_local() / PORTAL_APPLICATION_NAME;
+    return get_appdata_local() / "portal" / PORTAL_APPLICATION_NAME;
 }
 
 std::filesystem::path FileSystem::get_desktop_folder()

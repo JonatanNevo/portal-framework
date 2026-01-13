@@ -30,9 +30,6 @@ VulkanRenderTarget::VulkanRenderTarget(
     const RenderTargetProperties& prop
 ) : prop(prop)
 {
-    width = prop.width;
-    height = prop.height;
-
     color_formats.reserve(prop.attachments.attachment_images.size());
     for (const auto& attachment : prop.attachments.attachment_images)
     {
@@ -47,7 +44,9 @@ VulkanRenderTarget::VulkanRenderTarget(
         }
     }
 
-    resize(width, height, true);
+    width = static_cast<size_t>(prop.width * prop.scale);
+    height = static_cast<size_t>(prop.height * prop.scale);;
+    initialize();
 }
 
 VulkanRenderTarget::~VulkanRenderTarget()
@@ -58,6 +57,8 @@ VulkanRenderTarget::~VulkanRenderTarget()
 void VulkanRenderTarget::initialize()
 {
     release();
+
+    inner_initialize();
 
     // Using vulkan 1.4, no need to create frame buffer object
     rendering_attachments.reserve(prop.attachments.attachment_images.size());
@@ -99,6 +100,8 @@ void VulkanRenderTarget::initialize()
 void VulkanRenderTarget::release()
 {
     rendering_attachments.clear();
+
+    inner_release();
 }
 
 void VulkanRenderTarget::resize(const size_t new_width, const size_t new_height, const bool force_recreate)
@@ -107,14 +110,16 @@ void VulkanRenderTarget::resize(const size_t new_width, const size_t new_height,
         return;
 
     width = static_cast<size_t>(new_width * prop.scale);
-    height = static_cast<size_t>(new_height * prop.scale);;
+    height = static_cast<size_t>(new_height * prop.scale);
     initialize();
 }
 
 vk::RenderingInfo VulkanRenderTarget::make_rendering_info(const FrameRenderingContext& frame_context)
 {
-    llvm::SmallVector<vk::ImageView, 4> color_attachments = {frame_context.draw_image_view};
-    const std::optional depth_attachment = frame_context.depth_image_view;
+    llvm::SmallVector<vk::ImageView, 4> color_attachments = {
+        reference_cast<VulkanImageView>(frame_context.image_context.draw_image_view)->get_vk_image_view()
+    };
+    const std::optional depth_attachment = reference_cast<VulkanImageView>(frame_context.image_context.depth_image_view)->get_vk_image_view();
 
     return make_rendering_info(color_attachments, depth_attachment);
 }

@@ -11,7 +11,8 @@
 #include "portal/engine/imgui/backends/imgui_impl_vulkan.h"
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/renderer_context.h"
-#include "portal/engine/renderer/vulkan/vulkan_render_target.h"
+#include "../renderer/vulkan/render_target/vulkan_render_target.h"
+#include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_utils.h"
 #include "portal/engine/window/glfw_window.h"
 
@@ -71,7 +72,8 @@ ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window, const rendere
     const auto& vulkan_window = dynamic_cast<const GlfwWindow&>(window);
     ImGui_ImplGlfw_InitForVulkan(vulkan_window.get_handle(), true);
 
-    const auto& swapchain_format = renderer.get_swapchain().get_color_format();
+    auto color_formats = renderer.get_render_target().get_color_formats() ;
+    const auto vulkan_color_formats = std::ranges::to<std::vector>(color_formats | std::views::transform([](const auto& format) { return renderer::vulkan::to_format(format); }));
 
     ImGui_ImplVulkan_InitInfo init_info = {
         .Instance = *vulkan_context.get_instance(),
@@ -85,8 +87,8 @@ ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window, const rendere
         .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
         .UseDynamicRendering = true,
         .PipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfoKHR{
-            .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &swapchain_format
+            .colorAttachmentCount = static_cast<uint32_t>(vulkan_color_formats.size()),
+            .pColorAttachmentFormats = vulkan_color_formats.data()
         },
     };
 
@@ -121,12 +123,12 @@ void ImGuiModule::end_frame(FrameContext& frame)
     auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
 
     const auto& renderer = get_dependency<Renderer>();
-    auto& swapchain = renderer.get_swapchain();
+    auto& render_target = renderer.get_render_target();
 
     // set swapchain image layout to Attachment Optimal so we can draw it
     renderer::vulkan::transition_image_layout(
         rendering_context->command_buffer,
-        rendering_context->draw_image,
+        rendering_context->image_context.draw_image,
         1,
         vk::ImageLayout::ePresentSrcKHR,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -139,11 +141,11 @@ void ImGuiModule::end_frame(FrameContext& frame)
 
     ImGui::Render();
 
-    const auto width = static_cast<uint32_t>(swapchain.get_width());
-    const auto height = static_cast<uint32_t>(swapchain.get_height());
+    const auto width = static_cast<uint32_t>(render_target.get_width());
+    const auto height = static_cast<uint32_t>(render_target.get_height());
 
     vk::RenderingAttachmentInfo color_attachment = {
-        .imageView = rendering_context->draw_image_view,
+        .imageView = reference_cast<renderer::vulkan::VulkanImageView>(rendering_context->image_context.draw_image_view)->get_vk_image_view(),
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eLoad,
         .storeOp = vk::AttachmentStoreOp::eStore
@@ -173,7 +175,7 @@ void ImGuiModule::end_frame(FrameContext& frame)
     // set draw image layout to Present so we can present it
     renderer::vulkan::transition_image_layout(
         rendering_context->command_buffer,
-        rendering_context->draw_image,
+        rendering_context->image_context.draw_image,
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,

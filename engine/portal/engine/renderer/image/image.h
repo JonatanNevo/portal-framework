@@ -12,6 +12,8 @@
 
 namespace portal::renderer
 {
+class ImageView;
+
 /**
  * @class Image
  * @brief Abstract image interface for GPU textures and render targets
@@ -57,6 +59,8 @@ public:
     /** @brief Gets CPU buffer (mutable) */
     [[nodiscard]] virtual Buffer& get_buffer() = 0;
 
+    [[nodiscard]] virtual Reference<ImageView> get_view() const = 0;
+
     /** @brief Creates per-layer image views for array/cube textures */
     virtual void create_per_layer_image_view() = 0;
 
@@ -79,10 +83,12 @@ public:
  */
 struct ImageViewProperties
 {
-    Reference<Image> image;
+    // TODO: switch to invasive ref counting to be able to save a reference here
+    Image* image;
     size_t mip = 0;
+    size_t layer = 0;
 
-    StringId name;
+    StringId name{};
 };
 
 /**
@@ -92,7 +98,18 @@ struct ImageViewProperties
 class ImageView : public RendererResource
 {
 public:
-    explicit ImageView(const StringId& id) : RendererResource(id) {}
+    explicit ImageView(const ImageViewProperties& properties) : RendererResource(id), properties(properties)
+    {
+        PORTAL_ASSERT(properties.image != nullptr, "Image cannot be nullptr");
+        if (properties.name == INVALID_STRING_ID)
+            this->properties.name = properties.image->get_id();
+    }
+
+    [[nodiscard]] Image* get_image() const { return properties.image; }
+    [[nodiscard]] size_t get_mip() const { return properties.mip; }
+
+protected:
+    ImageViewProperties properties;
 };
 
 namespace utils

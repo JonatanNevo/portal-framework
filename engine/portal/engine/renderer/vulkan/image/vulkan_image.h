@@ -17,6 +17,8 @@ namespace portal::renderer::vulkan
 {
 class VulkanContext;
 
+class VulkanImageView;
+
 /**
  * @struct VulkanImageInfo
  * @brief Vulkan image resources (allocation, view, sampler)
@@ -24,7 +26,7 @@ class VulkanContext;
 struct VulkanImageInfo
 {
     ImageAllocation image = nullptr;
-    vk::raii::ImageView view = nullptr;
+    Reference<VulkanImageView> view = nullptr;
     Reference<VulkanSampler> sampler = nullptr;
 };
 
@@ -88,6 +90,9 @@ public:
     /** @brief Gets aspect ratio (width/height) */
     [[nodiscard]] float get_aspect_ratio() const override;
 
+    /** @brief Gets image view */
+    [[nodiscard]] Reference<ImageView> get_view() const override;
+
     /**
      * @brief Finds closest mip level for dimensions
      * @param width Target width
@@ -117,14 +122,14 @@ public:
      * @param mip_level Mip level index
      * @return Vulkan image view
      */
-    vk::ImageView get_mip_image_view(size_t mip_level);
+    Reference<VulkanImageView> get_mip_image_view(size_t mip_level);
 
     /**
      * @brief Gets image view for specific layer
      * @param layer Layer index
      * @return Vulkan image view
      */
-    vk::ImageView get_layer_image_view(size_t layer);
+    Reference<VulkanImageView> get_layer_image_view(size_t layer);
 
     /** @brief Gets image info (allocation, view, sampler) */
     VulkanImageInfo& get_image_info();
@@ -134,9 +139,6 @@ public:
 
     /** @brief Gets Vulkan image allocation */
     [[nodiscard]] const ImageAllocation& get_image() const;
-
-    /** @brief Gets Vulkan image view */
-    [[nodiscard]] const vk::raii::ImageView& get_view() const;
 
     /** @brief Gets Vulkan sampler */
     [[nodiscard]] const Reference<VulkanSampler>& get_sampler() const;
@@ -163,6 +165,7 @@ public:
     void update_descriptor();
 
 private:
+    const VulkanContext& context;
     const VulkanDevice& device;
     image::Properties properties;
 
@@ -170,8 +173,24 @@ private:
 
     VulkanImageInfo image_info;
 
-    std::vector<vk::raii::ImageView> per_layer_image_views;
-    std::unordered_map<size_t, vk::raii::ImageView> per_mip_image_views;
+    std::vector<Reference<VulkanImageView>> per_layer_image_views;
+    std::unordered_map<size_t, Reference<VulkanImageView>> per_mip_image_views;
     vk::DescriptorImageInfo descriptor_image_info;
+};
+
+class VulkanImageView final : public ImageView
+{
+public:
+    explicit VulkanImageView(vk::ImageView image_view, const ImageViewProperties& image_view_properties, const VulkanContext& context);
+    explicit VulkanImageView(const ImageViewProperties& image_view_properties, const VulkanContext& context);
+
+    ~VulkanImageView() override;
+
+    [[nodiscard]] vk::ImageView get_vk_image_view() const;
+
+private:
+    const VulkanContext& context;
+    vk::ImageView image_view;
+    const bool owner;
 };
 } // vulkan

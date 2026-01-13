@@ -16,34 +16,28 @@ namespace portal::renderer::vulkan
 {
 static auto logger = Log::get_logger("Vulkan");
 
-VulkanImage::VulkanImage(const vk::Image image, const image::Properties& properties, const VulkanContext& context) : Image(properties.name),
-    device(context.get_device()),
-    properties(properties)
+VulkanImage::VulkanImage(const vk::Image image, const image::Properties& properties, const VulkanContext& context)
+    : Image(properties.name),
+      context(context),
+      device(context.get_device()),
+      properties(properties)
 {
     // TODO: move this to the `reallocate` somehow?
     image_info.image = ImageAllocation(image);
-    const vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format)
-                                                 ? vk::ImageAspectFlagBits::eDepth
-                                                 : vk::ImageAspectFlagBits::eColor;
 
-    const vk::ImageViewCreateInfo view_info{
-        .image = image_info.image.get_handle(),
-        .viewType = properties.layers > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D,
-        .format = to_format(properties.format),
-        .subresourceRange = {
-            .aspectMask = aspect_mask,
-            .baseMipLevel = 0,
-            .levelCount = static_cast<uint32_t>(properties.mips),
-            .baseArrayLayer = 0,
-            .layerCount = static_cast<uint32_t>(properties.layers)
-        }
+    ImageViewProperties imageViewProperties{
+        .image = this,
+        .mip = 0,
+        .name = STRING_ID(fmt::format("{}_view", properties.name.string))
     };
-    image_info.view = device.create_image_view(view_info);
+    image_info.view = make_reference<VulkanImageView>(imageViewProperties, context);
 }
 
-VulkanImage::VulkanImage(const image::Properties& properties, const VulkanContext& context) : Image(properties.name),
-                                                                                              device(context.get_device()),
-                                                                                              properties(properties)
+VulkanImage::VulkanImage(const image::Properties& properties, const VulkanContext& context)
+    : Image(properties.name),
+      context(context),
+      device(context.get_device()),
+      properties(properties)
 {
     PORTAL_ASSERT(properties.width > 0 && properties.height > 0, "Invalid image size");
     reallocate();
@@ -112,20 +106,11 @@ void VulkanImage::reallocate()
 
     image_info.image = device.create_image(builder);
 
-    const vk::ImageViewCreateInfo view_info{
-        .image = image_info.image.get_handle(),
-        .viewType = properties.layers > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D,
-        .format = format,
-        .subresourceRange = {
-            .aspectMask = aspect_mask,
-            .baseMipLevel = 0,
-            .levelCount = static_cast<uint32_t>(properties.mips),
-            .baseArrayLayer = 0,
-            .layerCount = static_cast<uint32_t>(properties.layers)
-        }
+    ImageViewProperties imageViewProperties{
+        .image = this,
+        .name = STRING_ID(fmt::format("{}_view", properties.name.string))
     };
-    image_info.view = device.create_image_view(view_info);
-    device.set_debug_name(image_info.view, fmt::format("default_image_view_{}", properties.name.string).c_str());
+    image_info.view = make_reference<VulkanImageView>(imageViewProperties, context);
 
     if (properties.create_sampler)
     {
@@ -290,59 +275,33 @@ void VulkanImage::create_per_layer_image_view()
     if (utils::is_stencil_format(properties.format))
         aspect_mask |= vk::ImageAspectFlagBits::eStencil;
 
-    const vk::Format format = to_format(properties.format);
-
     per_layer_image_views.reserve(properties.layers);
-    for (size_t i = 0; i < properties.layers; ++i)
+    for (size_t layer = 0; layer < properties.layers; ++layer)
     {
-        const vk::ImageViewCreateInfo view_info{
-            .image = image_info.image.get_handle(),
-            .viewType = vk::ImageViewType::e2D,
-            .format = format,
-            .subresourceRange = {
-                .aspectMask = aspect_mask,
-                .baseMipLevel = 0,
-                .levelCount = static_cast<uint32_t>(properties.mips),
-                .baseArrayLayer = 0,
-                .layerCount = 1
-            }
+        ImageViewProperties imageViewProperties{
+            .image = this,
+            .layer = layer,
+            .name = STRING_ID(fmt::format("{}_layer_view_{}", properties.name.string, layer))
         };
-        per_layer_image_views.emplace_back(device.create_image_view(view_info));
-        device.set_debug_name(per_layer_image_views[i], fmt::format("{}_layer_view_{}", properties.name.string, i).c_str());
+        per_layer_image_views.emplace_back(make_reference<VulkanImageView>(imageViewProperties, context));
     }
 }
 
-vk::ImageView VulkanImage::get_mip_image_view(size_t mip_level)
+Reference<VulkanImageView> VulkanImage::get_mip_image_view(size_t mip_level)
 {
     if (!per_mip_image_views.contains(mip_level))
     {
-        vk::ImageAspectFlags aspect_mask = utils::is_depth_format(properties.format)
-                                               ? vk::ImageAspectFlagBits::eDepth
-                                               : vk::ImageAspectFlagBits::eColor;
-        if (utils::is_stencil_format(properties.format))
-            aspect_mask |= vk::ImageAspectFlagBits::eStencil;
-
-        const vk::Format format = to_format(properties.format);
-
-        const vk::ImageViewCreateInfo view_info{
-            .image = image_info.image.get_handle(),
-            .viewType = vk::ImageViewType::e2D,
-            .format = format,
-            .subresourceRange = {
-                .aspectMask = aspect_mask,
-                .baseMipLevel = static_cast<uint32_t>(mip_level),
-                .levelCount = 1,
-                .baseArrayLayer = 0,
-                .layerCount = 1
-            }
+        ImageViewProperties imageViewProperties{
+            .image = this,
+            .mip = mip_level,
+            .name = STRING_ID(fmt::format("{}_mip_view_{}", properties.name.string, mip_level))
         };
-        per_mip_image_views.emplace(mip_level, device.create_image_view(view_info));
-        device.set_debug_name(per_mip_image_views.at(mip_level), fmt::format("{}_mip_view_{}", properties.name.string, mip_level).c_str());
+        per_mip_image_views.emplace(mip_level, make_reference<VulkanImageView>(imageViewProperties, context));
     }
     return per_mip_image_views.at(mip_level);
 }
 
-vk::ImageView VulkanImage::get_layer_image_view(const size_t layer)
+Reference<VulkanImageView> VulkanImage::get_layer_image_view(const size_t layer)
 {
     PORTAL_ASSERT(layer < properties.layers, "Invalid layer index");
     return per_layer_image_views[layer];
@@ -363,7 +322,7 @@ const ImageAllocation& VulkanImage::get_image() const
     return image_info.image;
 }
 
-const vk::raii::ImageView& VulkanImage::get_view() const
+Reference<ImageView> VulkanImage::get_view() const
 {
     return image_info.view;
 }
@@ -558,8 +517,60 @@ void VulkanImage::update_descriptor()
     else
         descriptor_image_info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
-    descriptor_image_info.imageView = image_info.view;
+    descriptor_image_info.imageView = image_info.view->get_vk_image_view();
     if (image_info.sampler)
         descriptor_image_info.sampler = image_info.sampler->get_vk_sampler();
+}
+
+VulkanImageView::VulkanImageView(const vk::ImageView image_view, const ImageViewProperties& image_view_properties, const VulkanContext& context)
+    : ImageView(image_view_properties),
+      context(context),
+      image_view(image_view),
+      owner(false)
+{
+}
+
+VulkanImageView::VulkanImageView(const ImageViewProperties& image_view_properties, const VulkanContext& context)
+    : ImageView(image_view_properties),
+      context(context),
+      owner(true)
+{
+    const auto vulkan_image = dynamic_cast<VulkanImage*>(image_view_properties.image);
+    const auto image_properties = vulkan_image->get_prop();
+
+    vk::ImageAspectFlags aspect_mask = utils::is_depth_format(image_properties.format)
+                                                 ? vk::ImageAspectFlagBits::eDepth
+                                                 : vk::ImageAspectFlagBits::eColor;
+    if (utils::is_stencil_format(image_properties.format))
+        aspect_mask |= vk::ImageAspectFlagBits::eStencil;
+
+    const vk::ImageViewCreateInfo view_info{
+        .image = vulkan_image->get_image().get_handle(),
+        .viewType = image_properties.layers > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D,
+        .format = to_format(image_properties.format),
+        .subresourceRange = {
+            .aspectMask = aspect_mask,
+            .baseMipLevel = static_cast<uint32_t>(properties.mip),
+            .levelCount = static_cast<uint32_t>(image_properties.mips),
+            .baseArrayLayer = static_cast<uint32_t>(properties.layer),
+            .layerCount = static_cast<uint32_t>(image_properties.layers)
+        }
+    };
+
+    image_view = context.get_device().create_image_view(view_info);
+    context.get_device().set_debug_name(image_view, properties.name.string.data());
+}
+
+VulkanImageView::~VulkanImageView()
+{
+    if (owner)
+    {
+        context.get_device().destory_image_view(image_view);
+    }
+}
+
+vk::ImageView VulkanImageView::get_vk_image_view() const
+{
+    return image_view;
 }
 }
