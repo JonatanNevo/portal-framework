@@ -80,7 +80,7 @@ struct FrameContext
 
     // When rendering_context is set, it should be a `renderer::RenderingContext`
     // TODO: this might cause performance issues, especially since any can use dynamic allocations without custom allocators, investigate
-    std::any rendering_context;
+    std::any rendering_context = std::any{};
 
     // TODO: add a custom stack allocator that will handle all of the frame's allocations
 };

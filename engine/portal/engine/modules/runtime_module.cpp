@@ -16,7 +16,6 @@ RuntimeModule::RuntimeModule(
 )
     : TaggedModule(stack, STRING_ID("Runtime Module")),
       swapchain(swapchain),
-      context(context),
       renderer(context, get_dependency<ResourcesModule>().get_registry())
 {}
 

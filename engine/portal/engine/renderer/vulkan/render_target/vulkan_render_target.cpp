@@ -175,7 +175,7 @@ void VulkanRenderTarget::release()
         if (prop.existing_images.contains(attachment_index))
             continue;
 
-        if (image->get_prop().layers == 1 || attachment_index == 0 && !image->get_layer_image_view(0))
+        if (image->get_prop().layers == 1 || (attachment_index == 0 && !image->get_layer_image_view(0)))
             image->release();
         attachment_index++;
     }

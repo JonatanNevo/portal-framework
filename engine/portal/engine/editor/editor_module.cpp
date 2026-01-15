@@ -22,7 +22,6 @@ EditorModule::EditorModule(
 )
     : TaggedModule(stack, STRING_ID("Editor Module")),
       swapchain(swapchain),
-      context(context),
       runtime_module(stack, context, swapchain),
       im_gui_renderer(window, swapchain),
       viewport(swapchain, runtime_module)
