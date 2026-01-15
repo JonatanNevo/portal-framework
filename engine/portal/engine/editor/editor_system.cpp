@@ -6,22 +6,38 @@
 #include "editor_system.h"
 
 #include <imgui.h>
+#include <ImGuizmo.h>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 
+#include "selection_manager.h"
 #include "portal/engine/components/base_camera_controller.h"
 #include "portal/engine/components/camera.h"
 #include "portal/engine/components/mesh.h"
 #include "portal/engine/components/transform.h"
+#include "portal/engine/scene/scene.h"
 
 namespace portal
 {
-
-void draw_node( Entity entity, int& node_id, const RelationshipComponent& relationship, const NameComponent& name, const TransformComponent& transform)
+void draw_node(
+    Entity entity,
+    Entity scope,
+    int& node_id,
+    const RelationshipComponent& relationship,
+    const NameComponent& name,
+    const TransformComponent& transform
+)
 {
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
     if (relationship.children == 0)
     {
         flags |= ImGuiTreeNodeFlags_Leaf;
     }
+
+    const bool is_selected = SelectionSystem::is_selected(entity, scope);
+    if (is_selected)
+        flags |= ImGuiTreeNodeFlags_Selected;
+
 
     ImGui::PushID(node_id++);
 
@@ -57,6 +73,11 @@ void draw_node( Entity entity, int& node_id, const RelationshipComponent& relati
         ImGui::EndTooltip();
     }
 
+    if (ImGui::IsItemClicked())
+    {
+        SelectionSystem::select(entity, scope);
+    }
+
     if (open)
     {
         for (const auto& child : entity.children())
@@ -64,7 +85,7 @@ void draw_node( Entity entity, int& node_id, const RelationshipComponent& relati
             auto& child_rel = child.get_component<RelationshipComponent>();
             auto& child_name = child.get_component<NameComponent>();
             auto& child_transform = child.get_component<TransformComponent>();
-            draw_node(child, node_id, child_rel, child_name, child_transform);
+            draw_node(child, scope, node_id, child_rel, child_name, child_transform);
         }
         ImGui::TreePop();
     }
@@ -72,37 +93,15 @@ void draw_node( Entity entity, int& node_id, const RelationshipComponent& relati
     ImGui::PopID();
 }
 
-void EditorGuiSystem::execute(ecs::Registry& registry)
+void EditorGuiSystem::execute(ecs::Registry& registry, FrameContext& frame)
 {
-    print_cameras(registry);
-    print_scene_graph(registry);
+    print_scene_graph(registry, frame);
     print_controls(registry);
+    print_stats_block(registry, frame);
+    print_details_panel(registry, frame);
 }
 
-void EditorGuiSystem::print_cameras(ecs::Registry& registry)
-{
-    ImGui::Begin("Camera");
-    const auto camera_view = registry.view<CameraComponent, BaseCameraController, TransformComponent, NameComponent>();
-    for (auto entity : camera_view)
-    {
-        auto& camera = entity.get_component<CameraComponent>();
-        auto& controller = entity.get_component<BaseCameraController>();
-        auto& transform = entity.get_component<TransformComponent>();
-        auto& name = entity.get_component<NameComponent>();
-
-        ImGui::Text("Camera: %s", name.name.string.data());
-        if (entity.has_component<MainCameraTag>()) ImGui::Text("Main Camera");
-        ImGui::Text("position %f %f %f", transform.get_translation().x, transform.get_translation().y, transform.get_translation().z);
-        ImGui::Text("direction %f %f %f", controller.forward_direction.x, controller.forward_direction.y, controller.forward_direction.z);
-
-        ImGui::SliderFloat("Camera Speed", &controller.speed, 0.1f, 10.0f);
-        ImGui::InputFloat("Near Clip", &camera.near_clip);
-        ImGui::InputFloat("Far Clip", &camera.far_clip);
-    }
-    ImGui::End();
-}
-
-void EditorGuiSystem::print_scene_graph(ecs::Registry& registry)
+void EditorGuiSystem::print_scene_graph(ecs::Registry& registry, FrameContext& frame)
 {
     const auto relationship_group = group(registry);
     relationship_group.sort(
@@ -130,7 +129,7 @@ void EditorGuiSystem::print_scene_graph(ecs::Registry& registry)
         if (relationship.parent != null_entity)
             continue;
 
-        draw_node(registry.entity_from_id(entity), node_id, relationship, name_comp, transform);
+        draw_node(registry.entity_from_id(entity), frame.active_scene->get_scene_entity(), node_id, relationship, name_comp, transform);
     }
     ImGui::End();
 }
@@ -147,6 +146,171 @@ void EditorGuiSystem::print_controls(ecs::Registry&)
     ImGui::Text("D - Move Right");
     ImGui::Text("E - Move Up");
     ImGui::Text("Q - Move Down");
+    ImGui::End();
+}
+
+void EditorGuiSystem::print_stats_block(ecs::Registry&, FrameContext& frame)
+{
+    static std::array<float, 100> fps_history = {};
+    static int fps_history_index = 0;
+
+    fps_history[fps_history_index] = 1000.f / frame.stats.frame_time;
+    fps_history_index = (fps_history_index + 1) % fps_history.size();
+
+    ImGui::Begin("Stats");
+    ImGui::Text("FPS %f", std::ranges::fold_left(fps_history, 0.f, std::plus<float>()) / 100.f);
+    ImGui::Text("frametime %f ms", frame.stats.frame_time);
+    ImGui::Text("draw time %f ms", frame.stats.mesh_draw_time);
+    ImGui::Text("update time %f ms", frame.stats.scene_update_time);
+    ImGui::Text("triangles %i", frame.stats.triangle_count);
+    ImGui::Text("draws %i", frame.stats.drawcall_count);
+    ImGui::End();
+}
+
+void show_transform_controls(Scene& scene, Entity entity, TransformComponent& transform)
+{
+    ImGui::Separator();
+
+    auto main_camera = scene.get_main_camera_entity();
+    auto camera = main_camera.get_component<CameraComponent>();
+
+    static ImGuizmo::OPERATION current_gizmo_operation(ImGuizmo::ROTATE);
+    static ImGuizmo::MODE current_gizmo_mode(ImGuizmo::WORLD);
+
+    // TODO: This should not be here
+    if (ImGui::IsKeyPressed(ImGuiKey_T))
+        current_gizmo_operation = ImGuizmo::TRANSLATE;
+    if (ImGui::IsKeyPressed(ImGuiKey_E))
+        current_gizmo_operation = ImGuizmo::ROTATE;
+    if (ImGui::IsKeyPressed(ImGuiKey_R))
+        current_gizmo_operation = ImGuizmo::SCALE;
+    if (ImGui::RadioButton("Translate", current_gizmo_operation == ImGuizmo::TRANSLATE))
+        current_gizmo_operation = ImGuizmo::TRANSLATE;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Rotate", current_gizmo_operation == ImGuizmo::ROTATE))
+        current_gizmo_operation = ImGuizmo::ROTATE;
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Scale", current_gizmo_operation == ImGuizmo::SCALE))
+        current_gizmo_operation = ImGuizmo::SCALE;
+
+    float ptr_translation[3], ptr_rotation[3], ptr_scale[3];
+
+    std::memcpy(ptr_translation, glm::value_ptr(transform.get_translation()), sizeof(float) * 3);
+    std::memcpy(ptr_rotation, glm::value_ptr(transform.get_rotation_euler()), sizeof(float) * 3);
+    std::memcpy(ptr_scale, glm::value_ptr(transform.get_scale()), sizeof(float) * 3);
+
+    ImGui::InputFloat3("Tr", ptr_translation);
+    ImGui::InputFloat3("Rt", ptr_rotation);
+    ImGui::InputFloat3("Sc", ptr_scale);
+
+    transform.set_translation(glm::vec3{ptr_translation[0], ptr_translation[1], ptr_translation[2]});
+    transform.set_rotation_euler(glm::vec3{ptr_rotation[0], ptr_rotation[1], ptr_rotation[2]});
+    transform.set_scale(glm::vec3{ptr_scale[0], ptr_scale[1], ptr_scale[2]});
+
+    if (current_gizmo_operation != ImGuizmo::SCALE)
+    {
+        if (ImGui::RadioButton("Local", current_gizmo_mode == ImGuizmo::LOCAL))
+            current_gizmo_mode = ImGuizmo::LOCAL;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("World", current_gizmo_mode == ImGuizmo::WORLD))
+            current_gizmo_mode = ImGuizmo::WORLD;
+    }
+
+    if (entity.has_component<CameraComponent>())
+    {
+        return;
+    }
+
+    auto new_transform = transform.get_world_matrix();
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+    if (ImGuizmo::Manipulate(
+        glm::value_ptr(camera.view),
+        glm::value_ptr(camera.projection),
+        current_gizmo_operation,
+        current_gizmo_mode,
+        glm::value_ptr(new_transform),
+        nullptr,
+        nullptr
+    ))
+    {
+        auto parent = entity.get_parent();
+        if (parent)
+        {
+            auto parent_transform = parent.get_component<TransformComponent>().get_world_matrix();
+            new_transform = glm::inverse(parent_transform) * new_transform;
+
+            glm::vec3 translation;
+            glm::quat rotation;
+            glm::vec3 scale;
+            glm::vec3 skew;
+            glm::vec4 perspective;
+            glm::decompose(new_transform, scale, rotation, translation, skew, perspective);
+
+            switch (current_gizmo_operation)
+            {
+            case ImGuizmo::TRANSLATE:
+                {
+                    transform.set_translation(translation);
+                    break;
+                }
+            case ImGuizmo::ROTATE:
+                {
+                    transform.set_rotation(rotation);
+                    break;
+                }
+            case ImGuizmo::SCALE:
+                {
+                    transform.set_scale(scale);
+                    break;
+                }
+            default:
+                break;
+            }
+        }
+    }
+
+    entity.patch_component<TransformComponent>([transform](TransformComponent& comp)
+    {
+        comp.set_translation(transform.get_translation());
+        comp.set_rotation_euler(transform.get_rotation_euler());
+        comp.set_scale(transform.get_scale());
+    });
+}
+
+void show_camera_component(Entity entity, CameraComponent& camera)
+{
+    ImGui::Separator();
+    auto& controller = entity.get_component<BaseCameraController>();
+
+    if (entity.has_component<MainCameraTag>()) ImGui::Text("Main Camera");
+    ImGui::InputFloat3("Direction", glm::value_ptr(controller.forward_direction));
+
+    ImGui::SliderFloat("Camera Speed", &controller.speed, 0.1f, 10.0f);
+    ImGui::InputFloat("Near Clip", &camera.near_clip);
+    ImGui::InputFloat("Far Clip", &camera.far_clip);
+    ImGui::InputFloat("FOV", &camera.vertical_fov);
+}
+
+void EditorGuiSystem::print_details_panel(ecs::Registry&, const FrameContext& frame)
+{
+    ImGui::Begin("Details");
+    if (SelectionSystem::has_selection(frame.active_scene->get_scene_entity()))
+    {
+        auto selected_entity = SelectionSystem::get_selected_entity(frame.active_scene->get_scene_entity());
+
+        ImGui::Text(fmt::format("{} Details", selected_entity.get_name().string).c_str());
+
+        if (selected_entity.has_component<TransformComponent>())
+            show_transform_controls(*frame.active_scene, selected_entity, selected_entity.get_component<TransformComponent>());
+
+        if (selected_entity.has_component<CameraComponent>())
+            show_camera_component(selected_entity, selected_entity.get_component<CameraComponent>());
+    }
+    else
+    {
+        ImGui::Text("No entity selected");
+    }
     ImGui::End();
 }
 } // portal

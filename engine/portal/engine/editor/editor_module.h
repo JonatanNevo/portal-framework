@@ -5,12 +5,12 @@
 
 #pragma once
 #include "editor_system.h"
+#include "viewport.h"
 #include "portal/application/modules/module.h"
 #include "portal/engine/imgui/imgui_renderer.h"
 #include "portal/engine/modules/resources_module.h"
 #include "portal/engine/modules/runtime_module.h"
 #include "portal/engine/renderer/renderer.h"
-#include "portal/engine/renderer/descriptors/descriptor_set_manager.h"
 
 namespace portal
 {
@@ -32,7 +32,6 @@ public:
         renderer::vulkan::VulkanSwapchain& swapchain,
         const Window& window
     );
-    ~EditorModule() override;
 
     void begin_frame(FrameContext& frame) override;
     void gui_update(FrameContext& frame) override;
@@ -43,12 +42,9 @@ public:
 private:
     renderer::vulkan::VulkanSwapchain& swapchain;
     renderer::vulkan::VulkanContext& context;
-
-    vk::DescriptorSet viewport_descriptor_set;
-    Reference<renderer::RenderTarget> viewport_render_target;
-
     RuntimeModule runtime_module;
     ImGuiRenderer im_gui_renderer;
-    EditorGuiSystem gui_system;
+
+    Viewport viewport;
 };
 } // portal

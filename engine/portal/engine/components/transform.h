@@ -26,6 +26,7 @@ public:
 
     void calculate_world_matrix(const glm::mat4& root);
 
+    [[nodiscard]] glm::mat4& get_world_matrix();
     [[nodiscard]] const glm::mat4& get_world_matrix() const;
     [[nodiscard]] const glm::vec3& get_translation() const;
     [[nodiscard]] const glm::quat& get_rotation() const;

@@ -33,7 +33,10 @@
       ]
     },
     "serialization": {
-      "description": ["The serialization interface for the Portal framework", "depends: portal-core"],
+      "description": [
+        "The serialization interface for the Portal framework",
+        "depends: portal-core"
+      ],
       "dependencies": [
         {
           "name": "nlohmann-json",
@@ -46,7 +49,10 @@
       ]
     },
     "application": {
-      "description": ["The application module for the Portal framework.", "depends: portal-core,portal-serialization"],
+      "description": [
+        "The application module for the Portal framework.",
+        "depends: portal-core,portal-serialization"
+      ],
       "dependencies": [
         {
           "name": "glfw3",
@@ -58,18 +64,23 @@
         },
         {
           "name": "glfw3",
-
           "version>=": "3.4#1",
           "platform": "!linux"
         }
       ]
     },
     "input": {
-      "description": ["The input interface for the Portal framework", "depends: portal-core,portal-application"],
+      "description": [
+        "The input interface for the Portal framework",
+        "depends: portal-core,portal-application"
+      ],
       "dependencies": []
     },
     "networking": {
-      "description": ["The networking interface for the Portal framework", "depends: portal-core"],
+      "description": [
+        "The networking interface for the Portal framework",
+        "depends: portal-core"
+      ],
       "dependencies": [
         {
           "name": "gamenetworkingsockets",
@@ -78,7 +89,10 @@
       ]
     },
     "engine": {
-      "description": ["A game engine built on top of the Portal framework", "depends: portal-input,portal-networking,portal-serialization"],
+      "description": [
+        "A game engine built on top of the Portal framework",
+        "depends: portal-input,portal-networking,portal-serialization"
+      ],
       "dependencies": [
         {
           "name": "imgui",
@@ -115,6 +129,10 @@
         {
           "name": "volk",
           "version>=": "1.4.309.0"
+        },
+        {
+          "name": "imguizmo",
+          "version>=": "2024-05-29#1"
         }
       ]
     },

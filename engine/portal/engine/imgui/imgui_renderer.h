@@ -18,8 +18,6 @@ public:
     void begin_frame(const FrameContext& frame, const Reference<renderer::RenderTarget>& render_target);
     void end_frame(FrameContext& frame);
 
-    void gui_update(FrameContext& frame);
-
 private:
     Reference<renderer::RenderTarget> current_render_target = nullptr;
 

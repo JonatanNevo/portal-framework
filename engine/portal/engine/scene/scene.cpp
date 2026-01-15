@@ -6,6 +6,7 @@
 #include "scene.h"
 
 #include "portal/engine/components/base.h"
+#include "portal/engine/components/camera.h"
 #include "portal/engine/components/relationship.h"
 #include "portal/engine/renderer/rendering_context.h"
 
@@ -18,4 +19,8 @@ Scene::Scene(const StringId& name) : Resource(name)
     scene_entity.add_component<SceneTag>();
 }
 
+Entity Scene::get_main_camera_entity() const
+{
+    return registry.view<CameraComponent, MainCameraTag>().front();
+}
 } // portal
