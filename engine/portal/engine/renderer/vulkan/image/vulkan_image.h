@@ -52,6 +52,15 @@ public:
     VulkanImage(vk::Image image, const image::Properties& properties, const VulkanContext& context);
 
     /**
+     * @brief Wraps existing Vulkan image and Image View (e.g., swapchain image + view)
+     * @param image Vulkan image handle
+     * @param image_view
+     * @param properties Image properties
+     * @param context Vulkan context
+     */
+    VulkanImage(vk::Image image, vk::ImageView image_view, const image::Properties& properties, const VulkanContext& context);
+
+    /**
      * @brief Allocates new Vulkan image with VMA
      * @param properties Image properties
      * @param context Vulkan context

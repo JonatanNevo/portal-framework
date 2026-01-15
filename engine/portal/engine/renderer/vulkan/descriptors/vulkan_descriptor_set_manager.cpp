@@ -139,7 +139,7 @@ std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_u
         new VulkanDescriptorSetManager(
             properties,
             device,
-            portal::renderer::vulkan::DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes)
+            DescriptorAllocator(device.get_handle(), 10 * 3, pool_sizes)
         )
     );
 }
@@ -148,7 +148,7 @@ std::unique_ptr<VulkanDescriptorSetManager> VulkanDescriptorSetManager::create_u
 VulkanDescriptorSetManager::VulkanDescriptorSetManager(
     const DescriptorSetManagerProperties& properties,
     const VulkanDevice& device,
-    portal::renderer::vulkan::DescriptorAllocator&& descriptor_allocator
+    DescriptorAllocator&& descriptor_allocator
 ) : properties(properties), device(device), descriptor_allocator(std::move(descriptor_allocator))
 {
     init();

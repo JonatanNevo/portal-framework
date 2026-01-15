@@ -28,7 +28,7 @@ vk::SampleCountFlagBits get_max_usable_sample_count(vk::raii::PhysicalDevice& ph
  * @param new_layout Destination layout
  */
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const vk::Image& image,
     uint32_t mip_level,
     vk::ImageLayout old_layout,
@@ -36,7 +36,7 @@ void transition_image_layout(
 );
 
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const Reference<Image>& image,
     uint32_t mip_level,
     vk::ImageLayout old_layout,
@@ -57,7 +57,7 @@ void transition_image_layout(
  * @param aspect_mask Image aspect (default: color)
  */
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const vk::Image& image,
     uint32_t mip_level,
     vk::ImageLayout old_layout,
@@ -70,7 +70,7 @@ void transition_image_layout(
 );
 
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const Reference<Image>& image,
     uint32_t mip_level,
     vk::ImageLayout old_layout,
@@ -95,7 +95,7 @@ void transition_image_layout(
  * @param dst_stage_mask Destination pipeline stage
  */
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const vk::Image& image,
     const vk::ImageSubresourceRange& subresource,
     vk::ImageLayout old_layout,
@@ -107,7 +107,7 @@ void transition_image_layout(
 );
 
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const Reference<Image>& image,
     const vk::ImageSubresourceRange& subresource,
     vk::ImageLayout old_layout,
@@ -127,7 +127,7 @@ void transition_image_layout(
  * @param dst_size Destination extent
  */
 void copy_image_to_image(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const vk::Image& source,
     const vk::Image& dest,
     vk::Extent2D src_size,

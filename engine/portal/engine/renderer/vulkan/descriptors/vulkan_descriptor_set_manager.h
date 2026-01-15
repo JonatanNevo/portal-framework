@@ -110,7 +110,7 @@ public:
      * @brief Updates invalidated bindings for frame
      * @param frame_index Frame-in-flight index
      */
-    void invalidate_and_update(size_t frame_index);
+    void invalidate_and_update(size_t frame_index) override;
 
     /** @brief Gets first managed descriptor set index */
     size_t get_first_set_index() const;

@@ -99,6 +99,9 @@ struct RenderTargetProperties
 
     bool transfer = false; ///< Enable transfer operations
 
+    // A list of existing images to attach the render target to (from the swapchain)
+    std::unordered_map<size_t, Reference<Image>> existing_images;
+
     StringId name;
 };
 
@@ -133,12 +136,10 @@ public:
     /** @brief Gets render target properties */
     [[nodiscard]] virtual const RenderTargetProperties& get_properties() const = 0;
 
-    /**
-     * @brief Acquires next image for rendering and fills out the FrameRenderingContext
-     * @param frame The frame's context to begin
-     */
-    virtual void begin_frame(FrameContext& frame) = 0;
+    [[nodiscard]] virtual size_t get_color_images_count() const = 0;
+    [[nodiscard]] virtual Reference<Image> get_image(size_t attachment_index) = 0;
 
-    virtual void end_frame(const FrameContext& frame) = 0;
+    [[nodiscard]] virtual bool has_depth_image() const = 0;
+    [[nodiscard]] virtual Reference<Image> get_depth_image() const = 0;
 };
 } // portal

@@ -18,7 +18,6 @@ class Event;
 
 class BaseModule;
 
-// TODO: Move to application module
 // TODO: find a better name?
 // TODO: differentiate between using modules for dependency graph and memory allocation to using modules for polymorphisem flow control
 /**
@@ -109,6 +108,7 @@ public:
      */
     void build_dependency_graph();
 
+
     /**
      * Call begin_frame() on all FrameLifecycle modules in dependency order.
      * @param frame Per-frame context data
@@ -128,16 +128,16 @@ public:
     void update(FrameContext& frame) const;
 
     /**
-     * Call gui_update() on all GuiUpdate-tagged modules in dependency order.
-     * @param frame Per-frame context data
-     */
-    void gui_update(FrameContext& frame) const;
-
-    /**
      * Call post_update() on all PostUpdate-tagged modules in dependency order.
      * @param frame Per-frame context data
      */
     void post_update(FrameContext& frame) const;
+
+    /**
+     * Call gui_update() on all GuiUpdate-tagged modules in dependency order.
+     * @param frame Per-frame context data
+     */
+    void gui_update(FrameContext& frame) const;
 
     /**
      * Call on_event() on all Event-tagged modules.

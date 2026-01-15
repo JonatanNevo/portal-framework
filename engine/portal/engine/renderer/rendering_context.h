@@ -13,6 +13,7 @@
 #include "portal/engine/resources/resources/mesh_geometry.h"
 
 namespace portal::renderer {
+class RenderTarget;
 }
 
 namespace portal::renderer
@@ -26,7 +27,7 @@ struct RenderObject
     std::shared_ptr<vulkan::AllocatedBuffer> index_buffer = nullptr;
 
     Reference<Material> material = nullptr;
-    resources::Bounds bounds{};
+    portal::resources::Bounds bounds{};
 
     glm::mat4 transform = glm::mat4(1.0f);
     vk::DeviceAddress vertex_buffer_address = 0;
@@ -94,9 +95,6 @@ struct FrameResources
     vk::raii::Fence wait_fence = nullptr;
 
     DeletionQueue deletion_queue = {};
-
-    vk::raii::DescriptorSet global_descriptor_set = nullptr;
-    vulkan::AllocatedBuffer scene_data_buffer = nullptr;
     vulkan::DescriptorAllocator frame_descriptors;
 
     FrameResources(auto&& command_pool, auto&& command_buffer, auto&& image_available_sema, auto&& wait_fence, auto&& descriptors) :
@@ -117,22 +115,11 @@ struct FrameResources
     {
         deletion_queue.flush();
 
-        global_descriptor_set = nullptr;
         frame_descriptors.clear_pools();
         frame_descriptors.destroy_pools();
-        scene_data_buffer = nullptr;
     }
 };
 
-struct FrameDrawImageContext
-{
-    Reference<Image> draw_image;
-    Reference<ImageView> draw_image_view;
-    Reference<Image> depth_image;
-    Reference<ImageView> depth_image_view;
-
-    size_t last_used_frame_index = 0;
-};
 
 /**
  * Per frame rendering context (what to render and where)
@@ -144,11 +131,12 @@ struct FrameRenderingContext
     vulkan::GPUCameraData camera_data{};
     glm::uvec4 viewport_bounds;
 
-    FrameDrawImageContext image_context{};
+    // TODO: have a secondary buffer per rendering section and define dependencies between them
+    vk::CommandBuffer global_command_buffer = nullptr;
 
-    vk::raii::CommandBuffer& command_buffer;
-    FrameResources& resources;
+    vulkan::DescriptorAllocator* frame_descriptors = nullptr;
 
+    WeakReference<RenderTarget> render_target;
     llvm::SmallVector<RenderObject> render_objects;
 };
 } // portal

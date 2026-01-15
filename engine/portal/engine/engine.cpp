@@ -8,12 +8,10 @@
 #include "portal/application/settings.h"
 #include "editor/editor_module.h"
 #include "modules/system_orchestrator.h"
-#include "portal/engine/imgui/imgui_module.h"
 #include "portal/engine/modules/scheduler_module.h"
 #include "portal/engine/resources/resources/composite.h"
 #include "portal/engine/window/glfw_window.h"
 #include "resources/database/resource_database_facade.h"
-#include "portal/engine/resources/source/resource_source.h"
 
 namespace portal
 {
@@ -29,7 +27,6 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
             on_event(event);
         }
     );
-
 
     // Creating vulkan context
     const WindowProperties window_properties{
@@ -65,17 +62,12 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     auto surface = window->create_surface(*vulkan_context);
     // TODO: find better surface control
     vulkan_context->get_device().add_present_queue(*surface);
-
-    auto& renderer = modules.add_module<Renderer>(*vulkan_context);
     swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(*vulkan_context, surface);
-    renderer.set_render_target(swapchain->make_render_target());
 
-    modules.add_module<ImGuiModule>(*window, *swapchain);
-    modules.add_module<EditorModule>();
+    modules.add_module<EditorModule>(*vulkan_context, *swapchain, *window);
 
     // TODO: make a O(1) lookup inside the module stack, will make this class redundant
     engine_context = std::make_unique<EngineContext>(
-        renderer,
         registry,
         *window,
         input,
@@ -89,10 +81,10 @@ Engine::~Engine()
 {
     LOGGER_INFO("Shutting down Engine");
     vulkan_context->get_device().wait_idle();
-    engine_context->get_renderer().cleanup();
-    swapchain.reset();
+    // engine_context->get_renderer().cleanup();
     ecs_registry.clear();
     modules.clean();
+    swapchain.reset();
 
     vulkan_context.reset();
     glfwTerminate();
@@ -117,7 +109,6 @@ void Engine::on_resize(const WindowExtent extent)
     auto [width, height] = glfw_window->resize(extent);
 
     swapchain->on_resize(width, height);
-    engine_context->get_renderer().on_resize(width, height);
 }
 
 void Engine::on_close()

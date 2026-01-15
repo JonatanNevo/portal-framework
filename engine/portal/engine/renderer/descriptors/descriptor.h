@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#include <vulkan/vulkan.hpp>
 
 #include "portal/core/buffer.h"
 #include "portal/engine/renderer/descriptors/descriptor_types.h"
@@ -23,6 +24,12 @@ class BufferDescriptor : public RendererResource
 public:
     ~BufferDescriptor() override = default;
     explicit BufferDescriptor(const StringId& id, const DescriptorResourceType type) : RendererResource(id), type(type) {};
+
+    template <class T>
+    void set_data_typed(const vk::ArrayProxy<T>& object, const size_t offset = 0)
+    {
+        set_data(Buffer{reinterpret_cast<const uint8_t*>(object.data()), object.size() * sizeof(T)}, offset);
+    }
 
     /**
      * @brief Uploads data to buffer

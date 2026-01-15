@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <any>
 #include <portal/core/strings/string_id.h>
 
 #include "portal/application/modules/tags.h"
@@ -45,12 +46,6 @@ public:
     virtual void update(FrameContext& frame);
 
     /**
-     * Called during the GUI update phase.
-     * @param frame Per-frame context data
-     */
-    virtual void gui_update(FrameContext& frame);
-
-    /**
      * Called during the post-update phase (typically rendering).
      * @param frame Per-frame context data
      */
@@ -62,6 +57,12 @@ public:
      * @param frame Per-frame context data
      */
     virtual void end_frame(FrameContext& frame);
+
+    /**
+     * Called during the GUI update phase.
+     * @param frame Per-frame context data
+     */
+    virtual void gui_update(FrameContext& frame);
 
     /**
      * Called when events are dispatched to modules.

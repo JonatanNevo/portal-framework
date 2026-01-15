@@ -16,21 +16,16 @@ class EngineContext
 {
 public:
     EngineContext(
-        Renderer& renderer,
         ResourceRegistry& registry,
         Window& window,
         InputManager& input,
         SystemOrchestrator& system_orchestrator
     )
-        : renderer(renderer),
-          resource_registry(registry),
+        : resource_registry(registry),
           window(window),
           input(input),
           system_orchestrator(system_orchestrator)
     {}
-
-    [[nodiscard]] const Renderer& get_renderer() const { return renderer.get(); }
-    [[nodiscard]] Renderer& get_renderer() { return renderer.get(); }
 
     [[nodiscard]] const ResourceRegistry& get_resource_registry() const { return resource_registry.get(); }
     [[nodiscard]] ResourceRegistry& get_resource_registry() { return resource_registry.get(); }
@@ -45,7 +40,6 @@ public:
     [[nodiscard]] SystemOrchestrator& get_system_orchestrator() { return system_orchestrator.get(); }
 
 protected:
-    std::reference_wrapper<Renderer> renderer;
     std::reference_wrapper<ResourceRegistry> resource_registry;
     std::reference_wrapper<Window> window;
     std::reference_wrapper<InputManager> input;
