@@ -35,6 +35,6 @@ struct DatabaseDescription
 class ResourceDatabaseFactory
 {
 public:
-    static std::unique_ptr<ResourceDatabase> create(ModuleStack& stack, const DatabaseDescription& description);
+    static std::unique_ptr<ResourceDatabase> create(const DatabaseDescription& description);
 };
 } // portal

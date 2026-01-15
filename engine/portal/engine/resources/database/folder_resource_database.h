@@ -29,7 +29,7 @@ struct DatabaseMetadata
 class FolderResourceDatabase final : public ResourceDatabase
 {
 public:
-    static std::unique_ptr<FolderResourceDatabase> create(ModuleStack& stack, const std::filesystem::path& base_path);
+    static std::unique_ptr<FolderResourceDatabase> create(const std::filesystem::path& base_path);
 
     ~FolderResourceDatabase() override;
 
@@ -41,8 +41,6 @@ public:
 
 protected:
     FolderResourceDatabase(
-        ModuleStack& stack,
-        const StringId& name,
         std::filesystem::path  root_path,
         std::filesystem::path  meta_path,
         DatabaseMetadata metadata
@@ -58,6 +56,8 @@ protected:
 
     static void save_meta(const std::filesystem::path& meta_path, DatabaseMetadata& metadata);
     static DatabaseMetadata load_meta(const std::filesystem::path& meta_path);
+
+    [[nodiscard]] StringId get_name() const override;
 
 private:
     std::filesystem::path root_path;

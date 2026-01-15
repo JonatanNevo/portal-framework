@@ -7,6 +7,7 @@
 #include "editor_system.h"
 #include "portal/application/modules/module.h"
 #include "portal/engine/imgui/imgui_renderer.h"
+#include "portal/engine/modules/resources_module.h"
 #include "portal/engine/renderer/renderer.h"
 #include "portal/engine/renderer/descriptors/descriptor_set_manager.h"
 
@@ -20,7 +21,7 @@ class EditorModule final : public TaggedModule<
             ModuleTags::Event
         >,
         SystemOrchestrator,
-        ResourceRegistry
+        ResourcesModule
     >
 {
 public:
@@ -37,7 +38,6 @@ public:
     void post_update(FrameContext& frame) override;
     void end_frame(FrameContext& frame) override;
     void on_event(Event& event) override;
-
 
 private:
     renderer::vulkan::VulkanSwapchain& swapchain;

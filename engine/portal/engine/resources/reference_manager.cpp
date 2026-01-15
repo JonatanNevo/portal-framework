@@ -11,8 +11,6 @@ namespace portal
 {
 static auto logger = Log::get_logger("Resources");
 
-ReferenceManager::ReferenceManager(ModuleStack& stack) : Module<>(stack, STRING_ID("Reference Manager")) {}
-
 ReferenceManager::~ReferenceManager()
 {
     [[maybe_unused]] bool ok = true;

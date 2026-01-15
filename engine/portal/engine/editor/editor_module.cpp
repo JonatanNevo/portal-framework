@@ -22,7 +22,7 @@ EditorModule::EditorModule(
     : TaggedModule(stack, STRING_ID("Editor Module")),
       swapchain(swapchain),
       context(context),
-      viewport_renderer(context, get_dependency<ResourceRegistry>()),
+      viewport_renderer(context, get_dependency<ResourcesModule>().get_registry()),
       im_gui_renderer(window, swapchain)
 {
     renderer::RenderTargetProperties props{

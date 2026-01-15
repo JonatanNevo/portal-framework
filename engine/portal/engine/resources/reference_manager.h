@@ -17,11 +17,9 @@
 
 namespace portal
 {
-class ReferenceManager final : public Module<>
+class ReferenceManager
 {
 public:
-    explicit ReferenceManager(ModuleStack& stack);
-
     ~ReferenceManager();
 
     /**

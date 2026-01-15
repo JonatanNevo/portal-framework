@@ -208,11 +208,10 @@ using DatabaseError = Flags<DatabaseErrorBit>;
  * @see ResourceSource for the file reading abstraction
  * @see SourceMetadata for what metadata is stored
  */
-class ResourceDatabase : public Module<>
+class ResourceDatabase
 {
 public:
-    explicit ResourceDatabase(ModuleStack& stack, const StringId& name) : Module<>(stack, name) {}
-    ~ResourceDatabase() override = default;
+    virtual ~ResourceDatabase() = default;
 
     /**
      * @brief Find metadata for a resource by its ID
@@ -247,5 +246,7 @@ public:
      * @return Unique pointer to a ResourceSource for reading bytes
      */
     virtual std::unique_ptr<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) = 0;
+
+    [[nodiscard]] virtual StringId get_name() const = 0;
 };
 } // portal

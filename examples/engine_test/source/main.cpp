@@ -40,8 +40,5 @@ std::unique_ptr<Application> portal::create_application(int, char**)
 
     camera_comp.calculate_view(transform.get_translation(), controller.forward_direction);
 
-    engine->setup_scene(scene);
-
-
     return engine;
 }
