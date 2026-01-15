@@ -15,16 +15,32 @@
 
 namespace portal
 {
+
+/**
+ * @brief Main engine application class.
+ *
+ * Engine initializes and owns the core subsystems: Vulkan context, window,
+ * swapchain, and ECS registry. Supports both runtime and editor modes.
+ */
 class Engine : public Application, public WindowEventConsumer
 {
 public:
+    /**
+     * @brief Constructs the engine.
+     * @param properties Application configuration.
+     * @param editor If true, initializes in editor mode with EditorModule.
+     */
     explicit Engine(const ApplicationProperties& properties, bool editor);
+
     ~Engine() override;
 
+    /** @brief Initializes engine subsystems and modules. */
     void prepare() override;
 
+    /** @brief Sets up a scene for rendering. */
     void setup_scene(ResourceReference<Scene> scene) const;
 
+    /** @brief Processes window and input events. */
     void process_events() override;
 
     void on_resize(WindowExtent extent) override;
@@ -40,4 +56,5 @@ private:
     Reference<renderer::vulkan::VulkanSwapchain> swapchain = nullptr;
     std::unique_ptr<EngineContext> engine_context = nullptr;
 };
+
 } // portal
