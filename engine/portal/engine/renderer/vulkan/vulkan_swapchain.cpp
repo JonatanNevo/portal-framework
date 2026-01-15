@@ -215,7 +215,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
         RenderTargetProperties target_properties{
             .width = get_width(),
             .height = get_height(),
-            .attachments = {
+            .attachments = AttachmentProperties{
                 // TODO: Is this static? would this change based on settings? Do I need to recreate the render target on swapchain reset?
                 .attachment_images = {
                     // Present Image

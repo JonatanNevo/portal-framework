@@ -98,7 +98,7 @@ struct ImageViewProperties
 class ImageView : public RendererResource
 {
 public:
-    explicit ImageView(const ImageViewProperties& properties) : RendererResource(id), properties(properties)
+    explicit ImageView(const ImageViewProperties& properties) : RendererResource(properties.name), properties(properties)
     {
         PORTAL_ASSERT(properties.image != nullptr, "Image cannot be nullptr");
         if (properties.name == INVALID_STRING_ID)
