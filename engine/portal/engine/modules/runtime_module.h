@@ -71,7 +71,6 @@ public:
 
 private:
     renderer::vulkan::VulkanSwapchain& swapchain;
-    renderer::vulkan::VulkanContext& context;
 
     Renderer renderer;
 };

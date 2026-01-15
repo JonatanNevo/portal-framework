@@ -299,7 +299,7 @@ void EditorGuiSystem::print_details_panel(ecs::Registry&, const FrameContext& fr
     {
         auto selected_entity = SelectionSystem::get_selected_entity(frame.active_scene->get_scene_entity());
 
-        ImGui::Text(fmt::format("{} Details", selected_entity.get_name().string).c_str());
+        ImGui::Text("%s Details", selected_entity.get_name().string.data());
 
         if (selected_entity.has_component<TransformComponent>())
             show_transform_controls(*frame.active_scene, selected_entity, selected_entity.get_component<TransformComponent>());

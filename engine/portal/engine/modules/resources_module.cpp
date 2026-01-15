@@ -38,4 +38,6 @@ ResourcesModule::ResourcesModule(ModuleStack& stack, renderer::vulkan::VulkanCon
         context
     );
 }
+
+ResourcesModule::~ResourcesModule() = default;
 } // portal

@@ -7,10 +7,10 @@
 #include "system_orchestrator.h"
 #include "portal/application/modules/module.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
+#include "portal/engine/resources/database/resource_database_facade.h"
 
 namespace portal
 {
-class ResourceDatabaseFacade;
 class ResourceRegistry;
 class ReferenceManager;
 
@@ -32,6 +32,11 @@ public:
      * @param context The Vulkan context for GPU resource creation.
      */
     ResourcesModule(ModuleStack& stack, renderer::vulkan::VulkanContext& context);
+
+    /**
+     * @brief Destructor.
+     */
+    ~ResourcesModule();
 
     /**
      * @brief Gets the resource registry.

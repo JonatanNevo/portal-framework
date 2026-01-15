@@ -53,7 +53,6 @@ public:
 
 private:
     renderer::vulkan::VulkanSwapchain& swapchain;
-    renderer::vulkan::VulkanContext& context;
     RuntimeModule runtime_module;
     ImGuiRenderer im_gui_renderer;
 

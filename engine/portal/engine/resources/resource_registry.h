@@ -237,7 +237,7 @@ public:
         ) | std::ranges::views::transform(
             [this](auto& it)
             {
-                return get<T>(it.first);
+                return this->get<T>(it.first);
             }
         );
     }
