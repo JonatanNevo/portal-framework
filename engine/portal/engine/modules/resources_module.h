@@ -14,12 +14,29 @@ class ResourceDatabaseFacade;
 class ResourceRegistry;
 class ReferenceManager;
 
-
+/**
+ * @brief Module responsible for managing engine resources.
+ *
+ * ResourcesModule owns and initializes the resource management infrastructure:
+ * - ResourceDatabaseFacade for loading resources from disk
+ * - ReferenceManager for tracking resource references
+ * - ResourceRegistry for storing and accessing loaded resources
+ *
+ */
 class ResourcesModule final: public Module<SchedulerModule, SystemOrchestrator>
 {
 public:
+    /**
+     * @brief Constructs the resources module and initializes the resource system.
+     * @param stack The module stack this module belongs to.
+     * @param context The Vulkan context for GPU resource creation.
+     */
     ResourcesModule(ModuleStack& stack, renderer::vulkan::VulkanContext& context);
 
+    /**
+     * @brief Gets the resource registry.
+     * @return Reference to the resource registry.
+     */
     [[nodiscard]] ResourceRegistry& get_registry() const { return *registry; }
 
 private:

@@ -14,6 +14,18 @@
 
 namespace portal
 {
+
+/**
+ * @brief Top-level module for the editor application.
+ *
+ * EditorModule orchestrates the editor UI and scene rendering by combining:
+ * - RuntimeModule for scene rendering to the viewport
+ * - ImGuiRenderer for the editor UI
+ * - Viewport for displaying the rendered scene in an ImGui window
+ *
+ * Unlike RuntimeModule which renders directly to the swapchain, EditorModule
+ * renders the scene to a viewport texture and composites it with the editor UI.
+ */
 class EditorModule final : public TaggedModule<
         Tag<
             ModuleTags::FrameLifecycle,
