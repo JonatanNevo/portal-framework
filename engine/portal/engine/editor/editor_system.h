@@ -15,11 +15,12 @@ class EditorGuiSystem : public ecs::System<EditorGuiSystem, ecs::Owns<NameCompon
                                                TransformComponent>>
 {
 public:
-    static void execute(ecs::Registry& registry);
+    static void execute(ecs::Registry& registry, FrameContext& frame);
 
-    static void print_cameras(ecs::Registry& registry);
-    static void print_scene_graph(ecs::Registry& registry);
+    static void print_scene_graph(ecs::Registry& registry, FrameContext& frame);
     static void print_controls(ecs::Registry& registry);
+    static void print_stats_block(ecs::Registry& registry, FrameContext& frame);
+    static void print_details_panel(ecs::Registry& registry, const FrameContext& frame);
 
     [[nodiscard]] static StringId get_name() { return STRING_ID("Editor System"); };
 };

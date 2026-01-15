@@ -100,6 +100,11 @@ void TransformComponent::calculate_world_matrix(const glm::mat4& root)
     world_matrix = root * local_matrix;
 }
 
+glm::mat4& TransformComponent::get_world_matrix()
+{
+    return world_matrix;
+}
+
 const glm::mat4& TransformComponent::get_world_matrix() const
 {
     return world_matrix;

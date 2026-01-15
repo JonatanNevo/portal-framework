@@ -6,6 +6,7 @@
 #include "editor_module.h"
 
 #include <imgui.h>
+#include <ImGuizmo.h>
 
 #include "portal/engine/imgui/backends/imgui_impl_vulkan.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
@@ -23,49 +24,9 @@ EditorModule::EditorModule(
       swapchain(swapchain),
       context(context),
       runtime_module(stack, context, swapchain),
-      im_gui_renderer(window, swapchain)
-{
-    renderer::RenderTargetProperties props{
-        .width = swapchain.get_width(),
-        // TODO: fetch size from some config
-        .height = swapchain.get_height(),
-        .attachments = {
-            // TODO: Is this static? would this change based on settings? Do I need to recreate the render target on swapchain reset?
-            .attachment_images = {
-                // Present Image
-                {
-                    .format = renderer::vulkan::to_format(swapchain.get_color_format()),
-                    .blend = false
-                },
-                // TODO: who is supposed to hold the depth image?
-                // Depth Image
-                {
-                    .format = renderer::ImageFormat::Depth_32Float,
-                    .blend = true,
-                    .blend_mode = renderer::BlendMode::Additive
-                }
-            },
-            .blend = true,
-        },
-        .transfer = true,
-        .name = STRING_ID("viewport-render-target"),
-    };
-    viewport_render_target = make_reference<renderer::vulkan::VulkanRenderTarget>(props, context);
-
-    const auto vulkan_image = reference_cast<renderer::vulkan::VulkanImage>(viewport_render_target->get_image(0));
-    vulkan_image->update_descriptor();
-    auto& info = vulkan_image->get_image_info();
-    viewport_descriptor_set = ImGui_ImplVulkan_AddTexture(
-        info.sampler->get_vk_sampler(),
-        info.view->get_vk_image_view(),
-        static_cast<VkImageLayout>(vulkan_image->get_descriptor_image_info().imageLayout)
-    );
-}
-
-EditorModule::~EditorModule()
-{
-    ImGui_ImplVulkan_RemoveTexture(viewport_descriptor_set);
-}
+      im_gui_renderer(window, swapchain),
+      viewport(swapchain, runtime_module)
+{}
 
 void EditorModule::begin_frame(FrameContext& frame)
 {
@@ -78,50 +39,17 @@ void EditorModule::begin_frame(FrameContext& frame)
 
 void EditorModule::gui_update(FrameContext& frame)
 {
-    gui_system.execute(*frame.ecs_registry);
-    im_gui_renderer.gui_update(frame);
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {0, 0});
-    if (ImGui::Begin("Viewport"))
-    {
-        auto window_size = ImGui::GetContentRegionAvail();
-        auto recreated = viewport_render_target->resize(static_cast<size_t>(window_size.x), static_cast<size_t>(window_size.y), false);
-
-        if (recreated)
-        {
-            frame.active_scene->set_viewport_bounds({0, 0, static_cast<uint32_t>(window_size.x), static_cast<uint32_t>(window_size.y)});
-            const auto vulkan_image = reference_cast<renderer::vulkan::VulkanImage>(viewport_render_target->get_image(0));
-            auto& info = vulkan_image->get_image_info();
-            vulkan_image->update_descriptor();
-
-            ImGui_ImplVulkan_RemoveTexture(viewport_descriptor_set);
-            viewport_descriptor_set = ImGui_ImplVulkan_AddTexture(
-                info.sampler->get_vk_sampler(),
-                info.view->get_vk_image_view(),
-                static_cast<VkImageLayout>(vulkan_image->get_descriptor_image_info().imageLayout)
-            );
-        }
-        ImGui::Image(
-            reinterpret_cast<ImTextureID>(static_cast<VkDescriptorSet>(viewport_descriptor_set)),
-            window_size,
-            ImVec2(0, 0),
-            ImVec2(1, 1),
-            ImVec4(1, 1, 1, 1),
-            ImVec4(0, 0, 0, 0)
-        );
-    }
-    ImGui::End();
-    ImGui::PopStyleVar();
+    EditorGuiSystem::execute(*frame.ecs_registry, frame);
+    viewport.on_gui_update(frame);
 }
 
 void EditorModule::post_update(FrameContext& frame)
 {
-    runtime_module.inner_post_update(frame, viewport_render_target);
+    viewport.render(frame);
 }
 
 void EditorModule::end_frame(FrameContext& frame)
 {
-    runtime_module.inner_end_frame(frame, false);
     im_gui_renderer.end_frame(frame);
 
     swapchain.present(frame);

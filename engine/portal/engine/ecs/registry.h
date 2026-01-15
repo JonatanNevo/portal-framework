@@ -59,6 +59,8 @@ namespace portal::ecs
 class Registry
 {
 public:
+    constexpr static auto ENV_ENTITY_ID = "env";
+
     /**
      * @brief Constructs the Registry and initializes the ECS.
      *
@@ -237,9 +239,9 @@ public:
      * @see group for cached, optimized iteration
      */
     template <typename... T>
-    auto view()
+    auto view() const
     {
-        return view_raw<T...>() | std::views::transform([this](const auto entity) { return Entity{entity, registry}; });
+        return view_raw<T...>() | std::views::transform([this](const auto entity) { return Entity{entity, const_cast<entt::registry&>(registry)}; });
     }
 
     /**
@@ -391,7 +393,7 @@ public:
 
 private:
     template <typename... T>
-    auto view_raw()
+    auto view_raw() const
     {
         return registry.view<T...>();
     }

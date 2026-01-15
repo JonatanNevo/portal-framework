@@ -16,6 +16,11 @@ Most of the features are subject to change.
 To see the roadmap and the status of the project, see [Development Status](development-status.md).
 ```
 
+```{image} _static/engine_test_preview.png
+    :align: center
+    :caption: A Preview of the example `Engine Test`
+```
+
 ---
 
 ## First Steps

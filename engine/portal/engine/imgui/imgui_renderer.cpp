@@ -7,6 +7,7 @@
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
+#include <ImGuizmo.h>
 
 #include "portal/engine/imgui/backends/imgui_impl_vulkan.h"
 #include "portal/core/debug/profile.h"
@@ -113,7 +114,7 @@ void ImGuiRenderer::begin_frame(const FrameContext&, const Reference<renderer::R
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::DockSpaceOverViewport();
-    //ImGuizmo::BeginFrame();
+    ImGuizmo::BeginFrame();
 
     current_render_target = render_target;
 }
@@ -185,23 +186,5 @@ void ImGuiRenderer::end_frame(FrameContext& frame)
         vk::ImageAspectFlagBits::eColor
     );
 
-}
-
-void ImGuiRenderer::gui_update(FrameContext& frame)
-{
-    static std::array<float, 100> fps_history = {};
-    static int fps_history_index = 0;
-
-    fps_history[fps_history_index] = 1000.f / frame.stats.frame_time;
-    fps_history_index = (fps_history_index + 1) % fps_history.size();
-
-    ImGui::Begin("Stats");
-    ImGui::Text("FPS %f", std::ranges::fold_left(fps_history, 0.f, std::plus<float>()) / 100.f);
-    ImGui::Text("frametime %f ms", frame.stats.frame_time);
-    ImGui::Text("draw time %f ms", frame.stats.mesh_draw_time);
-    ImGui::Text("update time %f ms", frame.stats.scene_update_time);
-    ImGui::Text("triangles %i", frame.stats.triangle_count);
-    ImGui::Text("draws %i", frame.stats.drawcall_count);
-    ImGui::End();
 }
 } // portal

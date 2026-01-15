@@ -11,6 +11,8 @@ A modular cross-platform C++ framework for creating 3D graphics applications usi
 
 **[Full Documentation](https://jonatannevo.github.io/portal-framework/)**
 
+![Preview](docs/source/_static/engine_test_preview.png)
+
 ## Platform Support
 
 - **Windows 11** - Clang 20+ (recommended) or MSVC 17+

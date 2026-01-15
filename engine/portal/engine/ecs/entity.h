@@ -201,7 +201,7 @@ public:
     void remove_component() const
     {
         PORTAL_ASSERT(has_component<T>(), "Entity does not have component of type T");
-        auto deleted = handle.remove<T>();
+        [[maybe_unused]] auto deleted = handle.remove<T>();
         PORTAL_ASSERT(deleted == 1, "Failed to remove component of type T");
     }
 

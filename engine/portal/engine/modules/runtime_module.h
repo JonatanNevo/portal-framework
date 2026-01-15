@@ -5,13 +5,13 @@
 
 #pragma once
 #include "system_orchestrator.h"
+#include "resources_module.h"
 #include "portal/application/modules/module.h"
 #include "portal/engine/renderer/renderer.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 
 namespace portal
 {
-class ResourcesModule;
 
 class RuntimeModule final: public TaggedModule<
         Tag<

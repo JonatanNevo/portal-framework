@@ -41,6 +41,7 @@ portal_add_module(engine
             glaze
             EnTT
             volk
+            imguizmo
 
         COMPLEX_DEPENDENCIES
             VulkanHeaders|LINK|Vulkan::Headers

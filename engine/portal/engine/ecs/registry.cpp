@@ -17,7 +17,7 @@ static auto logger = Log::get_logger("ECS Registry");
 Registry::Registry(): registry(), env_entity(registry.create())
 {
     // Entity that holds global values
-    registry.emplace<NameComponent>(env_entity, STRING_ID("env"));
+    registry.emplace<NameComponent>(env_entity, STRING_ID(ENV_ENTITY_ID));
     registry.emplace<RelationshipComponent>(env_entity);
 
     // All entities should have a relationship component, except the `scene` which is used as a global state
