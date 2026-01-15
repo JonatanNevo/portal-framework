@@ -7,6 +7,7 @@
 
 #include "portal/application/settings.h"
 #include "editor/editor_module.h"
+#include "modules/resources_module.h"
 #include "modules/system_orchestrator.h"
 #include "portal/engine/modules/scheduler_module.h"
 #include "portal/engine/resources/resources/composite.h"
@@ -28,6 +29,9 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
         }
     );
 
+    modules.add_module<SchedulerModule>(settings.get_setting<int32_t>("application.scheduler-threads", 0));
+    auto& system_orchestrator = modules.add_module<SystemOrchestrator>();
+
     // Creating vulkan context
     const WindowProperties window_properties{
         .title = properties.name,
@@ -40,24 +44,8 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
 
     vulkan_context = renderer::vulkan::VulkanContext::create();
 
-    // Creating Resources
-    auto& resource_database = modules.add_module<ResourceDatabaseFacade>();
-    if (settings.get_setting<bool>("engine.include_engine_resources", true))
-    {
-        resource_database.register_database({DatabaseType::Folder, "engine"});
-    }
-    modules.add_module<SchedulerModule>(settings.get_setting<int32_t>("application.scheduler-threads", 0));
-    auto& system_orchestrator = modules.add_module<SystemOrchestrator>();
-    modules.add_module<ReferenceManager>();
-    auto& registry = modules.add_module<ResourceRegistry>(*vulkan_context);
+    auto& resources_module = modules.add_module<ResourcesModule>(*vulkan_context);
 
-    const auto descriptions = settings.get_setting<std::vector<DatabaseDescription>>("engine.resources");
-    for (auto& description : descriptions.value_or(std::vector<DatabaseDescription>{}))
-    {
-        resource_database.register_database(description);
-    }
-
-    // Setting up swapchain and renderer
     auto surface = window->create_surface(*vulkan_context);
     // TODO: find better surface control
     vulkan_context->get_device().add_present_queue(*surface);
@@ -67,7 +55,7 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
 
     // TODO: make a O(1) lookup inside the module stack, will make this class redundant
     engine_context = std::make_unique<EngineContext>(
-        registry,
+        resources_module,
         *window,
         input,
         system_orchestrator

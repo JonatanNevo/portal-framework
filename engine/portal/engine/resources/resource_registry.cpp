@@ -15,13 +15,20 @@ namespace portal
 {
 static auto logger = Log::get_logger("Resources");
 
-
-ResourceRegistry::ResourceRegistry(ModuleStack& stack, const renderer::vulkan::VulkanContext& context)
-    : Module<ReferenceManager, ResourceDatabase, SchedulerModule, SystemOrchestrator>(stack, STRING_ID("Resource Registry")),
-      loader_factory(
-          *this,
-          context
-      )
+ResourceRegistry::ResourceRegistry(
+    SystemOrchestrator& orchestrator,
+    jobs::Scheduler& scheduler,
+    ResourceDatabase& database,
+    ReferenceManager& reference_manager,
+    const renderer::vulkan::VulkanContext& context
+) : orchestrator(orchestrator),
+    scheduler(scheduler),
+    database(database),
+    reference_manager(reference_manager),
+    loader_factory(
+        *this,
+        context
+    )
 {}
 
 ResourceRegistry::~ResourceRegistry() noexcept
@@ -63,14 +70,14 @@ Job<Reference<Resource>> ResourceRegistry::load_direct(const SourceMetadata& met
     co_return resource;
 }
 
-void ResourceRegistry::wait_all(const std::span<Job<>> jobs)
+void ResourceRegistry::wait_all(const std::span<Job<>> jobs) const
 {
-    get_dependency<SchedulerModule>().get_scheduler().wait_for_jobs(jobs);
+    scheduler.wait_for_jobs(jobs);
 }
 
-void ResourceRegistry::configure_ecs_registry(ecs::Registry& ecs_registry)
+void ResourceRegistry::configure_ecs_registry(ecs::Registry& ecs_registry) const
 {
-    get_dependency<SystemOrchestrator>().register_systems(ecs_registry);
+    orchestrator.register_systems(ecs_registry);
 }
 
 std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource(const StringId& id)
@@ -97,7 +104,7 @@ void ResourceRegistry::create_resource(const StringId& resource_id, [[maybe_unus
             return;
     }
 
-    get_dependency<SchedulerModule>().get_scheduler().dispatch_job(load_resource(resource_id));
+    scheduler.dispatch_job(load_resource(resource_id));
 }
 
 void ResourceRegistry::create_resource_immediate(const StringId& resource_id, [[maybe_unused]] ResourceType type)
@@ -108,7 +115,7 @@ void ResourceRegistry::create_resource_immediate(const StringId& resource_id, [[
             return;
     }
 
-    get_dependency<SchedulerModule>().get_scheduler().wait_for_job(load_resource(resource_id));
+    scheduler.wait_for_job(load_resource(resource_id));
 }
 
 Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource_id)
@@ -121,7 +128,7 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
         pending_resources.insert(resource_id);
     }
 
-    const auto meta = get_dependency<ResourceDatabase>().find(resource_id);
+    const auto meta = database.find(resource_id);
     if (!meta)
     {
         std::lock_guard guard(lock);
@@ -131,7 +138,7 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
         co_return nullptr;
     }
 
-    const auto source = get_dependency<ResourceDatabase>().create_source(resource_id, *meta);
+    const auto source = database.create_source(resource_id, *meta);
 
     auto job = load_direct(*meta, *source);
     co_await job;

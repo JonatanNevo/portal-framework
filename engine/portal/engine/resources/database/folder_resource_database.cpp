@@ -98,24 +98,22 @@ std::filesystem::path validate_and_create_meta_path(const std::filesystem::path&
     return meta_files[0];
 }
 
-std::unique_ptr<FolderResourceDatabase> FolderResourceDatabase::create(ModuleStack& stack, const std::filesystem::path& base_path)
+std::unique_ptr<FolderResourceDatabase> FolderResourceDatabase::create(const std::filesystem::path& base_path)
 {
     const auto root_path = validate_and_create_path(base_path);
     const auto meta_path = validate_and_create_meta_path(root_path);
     const auto metadata = load_meta(meta_path);
-    return std::unique_ptr<FolderResourceDatabase>(new FolderResourceDatabase(stack, metadata.name, root_path, meta_path, metadata));
+    return std::unique_ptr<FolderResourceDatabase>(new FolderResourceDatabase(root_path, meta_path, metadata));
 }
 
 FolderResourceDatabase::FolderResourceDatabase(
-    ModuleStack& stack,
-    const StringId& name,
     std::filesystem::path root_path,
     std::filesystem::path meta_path,
     DatabaseMetadata metadata
-) : ResourceDatabase(stack, name),
-    root_path(std::move(root_path)),
-    meta_path(std::move(meta_path)),
-    metadata(metadata)
+)
+    : root_path(std::move(root_path)),
+      meta_path(std::move(meta_path)),
+      metadata(metadata)
 {
     LOGGER_INFO("Loaded folder database {}, version: {}", metadata.name, metadata.version);
 
@@ -433,5 +431,10 @@ DatabaseMetadata FolderResourceDatabase::load_meta(const std::filesystem::path& 
     json_dearchiver.read(meta_path);
 
     return DatabaseMetadata::dearchive(json_dearchiver);
+}
+
+StringId FolderResourceDatabase::get_name() const
+{
+    return metadata.name;
 }
 } // portal

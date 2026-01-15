@@ -23,12 +23,9 @@ StringId find_database_prefix(const StringId& resource_id)
     return STRING_ID(first_part);
 }
 
-ResourceDatabaseFacade::ResourceDatabaseFacade(ModuleStack& stack)
-    : ResourceDatabase(stack, STRING_ID("Resource Database Facade")), stack(stack) {}
-
 void ResourceDatabaseFacade::register_database(const DatabaseDescription& description)
 {
-    auto&& database = ResourceDatabaseFactory::create(stack, description);
+    auto&& database = ResourceDatabaseFactory::create(description);
     PORTAL_ASSERT(database, "Failed to create database");
     databases.emplace(database->get_name(), std::move(database));
 }

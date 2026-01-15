@@ -111,16 +111,25 @@ class ResourceReference;
  * @see LoaderFactory for loader selection
  * @see ReferenceManager for reference counting
  */
-class ResourceRegistry final : public Module<ReferenceManager, ResourceDatabase, SchedulerModule, SystemOrchestrator>
+class ResourceRegistry
 {
 public:
     /**
      * @brief Constructor
-     * @param stack Module dependency stack
+     * @param orchestrator
+     * @param scheduler
+     * @param database
+     * @param reference_manager
      * @param context Vulkan context for resource creation
      */
-    ResourceRegistry(ModuleStack& stack, const renderer::vulkan::VulkanContext& context);
-    ~ResourceRegistry() noexcept override;
+    ResourceRegistry(
+        SystemOrchestrator& orchestrator,
+        jobs::Scheduler& scheduler,
+        ResourceDatabase& database,
+        ReferenceManager& reference_manager,
+        const renderer::vulkan::VulkanContext& context
+    );
+    ~ResourceRegistry() noexcept;
 
     /**
      * Request an asynchronous load for a resource based on its unique id and returns a reference.
@@ -139,7 +148,7 @@ public:
         auto type = utils::to_resource_type<T>();
         create_resource(resource_id, type);
 
-        auto reference = ResourceReference<T>(resource_id, *this, get_dependency<ReferenceManager>());
+        auto reference = ResourceReference<T>(resource_id, *this, reference_manager);
         return reference;
     }
 
@@ -156,7 +165,7 @@ public:
         auto type = utils::to_resource_type<T>();
         create_resource_immediate(resource_id, type);
 
-        auto reference = ResourceReference<T>(resource_id, *this, get_dependency<ReferenceManager>());
+        auto reference = ResourceReference<T>(resource_id, *this, reference_manager);
         return reference;
     }
 
@@ -174,13 +183,13 @@ public:
     ResourceReference<T> get(const StringId resource_id)
     {
         if (resources.contains(resource_id))
-            return ResourceReference<T>(resource_id, *this, get_dependency<ReferenceManager>());
+            return ResourceReference<T>(resource_id, *this, reference_manager);
 
-        auto res = get_dependency<ResourceDatabase>().find(resource_id);
+        auto res = database.find(resource_id);
         if (res.has_value())
-            return ResourceReference<T>(res->resource_id, *this, get_dependency<ReferenceManager>());
+            return ResourceReference<T>(res->resource_id, *this, reference_manager);
 
-        return ResourceReference<T>(INVALID_STRING_ID, *this, get_dependency<ReferenceManager>());
+        return ResourceReference<T>(INVALID_STRING_ID, *this, reference_manager);
     }
 
     /**
@@ -213,7 +222,7 @@ public:
     Job<Reference<Resource>> load_direct(const SourceMetadata& meta, const resources::ResourceSource& source);
 
     // TODO: remove from here
-    void wait_all(std::span<Job<>> jobs);
+    void wait_all(std::span<Job<>> jobs) const;
 
     template <typename T>
     auto list_all_resources_of_type()
@@ -233,7 +242,7 @@ public:
         );
     }
 
-    void configure_ecs_registry(ecs::Registry& ecs_registry);
+    void configure_ecs_registry(ecs::Registry& ecs_registry) const;
 
 protected:
     /**
@@ -269,6 +278,11 @@ protected:
 private:
     template <ResourceConcept T>
     friend class ResourceReference;
+
+    SystemOrchestrator& orchestrator;
+    jobs::Scheduler& scheduler;
+    ResourceDatabase& database;
+    ReferenceManager& reference_manager;
 
     SpinLock lock;
     // Resource container, all resource are managed
