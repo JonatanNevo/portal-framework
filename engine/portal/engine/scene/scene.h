@@ -17,10 +17,13 @@ public:
     explicit Scene(const StringId& name);
 
     [[nodiscard]] ecs::Registry& get_registry() const { return const_cast<ecs::Registry&>(registry); }
-
     Entity get_scene_entity() const { return scene_entity; }
 
+    void set_viewport_bounds(const glm::uvec4& bounds) { viewport_bounds = bounds; }
+    [[nodiscard]] glm::uvec4 get_viewport_bounds() const { return viewport_bounds; }
+
 private:
+    glm::uvec4 viewport_bounds;
     ecs::Registry registry;
     Entity scene_entity;
 };

@@ -43,6 +43,9 @@ private:
     renderer::vulkan::VulkanSwapchain& swapchain;
     renderer::vulkan::VulkanContext& context;
 
+    vk::DescriptorSet viewport_descriptor_set;
+    Reference<renderer::RenderTarget> viewport_render_target;
+
     Renderer viewport_renderer;
     ImGuiRenderer im_gui_renderer;
     EditorGuiSystem gui_system;

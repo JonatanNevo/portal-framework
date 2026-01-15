@@ -15,12 +15,14 @@ public:
     ImGuiRenderer(const Window& window, const renderer::vulkan::VulkanSwapchain& swapchain);
     ~ImGuiRenderer();
 
-    void begin_frame(const FrameContext& frame);
+    void begin_frame(const FrameContext& frame, const Reference<renderer::RenderTarget>& render_target);
     void end_frame(FrameContext& frame);
 
     void gui_update(FrameContext& frame);
 
 private:
+    Reference<renderer::RenderTarget> current_render_target = nullptr;
+
     const renderer::vulkan::VulkanSwapchain& swapchain;
     vk::raii::DescriptorPool imgui_pool = nullptr;
 };

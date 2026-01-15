@@ -72,14 +72,22 @@ void Renderer::cleanup()
     is_initialized = false;
 }
 
-void Renderer::begin_frame(const FrameContext&)
+void Renderer::begin_frame(const FrameContext&, const Reference<RenderTarget>& render_target)
 {
     PORTAL_PROF_ZONE();
     PORTAL_ASSERT(is_initialized, "Renderer is not initialized");
+
+    // TODO: this should be based on what im rendering rn, add some `renderpass` class?
+    current_render_target = render_target;
+    current_draw_image = render_target->get_image(0);
+    current_depth_image = render_target->get_depth_image();
 }
 
 void Renderer::end_frame(FrameContext&)
 {
+    current_render_target = nullptr;
+    current_draw_image = nullptr;
+    current_depth_image = nullptr;
 }
 
 const RendererContext& Renderer::get_renderer_context() const
@@ -91,13 +99,9 @@ void Renderer::post_update(FrameContext& frame)
 {
     const auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
 
-    // TODO: this should be based on what im rendering rn, add some `renderpass` class?
-    const auto draw_image = rendering_context->render_target.lock()->get_image(0);
-    const auto depth_draw_image = rendering_context->render_target.lock()->get_depth_image();
-
     vulkan::transition_image_layout(
         rendering_context->global_command_buffer,
-        draw_image,
+        current_draw_image,
         1,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -109,7 +113,7 @@ void Renderer::post_update(FrameContext& frame)
     );
     vulkan::transition_image_layout(
         rendering_context->global_command_buffer,
-        depth_draw_image,
+        current_depth_image,
         1,
         vk::ImageLayout::eUndefined,
         vk::ImageLayout::eDepthAttachmentOptimal,
@@ -125,10 +129,10 @@ void Renderer::post_update(FrameContext& frame)
     // set draw image layout to Present so we can present it
     vulkan::transition_image_layout(
         rendering_context->global_command_buffer,
-        draw_image,
+        current_draw_image,
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::ePresentSrcKHR,
+        vk::ImageLayout::eShaderReadOnlyOptimal,
         vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
         vk::AccessFlagBits2::eNone,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
@@ -142,6 +146,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::CommandBuffer& comma
     PORTAL_PROF_ZONE();
 
     auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+    auto viewport_bounds = current_render_target->get_viewport_bounds();
 
     //reset counters
     frame.stats.drawcall_count = 0;
@@ -160,7 +165,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::CommandBuffer& comma
     }
 
     {
-        auto info = reference_cast<vulkan::VulkanRenderTarget>(rendering_context->render_target.lock())->make_rendering_info();
+        auto info = reference_cast<vulkan::VulkanRenderTarget>(current_render_target)->make_rendering_info();
         command_buffer.beginRendering(info);
 
         scene_data_uniform_buffer->get(frame.frame_index)->set_data_typed<vulkan::GPUSceneData>(rendering_context->scene_data);
@@ -206,8 +211,8 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::CommandBuffer& comma
                         vk::Viewport(
                             0.0f,
                             0.0f,
-                            static_cast<float>(rendering_context->viewport_bounds.z),
-                            static_cast<float>(rendering_context->viewport_bounds.w),
+                            static_cast<float>(viewport_bounds.z),
+                            static_cast<float>(viewport_bounds.w),
                             0.0f,
                             1.0f
                         )
@@ -217,8 +222,8 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::CommandBuffer& comma
                         vk::Rect2D(
                             vk::Offset2D(0, 0),
                             {
-                                static_cast<uint32_t>(rendering_context->viewport_bounds.z),
-                                static_cast<uint32_t>(rendering_context->viewport_bounds.w),
+                                viewport_bounds.z,
+                                viewport_bounds.w,
                             }
                         )
                     );

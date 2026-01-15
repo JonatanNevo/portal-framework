@@ -101,6 +101,8 @@ public:
      */
     FrameRenderingContext prepare_frame(const FrameContext& frame);
 
+    Reference<RenderTarget> get_current_render_target();
+
     /**
      * @brief Presents rendered image to surface
      * @param frame Frame context with semaphore to wait on before presenting

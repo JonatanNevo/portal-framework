@@ -21,7 +21,9 @@ public:
     explicit Engine(const ApplicationProperties& properties);
     ~Engine() override;
 
-    void setup_scene(const ResourceReference<Scene>& scene) const;
+    void prepare() override;
+
+    void setup_scene(ResourceReference<Scene> scene) const;
 
     void process_events() override;
 

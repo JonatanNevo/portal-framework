@@ -15,9 +15,12 @@
 #pragma once
 
 #include <any>
+#include <fastgltf/types.hpp>
 
 namespace portal
 {
+class Scene;
+
 namespace ecs
 {
     class Registry;
@@ -71,6 +74,9 @@ struct FrameContext
     FrameStats stats = {};
     // TODO: have in `ecs_context` instead of in global context?
     ecs::Registry* ecs_registry = nullptr;
+
+    // TODO: have in `scene_context` instead of in global context?
+    Scene* active_scene = nullptr;
 
     // When rendering_context is set, it should be a `renderer::RenderingContext`
     // TODO: this might cause performance issues, especially since any can use dynamic allocations without custom allocators, investigate

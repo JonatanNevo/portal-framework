@@ -47,11 +47,12 @@ void Application::run()
     try
     {
         should_stop.clear();
-
         // TODO: Improve the stats system, accumulate more stats, etc...
         FrameStats global_stats{};
 
         LOGGER_INFO("Starting application");
+        prepare();
+
         while (!should_stop.test())
         {
             process_events();
@@ -68,12 +69,12 @@ void Application::run()
                     // Update scene, physics, input, ...
                     modules.update(context);
 
-                    // Draw geometry
-                    modules.post_update(context);
-
                     // TODO: will this differ between runtime and editor?
                     // Draw gui
                     modules.gui_update(context);
+
+                    // Draw geometry
+                    modules.post_update(context);
                 }
                 modules.end_frame(context);
 
