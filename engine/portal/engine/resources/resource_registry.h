@@ -215,6 +215,24 @@ public:
     // TODO: remove from here
     void wait_all(std::span<Job<>> jobs);
 
+    template <typename T>
+    auto list_all_resources_of_type()
+    {
+        return resources | std::ranges::views::filter(
+            [](auto& it)
+            {
+                auto& [name, resource] = it;
+                auto typed_resource = reference_cast<T>(resource);
+                return typed_resource != nullptr;
+            }
+        ) | std::ranges::views::transform(
+            [this](auto& it)
+            {
+                return get<T>(it.first);
+            }
+        );
+    }
+
     void configure_ecs_registry(ecs::Registry& ecs_registry);
 
 protected:
@@ -255,11 +273,7 @@ private:
     SpinLock lock;
     // Resource container, all resource are managed
     // TODO: use custom allocator to have the resources next to each other on the heap
-#ifdef PORTAL_DEBUG
     std::unordered_map<StringId, Reference<Resource>> resources;
-#else
-    llvm::DenseMap<StringId, Reference<Resource>> resources;
-#endif
     llvm::DenseSet<StringId> pending_resources;
     llvm::DenseSet<StringId> errored_resources;
 

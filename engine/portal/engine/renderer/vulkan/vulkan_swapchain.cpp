@@ -276,14 +276,6 @@ FrameRenderingContext VulkanSwapchain::prepare_frame(const FrameContext& frame)
     auto& image_data = images_data[current_image];
     image_data.last_used_frame = frame.frame_index;
 
-    rendering_context.viewport_bounds = {
-        0,
-        0,
-        static_cast<uint32_t>(image_data.render_target->get_width()),
-        static_cast<uint32_t>(image_data.render_target->get_height())
-    };
-    rendering_context.render_target = image_data.render_target;
-
     // If this image was used before, wait for the fence from the frame that last used it
     if (image_data.last_used_frame != std::numeric_limits<size_t>::max())
     {
@@ -299,6 +291,12 @@ FrameRenderingContext VulkanSwapchain::prepare_frame(const FrameContext& frame)
     rendering_context.global_command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
 
     return rendering_context;
+}
+
+Reference<RenderTarget> VulkanSwapchain::get_current_render_target()
+{
+    auto& image_data = images_data[current_image];
+    return image_data.render_target;
 }
 
 void VulkanSwapchain::present(const FrameContext& frame)

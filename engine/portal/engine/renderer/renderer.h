@@ -74,7 +74,7 @@ public:
      * @brief Begins frame (wait for fence, acquire image, reset pools)
      * @param frame Frame context
      */
-    void begin_frame(const FrameContext& frame);
+    void begin_frame(const FrameContext& frame, const Reference<renderer::RenderTarget>& render_target);
 
     /**
      * @brief Ends frame (submit commands, present)
@@ -106,6 +106,10 @@ private:
 
 private:
     renderer::vulkan::VulkanContext& context;
+
+    Reference<renderer::RenderTarget> current_render_target;
+    Reference<renderer::Image> current_draw_image;
+    Reference<renderer::Image> current_depth_image;
 
     // TODO: Where should these two be?
     Reference<renderer::UniformBufferSet> scene_data_uniform_buffer;

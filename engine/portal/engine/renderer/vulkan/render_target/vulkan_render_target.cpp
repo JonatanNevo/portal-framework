@@ -188,15 +188,16 @@ void VulkanRenderTarget::release()
     }
 }
 
-void VulkanRenderTarget::resize(const size_t new_width, const size_t new_height, const bool force_recreate)
+bool VulkanRenderTarget::resize(const size_t new_width, const size_t new_height, const bool force_recreate)
 {
     if (!force_recreate && width == new_width && height == new_height)
-        return;
+        return false;
 
     width = static_cast<size_t>(new_width * prop.scale);
     height = static_cast<size_t>(new_height * prop.scale);
     depth_image->resize(new_width, new_height);
     initialize();
+    return true;
 }
 
 vk::RenderingInfo VulkanRenderTarget::make_rendering_info()
@@ -224,6 +225,16 @@ size_t VulkanRenderTarget::get_width() const
 size_t VulkanRenderTarget::get_height() const
 {
     return height;
+}
+
+glm::uvec4 VulkanRenderTarget::get_viewport_bounds() const
+{
+    return {
+        0,
+        0,
+        static_cast<uint32_t>(get_width()),
+        static_cast<uint32_t>(get_height())
+    };
 }
 
 size_t VulkanRenderTarget::get_color_attachment_count() const

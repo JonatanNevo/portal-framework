@@ -9,6 +9,7 @@
     },
 
     "engine": {
+        "starting_scene": "game/gltf-Scene-Scene",
         "include_engine_resources": true,
         "resources": [
             {
@@ -17,5 +18,6 @@
             }
         ]
     },
+
     "log-level": "Debug"
 }

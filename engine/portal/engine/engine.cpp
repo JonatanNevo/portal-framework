@@ -57,7 +57,6 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
         resource_database.register_database(description);
     }
 
-
     // Setting up swapchain and renderer
     auto surface = window->create_surface(*vulkan_context);
     // TODO: find better surface control
@@ -90,9 +89,28 @@ Engine::~Engine()
     glfwTerminate();
 }
 
-void Engine::setup_scene(const ResourceReference<Scene>& scene) const
+void Engine::prepare()
 {
-    engine_context->get_system_orchestrator().set_registry(scene->get_registry());
+    const auto scene_id = Settings::get().get_setting<StringId>("engine.starting_scene");
+    if (scene_id.has_value())
+    {
+        auto scene_reference = engine_context->get_resource_registry().immediate_load<Scene>(scene_id.value());
+        scene_reference->set_viewport_bounds({0, 0, swapchain->get_width(), swapchain->get_height()});
+        setup_scene(scene_reference);
+    }
+    else
+    {
+        // TODO: This will not be ordered, maybe use some default empty scene here instead
+        // Take the first scene
+        auto scene = engine_context->get_resource_registry().list_all_resources_of_type<Scene>() | std::ranges::views::take(1);
+        scene.front()->set_viewport_bounds({0, 0, swapchain->get_width(), swapchain->get_height()});
+        setup_scene(scene.front());
+    }
+}
+
+void Engine::setup_scene(ResourceReference<Scene> scene) const
+{
+    engine_context->get_system_orchestrator().set_active_scene(*scene);
 }
 
 void Engine::process_events()

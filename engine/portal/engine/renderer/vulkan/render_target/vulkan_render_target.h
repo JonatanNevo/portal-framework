@@ -44,14 +44,7 @@ public:
     ~VulkanRenderTarget() override;
 
     /** @brief Resizes render target, recreating attachments */
-    void resize(size_t new_width, size_t new_height, bool force_recreate) override;
-
-    /**
-     * @brief Creates vk::RenderingInfo from frame context
-     * @param frame_context Current frame rendering context
-     * @return Vulkan rendering info structure
-     */
-    vk::RenderingInfo make_rendering_info(const FrameRenderingContext& frame_context);
+    bool resize(size_t new_width, size_t new_height, bool force_recreate) override;
 
     /**
      * @brief Creates vk::RenderingInfo from custom attachments
@@ -64,6 +57,8 @@ public:
 
     /** @brief Gets render target height */
     [[nodiscard]] size_t get_height() const override;
+
+    [[nodiscard]] glm::uvec4 get_viewport_bounds() const override;
 
     /** @brief Gets color attachment count */
     [[nodiscard]] size_t get_color_attachment_count() const override;
@@ -93,7 +88,6 @@ protected:
 
     /** @brief Releases Vulkan resources */
     void release();
-
 
 protected:
     RenderTargetProperties prop;

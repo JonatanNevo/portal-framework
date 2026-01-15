@@ -7,6 +7,7 @@
 
 #include "portal/engine/components/camera.h"
 #include "portal/engine/renderer/rendering_context.h"
+#include "portal/engine/scene/scene.h"
 
 namespace portal
 {
@@ -19,6 +20,7 @@ void SceneRenderingSystem::execute(FrameContext& frame, ecs::Registry& registry)
 void SceneRenderingSystem::update_global_descriptors(FrameContext& frame, ecs::Registry& registry)
 {
     auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
+    const auto* scene = frame.active_scene;
 
     // Camera information
     {
@@ -28,7 +30,7 @@ void SceneRenderingSystem::update_global_descriptors(FrameContext& frame, ecs::R
         auto camera_entity = registry.entity_from_id(main_camera_group.front());
 
         auto camera = camera_entity.get_component<CameraComponent>();
-        camera.set_viewport_bounds(rendering_context->viewport_bounds);
+        camera.set_viewport_bounds(scene->get_viewport_bounds());
 
         const glm::mat4 view = camera.view;
         glm::mat4 projection = camera.projection;

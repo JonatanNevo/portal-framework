@@ -129,14 +129,11 @@ struct FrameRenderingContext
     // TODO: make this more generic? maybe based on active scene?
     vulkan::GPUSceneData scene_data{};
     vulkan::GPUCameraData camera_data{};
-    glm::uvec4 viewport_bounds;
 
     // TODO: have a secondary buffer per rendering section and define dependencies between them
     vk::CommandBuffer global_command_buffer = nullptr;
 
     vulkan::DescriptorAllocator* frame_descriptors = nullptr;
-
-    WeakReference<RenderTarget> render_target;
     llvm::SmallVector<RenderObject> render_objects;
 };
 } // portal

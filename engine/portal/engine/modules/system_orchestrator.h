@@ -28,8 +28,10 @@ public:
     explicit SystemOrchestrator(ModuleStack& stack);
     ~SystemOrchestrator() override;
 
+    void set_active_scene(Scene& scene);
+    [[nodiscard]] Scene* get_active_scene() const { return active_scene; }
+
     void register_systems(ecs::Registry& registry);
-    void set_registry(ecs::Registry& registry);
 
     void begin_frame(FrameContext& frame) override;
     void update(FrameContext& frame) override;
@@ -37,6 +39,7 @@ public:
 private:
     // TODO: support multiple registries in parallel?
     ecs::Registry* active_registry = nullptr;
+    Scene* active_scene = nullptr;
 
     std::unique_ptr<BasePlayerInputSystem> player_input_system;
     std::unique_ptr<BaseCameraSystem> camera_system;

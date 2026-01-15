@@ -91,6 +91,11 @@ void ArchiveObject::add_property(const PropertyName& name, const std::filesystem
     add_property(name, t.string());
 }
 
+void ArchiveObject::add_property(const PropertyName& name, const StringId& string_id)
+{
+    add_property(name, string_id.string);
+}
+
 bool ArchiveObject::get_property(const PropertyName& name, std::filesystem::path& out)
 {
     std::string string;
@@ -99,6 +104,16 @@ bool ArchiveObject::get_property(const PropertyName& name, std::filesystem::path
 
     // TODO: make absolute?
     out = std::filesystem::path(string);
+    return true;
+}
+
+bool ArchiveObject::get_property(const PropertyName& name, StringId& out)
+{
+    std::string string;
+    if (!get_property<std::string>(name, string))
+        return false;
+
+    out = STRING_ID(string);
     return true;
 }
 

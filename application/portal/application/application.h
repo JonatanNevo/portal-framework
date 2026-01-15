@@ -81,6 +81,8 @@ public:
     explicit Application(const ApplicationProperties& properties);
     virtual ~Application();
 
+    virtual void prepare() {};
+
     /**
      * Start the main game loop.
      *

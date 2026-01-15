@@ -15,6 +15,7 @@
 #include <portal/core/reflection/property.h>
 #include <portal/core/reflection/property_concepts.h>
 
+#include "portal/core/strings/string_id.h"
 #include "portal/core/strings/string_utils.h"
 #include "portal/serialization/archive.h"
 
@@ -345,6 +346,8 @@ public:
      * @param t Filesystem path
      */
     void add_property(const PropertyName& name, const std::filesystem::path& t);
+
+    void add_property(const PropertyName& name, const StringId& string_id);
 
     /**
      * @brief Adds a binary data block property from a byte vector.
@@ -734,6 +737,8 @@ public:
      * @return true if property exists, false otherwise
      */
     bool get_property(const PropertyName& name, std::filesystem::path& out);
+
+    bool get_property(const PropertyName& name, StringId& out);
 
     /**
      * @brief Retrieves a binary data block property into a Buffer.

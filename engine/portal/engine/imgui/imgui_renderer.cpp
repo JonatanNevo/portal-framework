@@ -107,13 +107,15 @@ ImGuiRenderer::~ImGuiRenderer()
     imgui_pool = nullptr;
 }
 
-void ImGuiRenderer::begin_frame(const FrameContext&)
+void ImGuiRenderer::begin_frame(const FrameContext&, const Reference<renderer::RenderTarget>& render_target)
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    // ImGui::DockSpaceOverViewport();
+    ImGui::DockSpaceOverViewport();
     //ImGuizmo::BeginFrame();
+
+    current_render_target = render_target;
 }
 
 void ImGuiRenderer::end_frame(FrameContext& frame)
@@ -121,15 +123,13 @@ void ImGuiRenderer::end_frame(FrameContext& frame)
     PORTAL_PROF_ZONE();
 
     auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
-    auto render_target = rendering_context->render_target.lock();
-
 
     // set swapchain image layout to Attachment Optimal so we can draw it
     renderer::vulkan::transition_image_layout(
         rendering_context->global_command_buffer,
-        render_target->get_image(0),
+        current_render_target->get_image(0),
         1,
-        vk::ImageLayout::ePresentSrcKHR,
+        vk::ImageLayout::eUndefined,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::AccessFlagBits2::eNone,
         vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
@@ -140,11 +140,11 @@ void ImGuiRenderer::end_frame(FrameContext& frame)
 
     ImGui::Render();
 
-    const auto width = static_cast<uint32_t>(render_target->get_width());
-    const auto height = static_cast<uint32_t>(render_target->get_height());
+    const auto width = static_cast<uint32_t>(current_render_target->get_width());
+    const auto height = static_cast<uint32_t>(current_render_target->get_height());
 
     vk::RenderingAttachmentInfo color_attachment = {
-        .imageView = reference_cast<renderer::vulkan::VulkanImageView>(render_target->get_image(0)->get_view())->get_vk_image_view(),
+        .imageView = reference_cast<renderer::vulkan::VulkanImageView>(current_render_target->get_image(0)->get_view())->get_vk_image_view(),
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eLoad,
         .storeOp = vk::AttachmentStoreOp::eStore
@@ -174,7 +174,7 @@ void ImGuiRenderer::end_frame(FrameContext& frame)
     // set draw image layout to Present so we can present it
     renderer::vulkan::transition_image_layout(
         rendering_context->global_command_buffer,
-        render_target->get_image(0),
+        current_render_target->get_image(0),
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,

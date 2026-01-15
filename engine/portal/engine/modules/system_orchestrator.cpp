@@ -5,6 +5,7 @@
 
 #include "system_orchestrator.h"
 
+#include "portal/engine/scene/scene.h"
 #include "portal/engine/systems/base_camera_system.h"
 #include "portal/engine/systems/base_player_input_system.h"
 #include "portal/engine/systems/scene_rendering_system.h"
@@ -22,24 +23,27 @@ SystemOrchestrator::SystemOrchestrator(ModuleStack& stack)
 
 SystemOrchestrator::~SystemOrchestrator() = default;
 
+void SystemOrchestrator::set_active_scene(Scene& scene)
+{
+    active_scene = &scene;
+    active_registry = &scene.get_registry();
+
+    // TODO: find a better way of doing this
+    for (auto entity : active_registry->view<InputComponent>())
+    {
+        auto& [input_manager] = entity.get_component<InputComponent>();
+        input_manager = &get_dependency<InputManager>();
+    }
+
+    register_systems(*active_registry);
+}
+
 void SystemOrchestrator::register_systems(ecs::Registry& registry)
 {
     player_input_system->register_to(registry);
     camera_system->register_to(registry);
     transform_system->register_to(registry);
     scene_rendering_system->register_to(registry);
-}
-
-void SystemOrchestrator::set_registry(ecs::Registry& registry)
-{
-    // TODO: find a better way of doing this
-    for (auto entity : registry.view<InputComponent>())
-    {
-        auto& [input_manager] = entity.get_component<InputComponent>();
-        input_manager = &get_dependency<InputManager>();
-    }
-
-    active_registry = &registry;
 }
 
 void SystemOrchestrator::begin_frame(FrameContext& frame)

@@ -117,13 +117,15 @@ public:
     virtual ~RenderTarget() = default;
 
     /** @brief Resizes render target */
-    virtual void resize(size_t width, size_t height, bool force_recreate) = 0;
+    virtual bool resize(size_t width, size_t height, bool force_recreate) = 0;
 
     /** @brief Gets render target width */
     [[nodiscard]] virtual size_t get_width() const = 0;
 
     /** @brief Gets render target height */
     [[nodiscard]] virtual size_t get_height() const = 0;
+
+    [[nodiscard]] virtual glm::uvec4 get_viewport_bounds() const = 0;
 
     /** @brief Gets color attachment count */
     [[nodiscard]] virtual size_t get_color_attachment_count() const = 0;
