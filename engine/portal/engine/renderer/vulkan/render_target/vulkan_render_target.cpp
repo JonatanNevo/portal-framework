@@ -51,7 +51,7 @@ VulkanRenderTarget::VulkanRenderTarget(
             {
                 image::Properties depth_image_properties{
                     .format = attachment.format,
-                    .usage = ImageUsage::Attachment,
+                    .usage = ImageUsage::SubAttachment,
                     .transfer = prop.transfer,
                     .width = width,
                     .height = height,
@@ -75,7 +75,7 @@ VulkanRenderTarget::VulkanRenderTarget(
             {
                 image::Properties depth_image_properties{
                     .format = attachment.format,
-                    .usage = ImageUsage::Attachment,
+                    .usage = ImageUsage::SubAttachment,
                     .transfer = prop.transfer,
                     .width = width,
                     .height = height,

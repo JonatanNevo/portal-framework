@@ -82,7 +82,7 @@ void VulkanImage::reallocate()
     ImageBuilder builder(properties.width, properties.height, 1);
 
     vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eSampled;
-    if (properties.usage == ImageUsage::Attachment)
+    if (properties.usage == ImageUsage::Attachment || properties.usage == ImageUsage::SubAttachment)
     {
         if (utils::is_depth_format(properties.format))
             usage |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
@@ -530,6 +530,8 @@ void VulkanImage::update_descriptor()
         descriptor_image_info.imageLayout = vk::ImageLayout::eGeneral;
     else if (properties.usage == ImageUsage::HostRead)
         descriptor_image_info.imageLayout = vk::ImageLayout::eTransferDstOptimal;
+    else if (properties.usage == ImageUsage::Attachment)
+        descriptor_image_info.imageLayout = vk::ImageLayout::ePresentSrcKHR;
     else
         descriptor_image_info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 

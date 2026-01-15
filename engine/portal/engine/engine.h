@@ -18,7 +18,7 @@ namespace portal
 class Engine : public Application, public WindowEventConsumer
 {
 public:
-    explicit Engine(const ApplicationProperties& properties);
+    explicit Engine(const ApplicationProperties& properties, bool editor);
     ~Engine() override;
 
     void prepare() override;

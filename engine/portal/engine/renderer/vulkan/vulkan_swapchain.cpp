@@ -209,6 +209,9 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
         device.set_debug_name(image_view, fmt::format("swapchain_image_view_{}", i).c_str());
         device.set_debug_name(render_finished_semaphore, fmt::format("swapchain_render_finished_semaphore_{}", i).c_str());
 
+        auto ref_image = make_reference<VulkanImage>(image, image_view, image_props, context);
+        ref_image->update_descriptor();
+
         RenderTargetProperties target_properties{
             .width = get_width(),
             .height = get_height(),
@@ -234,7 +237,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             .existing_images = {
                 {
                     0,
-                    make_reference<VulkanImage>(image, image_view, image_props, context)
+                    ref_image
                 }
             },
             .name = STRING_ID("geometry-render-target"),
