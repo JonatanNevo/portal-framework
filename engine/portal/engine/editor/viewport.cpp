@@ -21,7 +21,7 @@ Viewport::Viewport(const renderer::vulkan::VulkanSwapchain& swapchain, RuntimeMo
         .width = swapchain.get_width(),
         // TODO: fetch size from some config
         .height = swapchain.get_height(),
-        .attachments = {
+        .attachments = renderer::AttachmentProperties{
             // TODO: Is this static? would this change based on settings? Do I need to recreate the render target on swapchain reset?
             .attachment_images = std::vector<renderer::AttachmentTextureProperty>{
                 // Present Image
