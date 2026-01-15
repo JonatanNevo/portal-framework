@@ -1,24 +1,22 @@
 //
-// Copyright © 2025 Jonatan Nevo.
+// Copyright © 2026 Jonatan Nevo.
 // Distributed under the MIT license (see LICENSE file).
 //
 
 #pragma once
-#include "editor_system.h"
+#include "system_orchestrator.h"
 #include "portal/application/modules/module.h"
-#include "portal/engine/imgui/imgui_renderer.h"
-#include "portal/engine/modules/resources_module.h"
-#include "portal/engine/modules/runtime_module.h"
 #include "portal/engine/renderer/renderer.h"
-#include "portal/engine/renderer/descriptors/descriptor_set_manager.h"
+#include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 
 namespace portal
 {
-class EditorModule final : public TaggedModule<
+class ResourcesModule;
+
+class RuntimeModule final: public TaggedModule<
         Tag<
             ModuleTags::FrameLifecycle,
             ModuleTags::PostUpdate,
-            ModuleTags::GuiUpdate,
             ModuleTags::Event
         >,
         SystemOrchestrator,
@@ -26,29 +24,27 @@ class EditorModule final : public TaggedModule<
     >
 {
 public:
-    EditorModule(
+    RuntimeModule(
         ModuleStack& stack,
         renderer::vulkan::VulkanContext& context,
-        renderer::vulkan::VulkanSwapchain& swapchain,
-        const Window& window
+        renderer::vulkan::VulkanSwapchain& swapchain
     );
-    ~EditorModule() override;
+
+    ~RuntimeModule() override;
 
     void begin_frame(FrameContext& frame) override;
-    void gui_update(FrameContext& frame) override;
     void post_update(FrameContext& frame) override;
     void end_frame(FrameContext& frame) override;
     void on_event(Event& event) override;
+
+    void inner_post_update(FrameContext& frame, const Reference<renderer::RenderTarget>& render_target);
+    void inner_end_frame(FrameContext& frame, bool present = true);
 
 private:
     renderer::vulkan::VulkanSwapchain& swapchain;
     renderer::vulkan::VulkanContext& context;
 
-    vk::DescriptorSet viewport_descriptor_set;
-    Reference<renderer::RenderTarget> viewport_render_target;
-
-    RuntimeModule runtime_module;
-    ImGuiRenderer im_gui_renderer;
-    EditorGuiSystem gui_system;
+    Renderer renderer;
 };
+
 } // portal

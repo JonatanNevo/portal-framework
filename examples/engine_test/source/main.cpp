@@ -19,7 +19,7 @@ using namespace portal;
 std::unique_ptr<Application> portal::create_application(int, char**)
 {
     const auto prop = ApplicationProperties::from_settings();
-    auto engine = std::make_unique<Engine>(prop);
+    auto engine = std::make_unique<Engine>(prop, true);
 
     // TODO: Should not be here
     auto& engine_context = engine->get_engine_context();

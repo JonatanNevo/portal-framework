@@ -90,6 +90,7 @@ enum class ImageUsage
     Texture,
     Storage,
     Attachment,
+    SubAttachment,
     HostRead
 };
 

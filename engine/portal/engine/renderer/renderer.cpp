@@ -99,6 +99,8 @@ void Renderer::post_update(FrameContext& frame)
 {
     const auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
 
+    auto vulkan_draw_image = reference_cast<vulkan::VulkanImage>(current_draw_image);
+
     vulkan::transition_image_layout(
         rendering_context->global_command_buffer,
         current_draw_image,
@@ -132,7 +134,7 @@ void Renderer::post_update(FrameContext& frame)
         current_draw_image,
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::eShaderReadOnlyOptimal,
+        vulkan_draw_image->get_descriptor_image_info().imageLayout,
         vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
         vk::AccessFlagBits2::eNone,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,

@@ -22,7 +22,7 @@ EditorModule::EditorModule(
     : TaggedModule(stack, STRING_ID("Editor Module")),
       swapchain(swapchain),
       context(context),
-      viewport_renderer(context, get_dependency<ResourcesModule>().get_registry()),
+      runtime_module(stack, context, swapchain),
       im_gui_renderer(window, swapchain)
 {
     renderer::RenderTargetProperties props{
@@ -64,7 +64,6 @@ EditorModule::EditorModule(
 
 EditorModule::~EditorModule()
 {
-    viewport_renderer.cleanup();
     ImGui_ImplVulkan_RemoveTexture(viewport_descriptor_set);
 }
 
@@ -117,13 +116,12 @@ void EditorModule::gui_update(FrameContext& frame)
 
 void EditorModule::post_update(FrameContext& frame)
 {
-    viewport_renderer.begin_frame(frame, viewport_render_target);
-    viewport_renderer.post_update(frame);
+    runtime_module.inner_post_update(frame, viewport_render_target);
 }
 
 void EditorModule::end_frame(FrameContext& frame)
 {
-    viewport_renderer.end_frame(frame);
+    runtime_module.inner_end_frame(frame, false);
     im_gui_renderer.end_frame(frame);
 
     swapchain.present(frame);

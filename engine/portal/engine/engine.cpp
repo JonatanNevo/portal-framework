@@ -18,7 +18,7 @@ namespace portal
 {
 static auto logger = Log::get_logger("Engine");
 
-Engine::Engine(const ApplicationProperties& properties) : Application(properties)
+Engine::Engine(const ApplicationProperties& properties, bool editor) : Application(properties)
 {
     // Creating Input
     auto& settings = Settings::get();
@@ -51,7 +51,10 @@ Engine::Engine(const ApplicationProperties& properties) : Application(properties
     vulkan_context->get_device().add_present_queue(*surface);
     swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(*vulkan_context, surface);
 
-    modules.add_module<EditorModule>(*vulkan_context, *swapchain, *window);
+    if (editor)
+        modules.add_module<EditorModule>(*vulkan_context, *swapchain, *window);
+    else
+        modules.add_module<RuntimeModule>(*vulkan_context, *swapchain);
 
     // TODO: make a O(1) lookup inside the module stack, will make this class redundant
     engine_context = std::make_unique<EngineContext>(
