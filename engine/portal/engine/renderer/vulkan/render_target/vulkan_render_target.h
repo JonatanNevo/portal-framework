@@ -33,14 +33,14 @@ class VulkanImage;
  * Creates vk::RenderingInfo with color and depth attachments, clear values, and blending.
  * Supports dynamic rendering (no explicit framebuffer objects).
  */
-class VulkanRenderTarget : public RenderTarget
+class VulkanRenderTarget final : public RenderTarget
 {
 public:
     /**
      * @brief Constructs Vulkan render target
      * @param prop Render target configuration
      */
-    VulkanRenderTarget(const RenderTargetProperties& prop);
+    VulkanRenderTarget(const RenderTargetProperties& prop, const VulkanContext& context);
     ~VulkanRenderTarget() override;
 
     /** @brief Resizes render target, recreating attachments */
@@ -55,11 +55,9 @@ public:
 
     /**
      * @brief Creates vk::RenderingInfo from custom attachments
-     * @param color_images Color attachment views
-     * @param depth_image Optional depth attachment view
      * @return Vulkan rendering info structure
      */
-    vk::RenderingInfo make_rendering_info(std::span<vk::ImageView> color_images, const std::optional<vk::ImageView>& depth_image);
+    vk::RenderingInfo make_rendering_info();
 
     /** @brief Gets render target width */
     [[nodiscard]] size_t get_width() const override;
@@ -82,22 +80,24 @@ public:
     /** @brief Gets color attachment formats */
     [[nodiscard]] std::span<const ImageFormat> get_color_formats() const override;
 
+    [[nodiscard]] size_t get_color_images_count() const override;
+    [[nodiscard]] Reference<Image> get_image(size_t attachment_index) override;
+
+    [[nodiscard]] bool has_depth_image() const override;
+    [[nodiscard]] Reference<Image> get_depth_image() const override;
+
 
 protected:
     /** @brief Creates Vulkan attachments */
     void initialize();
 
-    virtual void inner_initialize() {};
-
     /** @brief Releases Vulkan resources */
     void release();
 
-    virtual void inner_release() {}
-
-protected:;
 
 protected:
     RenderTargetProperties prop;
+    const VulkanContext& context;
     size_t width = 0, height = 0;
 
     std::vector<ImageFormat> color_formats;
@@ -106,5 +106,10 @@ protected:
     std::vector<vk::RenderingAttachmentInfo> rendering_attachments;
     vk::RenderingAttachmentInfo depth_rendering;
     vk::RenderingInfo rendering_info;
+
+
+    std::vector<Reference<VulkanImage>> color_images;
+    // TODO: Should this be here or moved to some `g buffer` class
+    Reference<VulkanImage> depth_image;
 };
 }

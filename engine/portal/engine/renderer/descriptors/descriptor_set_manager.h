@@ -91,6 +91,8 @@ public:
      */
     virtual bool is_invalidated(size_t set, size_t binding_index) const = 0;
 
+    virtual void invalidate_and_update(size_t frame_index) = 0;
+
     /** @brief Validates all bindings are set */
     virtual bool validate() = 0;
 

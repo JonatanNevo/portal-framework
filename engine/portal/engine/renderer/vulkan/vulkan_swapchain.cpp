@@ -13,11 +13,11 @@
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "device/vulkan_physical_device.h"
+#include "portal/application/settings.h"
 #include "portal/engine/renderer/rendering_context.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "render_target/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
-#include "render_target/vulkan_swapchain_render_target.h"
 
 namespace portal::renderer::vulkan
 {
@@ -50,10 +50,11 @@ vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& av
     return present_mode;
 }
 
-VulkanSwapchain::VulkanSwapchain(const VulkanContext& context, const Reference<Surface>& surface) : context(context),
+VulkanSwapchain::VulkanSwapchain(VulkanContext& context, const Reference<Surface>& surface) : context(context),
     surface(reference_cast<VulkanSurface>(surface))
 {
     find_image_format_and_color_space();
+    init_frame_resources();
 
     auto extent = surface->get_extent();
     // TODO: propagate vsync to swapchain?
@@ -188,7 +189,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             },
         };
 
-        auto& [image_props, image, image_view, last_used_frame, render_finished_semaphore] = images_data[i];
+        auto& [image_props, image, image_view, last_used_frame, render_target, render_finished_semaphore] = images_data[i];
         image_props = {
             .format = to_format(color_format),
             .usage = ImageUsage::Attachment,
@@ -207,6 +208,38 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
 
         device.set_debug_name(image_view, fmt::format("swapchain_image_view_{}", i).c_str());
         device.set_debug_name(render_finished_semaphore, fmt::format("swapchain_render_finished_semaphore_{}", i).c_str());
+
+        RenderTargetProperties target_properties{
+            .width = get_width(),
+            .height = get_height(),
+            .attachments = {
+                // TODO: Is this static? would this change based on settings? Do I need to recreate the render target on swapchain reset?
+                .attachment_images = {
+                    // Present Image
+                    {
+                        .format = vulkan::to_format(get_color_format()),
+                        .blend = false
+                    },
+                    // TODO: who is supposed to hold the depth image?
+                    // Depth Image
+                    {
+                        .format = ImageFormat::Depth_32Float,
+                        .blend = true,
+                        .blend_mode = BlendMode::Additive
+                    }
+                },
+                .blend = true,
+            },
+            .transfer = true,
+            .existing_images = {
+                {
+                    0,
+                    make_reference<VulkanImage>(image, image_view, image_props, context)
+                }
+            },
+            .name = STRING_ID("geometry-render-target"),
+        };
+        render_target = std::make_shared<VulkanRenderTarget>(target_properties, context);
     }
 }
 
@@ -228,15 +261,44 @@ void VulkanSwapchain::on_resize(size_t new_width, size_t new_height)
     context.get_device().wait_idle();
 }
 
-SwapchainImageData& VulkanSwapchain::begin_frame(const FrameContext& frame)
+FrameRenderingContext VulkanSwapchain::prepare_frame(const FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
+
+    // TODO: Should this be in swapchain?
+    // TODO: pull the `RenderingContext` from some cache instead of allocating each frame
+    auto rendering_context = FrameRenderingContext{
+        .global_command_buffer = frame_resources[frame.frame_index].command_buffer,
+        .frame_descriptors = &frame_resources[frame.frame_index].frame_descriptors,
+    };
 
     current_image = acquire_next_image(frame);
     auto& image_data = images_data[current_image];
     image_data.last_used_frame = frame.frame_index;
 
-    return images_data[current_image];
+    rendering_context.viewport_bounds = {
+        0,
+        0,
+        static_cast<uint32_t>(image_data.render_target->get_width()),
+        static_cast<uint32_t>(image_data.render_target->get_height())
+    };
+    rendering_context.render_target = image_data.render_target;
+
+    // If this image was used before, wait for the fence from the frame that last used it
+    if (image_data.last_used_frame != std::numeric_limits<size_t>::max())
+    {
+        PORTAL_PROF_ZONE("VulkanSwapchain::begin_frame - wait for image fence");
+        const auto& last_frame = frame_resources[image_data.last_used_frame];
+        context.get_device().wait_for_fences(std::span{&*last_frame.wait_fence, 1}, true);
+    }
+
+    // Resets descriptor pools
+    clean_frame(frame);
+
+    // begin the command buffer recording. We will use this command buffer exactly once, so we want to let vulkan know that
+    rendering_context.global_command_buffer.begin({.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+
+    return rendering_context;
 }
 
 void VulkanSwapchain::present(const FrameContext& frame)
@@ -246,8 +308,12 @@ void VulkanSwapchain::present(const FrameContext& frame)
 
     auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
 
+    rendering_context->global_command_buffer.end();
+
+    auto& resources = frame_resources[frame.frame_index];
+
     const vk::SemaphoreSubmitInfo wait_semaphore_info{
-        .semaphore = *rendering_context->resources.image_available_semaphore,
+        .semaphore = *resources.image_available_semaphore,
         .value = 0,
         // Assuming binary semaphores are used (value is ignored/defaulted)
         .stageMask = wait_destination_stage_mask,
@@ -264,7 +330,7 @@ void VulkanSwapchain::present(const FrameContext& frame)
     };
 
     const vk::CommandBufferSubmitInfo command_buffer_info{
-        .commandBuffer = *rendering_context->command_buffer,
+        .commandBuffer = rendering_context->global_command_buffer,
         .deviceMask = 0
     };
 
@@ -279,15 +345,14 @@ void VulkanSwapchain::present(const FrameContext& frame)
         .pSignalSemaphoreInfos = &signal_semaphore_info,
     };
 
-    context.get_device().get_handle().resetFences({rendering_context->resources.wait_fence});
+    context.get_device().get_handle().resetFences({resources.wait_fence});
 
     // TODO: sync device queues?
-    context.get_device().get_graphics_queue().submit(submit_info, rendering_context->resources.wait_fence);
+    context.get_device().get_graphics_queue().submit(submit_info, resources.wait_fence);
 
     // Present the current buffer to the swap chain
     // Pass the semaphore signaled by the command buffer submission from the submit info as the wait semaphore for swap chain presentation
     // This ensures that the image is not presented to the windowing system until all commands have been submitted
-
     {
         PORTAL_PROF_ZONE("VulkanSwapchain::present - present");
 
@@ -319,49 +384,23 @@ void VulkanSwapchain::present(const FrameContext& frame)
             on_resize(width, height);
         }
     }
-}
 
-Reference<RenderTarget> VulkanSwapchain::make_render_target()
-{
-    RenderTargetProperties properties{
-        .width = get_width(),
-        .height = get_height(),
-        .attachments = {
-            // TODO: Is this static? would this change based on settings? Do I need to recreate the render target on swapchain reset?
-            .attachment_images = {
-                // Present Image
-                {
-                    .format = vulkan::to_format(get_color_format()),
-                    .blend = false
-                },
-                // Depth Image
-                {
-                    .format = ImageFormat::Depth_32Float,
-                    .blend = true,
-                    .blend_mode = BlendMode::Additive
-                }
-            },
-            .blend = true,
-        },
-        .transfer = true,
-        .name = STRING_ID("geometry-render-target"),
-    };
-    return make_reference<VulkanSwapchainRenderTarget>(properties, *this);
+    current_frame = (current_frame + 1) % frames_in_flight;
 }
 
 size_t VulkanSwapchain::acquire_next_image(const FrameContext& frame)
 {
-    auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
+    auto& resources = frame_resources[frame.frame_index];
 
     // Make sure the frame we're requesting has finished rendering (from previous iterations)
     {
         PORTAL_PROF_ZONE("VulkanSwapchain::acquire_next_image - wait for fences");
-        context.get_device().wait_for_fences(std::span{&*rendering_context->resources.wait_fence, 1}, true);
+        context.get_device().wait_for_fences(std::span{&*resources.wait_fence, 1}, true);
     }
 
     auto [result, index] = swapchain.acquireNextImage(
         std::numeric_limits<uint64_t>::max(),
-        rendering_context->resources.image_available_semaphore,
+        resources.image_available_semaphore,
         nullptr
     );
 
@@ -372,7 +411,7 @@ size_t VulkanSwapchain::acquire_next_image(const FrameContext& frame)
             on_resize(width, height);
             auto [new_result, new_index] = swapchain.acquireNextImage(
                 std::numeric_limits<uint64_t>::max(),
-                rendering_context->resources.image_available_semaphore,
+                resources.image_available_semaphore,
                 nullptr
             );
             if (new_result != vk::Result::eSuccess)
@@ -424,5 +463,75 @@ void VulkanSwapchain::find_image_format_and_color_space()
         color_format = surface_formats[0].format;
         color_space = surface_formats[0].colorSpace;
     }
+}
+
+void VulkanSwapchain::init_frame_resources()
+{
+    PORTAL_PROF_ZONE();
+
+    // TODO: have different amount of frames in flight based on some config?
+    frames_in_flight = Settings::get().get_setting<size_t>("application.frames_in_flight", 3);
+
+    frame_resources.clear();
+    frame_resources.reserve(frames_in_flight);
+
+    auto& device = context.get_device();
+
+    // create a descriptor pool that will hold 10 sets with 1 image each
+    std::vector<vulkan::DescriptorAllocator::PoolSizeRatio> sizes =
+    {
+        {vk::DescriptorType::eStorageImage, 1}
+    };
+
+    // create synchronization structures
+    // one fence to control when the gpu has finished rendering the frame,
+    // and 2 semaphores to synchronize rendering with swapchain
+    // we want the fence to start signaled so we can wait on it on the first frame
+    for (size_t i = 0; i < frames_in_flight; ++i)
+    {
+        const vk::CommandPoolCreateInfo pool_info{
+            .flags = vk::CommandPoolCreateFlagBits::eTransient,
+            .queueFamilyIndex = static_cast<uint32_t>(context.get_device().get_graphics_queue().get_family_index()),
+        };
+        auto command_pool = device.get_handle().createCommandPool(pool_info);
+
+        const vk::CommandBufferAllocateInfo alloc_info{
+            .commandPool = command_pool,
+            .level = vk::CommandBufferLevel::ePrimary,
+            .commandBufferCount = 1,
+        };
+
+        std::vector<vulkan::DescriptorAllocator::PoolSizeRatio> frame_sizes = {
+            {vk::DescriptorType::eStorageImage, 3},
+            {vk::DescriptorType::eStorageBuffer, 3},
+            {vk::DescriptorType::eUniformBuffer, 3},
+            {vk::DescriptorType::eCombinedImageSampler, 4},
+        };;
+
+
+        auto& data = frame_resources.emplace_back(
+            std::move(command_pool),
+            std::move(device.get_handle().allocateCommandBuffers(alloc_info).front()),
+            device.get_handle().createSemaphore({}),
+            device.get_handle().createFence(
+                {
+                    .flags = vk::FenceCreateFlagBits::eSignaled
+                }
+            ),
+            vulkan::DescriptorAllocator{context.get_device().get_handle(), 1000, frame_sizes}
+        );
+
+        device.set_debug_name(data.command_pool, fmt::format("swapchain_command_pool_{}", i).c_str());
+        device.set_debug_name(data.command_buffer, fmt::format("swapchain_command_buffer_{}", i).c_str());
+        device.set_debug_name(data.image_available_semaphore, fmt::format("swapchain_image_available_semaphore_{}", i).c_str());
+        device.set_debug_name(data.wait_fence, fmt::format("swapchain_wait_fence_{}", i).c_str());
+    }
+}
+
+void VulkanSwapchain::clean_frame(const FrameContext& frame)
+{
+    frame_resources[frame.frame_index].deletion_queue.flush();
+    frame_resources[frame.frame_index].frame_descriptors.clear_pools();
+    frame_resources[frame.frame_index].command_pool.reset();
 }
 } // portal

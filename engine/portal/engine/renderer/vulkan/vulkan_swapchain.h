@@ -36,6 +36,8 @@ struct SwapchainImageData
     vk::raii::ImageView image_view = nullptr;
     size_t last_used_frame = std::numeric_limits<size_t>::max();
 
+    Reference<VulkanRenderTarget> render_target;
+
     // Semaphore signaled when this specific image finishes rendering
     vk::raii::Semaphore render_finished_semaphore = nullptr;
 };
@@ -70,7 +72,7 @@ public:
      * @param context Vulkan context
      * @param surface Presentation surface
      */
-    VulkanSwapchain(const VulkanContext& context, const Reference<Surface>& surface);
+    VulkanSwapchain(VulkanContext& context, const Reference<Surface>& surface);
 
     /**
      * @brief Creates swapchain with requested dimensions and vsync
@@ -97,7 +99,7 @@ public:
      * @param frame Frame context with semaphore to signal when image is ready
      * @return SwapchainImageData for the acquired image
      */
-    SwapchainImageData& begin_frame(const FrameContext& frame);
+    FrameRenderingContext prepare_frame(const FrameContext& frame);
 
     /**
      * @brief Presents rendered image to surface
@@ -120,7 +122,7 @@ public:
     /** @brief Gets swapchain color space */
     [[nodiscard]] vk::ColorSpaceKHR get_color_space() const { return color_space; }
 
-    [[nodiscard]] const VulkanContext& get_context() const { return context; }
+    [[nodiscard]] VulkanContext& get_context() const { return context; }
 
     /**
      * @brief Sets vsync enabled/disabled
@@ -128,15 +130,16 @@ public:
      */
     void set_vsync(const bool new_vsync) { vsync = new_vsync; }
 
-    Reference<RenderTarget> make_render_target();
-
 private:
     size_t acquire_next_image(const FrameContext& frame);
 
     void find_image_format_and_color_space();
+    void init_frame_resources();
+
+    void clean_frame(const FrameContext& frame);
 
 private:
-    const VulkanContext& context;
+    VulkanContext& context;
     bool vsync = false;
 
     Reference<VulkanSurface> surface;
@@ -149,7 +152,13 @@ private:
     std::vector<vk::Image> swap_chain_images;
     std::vector<SwapchainImageData> images_data;
 
+    std::vector<FrameResources> frame_resources;
+
     // Index of the current swapchain image. can be different from the frame index
     size_t current_image = 0;
+    // Index of the frame we are currently working on, up to max frames in flight
+    size_t current_frame = 0;
+
+    size_t frames_in_flight = 0;
 };
 } // portal

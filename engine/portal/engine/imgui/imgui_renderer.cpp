@@ -3,7 +3,7 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include "imgui_module.h"
+#include "imgui_renderer.h"
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -12,13 +12,15 @@
 #include "portal/core/debug/profile.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "../renderer/vulkan/render_target/vulkan_render_target.h"
+#include "portal/application/settings.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_utils.h"
 #include "portal/engine/window/glfw_window.h"
 
 namespace portal
 {
-ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window, const renderer::vulkan::VulkanSwapchain& swapchain) : TaggedModule(stack, STRING_ID("ImGUI Module"))
+ImGuiRenderer::ImGuiRenderer(const Window& window, const renderer::vulkan::VulkanSwapchain& swapchain)
+    : swapchain(swapchain)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -41,8 +43,6 @@ ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window, const rendere
     }
     style.Colors[ImGuiCol_WindowBg] = ImVec4(0.15f, 0.15f, 0.15f, style.Colors[ImGuiCol_WindowBg].w);
 
-    auto& renderer = get_dependency<Renderer>();
-
     //  create descriptor pool for IMGUI
     //  the size of the pool is very oversize, but it's copied from imgui demo itself.
     const vk::DescriptorPoolSize pool_sizes[] = {
@@ -61,19 +61,18 @@ ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window, const rendere
 
     vk::DescriptorPoolCreateInfo pool_info = {
         .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet,
-        .maxSets = 1000,
+        .maxSets = 1000 * IM_ARRAYSIZE(pool_sizes),
         .poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes)),
         .pPoolSizes = pool_sizes
     };
 
-    auto& vulkan_context = renderer.get_renderer_context().get_gpu_context();
+    auto& vulkan_context = swapchain.get_context();
     imgui_pool = (vulkan_context.get_device().get_handle()).createDescriptorPool(pool_info);
 
     const auto& vulkan_window = dynamic_cast<const GlfwWindow&>(window);
     ImGui_ImplGlfw_InitForVulkan(vulkan_window.get_handle(), true);
 
-    auto color_formats = renderer.get_render_target().get_color_formats() ;
-    const auto vulkan_color_formats = std::ranges::to<std::vector>(color_formats | std::views::transform([](const auto& format) { return renderer::vulkan::to_format(format); }));
+    const auto color_format = swapchain.get_color_format();
 
     ImGui_ImplVulkan_InitInfo init_info = {
         .Instance = *vulkan_context.get_instance(),
@@ -87,8 +86,8 @@ ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window, const rendere
         .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
         .UseDynamicRendering = true,
         .PipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfoKHR{
-            .colorAttachmentCount = static_cast<uint32_t>(vulkan_color_formats.size()),
-            .pColorAttachmentFormats = vulkan_color_formats.data()
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &color_format
         },
     };
 
@@ -96,9 +95,9 @@ ImGuiModule::ImGuiModule(ModuleStack& stack, const Window& window, const rendere
     ImGui_ImplVulkan_CreateFontsTexture();
 }
 
-ImGuiModule::~ImGuiModule()
+ImGuiRenderer::~ImGuiRenderer()
 {
-    auto& vulkan_context = get_dependency<Renderer>().get_renderer_context().get_gpu_context();
+    auto& vulkan_context = swapchain.get_context();
     vulkan_context.get_device().wait_idle();
 
     ImGui_ImplVulkan_Shutdown();
@@ -108,27 +107,27 @@ ImGuiModule::~ImGuiModule()
     imgui_pool = nullptr;
 }
 
-void ImGuiModule::begin_frame(FrameContext&)
+void ImGuiRenderer::begin_frame(const FrameContext&)
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+    // ImGui::DockSpaceOverViewport();
     //ImGuizmo::BeginFrame();
 }
 
-void ImGuiModule::end_frame(FrameContext& frame)
+void ImGuiRenderer::end_frame(FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
 
     auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
+    auto render_target = rendering_context->render_target.lock();
 
-    const auto& renderer = get_dependency<Renderer>();
-    auto& render_target = renderer.get_render_target();
 
     // set swapchain image layout to Attachment Optimal so we can draw it
     renderer::vulkan::transition_image_layout(
-        rendering_context->command_buffer,
-        rendering_context->image_context.draw_image,
+        rendering_context->global_command_buffer,
+        render_target->get_image(0),
         1,
         vk::ImageLayout::ePresentSrcKHR,
         vk::ImageLayout::eColorAttachmentOptimal,
@@ -141,11 +140,11 @@ void ImGuiModule::end_frame(FrameContext& frame)
 
     ImGui::Render();
 
-    const auto width = static_cast<uint32_t>(render_target.get_width());
-    const auto height = static_cast<uint32_t>(render_target.get_height());
+    const auto width = static_cast<uint32_t>(render_target->get_width());
+    const auto height = static_cast<uint32_t>(render_target->get_height());
 
     vk::RenderingAttachmentInfo color_attachment = {
-        .imageView = reference_cast<renderer::vulkan::VulkanImageView>(rendering_context->image_context.draw_image_view)->get_vk_image_view(),
+        .imageView = reference_cast<renderer::vulkan::VulkanImageView>(render_target->get_image(0)->get_view())->get_vk_image_view(),
         .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
         .loadOp = vk::AttachmentLoadOp::eLoad,
         .storeOp = vk::AttachmentStoreOp::eStore
@@ -160,9 +159,9 @@ void ImGuiModule::end_frame(FrameContext& frame)
     };
 
     // TODO: have imgui command buffers?
-    rendering_context->command_buffer.beginRendering(rendering_info);
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *rendering_context->command_buffer);
-    rendering_context->command_buffer.endRendering();
+    rendering_context->global_command_buffer.beginRendering(rendering_info);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), rendering_context->global_command_buffer);
+    rendering_context->global_command_buffer.endRendering();
 
     const ImGuiIO& io = ImGui::GetIO();
     // Update and Render additional Platform Windows
@@ -174,8 +173,8 @@ void ImGuiModule::end_frame(FrameContext& frame)
 
     // set draw image layout to Present so we can present it
     renderer::vulkan::transition_image_layout(
-        rendering_context->command_buffer,
-        rendering_context->image_context.draw_image,
+        rendering_context->global_command_buffer,
+        render_target->get_image(0),
         1,
         vk::ImageLayout::eColorAttachmentOptimal,
         vk::ImageLayout::ePresentSrcKHR,
@@ -185,9 +184,10 @@ void ImGuiModule::end_frame(FrameContext& frame)
         vk::PipelineStageFlagBits2::eBottomOfPipe,
         vk::ImageAspectFlagBits::eColor
     );
+
 }
 
-void ImGuiModule::gui_update(FrameContext& frame)
+void ImGuiRenderer::gui_update(FrameContext& frame)
 {
     static std::array<float, 100> fps_history = {};
     static int fps_history_index = 0;

@@ -14,11 +14,14 @@
 #include "portal/engine/renderer/rendering_context.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
 #include "portal/engine/scene/scene.h"
+#include "vulkan/descriptors/vulkan_descriptor_set_manager.h"
 
 namespace portal
 {
 namespace renderer
 {
+    class DescriptorSetManager;
+    class UniformBufferSet;
     class RenderTarget;
 }
 
@@ -51,7 +54,7 @@ class Window;
  * 3. Present swapchain image (wait on render_finished)
  * 4. Advance current_frame index (mod frames_in_flight)
  */
-class Renderer final : public TaggedModule<Tag<ModuleTags::FrameLifecycle, ModuleTags::Update, ModuleTags::PostUpdate>>
+class Renderer
 {
 public:
     /**
@@ -59,16 +62,10 @@ public:
      * @param stack Module stack
      * @param context Vulkan context
      */
-    Renderer(ModuleStack& stack, renderer::vulkan::VulkanContext& context);
+    Renderer(renderer::vulkan::VulkanContext& context, ResourceRegistry& resource_registry);
 
     /** @brief Destructor (cleans up frame resources) */
-    ~Renderer() override;
-
-    /**
-     * @brief Sets render target reference
-     * @param new_render_target The target to render to
-     */
-    void set_render_target(const Reference<renderer::RenderTarget>& new_render_target);
+    ~Renderer();
 
     /** @brief Cleans up renderer resources */
     void cleanup();
@@ -77,52 +74,42 @@ public:
      * @brief Begins frame (wait for fence, acquire image, reset pools)
      * @param frame Frame context
      */
-    void begin_frame(FrameContext& frame) override;
+    void begin_frame(const FrameContext& frame);
 
     /**
      * @brief Ends frame (submit commands, present)
      * @param frame Frame context
      */
-    void end_frame(FrameContext& frame) override;
+    void end_frame(FrameContext& frame);
 
     /**
      * @brief Post-update hook (renders geometry)
      * @param frame Frame context
      */
-    void post_update(FrameContext& frame) override;
+    void post_update(FrameContext& frame);
 
     /**
      * @brief Records geometry rendering commands
      * @param frame Frame context
      * @param command_buffer Command buffer to record into
      */
-    void draw_geometry(FrameContext& frame, const vk::raii::CommandBuffer& command_buffer);
+    void draw_geometry(FrameContext& frame, const vk::CommandBuffer& command_buffer);
 
-    /**
-     * @brief Handles render target resize
-     * @param new_width New width
-     * @param new_height New height
-     */
-    void on_resize(size_t new_width, size_t new_height) const;
 
     /** @brief Gets renderer context */
     [[nodiscard]] const RendererContext& get_renderer_context() const;
 
-    /** @brief Gets the render target */
-    [[nodiscard]] const renderer::RenderTarget& get_render_target() const;
-
 private:
-    void init_frame_resources();
-
     void immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& function);
 
-    static void clean_frame(const FrameContext& frame);
+    void init_global_descriptors(ResourceRegistry& resource_registry);
 
 private:
     renderer::vulkan::VulkanContext& context;
 
-
-    Reference<renderer::RenderTarget> render_target;
+    // TODO: Where should these two be?
+    Reference<renderer::UniformBufferSet> scene_data_uniform_buffer;
+    std::unique_ptr<renderer::vulkan::VulkanDescriptorSetManager> descriptor_set_manager;
 
     DeletionQueue deletion_queue = {};
 
@@ -130,15 +117,7 @@ private:
     vk::raii::CommandPool immediate_command_pool = nullptr;
     vk::raii::CommandBuffer immediate_command_buffer = nullptr;
 
-    std::vector<vk::raii::DescriptorSetLayout> scene_descriptor_set_layouts;
-    std::vector<renderer::FrameResources> frames;
-
     RendererContext renderer_context;
     bool is_initialized = false;
-
-    size_t frames_in_flight = 0;
-
-    // Index of the frame we are currently working on, up to max frames in flight
-    size_t current_frame = 0;
 };
 } // portal

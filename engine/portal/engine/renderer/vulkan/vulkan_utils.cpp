@@ -30,7 +30,7 @@ vk::SampleCountFlagBits get_max_usable_sample_count(vk::raii::PhysicalDevice& ph
 }
 
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const vk::Image& image,
     const uint32_t mip_level,
     const vk::ImageLayout old_layout,
@@ -78,7 +78,7 @@ void transition_image_layout(
 }
 
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const Reference<Image>& image,
     const uint32_t mip_level,
     const vk::ImageLayout old_layout,
@@ -95,7 +95,7 @@ void transition_image_layout(
 }
 
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const vk::Image& image,
     const uint32_t mip_level,
     const vk::ImageLayout old_layout,
@@ -129,7 +129,7 @@ void transition_image_layout(
 }
 
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const Reference<Image>& image,
     const uint32_t mip_level,
     const vk::ImageLayout old_layout,
@@ -156,7 +156,7 @@ void transition_image_layout(
 }
 
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const vk::Image& image,
     const vk::ImageSubresourceRange& subresource,
     const vk::ImageLayout old_layout,
@@ -189,7 +189,7 @@ void transition_image_layout(
 }
 
 void transition_image_layout(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const Reference<Image>& image,
     const vk::ImageSubresourceRange& subresource,
     const vk::ImageLayout old_layout,
@@ -214,7 +214,7 @@ void transition_image_layout(
 }
 
 void copy_image_to_image(
-    const vk::raii::CommandBuffer& command_buffer,
+    const vk::CommandBuffer& command_buffer,
     const vk::Image& source,
     const vk::Image& dest,
     const vk::Extent2D src_size,

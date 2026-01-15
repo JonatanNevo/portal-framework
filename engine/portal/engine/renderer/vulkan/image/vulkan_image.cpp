@@ -33,6 +33,22 @@ VulkanImage::VulkanImage(const vk::Image image, const image::Properties& propert
     image_info.view = make_reference<VulkanImageView>(imageViewProperties, context);
 }
 
+VulkanImage::VulkanImage(const vk::Image image, vk::ImageView image_view, const image::Properties& properties, const VulkanContext& context)
+    : Image(properties.name),
+      context(context),
+      device(context.get_device()),
+      properties(properties)
+{
+    image_info.image = ImageAllocation(image);
+
+    ImageViewProperties imageViewProperties{
+        .image = this,
+        .mip = 0,
+        .name = STRING_ID(fmt::format("{}_view", properties.name.string))
+    };
+    image_info.view = make_reference<VulkanImageView>(image_view, imageViewProperties, context);
+}
+
 VulkanImage::VulkanImage(const image::Properties& properties, const VulkanContext& context)
     : Image(properties.name),
       context(context),
@@ -539,8 +555,8 @@ VulkanImageView::VulkanImageView(const ImageViewProperties& image_view_propertie
     const auto image_properties = vulkan_image->get_prop();
 
     vk::ImageAspectFlags aspect_mask = utils::is_depth_format(image_properties.format)
-                                                 ? vk::ImageAspectFlagBits::eDepth
-                                                 : vk::ImageAspectFlagBits::eColor;
+                                           ? vk::ImageAspectFlagBits::eDepth
+                                           : vk::ImageAspectFlagBits::eColor;
     if (utils::is_stencil_format(image_properties.format))
         aspect_mask |= vk::ImageAspectFlagBits::eStencil;
 

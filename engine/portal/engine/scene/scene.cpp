@@ -11,9 +11,11 @@
 
 namespace portal
 {
+
 Scene::Scene(const StringId& name) : Resource(name)
 {
     scene_entity = registry.create_entity(name);
     scene_entity.add_component<SceneTag>();
 }
+
 } // portal

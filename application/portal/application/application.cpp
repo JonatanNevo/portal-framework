@@ -67,10 +67,13 @@ void Application::run()
                 {
                     // Update scene, physics, input, ...
                     modules.update(context);
-                    modules.gui_update(context);
 
                     // Draw geometry
                     modules.post_update(context);
+
+                    // TODO: will this differ between runtime and editor?
+                    // Draw gui
+                    modules.gui_update(context);
                 }
                 modules.end_frame(context);
 
