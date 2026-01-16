@@ -24,7 +24,11 @@ public:
      * @param window The window for input handling.
      * @param swapchain The swapchain for format information.
      */
-    ImGuiRenderer(const Window& window, const renderer::vulkan::VulkanSwapchain& swapchain);
+    ImGuiRenderer(
+        ResourceRegistry& resource_registry,
+        const Window& window,
+        const renderer::vulkan::VulkanSwapchain& swapchain
+        );
 
     ~ImGuiRenderer();
 

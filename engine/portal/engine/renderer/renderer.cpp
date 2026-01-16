@@ -23,7 +23,7 @@
 #include <imgui.h>
 #include <ranges>
 
-#include "portal/engine/imgui/backends/imgui_impl_vulkan.h"
+#include "portal/third_party/imgui/backends/imgui_impl_vulkan.h"
 
 #include "llvm/Support/MemoryBuffer.h"
 #include "portal/application/settings.h"

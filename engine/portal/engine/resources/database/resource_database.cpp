@@ -7,6 +7,7 @@
 #include "resource_database.h"
 
 #include <ranges>
+#include <llvm/ADT/STLExtras.h>
 
 #include "portal/core/strings/string_utils.h"
 #include "portal/engine/resources/loader/gltf_loader.h"
@@ -41,7 +42,7 @@ void TextureMetadata::archive(ArchiveObject& archive) const
     child->add_property("format", to_string(format));
 }
 
-TextureMetadata TextureMetadata::dearchive(ArchiveObject& archive)
+TextureMetadata TextureMetadata::dearchive(const ArchiveObject& archive)
 {
     auto* child = archive.get_object("texture");
     bool hdr{};
@@ -66,13 +67,33 @@ void MaterialMetadata::archive(ArchiveObject& archive) const
     child->add_property("shader", shader.string);
 }
 
-MaterialMetadata MaterialMetadata::dearchive(ArchiveObject& archive)
+MaterialMetadata MaterialMetadata::dearchive(const ArchiveObject& archive)
 {
     auto* child = archive.get_object("material");
     std::string shader_name;
     child->get_property("shader", shader_name);
 
     return MaterialMetadata{STRING_ID(shader_name)};
+}
+
+void FontMetadata::archive(ArchiveObject& archive) const
+{
+    auto* child = archive.create_child("font");
+    child->add_property("name", name);
+    child->add_property("glyph_range_min", glyph_range_min);
+    child->add_property("glyph_range_max", glyph_range_max);
+}
+
+FontMetadata FontMetadata::dearchive(const ArchiveObject& archive)
+{
+    auto* child = archive.get_object("font");
+    std::string name;
+    wchar_t glyph_range_min{}, glyph_range_max{};
+    child->get_property("name", name);
+    child->get_property("glyph_range_min", glyph_range_min);
+    child->get_property("glyph_range_max", glyph_range_max);
+
+    return FontMetadata{STRING_ID(name), glyph_range_min, glyph_range_max};
 }
 
 void SourceMetadata::archive(ArchiveObject& archive) const
@@ -131,6 +152,9 @@ SourceMetadata SourceMetadata::dearchive(ArchiveObject& archive)
         break;
     case ResourceType::Material:
         metadata.meta = MaterialMetadata::dearchive(archive);
+        break;
+    case ResourceType::Font:
+        metadata.meta = FontMetadata::dearchive(archive);
         break;
     default:
         break;

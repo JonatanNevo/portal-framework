@@ -1,0 +1,10 @@
+{
+    "dependencies": [],
+    "font": {
+        "name": "Roboto Semi Medium"
+    },
+    "format": "FontFile",
+    "resource_id": "engine/fonts/Roboto/Roboto-SemiMedium",
+    "source": "fonts/Roboto/Roboto-SemiMedium.ttf",
+    "type": "Font"
+}

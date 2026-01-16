@@ -15,6 +15,8 @@ include(cmake/portal-engine-package-helpers.cmake)
 
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS "portal/engine/*.cpp")
 file(GLOB_RECURSE ENGINE_HEADERS CONFIGURE_DEPENDS "portal/engine/*.h")
+file(GLOB_RECURSE ENGINE_THIRD_PARTY_SOURCES CONFIGURE_DEPENDS "portal/third_party/*.cpp")
+file(GLOB_RECURSE ENGINE_THIRD_PARTY_HEADERS CONFIGURE_DEPENDS "portal/third_party/*.h")
 
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
 option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF)
@@ -24,8 +26,8 @@ if (PORTAL_FIND_PACKAGE)
 endif ()
 
 portal_add_module(engine
-        SOURCES ${ENGINE_SOURCES}
-        HEADERS ${ENGINE_HEADERS}
+        SOURCES ${ENGINE_SOURCES} ${ENGINE_THIRD_PARTY_SOURCES}
+        HEADERS ${ENGINE_HEADERS} ${ENGINE_THIRD_PARTY_HEADERS}
 
         PORTAL_DEPENDENCIES
             input

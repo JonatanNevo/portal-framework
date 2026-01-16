@@ -1,0 +1,10 @@
+{
+    "dependencies": [],
+    "font": {
+        "name": "Roboto Black"
+    },
+    "format": "FontFile",
+    "resource_id": "engine/fonts/Roboto/Roboto-Black",
+    "source": "fonts/Roboto/Roboto-Black.ttf",
+    "type": "Font"
+}

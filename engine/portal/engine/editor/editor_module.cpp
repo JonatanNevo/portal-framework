@@ -8,7 +8,6 @@
 #include <imgui.h>
 #include <ImGuizmo.h>
 
-#include "portal/engine/imgui/backends/imgui_impl_vulkan.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/render_target/vulkan_render_target.h"
 
@@ -23,7 +22,7 @@ EditorModule::EditorModule(
     : TaggedModule(stack, STRING_ID("Editor Module")),
       swapchain(swapchain),
       runtime_module(stack, context, swapchain),
-      im_gui_renderer(window, swapchain),
+      im_gui_renderer(get_dependency<ResourcesModule>().get_registry(), window, swapchain),
       viewport(swapchain, runtime_module)
 {}
 

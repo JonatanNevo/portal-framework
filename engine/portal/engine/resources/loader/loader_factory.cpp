@@ -5,6 +5,7 @@
 
 #include "loader_factory.h"
 
+#include "font_loader.h"
 #include "texture_loader.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/resources/loader/gltf_loader.h"
@@ -23,6 +24,7 @@ LoaderFactory::LoaderFactory(ResourceRegistry& registry, const renderer::vulkan:
     loaders[ResourceType::Mesh] = std::make_shared<MeshLoader>(registry, context);
     loaders[ResourceType::Scene] = std::make_shared<SceneLoader>(registry);
     loaders[ResourceType::Composite] = std::make_shared<GltfLoader>(registry, context);
+    loaders[ResourceType::Font] = std::make_shared<FontLoader>(registry);
 }
 
 ResourceLoader& LoaderFactory::get(const SourceMetadata& meta)
@@ -45,6 +47,10 @@ void LoaderFactory::enrich_metadata(SourceMetadata& meta, const ResourceSource& 
         break;
     case ResourceType::Material:
         MaterialLoader::enrich_metadata(meta, source);
+        break;
+    case ResourceType::Font:
+        FontLoader::enrich_metadata(meta, source);
+        break;
     default:
         break;
     }

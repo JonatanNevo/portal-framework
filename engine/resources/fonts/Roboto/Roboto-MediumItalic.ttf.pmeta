@@ -1,0 +1,10 @@
+{
+    "dependencies": [],
+    "font": {
+        "name": "Roboto Medium Italic"
+    },
+    "format": "FontFile",
+    "resource_id": "engine/fonts/Roboto/Roboto-MediumItalic",
+    "source": "fonts/Roboto/Roboto-MediumItalic.ttf",
+    "type": "Font"
+}

@@ -48,10 +48,31 @@ public:
     void render(FrameContext& frame) const;
 
 private:
+    void draw_gizmos_toolbar();
+    void draw_central_toolbar();
+    void draw_gizmos(const FrameContext& frame);
+
+    float get_snap_value() const;
+
+private:
     RuntimeModule& runtime_module;
 
     vk::DescriptorSet viewport_descriptor_set;
     Reference<renderer::RenderTarget> viewport_render_target;
-};
 
+    glm::uvec2 viewport_size;
+
+    // -1 means no gizmo selected
+    int gizmo_type = -1;
+    bool gizmo_world_orientation;
+
+    bool is_mouse_over = false;
+    bool is_focused = false;
+    bool show_gizmos = true;
+
+    // TODO: should this be here or in editor?
+    float translation_snap_value = 0.5f;
+    float rotation_snap_value = 45.f;
+    float scale_snap_value = 0.1f;
+};
 } // portal

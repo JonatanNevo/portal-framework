@@ -9,9 +9,9 @@
 #include <imgui_impl_glfw.h>
 #include <ImGuizmo.h>
 
-#include "portal/engine/imgui/backends/imgui_impl_vulkan.h"
+#include "imgui_fonts.h"
+#include "portal/third_party/imgui/backends/imgui_impl_vulkan.h"
 #include "portal/core/debug/profile.h"
-#include "portal/engine/renderer/renderer_context.h"
 #include "../renderer/vulkan/render_target/vulkan_render_target.h"
 #include "portal/application/settings.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
@@ -20,7 +20,7 @@
 
 namespace portal
 {
-ImGuiRenderer::ImGuiRenderer(const Window& window, const renderer::vulkan::VulkanSwapchain& swapchain)
+ImGuiRenderer::ImGuiRenderer(ResourceRegistry& resource_registry, const Window& window, const renderer::vulkan::VulkanSwapchain& swapchain)
     : swapchain(swapchain)
 {
     IMGUI_CHECKVERSION();
@@ -32,6 +32,72 @@ ImGuiRenderer::ImGuiRenderer(const Window& window, const renderer::vulkan::Vulka
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;   // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
     io.ConfigWindowsMoveFromTitleBarOnly = true;
+
+    // Configure Fonts
+    {
+        ImGuiFontConfiguration roboto_bold{
+            .name = STRING_ID("Bold"),
+            .size = 18.f,
+            .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/Roboto/Roboto-Bold")),
+        };
+        ImGuiFonts::add(roboto_bold);
+
+        ImGuiFontConfiguration roboto_large{
+            .name = STRING_ID("Large"),
+            .size = 36.f,
+            .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/Roboto/Roboto-Regular")),
+        };
+        ImGuiFonts::add(roboto_large);
+
+        ImGuiFontConfiguration roboto_default{
+            .name = STRING_ID("Default"),
+            .size = 15.f,
+            .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/Roboto/Roboto-Regular")),
+        };
+        ImGuiFonts::add(roboto_default, true);
+
+        ImGuiFontConfiguration fa{
+            .name = STRING_ID("FontAwesome"),
+            .size = 16.f,
+            .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/FontAwesome/fa6-solid")),
+        };
+        ImGuiFonts::add(fa, false, true);
+
+        ImGuiFontConfiguration roboto_medium{
+            .name = STRING_ID("Medium"),
+            .size = 18.f,
+            .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/Roboto/Roboto-SemiMedium")),
+        };
+        ImGuiFonts::add(roboto_medium);
+
+        ImGuiFontConfiguration roboto_small{
+            .name = STRING_ID("Small"),
+            .size = 12.f,
+            .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/Roboto/Roboto-SemiMedium")),
+        };
+        ImGuiFonts::add(roboto_small);
+
+        ImGuiFontConfiguration roboto_extra_small{
+            .name = STRING_ID("ExtraSmall"),
+            .size = 10.f,
+            .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/Roboto/Roboto-SemiMedium")),
+        };
+        ImGuiFonts::add(roboto_extra_small);
+
+        ImGuiFontConfiguration roboto_bold_title{
+            .name = STRING_ID("BoldTitle"),
+            .size = 16.f,
+            .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/Roboto/Roboto-Bold")),
+        };
+        ImGuiFonts::add(roboto_bold_title);
+
+        ImGuiFontConfiguration roboto_bold_large{
+            .name = STRING_ID("BoldLarge"),
+            .size = 36.f,
+            .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/Roboto/Roboto-Bold")),
+        };
+        ImGuiFonts::add(roboto_bold_large);
+    }
 
     ImGui::StyleColorsDark();
 
