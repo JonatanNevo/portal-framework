@@ -27,7 +27,7 @@ void ImGuiFonts::add(ImGuiFontConfiguration font, const bool is_default, const b
 
     if (glyph_range.has_value())
     {
-        static_assert(sizeof(ImWchar) == sizeof(wchar_t), "Cannot convert font glyph range to ImWchar");
+        static_assert(sizeof(ImWchar) == sizeof(uint16_t), "Cannot convert font glyph range to ImWchar");
         im_glyph_range = reinterpret_cast<const ImWchar*>(glyph_range.value().data());
     }
 

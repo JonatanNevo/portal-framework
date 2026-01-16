@@ -111,8 +111,8 @@ struct MaterialMetadata
 struct FontMetadata
 {
     StringId name{};
-    wchar_t glyph_range_min{};
-    wchar_t glyph_range_max{};
+    uint16_t glyph_range_min{};
+    uint16_t glyph_range_max{};
 
     void archive(ArchiveObject& archive) const;
     static FontMetadata dearchive(const ArchiveObject& archive);
