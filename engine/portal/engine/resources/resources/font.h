@@ -13,7 +13,8 @@ struct FontProperties
 {
     StringId name;
     std::filesystem::path path;
-    std::optional<std::array<wchar_t, 3>> glyph_range = std::nullopt;
+    // I wanted this to be wchar_t but on mac its 4 bytes instead of 2 :(
+    std::optional<std::array<uint16_t, 3>> glyph_range = std::nullopt;
 };
 
 // TODO: This is a placeholder class for a font, Currently I dont have font rendering in game, so this is used only for imgui.
