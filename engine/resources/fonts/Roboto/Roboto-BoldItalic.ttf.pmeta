@@ -1,0 +1,10 @@
+{
+    "dependencies": [],
+    "font": {
+        "name": "Roboto Bold Italic"
+    },
+    "format": "FontFile",
+    "resource_id": "engine/fonts/Roboto/Roboto-BoldItalic",
+    "source": "fonts/Roboto/Roboto-BoldItalic.ttf",
+    "type": "Font"
+}

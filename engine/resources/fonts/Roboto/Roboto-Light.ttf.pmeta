@@ -1,0 +1,10 @@
+{
+    "dependencies": [],
+    "font": {
+        "name": "Roboto Light"
+    },
+    "format": "FontFile",
+    "resource_id": "engine/fonts/Roboto/Roboto-Light",
+    "source": "fonts/Roboto/Roboto-Light.ttf",
+    "type": "Font"
+}

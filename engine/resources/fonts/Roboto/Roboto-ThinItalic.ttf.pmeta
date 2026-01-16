@@ -1,0 +1,10 @@
+{
+    "dependencies": [],
+    "font": {
+        "name": "Roboto Thin Italic"
+    },
+    "format": "FontFile",
+    "resource_id": "engine/fonts/Roboto/Roboto-ThinItalic",
+    "source": "fonts/Roboto/Roboto-ThinItalic.ttf",
+    "type": "Font"
+}

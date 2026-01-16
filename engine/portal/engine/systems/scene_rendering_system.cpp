@@ -29,7 +29,7 @@ void SceneRenderingSystem::update_global_descriptors(FrameContext& frame, ecs::R
 
         auto camera_entity = registry.entity_from_id(main_camera_group.front());
 
-        auto camera = camera_entity.get_component<CameraComponent>();
+        auto& camera = camera_entity.get_component<CameraComponent>();
         camera.set_viewport_bounds(scene->get_viewport_bounds());
 
         const glm::mat4 view = camera.view;

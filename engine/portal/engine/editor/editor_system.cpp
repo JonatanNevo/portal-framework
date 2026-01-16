@@ -167,31 +167,9 @@ void EditorGuiSystem::print_stats_block(ecs::Registry&, FrameContext& frame)
     ImGui::End();
 }
 
-void show_transform_controls(Scene& scene, Entity entity, TransformComponent& transform)
+void show_transform_controls(Scene&, Entity entity, TransformComponent& transform)
 {
     ImGui::Separator();
-
-    auto main_camera = scene.get_main_camera_entity();
-    auto camera = main_camera.get_component<CameraComponent>();
-
-    static ImGuizmo::OPERATION current_gizmo_operation(ImGuizmo::ROTATE);
-    static ImGuizmo::MODE current_gizmo_mode(ImGuizmo::WORLD);
-
-    // TODO: This should not be here
-    if (ImGui::IsKeyPressed(ImGuiKey_T))
-        current_gizmo_operation = ImGuizmo::TRANSLATE;
-    if (ImGui::IsKeyPressed(ImGuiKey_E))
-        current_gizmo_operation = ImGuizmo::ROTATE;
-    if (ImGui::IsKeyPressed(ImGuiKey_R))
-        current_gizmo_operation = ImGuizmo::SCALE;
-    if (ImGui::RadioButton("Translate", current_gizmo_operation == ImGuizmo::TRANSLATE))
-        current_gizmo_operation = ImGuizmo::TRANSLATE;
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Rotate", current_gizmo_operation == ImGuizmo::ROTATE))
-        current_gizmo_operation = ImGuizmo::ROTATE;
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Scale", current_gizmo_operation == ImGuizmo::SCALE))
-        current_gizmo_operation = ImGuizmo::SCALE;
 
     float ptr_translation[3], ptr_rotation[3], ptr_scale[3];
 
@@ -206,69 +184,6 @@ void show_transform_controls(Scene& scene, Entity entity, TransformComponent& tr
     transform.set_translation(glm::vec3{ptr_translation[0], ptr_translation[1], ptr_translation[2]});
     transform.set_rotation_euler(glm::vec3{ptr_rotation[0], ptr_rotation[1], ptr_rotation[2]});
     transform.set_scale(glm::vec3{ptr_scale[0], ptr_scale[1], ptr_scale[2]});
-
-    if (current_gizmo_operation != ImGuizmo::SCALE)
-    {
-        if (ImGui::RadioButton("Local", current_gizmo_mode == ImGuizmo::LOCAL))
-            current_gizmo_mode = ImGuizmo::LOCAL;
-        ImGui::SameLine();
-        if (ImGui::RadioButton("World", current_gizmo_mode == ImGuizmo::WORLD))
-            current_gizmo_mode = ImGuizmo::WORLD;
-    }
-
-    if (entity.has_component<CameraComponent>())
-    {
-        return;
-    }
-
-    auto new_transform = transform.get_world_matrix();
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
-    if (ImGuizmo::Manipulate(
-        glm::value_ptr(camera.view),
-        glm::value_ptr(camera.projection),
-        current_gizmo_operation,
-        current_gizmo_mode,
-        glm::value_ptr(new_transform),
-        nullptr,
-        nullptr
-    ))
-    {
-        auto parent = entity.get_parent();
-        if (parent)
-        {
-            auto parent_transform = parent.get_component<TransformComponent>().get_world_matrix();
-            new_transform = glm::inverse(parent_transform) * new_transform;
-
-            glm::vec3 translation;
-            glm::quat rotation;
-            glm::vec3 scale;
-            glm::vec3 skew;
-            glm::vec4 perspective;
-            glm::decompose(new_transform, scale, rotation, translation, skew, perspective);
-
-            switch (current_gizmo_operation)
-            {
-            case ImGuizmo::TRANSLATE:
-                {
-                    transform.set_translation(translation);
-                    break;
-                }
-            case ImGuizmo::ROTATE:
-                {
-                    transform.set_rotation(rotation);
-                    break;
-                }
-            case ImGuizmo::SCALE:
-                {
-                    transform.set_scale(scale);
-                    break;
-                }
-            default:
-                break;
-            }
-        }
-    }
 
     entity.patch_component<TransformComponent>([transform](TransformComponent& comp)
     {

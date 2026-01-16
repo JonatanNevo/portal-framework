@@ -1,0 +1,12 @@
+{
+    "dependencies": [],
+    "font": {
+        "glyph_range_max": 63743,
+        "glyph_range_min": 57349,
+        "name": "Font Awesome 6 Regular"
+    },
+    "format": "FontFile",
+    "resource_id": "engine/fonts/FontAwesome/fa6-regular",
+    "source": "fonts/FontAwesome/fa6-regular.ttf",
+    "type": "Font"
+}

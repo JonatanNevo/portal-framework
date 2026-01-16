@@ -2,7 +2,7 @@
   "registries": [
     {
       "kind": "git",
-      "baseline": "5088b42710456e43fda314e6f826d814ac43d04e",
+      "baseline": "77e8e116c4927f5045892bea9a05b18c67eea217",
       "reference": "main",
       "repository": "https://github.com/JonatanNevo/portal-vcpkg-registry",
       "packages": [
@@ -15,7 +15,8 @@
         "portal-engine",
         "llvm-adt",
         "enchantum",
-        "glaze"
+        "glaze",
+        "imgui"
       ]
     }
   ],

@@ -1,0 +1,10 @@
+{
+    "dependencies": [],
+    "font": {
+        "name": "Roboto Bold"
+    },
+    "format": "FontFile",
+    "resource_id": "engine/fonts/Roboto/Roboto-Bold",
+    "source": "fonts/Roboto/Roboto-Bold.ttf",
+    "type": "Font"
+}

@@ -86,7 +86,7 @@ struct TextureMetadata
     renderer::ImageFormat format;
 
     void archive(ArchiveObject& archive) const;
-    static TextureMetadata dearchive(ArchiveObject& archive);
+    static TextureMetadata dearchive(const ArchiveObject& archive);
 };
 
 /**
@@ -101,7 +101,21 @@ struct MaterialMetadata
     StringId shader;
 
     void archive(ArchiveObject& archive) const;
-    static MaterialMetadata dearchive(ArchiveObject& archive);
+    static MaterialMetadata dearchive(const ArchiveObject& archive);
+};
+
+/**
+ * @struct FontMetadata
+ * @brief Format-specific metadata for font resources
+ */
+struct FontMetadata
+{
+    StringId name{};
+    wchar_t glyph_range_min{};
+    wchar_t glyph_range_max{};
+
+    void archive(ArchiveObject& archive) const;
+    static FontMetadata dearchive(const ArchiveObject& archive);
 };
 
 /**
@@ -159,7 +173,7 @@ struct SourceMetadata
      * - MaterialMetadata: Shader reference
      * - EmptyMeta: No additional metadata needed
      */
-    std::variant<TextureMetadata, CompositeMetadata, MaterialMetadata, EmptyMeta> meta = EmptyMeta{};
+    std::variant<TextureMetadata, CompositeMetadata, MaterialMetadata, EmptyMeta, FontMetadata> meta = EmptyMeta{};
 
     void archive(ArchiveObject& archive) const;
     static SourceMetadata dearchive(ArchiveObject& archive);

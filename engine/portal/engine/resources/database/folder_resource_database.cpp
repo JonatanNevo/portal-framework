@@ -211,7 +211,7 @@ void FolderResourceDatabase::populate()
 
                 // TODO: Add serialization checks
                 auto resource_metadata = SourceMetadata::dearchive(archiver);
-                resource_metadata.full_source_path = STRING_ID((root_path / entry.path()).generic_string());
+                resource_metadata.full_source_path = STRING_ID((root_path / entry.path()).replace_extension("").generic_string());
                 resources[resource_metadata.resource_id] = resource_metadata;
 
                 // TODO: update to new version if necessary

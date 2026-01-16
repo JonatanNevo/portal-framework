@@ -194,6 +194,7 @@ enum class ResourceType: uint16_t
     Mesh      = 4,
     Scene     = 6,
     Composite = 7,
+    Font      = 8
 };
 
 enum class SourceFormat: uint8_t
@@ -206,7 +207,8 @@ enum class SourceFormat: uint8_t
     Obj,               // Wavefront .obj files
     Shader,            // Shader files, e.g. slang
     PrecompiledShader, // Precompiled shader files, e.g. spv
-    Glft               // GLTF files
+    Glft,              // GLTF files
+    FontFile           // A font file, e.g. TTF
 };
 
 namespace utils
