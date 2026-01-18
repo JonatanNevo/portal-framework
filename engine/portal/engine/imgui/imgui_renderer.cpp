@@ -138,7 +138,7 @@ ImGuiRenderer::ImGuiRenderer(ResourceRegistry& resource_registry, const Window& 
     const auto& vulkan_window = dynamic_cast<const GlfwWindow&>(window);
     ImGui_ImplGlfw_InitForVulkan(vulkan_window.get_handle(), true);
 
-    const auto color_format = swapchain.get_linear_color_format();
+    color_format = swapchain.get_linear_color_format();
 
     ImGui_ImplVulkan_InitInfo init_info = {
         .Instance = *vulkan_context.get_instance(),
@@ -149,16 +149,17 @@ ImGuiRenderer::ImGuiRenderer(ResourceRegistry& resource_registry, const Window& 
         .DescriptorPool = *imgui_pool,
         .MinImageCount = static_cast<uint32_t>(swapchain.get_image_count()),
         .ImageCount = static_cast<uint32_t>(swapchain.get_image_count()),
-        .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
-        .UseDynamicRendering = true,
-        .PipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfoKHR{
-            .colorAttachmentCount = 1,
-            .pColorAttachmentFormats = &color_format
+        .PipelineInfoMain = ImGui_ImplVulkan_PipelineInfo{
+            .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+            .PipelineRenderingCreateInfo = vk::PipelineRenderingCreateInfoKHR{
+                .colorAttachmentCount = 1,
+                .pColorAttachmentFormats = &color_format
+            },
         },
+        .UseDynamicRendering = true,
     };
 
     ImGui_ImplVulkan_Init(&init_info);
-    ImGui_ImplVulkan_CreateFontsTexture();
 }
 
 ImGuiRenderer::~ImGuiRenderer()
@@ -178,7 +179,6 @@ void ImGuiRenderer::begin_frame(const FrameContext&, const Reference<renderer::R
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGui::DockSpaceOverViewport();
     ImGuizmo::BeginFrame();
 
     current_render_target = render_target;
@@ -229,14 +229,6 @@ void ImGuiRenderer::end_frame(FrameContext& frame)
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), rendering_context->global_command_buffer);
     rendering_context->global_command_buffer.endRendering();
 
-    const ImGuiIO& io = ImGui::GetIO();
-    // Update and Render additional Platform Windows
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-    }
-
     // set draw image layout to Present so we can present it
     renderer::vulkan::transition_image_layout(
         rendering_context->global_command_buffer,
@@ -250,6 +242,16 @@ void ImGuiRenderer::end_frame(FrameContext& frame)
         vk::PipelineStageFlagBits2::eBottomOfPipe,
         vk::ImageAspectFlagBits::eColor
     );
+}
 
+void ImGuiRenderer::render_subwindows()
+{
+    const ImGuiIO& io = ImGui::GetIO();
+    // Update and Render additional Platform Windows
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+    {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+    }
 }
 } // portal

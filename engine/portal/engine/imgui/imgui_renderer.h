@@ -45,11 +45,18 @@ public:
      */
     void end_frame(FrameContext& frame);
 
+    /**
+     * @brief Renders secondary windows
+     * Must be called after the main swapchain present.
+     */
+    void render_subwindows();
+
 private:
     Reference<renderer::RenderTarget> current_render_target = nullptr;
 
     const renderer::vulkan::VulkanSwapchain& swapchain;
     vk::raii::DescriptorPool imgui_pool = nullptr;
+    vk::Format color_format;  // Must persist for viewport pipeline creation
 };
 
 } // portal

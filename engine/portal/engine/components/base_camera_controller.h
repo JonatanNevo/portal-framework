@@ -28,7 +28,7 @@ public:
 
     glm::vec2 mouse_delta{0.f, 0.f};
 
-    float speed = 5.f;
+    float speed = 2.f;
     float rotation_speed = 0.3f;
 
     bool moved = false;
