@@ -135,6 +135,7 @@ EXCLUDE_PATTERNS       = */tests/* \
                          */.git/* \
                          */vcpkg_installed/* \
                          */build*/* \
+                         *third_party* \
                          *_impl.h \
                          *_internal.h
 EXCLUDE_SYMBOLS        = detail \
