@@ -19,6 +19,36 @@ class Serializer;
 class Deserializer;
 
 /**
+ * @brief Non-intrusive serialization customization point.
+ *
+ * Specialize this template to enable serialization for types you don't control.
+ * The specialization must provide static serialize() and deserialize() functions.
+ *
+ * Example:
+ * @code
+ * // For a third-party type you can't modify:
+ * template <>
+ * struct SerializableType<ThirdPartyPacket> {
+ *     static void serialize(const ThirdPartyPacket& obj, Serializer& s) {
+ *         s.add_value(obj.getId());
+ *         s.add_value(obj.getData());
+ *     }
+ *     static ThirdPartyPacket deserialize(Deserializer& d) {
+ *         size_t id;
+ *         std::string data;
+ *         d.get_value(id);
+ *         d.get_value(data);
+ *         return ThirdPartyPacket(id, data);
+ *     }
+ * };
+ * @endcode
+ *
+ * @tparam T The type to provide serialization support for
+ */
+template <typename T>
+struct Serializable;
+
+/**
  * @brief Concept for types with a serialize() method that writes data sequentially to a Serializer.
  *
  * Example:
@@ -35,7 +65,7 @@ class Deserializer;
  * @endcode
  */
 template <typename T>
-concept Serializable = requires(const T t, Serializer& s) {
+concept SerializableConcept = requires(const T t, Serializer& s) {
     { t.serialize(s) } -> std::same_as<void>;
 };
 
@@ -58,8 +88,50 @@ concept Serializable = requires(const T t, Serializer& s) {
  * @endcode
  */
 template <typename T>
-concept Deserializable = requires(T t, Deserializer& d) {
+concept DeserializableConcept = requires(T t, Deserializer& d) {
     { T::deserialize(d) } -> std::same_as<T>;
+};
+
+/**
+ * @brief Concept for types with a SerializableType<T> specialization providing serialize().
+ *
+ * This enables non-intrusive serialization for types you don't control.
+ *
+ * Example:
+ * @code
+ * template <>
+ * struct SerializableType<ExternalData> {
+ *     static void serialize(const ExternalData& obj, Serializer& s) {
+ *         s.add_value(obj.value);
+ *     }
+ * };
+ * @endcode
+ */
+template <typename T>
+concept ExternalSerializable = requires(const T& t, Serializer& s) {
+    { Serializable<std::remove_cvref_t<T>>::serialize(t, s) } -> std::same_as<void>;
+};
+
+/**
+ * @brief Concept for types with a SerializableType<T> specialization providing deserialize().
+ *
+ * This enables non-intrusive deserialization for types you don't control.
+ *
+ * Example:
+ * @code
+ * template <>
+ * struct SerializableType<ExternalData> {
+ *     static ExternalData deserialize(Deserializer& d) {
+ *         ExternalData obj;
+ *         d.get_value(obj.value);
+ *         return obj;
+ *     }
+ * };
+ * @endcode
+ */
+template <typename T>
+concept ExternalDeserializable = requires(Deserializer& d) {
+    { Serializable<std::remove_cvref_t<T>>::deserialize(d) } -> std::same_as<T>;
 };
 
 /**
@@ -366,10 +438,25 @@ public:
      * @tparam T Type satisfying the Serializable concept
      * @param t The object to serialize
      */
-    template <Serializable T>
+    template <SerializableConcept T>
     void add_value(const T& t)
     {
         t.serialize(*this);
+    }
+
+    /**
+     * @brief Serializes a type with a SerializableType<T> specialization.
+     *
+     * Calls SerializableType<T>::serialize() to write the object's data sequentially.
+     * This enables non-intrusive serialization for types you don't control.
+     *
+     * @tparam T Type satisfying the ExternalSerializable concept
+     * @param t The object to serialize
+     */
+    template <ExternalSerializable T>
+    void add_value(const T& t)
+    {
+        Serializable<std::remove_cvref_t<T>>::serialize(t, *this);
     }
 
     /**
@@ -393,7 +480,7 @@ public:
      * @tparam T Type with glaze reflection metadata (glz::reflect)
      * @param t The object to serialize
      */
-    template <typename T> requires glz::reflectable<T> && (!Serializable<T>)
+    template <typename T> requires glz::reflectable<T> && (!SerializableConcept<T> && !ExternalSerializable<T>)
     void add_value(const T& t)
     {
         glz::for_each_field(
@@ -692,10 +779,25 @@ public:
      * @tparam T Type satisfying the Deserializable concept
      * @param t Output parameter to store the deserialized object
      */
-    template <Deserializable T>
+    template <DeserializableConcept T>
     void get_value(T& t)
     {
         t = T::deserialize(*this);
+    }
+
+    /**
+     * @brief Deserializes a type with a SerializableType<T> specialization.
+     *
+     * Calls SerializableType<T>::deserialize() to read the object's data sequentially.
+     * This enables non-intrusive deserialization for types you don't control.
+     *
+     * @tparam T Type satisfying the ExternalDeserializable concept
+     * @param t Output parameter to store the deserialized object
+     */
+    template <ExternalDeserializable T>
+    void get_value(T& t)
+    {
+        t = Serializable<std::remove_cvref_t<T>>::deserialize(*this);
     }
 
     /**
@@ -730,7 +832,7 @@ public:
      * @tparam T Type with glaze reflection metadata (glz::reflect)
      * @return The deserialized object
      */
-    template <typename T> requires glz::reflectable<T> && (!Deserializable<T>)
+    template <typename T> requires glz::reflectable<T> && (!DeserializableConcept<T> && !ExternalDeserializable<T>)
     void get_value(T& output)
     {
         constexpr auto N = glz::reflect<T>::size;
@@ -785,7 +887,7 @@ protected:
 };
 } // namespace portal
 
-template <portal::Serializable T>
+template <portal::SerializableConcept T>
 portal::Serializer& operator<<(portal::Serializer& s, const T& t)
 {
     t.serialize(s);
@@ -826,7 +928,7 @@ portal::Serializer* operator<<(portal::Serializer* s, const T& t)
 }
 
 
-template <portal::Deserializable T>
+template <portal::DeserializableConcept T>
 portal::Deserializer& operator>>(portal::Deserializer& d, T& t)
 {
     t = T::deserialize(d);

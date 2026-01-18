@@ -6,6 +6,7 @@
 #include "vulkan_swapchain.h"
 
 #include <ranges>
+#include <shobjidl.h>
 
 #include <vulkan/vulkan_raii.hpp>
 
@@ -51,7 +52,7 @@ vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& av
 }
 
 VulkanSwapchain::VulkanSwapchain(VulkanContext& context, const Reference<Surface>& surface) : context(context),
-    surface(reference_cast<VulkanSurface>(surface))
+                                                                                              surface(reference_cast<VulkanSurface>(surface))
 {
     find_image_format_and_color_space();
     init_frame_resources();
@@ -138,11 +139,25 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
         }
     }
 
+    std::vector<vk::Format> formats(2);
+    if (non_linear_color_format != vk::Format::eUndefined)
+    {
+        formats = {linear_color_format, non_linear_color_format};
+    }
+    else
+    {
+        formats = {linear_color_format};
+    }
+
     vk::SwapchainCreateInfoKHR swap_chain_create_info = {
-        .flags = vk::SwapchainCreateFlagsKHR(),
+        .pNext = vk::ImageFormatListCreateInfo{
+            .viewFormatCount = static_cast<uint32_t>(formats.size()),
+            .pViewFormats = formats.data(),
+        },
+        .flags = vk::SwapchainCreateFlagBitsKHR::eMutableFormat,
         .surface = surface->get_vulkan_surface(),
         .minImageCount = static_cast<uint32_t>(min_image_count),
-        .imageFormat = color_format,
+        .imageFormat = linear_color_format,
         .imageColorSpace = color_space,
         .imageExtent = swapchain_extent,
         .imageArrayLayers = 1,
@@ -152,7 +167,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
         .compositeAlpha = composite_alpha,
         .presentMode = present_mode,
         .clipped = true,
-        .oldSwapchain = old_swapchain
+        .oldSwapchain = old_swapchain,
     };
 
     if (surface_capabilities.supportedUsageFlags & vk::ImageUsageFlagBits::eTransferDst)
@@ -178,7 +193,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
         vk::ImageViewCreateInfo view_info{
             .image = swap_chain_images[i],
             .viewType = vk::ImageViewType::e2D,
-            .format = color_format,
+            .format = linear_color_format,
             .components = {vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA},
             .subresourceRange = {
                 .aspectMask = vk::ImageAspectFlagBits::eColor,
@@ -189,9 +204,34 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             },
         };
 
-        auto& [image_props, image, image_view, last_used_frame, render_target, render_finished_semaphore] = images_data[i];
-        image_props = {
-            .format = to_format(color_format),
+        auto depth_image_props = image::Properties{
+            .format = ImageFormat::Depth_32Float,
+            .usage = ImageUsage::Attachment,
+            .transfer = false,
+            .width = width,
+            .height = height,
+            .depth = 1,
+            .mips = 1,
+            .layers = 1,
+            .create_sampler = false,
+            .name = STRING_ID(fmt::format("swapchain_depth", i)),
+        };
+        auto ref_image_depth = make_reference<VulkanImage>(depth_image_props, context);
+
+
+        auto& [
+            image,
+            linear_image_view,
+            non_linear_image_view,
+            last_used_frame,
+            render_target_linear,
+            render_target_non_linear,
+            render_finished_semaphore
+        ] = images_data[i];
+
+
+        image::Properties image_properties{
+            .format = to_format(linear_color_format),
             .usage = ImageUsage::Attachment,
             .transfer = false,
             .width = width,
@@ -203,14 +243,23 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             .name = STRING_ID(fmt::format("swapchain_image_{}", i)),
         };
         image = swap_chain_images[i];
-        image_view = device.get_handle().createImageView(view_info);
+        linear_image_view = device.get_handle().createImageView(view_info);
+
+        view_info.format = non_linear_color_format;
+        non_linear_image_view = device.get_handle().createImageView(view_info);
+
         render_finished_semaphore = device.get_handle().createSemaphore({});
 
-        device.set_debug_name(image_view, fmt::format("swapchain_image_view_{}", i).c_str());
+        device.set_debug_name(linear_image_view, fmt::format("swapchain_linear_image_view_{}", i).c_str());
+        device.set_debug_name(non_linear_image_view, fmt::format("swapchain_non_linear_image_view_{}", i).c_str());
         device.set_debug_name(render_finished_semaphore, fmt::format("swapchain_render_finished_semaphore_{}", i).c_str());
 
-        auto ref_image = make_reference<VulkanImage>(image, image_view, image_props, context);
-        ref_image->update_descriptor();
+        auto ref_image_linear = make_reference<VulkanImage>(image, linear_image_view, image_properties, context);
+        ref_image_linear->update_descriptor();
+
+        image_properties.format = to_format(non_linear_color_format);
+        auto ref_image_non_linear = make_reference<VulkanImage>(image, non_linear_image_view, image_properties, context);
+        ref_image_non_linear->update_descriptor();
 
         RenderTargetProperties target_properties{
             .width = get_width(),
@@ -220,7 +269,7 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
                 .attachment_images = {
                     // Present Image
                     {
-                        .format = vulkan::to_format(get_color_format()),
+                        .format = vulkan::to_format(linear_color_format),
                         .blend = false
                     },
                     // TODO: who is supposed to hold the depth image?
@@ -237,12 +286,20 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
             .existing_images = {
                 {
                     0,
-                    ref_image
+                    ref_image_linear,
+                },
+                {
+                    1,
+                    ref_image_depth
                 }
             },
             .name = STRING_ID("geometry-render-target"),
         };
-        render_target = std::make_shared<VulkanRenderTarget>(target_properties, context);
+        render_target_linear = std::make_shared<VulkanRenderTarget>(target_properties, context);
+
+        target_properties.attachments.attachment_images[0].format = to_format(non_linear_color_format);
+        target_properties.existing_images[0] = ref_image_non_linear;
+        render_target_non_linear = std::make_shared<VulkanRenderTarget>(target_properties, context);
     }
 }
 
@@ -296,10 +353,12 @@ FrameRenderingContext VulkanSwapchain::prepare_frame(const FrameContext& frame)
     return rendering_context;
 }
 
-Reference<RenderTarget> VulkanSwapchain::get_current_render_target()
+Reference<RenderTarget> VulkanSwapchain::get_current_render_target(const bool non_linear)
 {
     auto& image_data = images_data[current_image];
-    return image_data.render_target;
+    if (non_linear)
+        return image_data.render_target_non_linear;
+    return image_data.render_target_linear;
 }
 
 void VulkanSwapchain::present(const FrameContext& frame)
@@ -438,31 +497,47 @@ void VulkanSwapchain::find_image_format_and_color_space()
     // there is no preferred format, so we assume eR8G8B8A8Unorm
     if (surface_formats.size() == 1 && surface_formats[0].format == vk::Format::eUndefined)
     {
-        color_format = vk::Format::eR8G8B8A8Unorm;
+        linear_color_format = vk::Format::eR8G8B8A8Unorm;
+        non_linear_color_format = vk::Format::eR8G8B8A8Srgb;
         color_space = surface_formats[0].colorSpace;
         return;
     }
 
     // iterate over the list of available surface format and
-    // check for the presence of eB8G8R8A8Srgb
-    bool found_srgb = false;
-    for (auto&& [format, color_scape] : surface_formats)
+    // check for the presence of an sRGB format (RGBA or BGRA)
+    bool found_linear = false;
+    bool found_non_linear = false;
+
+    for (auto&& [format, surface_color_space] : surface_formats)
     {
-        if (format == vk::Format::eR8G8B8A8Srgb && color_space == vk::ColorSpaceKHR::eSrgbNonlinear)
+        if (format == vk::Format::eR8G8B8A8Unorm && surface_color_space == vk::ColorSpaceKHR::eSrgbNonlinear)
         {
-            color_format = vk::Format::eR8G8B8A8Srgb;
-            color_space = color_scape;
-            found_srgb = true;
-            break;
+            linear_color_format = format;
+            color_space = surface_color_space;
+            found_linear = true;
+        }
+        else if (format == vk::Format::eR8G8B8A8Srgb && surface_color_space == vk::ColorSpaceKHR::eSrgbNonlinear)
+        {
+            non_linear_color_format = format;
+            found_non_linear = true;
         }
     }
 
-    // in case eR8G8B8A8Srgb is not available,
-    // we select the first available color format
-    if (!found_srgb)
+    if (!found_linear)
     {
-        color_format = surface_formats[0].format;
+        linear_color_format = surface_formats[0].format;
         color_space = surface_formats[0].colorSpace;
+    }
+
+    if (!found_non_linear)
+    {
+        // Try to find a matching sRGB format for the linear format if not found directly
+        if (linear_color_format == vk::Format::eR8G8B8A8Unorm)
+            non_linear_color_format = vk::Format::eR8G8B8A8Srgb;
+        else if (linear_color_format == vk::Format::eB8G8R8A8Unorm)
+            non_linear_color_format = vk::Format::eB8G8R8A8Srgb;
+        else
+            non_linear_color_format = linear_color_format; // Fallback
     }
 }
 

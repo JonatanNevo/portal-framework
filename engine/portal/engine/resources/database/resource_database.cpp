@@ -88,7 +88,7 @@ FontMetadata FontMetadata::dearchive(const ArchiveObject& archive)
 {
     auto* child = archive.get_object("font");
     std::string name;
-    wchar_t glyph_range_min{}, glyph_range_max{};
+    uint16_t glyph_range_min{}, glyph_range_max{};
     child->get_property("name", name);
     child->get_property("glyph_range_min", glyph_range_min);
     child->get_property("glyph_range_max", glyph_range_max);

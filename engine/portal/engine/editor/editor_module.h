@@ -4,7 +4,8 @@
 //
 
 #pragma once
-#include "editor_system.h"
+#include "editor_context.h"
+#include "panel_manager.h"
 #include "viewport.h"
 #include "portal/application/modules/module.h"
 #include "portal/engine/imgui/imgui_renderer.h"
@@ -55,7 +56,9 @@ private:
     renderer::vulkan::VulkanSwapchain& swapchain;
     RuntimeModule runtime_module;
     ImGuiRenderer im_gui_renderer;
+    PanelManager panel_manager;
 
+    EditorContext editor_context;
     Viewport viewport;
 };
 } // portal

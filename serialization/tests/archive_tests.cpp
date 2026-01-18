@@ -38,6 +38,74 @@ struct TestObject
     }
 };
 
+// External type that doesn't have intrusive archive/dearchive methods
+struct ExternalPoint
+{
+    float x;
+    float y;
+    float z;
+
+    bool operator==(const ExternalPoint& other) const
+    {
+        return x == other.x && y == other.y && z == other.z;
+    }
+};
+
+// Another external type for testing
+struct ExternalConfig
+{
+    std::string name;
+    int priority;
+    bool enabled;
+
+    bool operator==(const ExternalConfig& other) const
+    {
+        return name == other.name && priority == other.priority && enabled == other.enabled;
+    }
+};
+
+// Non-intrusive archiving specialization for ExternalPoint
+template <>
+struct portal::Archivable<ExternalPoint>
+{
+    static void archive(const ExternalPoint& obj, ArchiveObject& ar)
+    {
+        ar.add_property("x", obj.x);
+        ar.add_property("y", obj.y);
+        ar.add_property("z", obj.z);
+    }
+
+    static ExternalPoint dearchive(ArchiveObject& ar)
+    {
+        ExternalPoint point{};
+        ar.get_property("x", point.x);
+        ar.get_property("y", point.y);
+        ar.get_property("z", point.z);
+        return point;
+    }
+};
+
+// Non-intrusive archiving specialization for ExternalConfig
+template <>
+struct portal::Archivable<ExternalConfig>
+{
+    static void archive(const ExternalConfig& obj, ArchiveObject& ar)
+    {
+        ar.add_property("name", obj.name);
+        ar.add_property("priority", obj.priority);
+        ar.add_property("enabled", obj.enabled);
+    }
+
+    static ExternalConfig dearchive(ArchiveObject& ar)
+    {
+        ExternalConfig config{};
+        ar.get_property("name", config.name);
+        ar.get_property("priority", config.priority);
+        ar.get_property("enabled", config.enabled);
+        return config;
+    }
+};
+
 using namespace Catch::Matchers;
 
 SCENARIO("Archive can handle basic types")
@@ -477,5 +545,146 @@ SCENARIO("Archive recovers from invalid input correctly")
             REQUIRE(retrieved.length() ==  test_string.length());
             REQUIRE_THAT(retrieved, RangeEquals(test_string));
         }
+    }
+}
+
+SCENARIO("Archive can handle types with non-intrusive Archivable specialization")
+{
+    GIVEN("An archive object")
+    {
+        ArchiveObject archive;
+
+        AND_GIVEN("An external type with Archivable specialization")
+        {
+            const ExternalPoint point{1.5f, 2.5f, 3.5f};
+
+            THEN("`add_property` is called on the external type")
+            {
+                archive.add_property("point", point);
+
+                THEN("The external object is archived correctly")
+                {
+                    ExternalPoint retrieved{};
+                    REQUIRE(archive.get_property("point", retrieved));
+                    REQUIRE(retrieved.x == point.x);
+                    REQUIRE(retrieved.y == point.y);
+                    REQUIRE(retrieved.z == point.z);
+                }
+            }
+        }
+
+        AND_GIVEN("Multiple external types with Archivable specializations")
+        {
+            const ExternalPoint point{10.0f, 20.0f, 30.0f};
+            const ExternalConfig config{"test_config", 5, true};
+
+            THEN("Both types can be archived and dearchived")
+            {
+                archive.add_property("point", point);
+                archive.add_property("config", config);
+
+                ExternalPoint retrieved_point{};
+                ExternalConfig retrieved_config{};
+
+                REQUIRE(archive.get_property("point", retrieved_point));
+                REQUIRE(archive.get_property("config", retrieved_config));
+
+                REQUIRE(retrieved_point == point);
+                REQUIRE(retrieved_config == config);
+            }
+        }
+
+        AND_GIVEN("A vector of external types")
+        {
+            const std::vector<ExternalPoint> points = {
+                {1.0f, 2.0f, 3.0f},
+                {4.0f, 5.0f, 6.0f},
+                {7.0f, 8.0f, 9.0f}
+            };
+
+            THEN("`add_property` is called on the vector")
+            {
+                archive.add_property("points", points);
+
+                THEN("The vector of external objects is archived correctly")
+                {
+                    std::vector<ExternalPoint> retrieved;
+                    REQUIRE(archive.get_property("points", retrieved));
+                    REQUIRE(retrieved.size() == points.size());
+
+                    for (size_t i = 0; i < points.size(); ++i)
+                    {
+                        REQUIRE(retrieved[i] == points[i]);
+                    }
+                }
+            }
+        }
+
+        AND_GIVEN("An empty vector of external types")
+        {
+            const std::vector<ExternalPoint> empty_points;
+
+            THEN("Empty vector of external types is handled correctly")
+            {
+                archive.add_property("empty_points", empty_points);
+
+                std::vector<ExternalPoint> retrieved;
+                REQUIRE(archive.get_property("empty_points", retrieved));
+                REQUIRE(retrieved.empty());
+            }
+        }
+
+        AND_GIVEN("Nested structures mixing intrusive and non-intrusive types")
+        {
+            const TestObject intrusive_obj{42, "intrusive"};
+            const ExternalPoint external_obj{1.0f, 2.0f, 3.0f};
+
+            THEN("Both intrusive and non-intrusive types can coexist in the same archive")
+            {
+                archive.add_property("intrusive", intrusive_obj);
+                archive.add_property("external", external_obj);
+
+                TestObject retrieved_intrusive;
+                ExternalPoint retrieved_external{};
+
+                REQUIRE(archive.get_property("intrusive", retrieved_intrusive));
+                REQUIRE(archive.get_property("external", retrieved_external));
+
+                REQUIRE(retrieved_intrusive.value == intrusive_obj.value);
+                REQUIRE_THAT(retrieved_intrusive.name, Equals(intrusive_obj.name));
+                REQUIRE(retrieved_external == external_obj);
+            }
+        }
+    }
+}
+
+SCENARIO("Non-intrusive archiving concepts are correctly detected")
+{
+    THEN("ExternalArchiveableConcept is satisfied for types with Archivable specialization")
+    {
+        STATIC_REQUIRE(ExternalArchiveableConcept<ExternalPoint>);
+        STATIC_REQUIRE(ExternalArchiveableConcept<ExternalConfig>);
+    }
+
+    THEN("ExternalDearchiveableConcept is satisfied for types with Archivable specialization")
+    {
+        STATIC_REQUIRE(ExternalDearchiveableConcept<ExternalPoint>);
+        STATIC_REQUIRE(ExternalDearchiveableConcept<ExternalConfig>);
+    }
+
+    THEN("ArchiveableConcept is satisfied for intrusive types")
+    {
+        STATIC_REQUIRE(ArchiveableConcept<TestObject>);
+    }
+
+    THEN("ExternalArchiveableConcept is NOT satisfied for intrusive types without specialization")
+    {
+        STATIC_REQUIRE_FALSE(ExternalArchiveableConcept<TestObject>);
+    }
+
+    THEN("ArchiveableConcept is NOT satisfied for external types")
+    {
+        STATIC_REQUIRE_FALSE(ArchiveableConcept<ExternalPoint>);
+        STATIC_REQUIRE_FALSE(ArchiveableConcept<ExternalConfig>);
     }
 }

@@ -3,14 +3,14 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include "editor_system.h"
+#include "panel_manager.h"
 
 #include <imgui.h>
-#include <ImGuizmo.h>
+#include <entt/entt.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
 
 #include "selection_manager.h"
+#include "portal/engine/engine_context.h"
 #include "portal/engine/components/base_camera_controller.h"
 #include "portal/engine/components/camera.h"
 #include "portal/engine/components/mesh.h"
@@ -93,25 +93,30 @@ void draw_node(
     ImGui::PopID();
 }
 
-void EditorGuiSystem::execute(ecs::Registry& registry, FrameContext& frame)
+void PanelManager::on_gui_render(EditorContext& editor_context, FrameContext& frame)
 {
-    print_scene_graph(registry, frame);
-    print_controls(registry);
-    print_stats_block(registry, frame);
-    print_details_panel(registry, frame);
+    editor_context.theme.show_color_picker();
+    for (auto& panel: panels)
+    {
+        panel->on_gui_render(editor_context, frame);
+    }
+
+    print_scene_graph(*frame.ecs_registry, frame);
+    print_controls(*frame.ecs_registry);
+    print_stats_block(*frame.ecs_registry, frame);
 }
 
-void EditorGuiSystem::print_scene_graph(ecs::Registry& registry, FrameContext& frame)
+void PanelManager::print_scene_graph(ecs::Registry& registry, const FrameContext& frame)
 {
-    const auto relationship_group = group(registry);
+    const auto relationship_group = registry.group<NameComponent>(entt::get<RelationshipComponent, TransformComponent>);
     relationship_group.sort(
         [&registry](const entt::entity lhs_raw, const entt::entity rhs_raw)
         {
             auto lhs = registry.entity_from_id(lhs_raw);
             auto rhs = registry.entity_from_id(rhs_raw);
 
-            const auto& [left_name] = lhs.get_component<NameComponent>();
-            const auto& [right_name] = rhs.get_component<NameComponent>();
+            const auto& [left_name, _] = lhs.get_component<NameComponent>();
+            const auto& [right_name, __] = rhs.get_component<NameComponent>();
 
             return left_name.string < right_name.string;
         }
@@ -134,7 +139,7 @@ void EditorGuiSystem::print_scene_graph(ecs::Registry& registry, FrameContext& f
     ImGui::End();
 }
 
-void EditorGuiSystem::print_controls(ecs::Registry&)
+void PanelManager::print_controls(ecs::Registry&)
 {
     // TODO: This A - should not exist B - Should not be here, A necessary evil for now
     ImGui::Begin("Controls");
@@ -149,7 +154,7 @@ void EditorGuiSystem::print_controls(ecs::Registry&)
     ImGui::End();
 }
 
-void EditorGuiSystem::print_stats_block(ecs::Registry&, FrameContext& frame)
+void PanelManager::print_stats_block(ecs::Registry&, FrameContext& frame)
 {
     static std::array<float, 100> fps_history = {};
     static int fps_history_index = 0;
@@ -167,32 +172,6 @@ void EditorGuiSystem::print_stats_block(ecs::Registry&, FrameContext& frame)
     ImGui::End();
 }
 
-void show_transform_controls(Scene&, Entity entity, TransformComponent& transform)
-{
-    ImGui::Separator();
-
-    float ptr_translation[3], ptr_rotation[3], ptr_scale[3];
-
-    std::memcpy(ptr_translation, glm::value_ptr(transform.get_translation()), sizeof(float) * 3);
-    std::memcpy(ptr_rotation, glm::value_ptr(transform.get_rotation_euler()), sizeof(float) * 3);
-    std::memcpy(ptr_scale, glm::value_ptr(transform.get_scale()), sizeof(float) * 3);
-
-    ImGui::InputFloat3("Tr", ptr_translation);
-    ImGui::InputFloat3("Rt", ptr_rotation);
-    ImGui::InputFloat3("Sc", ptr_scale);
-
-    transform.set_translation(glm::vec3{ptr_translation[0], ptr_translation[1], ptr_translation[2]});
-    transform.set_rotation_euler(glm::vec3{ptr_rotation[0], ptr_rotation[1], ptr_rotation[2]});
-    transform.set_scale(glm::vec3{ptr_scale[0], ptr_scale[1], ptr_scale[2]});
-
-    entity.patch_component<TransformComponent>([transform](TransformComponent& comp)
-    {
-        comp.set_translation(transform.get_translation());
-        comp.set_rotation_euler(transform.get_rotation_euler());
-        comp.set_scale(transform.get_scale());
-    });
-}
-
 void show_camera_component(Entity entity, CameraComponent& camera)
 {
     ImGui::Separator();
@@ -207,25 +186,5 @@ void show_camera_component(Entity entity, CameraComponent& camera)
     ImGui::InputFloat("FOV", &camera.vertical_fov);
 }
 
-void EditorGuiSystem::print_details_panel(ecs::Registry&, const FrameContext& frame)
-{
-    ImGui::Begin("Details");
-    if (SelectionSystem::has_selection(frame.active_scene->get_scene_entity()))
-    {
-        auto selected_entity = SelectionSystem::get_selected_entity(frame.active_scene->get_scene_entity());
 
-        ImGui::Text("%s Details", selected_entity.get_name().string.data());
-
-        if (selected_entity.has_component<TransformComponent>())
-            show_transform_controls(*frame.active_scene, selected_entity, selected_entity.get_component<TransformComponent>());
-
-        if (selected_entity.has_component<CameraComponent>())
-            show_camera_component(selected_entity, selected_entity.get_component<CameraComponent>());
-    }
-    else
-    {
-        ImGui::Text("No entity selected");
-    }
-    ImGui::End();
-}
 } // portal

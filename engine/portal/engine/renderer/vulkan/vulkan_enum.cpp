@@ -30,6 +30,7 @@ return vk::Format::TO
     CASE(RG32_Float, eR32G32Sfloat);
     CASE(RGB8_UNorm, eR8G8B8Unorm);
     CASE(BGRA8_UNorm, eB8G8R8A8Unorm);
+    CASE(BGRA8_SRGB, eB8G8R8A8Srgb);
     CASE(RGB8_UInt, eR8G8B8Uint);
     CASE(RGB16_UInt, eR16G16B16Uint);
     CASE(RGB32_UInt, eR32G32B32Uint);
@@ -78,6 +79,7 @@ return portal::renderer::ImageFormat::TO
     CASE(RG32_Float, eR32G32Sfloat);
     CASE(RGB8_UNorm, eR8G8B8Unorm);
     CASE(BGRA8_UNorm, eB8G8R8A8Unorm);
+    CASE(BGRA8_SRGB, eB8G8R8A8Srgb);
     CASE(RGB8_UInt, eR8G8B8Uint);
     CASE(RGB16_UInt, eR16G16B16Uint);
     CASE(RGB32_UInt, eR32G32B32Uint);

@@ -19,6 +19,7 @@ namespace portal::renderer::vulkan
 /** @brief Required device extensions for all platforms */
 constexpr std::array REQUIRED_DEVICE_EXTENSIONS = {
     vk::KHRSwapchainExtensionName,
+    vk::KHRSwapchainMutableFormatExtensionName,
 #if defined(PORTAL_PLATFORM_MACOS)
     vk::KHRPortabilitySubsetExtensionName
 #endif

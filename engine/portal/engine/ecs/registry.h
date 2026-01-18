@@ -294,6 +294,12 @@ public:
         return registry.group<T...>((views.comp_view)...);
     }
 
+    template <typename... T, typename... V>
+    auto group(V&&... views)
+    {
+        return registry.group<T...>((views)...);
+    }
+
     /**
      * @brief Registers a component to be added to all created entities.
      *

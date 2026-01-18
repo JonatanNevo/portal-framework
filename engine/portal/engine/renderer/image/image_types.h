@@ -47,6 +47,7 @@ enum class ImageFormat
     // RGB
     RGB8_UNorm,
     BGRA8_UNorm,
+    BGRA8_SRGB,
 
     RGB8_UInt,
     RGB16_UInt,

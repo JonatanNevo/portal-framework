@@ -13,6 +13,7 @@
 #include "selection_manager.h"
 #include "portal/engine/components/camera.h"
 #include "portal/engine/components/transform.h"
+#include "portal/engine/imgui/imgui_scoped.h"
 #include "portal/engine/imgui/utils.h"
 #include "portal/third_party/imgui/backends/imgui_impl_vulkan.h"
 #include "portal/engine/renderer/vulkan/render_target/vulkan_render_target.h"
@@ -34,7 +35,7 @@ Viewport::Viewport(const renderer::vulkan::VulkanSwapchain& swapchain, RuntimeMo
             .attachment_images = std::vector<renderer::AttachmentTextureProperty>{
                 // Present Image
                 {
-                    .format = renderer::vulkan::to_format(swapchain.get_color_format()),
+                    .format = renderer::vulkan::to_format(swapchain.get_non_linear_color_format()),
                     .blend = false
                 },
                 // TODO: who is supposed to hold the depth image?
