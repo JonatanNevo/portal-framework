@@ -2,7 +2,7 @@
   "registries": [
     {
       "kind": "git",
-      "baseline": "2e5c5cdf297ba2744393b3d85eb69dc2e92ebbeb",
+      "baseline": "98e3f543289686e168a4ab66e658ba46799031e2",
       "reference": "main",
       "repository": "https://github.com/JonatanNevo/portal-vcpkg-registry",
       "packages": [

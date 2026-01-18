@@ -6,11 +6,11 @@
 #include "imgui_renderer.h"
 
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
 #include <ImGuizmo.h>
 
 #include "imgui_fonts.h"
 #include "portal/third_party/imgui/backends/imgui_impl_vulkan.h"
+#include "portal/third_party/imgui/backends/imgui_impl_glfw.h"
 #include "portal/core/debug/profile.h"
 #include "portal/application/settings.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
