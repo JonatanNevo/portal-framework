@@ -64,7 +64,7 @@
       "dependencies" : [ {
         "name" : "imgui",
         "version>=" : "1.91.9",
-        "features" : [ "glfw-binding", "docking-experimental" ]
+        "features" : [ "docking-experimental" ]
       }, {
         "name" : "stb",
         "version>=" : "2024-07-29#1"
