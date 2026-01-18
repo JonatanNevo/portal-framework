@@ -152,6 +152,7 @@ GENERATE_LATEX         = NO
 # Configuration options related to the XML output
 #---------------------------------------------------------------------------
 GENERATE_XML           = YES
+CLASS_DIAGRAMS         = NO
 
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor
