@@ -6,7 +6,6 @@
 #include "vulkan_swapchain.h"
 
 #include <ranges>
-#include <shobjidl.h>
 
 #include <vulkan/vulkan_raii.hpp>
 
@@ -533,6 +532,8 @@ void VulkanSwapchain::find_image_format_and_color_space()
     {
         if (linear_color_format == vk::Format::eR8G8B8A8Unorm)
             non_linear_color_format = vk::Format::eR8G8B8A8Srgb;
+        if (linear_color_format == vk::Format::eB8G8R8A8Unorm)
+            non_linear_color_format = vk::Format::eB8G8R8A8Srgb;
         else
             non_linear_color_format = linear_color_format; // Fallback
     }
