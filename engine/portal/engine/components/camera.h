@@ -25,7 +25,7 @@ struct CameraComponent
     glm::mat4 inverse_projection{1.f};
     glm::mat4 inverse_view{1.f};
 
-    float vertical_fov = 70.f;
+    float vertical_fov = 35.f;
     float near_clip = 10000.f;
     float far_clip = 0.0175f;
 

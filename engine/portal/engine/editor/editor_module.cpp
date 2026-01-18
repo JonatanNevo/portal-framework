@@ -54,12 +54,10 @@ void EditorModule::gui_update(FrameContext& frame)
     ImGui::SetNextWindowSize(imgui_viewport->Size);
     ImGui::SetNextWindowViewport(imgui_viewport->ID);
 
-
+#ifdef PORTAL_PLATFORM_WINDOWS
     // TODO: this can be a generic function on the window class
     const auto& vulkan_window = dynamic_cast<const GlfwWindow&>(window);
     bool is_maximized = glfwGetWindowAttrib(vulkan_window.get_handle(), GLFW_MAXIMIZED) == GLFW_TRUE;
-
-#ifdef PORTAL_PLATFORM_WINDOWS
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, is_maximized ? ImVec2(6.0f, 6.0f) : ImVec2(1.0f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
 #else
