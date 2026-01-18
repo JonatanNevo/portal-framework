@@ -53,6 +53,7 @@ public:
     void on_event(Event& event) override;
 
 private:
+    const Window& window;
     renderer::vulkan::VulkanSwapchain& swapchain;
     RuntimeModule runtime_module;
     ImGuiRenderer im_gui_renderer;

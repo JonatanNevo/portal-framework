@@ -6,6 +6,7 @@
 #include "details_panel.h"
 
 #include "portal/engine/components/base.h"
+#include "portal/engine/components/base_camera_controller.h"
 #include "portal/engine/components/camera.h"
 #include "portal/engine/components/transform.h"
 #include "portal/engine/editor/editor_context.h"
@@ -18,7 +19,7 @@ namespace portal
 {
 struct TransformVec3Consts
 {
-    float column_width = 100.f;
+    float column_width = 70.f;
     float frame_padding_scale = 2.f;
     float columns_width_offset = 30.f;
 };
@@ -32,16 +33,14 @@ void transform_vec3_slider(
     float reset_val = 0.0f
 )
 {
-    static TransformVec3Consts consts{};
-    imgui::draw_consts_controls("Vec3 Consts Controls", consts);
-
+    constexpr TransformVec3Consts consts{};
     imgui::ScopedID scoped_id(label);
 
     ImGui::AlignTextToFramePadding();
     ImGui::Columns(2);
     // width of the 1st column (labels)
     ImGui::SetColumnWidth(0, consts.column_width);
-    float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * consts.frame_padding_scale;
+    float line_height = GImGui->FontSize + GImGui->Style.FramePadding.y * consts.frame_padding_scale;
     auto button_size = ImVec2(line_height * 0.7f, line_height);
 
     {
@@ -230,9 +229,80 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
         context,
         ICON_FA_VIDEO " Camera",
         selected_entity,
-        [](const EditorContext&, const Entity&)
+        [](const EditorContext& editor_context, Entity& entity)
         {
+            auto& camera = entity.get_component<CameraComponent>();
+            bool changed = false;
 
+            imgui::ScopedStyle frame_padding(ImGuiStyleVar_FramePadding, ImVec2(4, 1));
+            {
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Main Camera:");
+            }
+            ImGui::SameLine();
+            {
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
+                auto frame_background = editor_context.theme.scoped_color(ImGuiCol_FrameBg, imgui::ThemeColors::Primary1);
+
+                ImGui::BeginDisabled();
+                auto is_main = entity.has_component<MainCameraTag>();
+                ImGui::Checkbox("##MainCameraCheckbox", &is_main);
+                ImGui::EndDisabled();
+            }
+
+            {
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Vertical FOV:");
+            }
+            ImGui::SameLine();
+            {
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                changed |= ImGui::DragFloat("##VerticalFOV", &camera.vertical_fov, 0.1f, 0.0f, 180.0f);
+            }
+
+            {
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Far Clip:");
+            }
+            ImGui::SameLine();
+            {
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                changed |= ImGui::DragFloat("##FarClip", &camera.near_clip, 0.1f, 0.0f, std::numeric_limits<float>::max());
+            }
+
+            {
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                ImGui::AlignTextToFramePadding();
+                ImGui::Text("Near Clip:");
+            }
+            ImGui::SameLine();
+            {
+                ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                changed |= ImGui::DragFloat("##NearClip", &camera.far_clip, 0.1f, 0.0f, std::numeric_limits<float>::max());
+            }
+
+            if (entity.has_component<BaseCameraController>())
+            {
+                auto& controller = entity.get_component<BaseCameraController>();
+                {
+                    auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                    ImGui::AlignTextToFramePadding();
+                    ImGui::Text("Camera Speed:");
+                }
+                ImGui::SameLine();
+                {
+                    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+                    ImGui::DragFloat("##Speed", &controller.speed, 0.01f, 0.0f, std::numeric_limits<float>::max());
+                }
+            }
+
+            if (changed)
+            {
+                camera.calculate_projection();
+            }
         }
     );
 }

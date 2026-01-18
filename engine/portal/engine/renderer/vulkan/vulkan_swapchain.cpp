@@ -531,11 +531,8 @@ void VulkanSwapchain::find_image_format_and_color_space()
 
     if (!found_non_linear)
     {
-        // Try to find a matching sRGB format for the linear format if not found directly
         if (linear_color_format == vk::Format::eR8G8B8A8Unorm)
             non_linear_color_format = vk::Format::eR8G8B8A8Srgb;
-        else if (linear_color_format == vk::Format::eB8G8R8A8Unorm)
-            non_linear_color_format = vk::Format::eB8G8R8A8Srgb;
         else
             non_linear_color_format = linear_color_format; // Fallback
     }

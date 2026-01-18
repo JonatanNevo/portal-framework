@@ -100,14 +100,6 @@ struct ScopedTextWrapPos
     IMGUI_DELETE_MOVE_COPY(ScopedTextWrapPos);
 };
 
-struct ScopedAllowKeyboardFocus
-{
-    ScopedAllowKeyboardFocus(bool allow_keyboard_focus) { ImGui::PushAllowKeyboardFocus(allow_keyboard_focus); }
-    ~ScopedAllowKeyboardFocus() { ImGui::PopAllowKeyboardFocus(); }
-
-    IMGUI_DELETE_MOVE_COPY(ScopedAllowKeyboardFocus);
-};
-
 struct ScopedButtonRepeat
 {
     ScopedButtonRepeat(bool repeat) { ImGui::PushButtonRepeat(repeat); }
@@ -232,7 +224,7 @@ struct ScopedTreeNodeIcon
     {
         constexpr ImGuiTreeNodeFlags tree_node_flags = ImGuiTreeNodeFlags_Framed
          | ImGuiTreeNodeFlags_SpanAvailWidth
-         | ImGuiTreeNodeFlags_AllowItemOverlap
+         | ImGuiTreeNodeFlags_AllowOverlap
          | ImGuiTreeNodeFlags_FramePadding
          | ImGuiTreeNodeFlags_DefaultOpen;
 

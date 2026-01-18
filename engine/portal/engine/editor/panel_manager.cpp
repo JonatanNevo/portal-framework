@@ -95,8 +95,7 @@ void draw_node(
 
 void PanelManager::on_gui_render(EditorContext& editor_context, FrameContext& frame)
 {
-    editor_context.theme.show_color_picker();
-    for (auto& panel: panels)
+    for (const auto& panel: panels)
     {
         panel->on_gui_render(editor_context, frame);
     }
@@ -170,20 +169,6 @@ void PanelManager::print_stats_block(ecs::Registry&, FrameContext& frame)
     ImGui::Text("triangles %i", frame.stats.triangle_count);
     ImGui::Text("draws %i", frame.stats.drawcall_count);
     ImGui::End();
-}
-
-void show_camera_component(Entity entity, CameraComponent& camera)
-{
-    ImGui::Separator();
-    auto& controller = entity.get_component<BaseCameraController>();
-
-    if (entity.has_component<MainCameraTag>()) ImGui::Text("Main Camera");
-    ImGui::InputFloat3("Direction", glm::value_ptr(controller.forward_direction));
-
-    ImGui::SliderFloat("Camera Speed", &controller.speed, 0.1f, 10.0f);
-    ImGui::InputFloat("Near Clip", &camera.near_clip);
-    ImGui::InputFloat("Far Clip", &camera.far_clip);
-    ImGui::InputFloat("FOV", &camera.vertical_fov);
 }
 
 
