@@ -31,12 +31,14 @@ class VulkanRenderTarget;
  */
 struct SwapchainImageData
 {
-    image::Properties image_properties;
     vk::Image image = nullptr;
-    vk::raii::ImageView image_view = nullptr;
+
+    vk::raii::ImageView linear_image_view = nullptr;
+    vk::raii::ImageView non_linear_image_view = nullptr;
     size_t last_used_frame = std::numeric_limits<size_t>::max();
 
-    Reference<VulkanRenderTarget> render_target;
+    Reference<VulkanRenderTarget> render_target_linear;
+    Reference<VulkanRenderTarget> render_target_non_linear;
 
     // Semaphore signaled when this specific image finishes rendering
     vk::raii::Semaphore render_finished_semaphore = nullptr;
@@ -101,7 +103,7 @@ public:
      */
     FrameRenderingContext prepare_frame(const FrameContext& frame);
 
-    Reference<RenderTarget> get_current_render_target();
+    Reference<RenderTarget> get_current_render_target(bool non_linear = true);
 
     /**
      * @brief Presents rendered image to surface
@@ -118,8 +120,11 @@ public:
     /** @brief Gets swapchain height */
     [[nodiscard]] size_t get_height() const { return height; }
 
-    /** @brief Gets swapchain color format */
-    [[nodiscard]] const vk::Format& get_color_format() const { return color_format; }
+    /** @brief Gets linear swapchain color format */
+    [[nodiscard]] const vk::Format& get_linear_color_format() const { return linear_color_format; }
+
+    /** @brief Gets non linear swapchain color format */
+    [[nodiscard]] const vk::Format& get_non_linear_color_format() const { return non_linear_color_format; }
 
     /** @brief Gets swapchain color space */
     [[nodiscard]] vk::ColorSpaceKHR get_color_space() const { return color_space; }
@@ -148,7 +153,8 @@ private:
     vk::raii::SwapchainKHR swapchain = nullptr;
 
     size_t width = 0, height = 0;
-    vk::Format color_format{};
+    vk::Format linear_color_format{};
+    vk::Format non_linear_color_format{};
     vk::ColorSpaceKHR color_space{};
 
     std::vector<vk::Image> swap_chain_images;

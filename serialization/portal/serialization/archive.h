@@ -25,6 +25,36 @@ namespace portal
 class ArchiveObject;
 
 /**
+ * @brief Non-intrusive archiving customization point.
+ *
+ * Specialize this template to enable archiving for types you don't control.
+ * The specialization must provide static archive() and dearchive() functions.
+ *
+ * Example:
+ * @code
+ * // For a third-party type you can't modify:
+ * template <>
+ * struct Archivable<ThirdPartyConfig> {
+ *     static void archive(const ThirdPartyConfig& obj, ArchiveObject& ar) {
+ *         ar.add_property("name", obj.getName());
+ *         ar.add_property("value", obj.getValue());
+ *     }
+ *     static ThirdPartyConfig dearchive(ArchiveObject& ar) {
+ *         std::string name;
+ *         int value;
+ *         ar.get_property("name", name);
+ *         ar.get_property("value", value);
+ *         return ThirdPartyConfig(name, value);
+ *     }
+ * };
+ * @endcode
+ *
+ * @tparam T The type to provide archiving support for
+ */
+template <typename T>
+struct Archivable;
+
+/**
  * @brief Concept for types with an archive() method that writes named properties to an ArchiveObject.
  *
  * Example:
@@ -38,7 +68,7 @@ class ArchiveObject;
  * @endcode
  */
 template <typename T>
-concept Archiveable = requires(T t, ArchiveObject& s) {
+concept ArchiveableConcept = requires(T t, ArchiveObject& s) {
     { t.archive(s) } -> std::same_as<void>;
 };
 
@@ -58,8 +88,50 @@ concept Archiveable = requires(T t, ArchiveObject& s) {
  * @endcode
  */
 template <typename T>
-concept Dearchiveable = requires(T t, ArchiveObject& d) {
+concept DearchiveableConcept = requires(T t, ArchiveObject& d) {
     { T::dearchive(d) } -> std::same_as<T>;
+};
+
+/**
+ * @brief Concept for types with an Archivable<T> specialization providing archive().
+ *
+ * This enables non-intrusive archiving for types you don't control.
+ *
+ * Example:
+ * @code
+ * template <>
+ * struct Archivable<ExternalType> {
+ *     static void archive(const ExternalType& obj, ArchiveObject& ar) {
+ *         ar.add_property("field", obj.field);
+ *     }
+ * };
+ * @endcode
+ */
+template <typename T>
+concept ExternalArchiveableConcept = requires(const T& t, ArchiveObject& ar) {
+    { Archivable<std::remove_cvref_t<T>>::archive(t, ar) } -> std::same_as<void>;
+};
+
+/**
+ * @brief Concept for types with an Archivable<T> specialization providing dearchive().
+ *
+ * This enables non-intrusive dearchiving for types you don't control.
+ *
+ * Example:
+ * @code
+ * template <>
+ * struct Archivable<ExternalType> {
+ *     static ExternalType dearchive(ArchiveObject& ar) {
+ *         ExternalType obj;
+ *         ar.get_property("field", obj.field);
+ *         return obj;
+ *     }
+ * };
+ * @endcode
+ */
+template <typename T>
+concept ExternalDearchiveableConcept = requires(ArchiveObject& ar) {
+    { Archivable<std::remove_cvref_t<T>>::dearchive(ar) } -> std::same_as<T>;
 };
 
 /**
@@ -147,13 +219,17 @@ public:
     template <reflection::SmallVector T>
     void add_property(const PropertyName& name, const T& t)
     {
-        if constexpr (Archiveable<typename T::ValueParamT>)
+        using ValueT = typename T::ValueParamT;
+        if constexpr (ArchiveableConcept<ValueT> || ExternalArchiveableConcept<ValueT>)
         {
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
-            for (int i = 0; i < t.size(); ++i)
+            for (size_t i = 0; i < t.size(); ++i)
             {
                 auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
-                t[i].archive(*object);
+                if constexpr (ArchiveableConcept<ValueT>)
+                    t[i].archive(*object);
+                else
+                    Archivable<ValueT>::archive(t[i], *object);
             }
 
             add_property_to_map(name, {std::move(buffer), reflection::PropertyType::object, reflection::PropertyContainerType::array, t.size()});
@@ -167,8 +243,8 @@ public:
                 object->add_property("v", t[i]);
             }
 
-            constexpr auto property_type = (reflection::String<typename T::ValueParamT>) ? reflection::PropertyType::null_term_string
-                                                                                         : reflection::get_property_type<typename T::ValueParamT>();
+            constexpr auto property_type = (reflection::String<ValueT>) ? reflection::PropertyType::null_term_string
+                                                                        : reflection::get_property_type<ValueT>();
 
             add_property_to_map(name, {std::move(buffer), property_type, reflection::PropertyContainerType::array, t.size()});
         }
@@ -191,13 +267,17 @@ public:
     template <reflection::Vector T>
     void add_property(const PropertyName& name, const T& t)
     {
-        if constexpr (Archiveable<typename T::value_type>)
+        using ValueT = typename T::value_type;
+        if constexpr (ArchiveableConcept<ValueT> || ExternalArchiveableConcept<ValueT>)
         {
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
-            for (int i = 0; i < t.size(); ++i)
+            for (size_t i = 0; i < t.size(); ++i)
             {
                 auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
-                t[i].archive(*object);
+                if constexpr (ArchiveableConcept<ValueT>)
+                    t[i].archive(*object);
+                else
+                    Archivable<ValueT>::archive(t[i], *object);
             }
 
             add_property_to_map(name, {std::move(buffer), reflection::PropertyType::object, reflection::PropertyContainerType::array, t.size()});
@@ -211,8 +291,8 @@ public:
                 object->add_property("v", t[i]);
             }
 
-            constexpr auto property_type = (reflection::String<typename T::value_type>) ? reflection::PropertyType::null_term_string
-                                                                                        : reflection::get_property_type<typename T::value_type>();
+            constexpr auto property_type = (reflection::String<ValueT>) ? reflection::PropertyType::null_term_string
+                                                                        : reflection::get_property_type<ValueT>();
 
             add_property_to_map(name, {std::move(buffer), property_type, reflection::PropertyContainerType::array, t.size()});
         }
@@ -382,11 +462,28 @@ public:
      * @param name Property name identifier
      * @param t The object to serialize
      */
-    template <Archiveable T>
+    template <ArchiveableConcept T>
     void add_property(const PropertyName& name, const T& t)
     {
         auto* child = create_child(name);
         t.archive(*child);
+    }
+
+    /**
+     * @brief Adds a type with an Archivable<T> specialization as a nested property.
+     *
+     * Creates a child ArchiveObject and calls Archivable<T>::archive() to populate it.
+     * This enables non-intrusive hierarchical serialization of external types.
+     *
+     * @tparam T Type satisfying the ExternalArchiveableConcept
+     * @param name Property name identifier
+     * @param t The object to serialize
+     */
+    template <ExternalArchiveableConcept T>
+    void add_property(const PropertyName& name, const T& t)
+    {
+        auto* child = create_child(name);
+        Archivable<std::remove_cvref_t<T>>::archive(t, *child);
     }
 
     /**
@@ -693,7 +790,7 @@ public:
 
         for (const auto& [key, property] : child->property_map)
         {
-            if constexpr (Dearchiveable<typename T::mapped_type>)
+            if constexpr (DearchiveableConcept<typename T::mapped_type>)
             {
                 auto* value_child = child->get_object(key);
                 if (value_child)
@@ -719,7 +816,7 @@ public:
      * @param out Output parameter to store the dearchived object
      * @return true if property exists and is an object, false otherwise
      */
-    template <Archiveable T>
+    template <ArchiveableConcept T>
     bool get_property(const PropertyName& name, T& out)
     {
         auto* child = get_object(name);
@@ -727,6 +824,28 @@ public:
             return false;
 
         out = T::dearchive(*child);
+        return true;
+    }
+
+    /**
+     * @brief Retrieves a type with an Archivable<T> specialization from a nested property.
+     *
+     * Gets the child ArchiveObject and calls Archivable<T>::dearchive() to reconstruct it.
+     * This enables non-intrusive deserialization of external types.
+     *
+     * @tparam T Type satisfying the ExternalDearchiveableConcept
+     * @param name Property name identifier
+     * @param out Output parameter to store the dearchived object
+     * @return true if property exists and is an object, false otherwise
+     */
+    template <ExternalDearchiveableConcept T>
+    bool get_property(const PropertyName& name, T& out)
+    {
+        auto* child = get_object(name);
+        if (!child)
+            return false;
+
+        out = Archivable<std::remove_cvref_t<T>>::dearchive(*child);
         return true;
     }
 
@@ -850,12 +969,15 @@ protected:
     {
         const auto& [value, type, container_type, elements_number] = prop;
 
-        if constexpr (Archiveable<ValueType>)
+        if constexpr (ArchiveableConcept<ValueType> || ExternalDearchiveableConcept<ValueType>)
         {
             auto* objects = value.as<ArchiveObject*>();
             for (size_t i = 0; i < elements_number; ++i)
             {
-                out.push_back(ValueType::dearchive(objects[i]));
+                if constexpr (ArchiveableConcept<ValueType>)
+                    out.push_back(ValueType::dearchive(objects[i]));
+                else
+                    out.push_back(Archivable<ValueType>::dearchive(objects[i]));
             }
         }
         else

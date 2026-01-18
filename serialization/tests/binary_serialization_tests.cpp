@@ -64,6 +64,77 @@ struct TestObjectNaked
     }
 };
 
+// External type that doesn't have intrusive serialize/deserialize methods
+struct ExternalData
+{
+    float x;
+    float y;
+    float z;
+    int priority;
+
+    bool operator==(const ExternalData& other) const
+    {
+        return x == other.x && y == other.y && z == other.z && priority == other.priority;
+    }
+};
+
+// Another external type for testing
+struct ExternalPacket
+{
+    std::string header;
+    std::vector<int> payload;
+    bool valid;
+
+    bool operator==(const ExternalPacket& other) const
+    {
+        return header == other.header && payload == other.payload && valid == other.valid;
+    }
+};
+
+// Non-intrusive serialization specialization for ExternalData
+template <>
+struct portal::Serializable<ExternalData>
+{
+    static void serialize(const ExternalData& obj, Serializer& s)
+    {
+        s.add_value(obj.x);
+        s.add_value(obj.y);
+        s.add_value(obj.z);
+        s.add_value(obj.priority);
+    }
+
+    static ExternalData deserialize(Deserializer& d)
+    {
+        ExternalData data{};
+        d.get_value(data.x);
+        d.get_value(data.y);
+        d.get_value(data.z);
+        d.get_value(data.priority);
+        return data;
+    }
+};
+
+// Non-intrusive serialization specialization for ExternalPacket
+template <>
+struct portal::Serializable<ExternalPacket>
+{
+    static void serialize(const ExternalPacket& obj, Serializer& s)
+    {
+        s.add_value(obj.header);
+        s.add_value(obj.payload);
+        s.add_value(obj.valid);
+    }
+
+    static ExternalPacket deserialize(Deserializer& d)
+    {
+        ExternalPacket packet{};
+        d.get_value(packet.header);
+        d.get_value(packet.payload);
+        d.get_value(packet.valid);
+        return packet;
+    }
+};
+
 SCENARIO("BinarySerializer can serialize basic types")
 {
     GIVEN("A BinarySerializer writing to a stringstream")
@@ -478,5 +549,145 @@ SCENARIO("BinarySerializer huge data test")
 
             REQUIRE_THAT(output, RangeEquals(huge_data));
         }
+    }
+}
+
+SCENARIO("BinarySerializer can serialize types with non-intrusive SerializableType specialization")
+{
+    GIVEN("A BinarySerializer writing to a stringstream")
+    {
+        std::stringstream ss;
+        BinarySerializer serializer(ss);
+
+        AND_GIVEN("An external type with SerializableType specialization")
+        {
+            const ExternalData data{1.5f, 2.5f, 3.5f, 42};
+
+            THEN("The external object is round-tripped correctly")
+            {
+                serializer.add_value(data);
+
+                ExternalData deserialized{};
+                BinaryDeserializer deserializer(ss);
+                deserializer.get_value(deserialized);
+
+                REQUIRE(deserialized == data);
+            }
+        }
+
+        AND_GIVEN("Multiple external types with SerializableType specializations")
+        {
+            const ExternalData data{10.0f, 20.0f, 30.0f, 100};
+            const ExternalPacket packet{"test_header", {1, 2, 3, 4, 5}, true};
+
+            THEN("Both types can be serialized and deserialized")
+            {
+                serializer.add_value(data);
+                serializer.add_value(packet);
+
+                ExternalData retrieved_data{};
+                ExternalPacket retrieved_packet{};
+
+                BinaryDeserializer deserializer(ss);
+                deserializer.get_value(retrieved_data);
+                deserializer.get_value(retrieved_packet);
+
+                REQUIRE(retrieved_data == data);
+                REQUIRE(retrieved_packet == packet);
+            }
+        }
+
+        AND_GIVEN("A vector of external types")
+        {
+            const std::vector<ExternalData> data_list = {
+                {1.0f, 2.0f, 3.0f, 1},
+                {4.0f, 5.0f, 6.0f, 2},
+                {7.0f, 8.0f, 9.0f, 3}
+            };
+
+            THEN("The vector of external objects is round-tripped correctly")
+            {
+                serializer.add_value(data_list);
+
+                std::vector<ExternalData> retrieved;
+                BinaryDeserializer deserializer(ss);
+                deserializer.get_value(retrieved);
+
+                REQUIRE(retrieved.size() == data_list.size());
+                for (size_t i = 0; i < data_list.size(); ++i)
+                {
+                    REQUIRE(retrieved[i] == data_list[i]);
+                }
+            }
+        }
+
+        AND_GIVEN("An empty vector of external types")
+        {
+            const std::vector<ExternalData> empty_list;
+
+            THEN("Empty vector of external types is handled correctly")
+            {
+                serializer.add_value(empty_list);
+
+                std::vector<ExternalData> retrieved;
+                BinaryDeserializer deserializer(ss);
+                deserializer.get_value(retrieved);
+
+                REQUIRE(retrieved.empty());
+            }
+        }
+
+        AND_GIVEN("Nested structures mixing intrusive and non-intrusive types")
+        {
+            const TestObject1 intrusive_obj{42, "intrusive", {1.0f, 2.0f, 3.0f}};
+            const ExternalData external_obj{1.0f, 2.0f, 3.0f, 10};
+
+            THEN("Both intrusive and non-intrusive types can coexist in the same stream")
+            {
+                serializer.add_value(intrusive_obj);
+                serializer.add_value(external_obj);
+
+                TestObject1 retrieved_intrusive{};
+                ExternalData retrieved_external{};
+
+                BinaryDeserializer deserializer(ss);
+                deserializer.get_value(retrieved_intrusive);
+                deserializer.get_value(retrieved_external);
+
+                REQUIRE(retrieved_intrusive == intrusive_obj);
+                REQUIRE(retrieved_external == external_obj);
+            }
+        }
+    }
+}
+
+SCENARIO("Non-intrusive serialization concepts are correctly detected")
+{
+    THEN("ExternalSerializable is satisfied for types with SerializableType specialization")
+    {
+        STATIC_REQUIRE(ExternalSerializable<ExternalData>);
+        STATIC_REQUIRE(ExternalSerializable<ExternalPacket>);
+    }
+
+    THEN("ExternalDeserializable is satisfied for types with SerializableType specialization")
+    {
+        STATIC_REQUIRE(ExternalDeserializable<ExternalData>);
+        STATIC_REQUIRE(ExternalDeserializable<ExternalPacket>);
+    }
+
+    THEN("Serializable is satisfied for intrusive types")
+    {
+        STATIC_REQUIRE(SerializableConcept<TestObject1>);
+    }
+
+    THEN("ExternalSerializable is NOT satisfied for intrusive types without specialization")
+    {
+        STATIC_REQUIRE_FALSE(ExternalSerializable<TestObject1>);
+    }
+
+    THEN("Serializable is NOT satisfied for external types")
+    {
+        STATIC_REQUIRE_FALSE(SerializableConcept<ExternalData>);
+        STATIC_REQUIRE_FALSE(SerializableConcept<ExternalPacket>);
     }
 }

@@ -12,7 +12,6 @@
 #include "imgui_fonts.h"
 #include "portal/third_party/imgui/backends/imgui_impl_vulkan.h"
 #include "portal/core/debug/profile.h"
-#include "../renderer/vulkan/render_target/vulkan_render_target.h"
 #include "portal/application/settings.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_utils.h"
@@ -139,7 +138,7 @@ ImGuiRenderer::ImGuiRenderer(ResourceRegistry& resource_registry, const Window& 
     const auto& vulkan_window = dynamic_cast<const GlfwWindow&>(window);
     ImGui_ImplGlfw_InitForVulkan(vulkan_window.get_handle(), true);
 
-    const auto color_format = swapchain.get_color_format();
+    const auto color_format = swapchain.get_linear_color_format();
 
     ImGui_ImplVulkan_InitInfo init_info = {
         .Instance = *vulkan_context.get_instance(),
