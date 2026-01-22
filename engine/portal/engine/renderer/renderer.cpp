@@ -48,8 +48,9 @@ using namespace renderer;
 
 [[maybe_unused]] static auto logger = Log::get_logger("Renderer");
 
-Renderer::Renderer(vulkan::VulkanContext& context, ResourceRegistry& resource_registry)
-    : context(context),
+Renderer::Renderer(ProjectSettings& settings, vulkan::VulkanContext& context, ResourceRegistry& resource_registry)
+    : settings(settings),
+      context(context),
       renderer_context(context)
 {
     init_global_descriptors(resource_registry);
@@ -319,7 +320,7 @@ void Renderer::immediate_submit(std::function<void(vk::raii::CommandBuffer&)>&& 
 void Renderer::init_global_descriptors(ResourceRegistry& resource_registry)
 {
     // TODO: should this be here or under scene?
-    auto frames_in_flight = Settings::get().get_setting<size_t>("application.frames_in_flight", 3);
+    auto frames_in_flight = settings.get_setting<size_t>("application.frames_in_flight", 3);
 
     auto shader = resource_registry.immediate_load<Shader>(STRING_ID("engine/shaders/pbr"));
     const auto hash = shader->compile_with_permutations({});

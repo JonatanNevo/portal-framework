@@ -5,6 +5,7 @@
 
 #include "material_loader.h"
 
+#include "portal/engine/project/project.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/material/material.h"
 #include "portal/engine/renderer/vulkan/vulkan_material.h"
@@ -22,8 +23,10 @@ class VulkanMaterial;
 
 namespace portal::resources
 {
-MaterialLoader::MaterialLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : ResourceLoader(registry),
-    context(context)
+MaterialLoader::MaterialLoader(const Project& project, ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) :
+    ResourceLoader(registry),
+    context(context),
+    project(project)
 {
 }
 
@@ -42,6 +45,7 @@ Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const Resou
         .global_descriptor_sets = {STRING_ID("scene_data")},
         // TODO: determine the amount of global descriptors based on loaded project
         .set_start_index = 1,
+        .frames_in_flight = project.get_settings().get_setting<size_t>("application.frames_in_flight", 3),
         .default_texture = registry.get<renderer::Texture>(renderer::Texture::MISSING_TEXTURE_ID).underlying(),
     };
 
@@ -112,7 +116,8 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& na
     // TODO: add pipeline cache
     renderer::PipelineProperties pipeline_properties{
         .shader = shader,
-        .attachments = { // TODO: Find a way to extract this from current swapchain
+        .attachments = {
+            // TODO: Find a way to extract this from current swapchain
             .attachment_images = {
                 // Present Image
                 {

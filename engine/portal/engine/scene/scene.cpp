@@ -12,15 +12,15 @@
 
 namespace portal
 {
-
-Scene::Scene(const StringId& name) : Resource(name)
+Scene::Scene(const StringId& name, ecs::Registry& registry) : Resource(name), ecs_registry(registry)
 {
     scene_entity = registry.create_entity(name);
+    scene_entity.add_component<RelationshipComponent>();
     scene_entity.add_component<SceneTag>();
 }
 
 Entity Scene::get_main_camera_entity() const
 {
-    return registry.view<CameraComponent, MainCameraTag>().front();
+    return ecs_registry.view<CameraComponent, MainCameraTag>().front();
 }
 } // portal

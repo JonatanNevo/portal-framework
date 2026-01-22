@@ -48,7 +48,7 @@ SurfaceTransform to_surface_transform(const vk::SurfaceTransformFlagsKHR transfo
     return output;
 }
 
-VulkanSurface::VulkanSurface(const VulkanContext& context, const SurfaceProperties& properties) : Surface(properties)
+VulkanSurface::VulkanSurface(ProjectSettings& settings, const VulkanContext& context, const SurfaceProperties& properties) : Surface(properties)
 {
     if (properties.window.has_value())
     {
@@ -103,7 +103,7 @@ VulkanSurface::VulkanSurface(const VulkanContext& context, const SurfaceProperti
 
     if (get_min_frames_in_flight() > properties.min_frames_in_flight)
     {
-        Settings::get().set_setting("application.frames_in_flight", get_min_frames_in_flight());
+        settings.set_setting("application.frames_in_flight", get_min_frames_in_flight());
     }
 }
 

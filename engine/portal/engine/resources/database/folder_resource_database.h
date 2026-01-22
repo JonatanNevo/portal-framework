@@ -8,9 +8,11 @@
 #include <llvm/ADT/DenseMap.h>
 
 #include "resource_database.h"
+#include "portal/core/files/file_system.h"
 
 namespace portal
 {
+class Project;
 constexpr auto CURRENT_DATABASE_VERSION = 1;
 
 struct DatabaseMetadata
@@ -29,7 +31,7 @@ struct DatabaseMetadata
 class FolderResourceDatabase final : public ResourceDatabase
 {
 public:
-    static std::unique_ptr<FolderResourceDatabase> create(const std::filesystem::path& base_path);
+    static std::unique_ptr<FolderResourceDatabase> create(const Project& project, const std::filesystem::path& database_path);
 
     ~FolderResourceDatabase() override;
 

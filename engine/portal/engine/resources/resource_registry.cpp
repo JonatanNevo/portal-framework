@@ -16,16 +16,18 @@ namespace portal
 static auto logger = Log::get_logger("Resources");
 
 ResourceRegistry::ResourceRegistry(
-    SystemOrchestrator& orchestrator,
+    const Project& project,
+    ecs::Registry& ecs_registry,
     jobs::Scheduler& scheduler,
     ResourceDatabase& database,
     ReferenceManager& reference_manager,
     const renderer::vulkan::VulkanContext& context
-) : orchestrator(orchestrator),
+) : ecs_registry(ecs_registry),
     scheduler(scheduler),
     database(database),
     reference_manager(reference_manager),
     loader_factory(
+        project,
         *this,
         context
     )
@@ -73,11 +75,6 @@ Job<Reference<Resource>> ResourceRegistry::load_direct(const SourceMetadata& met
 void ResourceRegistry::wait_all(const std::span<Job<>> jobs) const
 {
     scheduler.wait_for_jobs(jobs);
-}
-
-void ResourceRegistry::configure_ecs_registry(ecs::Registry& ecs_registry) const
-{
-    orchestrator.register_systems(ecs_registry);
 }
 
 std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource(const StringId& id)

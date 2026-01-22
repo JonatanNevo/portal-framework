@@ -23,14 +23,18 @@ enum class SettingsArchiveType
  * A settings singleton class.
  * To call, the static method `init` needs to be called once, from then, call the static `get` to retrive an instance
  */
-class Settings final : public ArchiveObject
+class ProjectSettings final : public ArchiveObject
 {
 public:
-    static void init(SettingsArchiveType type, const std::filesystem::path& settings_file_name);
-    static void shutdown();
-    static Settings& get();
+    static ProjectSettings create_settings(SettingsArchiveType type, const std::filesystem::path& working_directory, const std::filesystem::path& settings_file_name);
 
-    ~Settings() override;
+    ~ProjectSettings() override;
+
+    ProjectSettings(const ProjectSettings&) = delete;
+    ProjectSettings& operator=(const ProjectSettings&) = delete;
+
+    ProjectSettings(ProjectSettings&& other) noexcept;
+    ProjectSettings& operator=(ProjectSettings&& other) noexcept;
 
     void load();
     void dump() const;
@@ -48,7 +52,7 @@ public:
     }
 
     template <typename T>
-    std::optional<T> get_setting(const PropertyName& name)
+    std::optional<T> get_setting(const PropertyName& name) const
     {
         auto split_view = name | std::ranges::views::split('.');
         auto split_size = std::ranges::distance(split_view);
@@ -111,11 +115,8 @@ private:
     void debug_print_scalar(const std::string& name, const reflection::Property& prop) const;
     void debug_print_array(const std::string& name, const reflection::Property& prop) const;
 
-    explicit Settings(SettingsArchiveType type, const std::filesystem::path& path);
-    Settings(const Settings&) = delete;
-    Settings(Settings&&) = delete;
-    Settings& operator=(const Settings&) = delete;
-    Settings& operator=(Settings&&) = delete;
+    explicit ProjectSettings(SettingsArchiveType type, const std::filesystem::path& path);
+
 
 protected:
     reflection::Property& get_property_from_map(PropertyName name) override;

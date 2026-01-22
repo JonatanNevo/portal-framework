@@ -9,6 +9,7 @@
 #include <utility>
 
 #include "portal/core/files/file_system.h"
+#include "portal/engine/project/project.h"
 #include "portal/engine/resources/loader/loader_factory.h"
 #include "portal/engine/resources/source/file_source.h"
 #include "portal/serialization/archive/json_archive.h"
@@ -52,15 +53,14 @@ DatabaseMetadata DatabaseMetadata::dearchive(ArchiveObject& archive)
     return metadata;
 }
 
-std::filesystem::path validate_and_create_path(const std::filesystem::path& base_path)
+std::filesystem::path validate_and_create_path(const Project& project, const std::filesystem::path& database_path)
 {
     std::filesystem::path output;
 
-    if (base_path.is_absolute())
-        output = base_path;
+    if (database_path.is_absolute())
+        output = database_path;
     else
-        // TODO: Change to resources path once macos bundle configuration is fixed
-        output = FileSystem::get_binary_path() / "resources" / base_path;
+        output = project.get_resource_directory() / database_path;
 
     if (!FileSystem::is_directory(output) && !FileSystem::create_directory(output))
     {
@@ -98,9 +98,9 @@ std::filesystem::path validate_and_create_meta_path(const std::filesystem::path&
     return meta_files[0];
 }
 
-std::unique_ptr<FolderResourceDatabase> FolderResourceDatabase::create(const std::filesystem::path& base_path)
+std::unique_ptr<FolderResourceDatabase> FolderResourceDatabase::create(const Project& project, const std::filesystem::path& database_path)
 {
-    const auto root_path = validate_and_create_path(base_path);
+    const auto root_path = validate_and_create_path(project, database_path);
     const auto meta_path = validate_and_create_meta_path(root_path);
     const auto metadata = load_meta(meta_path);
     return std::unique_ptr<FolderResourceDatabase>(new FolderResourceDatabase(root_path, meta_path, metadata));

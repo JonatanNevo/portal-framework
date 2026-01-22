@@ -20,7 +20,6 @@
 
 namespace portal
 {
-
 static void add_to_platform_folders_form_file(std::filesystem::path filename, std::unordered_map<std::string, std::filesystem::path>& folders)
 {
     std::ifstream infile(filename.c_str());
@@ -198,24 +197,24 @@ std::filesystem::path FileSystem::get_root_path()
 }
 
 
-std::filesystem::path FileSystem::get_data_home()
+std::filesystem::path FileSystem::get_data_home(const std::filesystem::path& app_name)
 {
-    return get_linux_folder_default("XDG_DATA_HOME", ".local/share");
+    return get_linux_folder_default("XDG_DATA_HOME", ".local/share") / "portal" / app_name;
 }
 
-std::filesystem::path FileSystem::get_config_home()
+std::filesystem::path FileSystem::get_config_home(const std::filesystem::path& app_name)
 {
-    return get_linux_folder_default("XDG_CONFIG_HOME", ".config");
+    return get_linux_folder_default("XDG_CONFIG_HOME", ".config") / "portal" / app_name;
 }
 
-std::filesystem::path FileSystem::get_cache_dir()
+std::filesystem::path FileSystem::get_cache_dir(const std::filesystem::path& app_name)
 {
-    return get_linux_folder_default("XDG_CACHE_HOME", ".cache");
+    return get_linux_folder_default("XDG_CACHE_HOME", ".cache") / "portal" / app_name;
 }
 
-std::filesystem::path FileSystem::get_state_dir()
+std::filesystem::path FileSystem::get_state_dir(const std::filesystem::path& app_name)
 {
-    return get_linux_folder_default("XDG_STATE_HOME", ".local/state");
+    return get_linux_folder_default("XDG_STATE_HOME", ".local/state") / "portal" / app_name;
 }
 
 std::filesystem::path FileSystem::get_desktop_folder()

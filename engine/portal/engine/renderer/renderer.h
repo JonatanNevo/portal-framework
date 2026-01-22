@@ -62,7 +62,7 @@ public:
      * @param stack Module stack
      * @param context Vulkan context
      */
-    Renderer(renderer::vulkan::VulkanContext& context, ResourceRegistry& resource_registry);
+    Renderer(ProjectSettings& settings, renderer::vulkan::VulkanContext& context, ResourceRegistry& resource_registry);
 
     /** @brief Destructor (cleans up frame resources) */
     ~Renderer();
@@ -105,6 +105,7 @@ private:
     void init_global_descriptors(ResourceRegistry& resource_registry);
 
 private:
+    ProjectSettings& settings;
     renderer::vulkan::VulkanContext& context;
 
     Reference<renderer::RenderTarget> current_render_target;

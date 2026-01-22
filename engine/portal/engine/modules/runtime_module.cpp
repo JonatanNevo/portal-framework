@@ -6,17 +6,20 @@
 #include "runtime_module.h"
 
 #include "resources_module.h"
+#include "portal/engine/project/project.h"
 
 namespace portal
 {
 RuntimeModule::RuntimeModule(
     ModuleStack& stack,
+    Project& project,
     renderer::vulkan::VulkanContext& context,
     renderer::vulkan::VulkanSwapchain& swapchain
 )
     : TaggedModule(stack, STRING_ID("Runtime Module")),
+      project(project),
       swapchain(swapchain),
-      renderer(context, get_dependency<ResourcesModule>().get_registry())
+      renderer(project.get_settings(), context, get_dependency<ResourcesModule>().get_registry())
 {}
 
 RuntimeModule::~RuntimeModule()

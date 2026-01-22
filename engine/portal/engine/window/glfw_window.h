@@ -13,10 +13,12 @@
 
 namespace portal
 {
+class ProjectSettings;
+
 class GlfwWindow final : public Window
 {
 public:
-    GlfwWindow(const WindowProperties& properties, const CallbackConsumers& consumers);
+    GlfwWindow(ProjectSettings& settings, const WindowProperties& properties, const CallbackConsumers& consumers);
 
     ~GlfwWindow() override;
 
@@ -42,6 +44,7 @@ public:
     [[nodiscard]] GLFWwindow* get_handle() const;
 
 private:
+    ProjectSettings& settings;
     GLFWwindow* handle = nullptr;
 };
 } // portal

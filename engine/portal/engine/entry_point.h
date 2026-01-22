@@ -1,0 +1,52 @@
+//
+// Copyright © 2026 Jonatan Nevo.
+// Distributed under the MIT license (see LICENSE file).
+//
+
+/**
+ * @file entry_point.h
+ * @brief Portal Engine application entry point.
+ *
+ * This header provides the main entry point for Portal Engine Users.
+ * This is a wrapper around <portal/application/entry_point.h> with additional checks and actions
+ * That only 3D and gui applications require
+ *
+ * Example usage:
+
+ * @code
+ * #include <portal/application/entry_point.h>
+ *
+ * std::unique_ptr<portal::Application> portal::create_application(int argc, char** argv) {
+ *     ApplicationProperties props{.name = STRING_ID("My Game")};
+ *     return std::make_unique<MyGameApp>(props);
+ * }
+ * @endcode
+ */
+#pragma once
+#include <portal/application/entry_point.h>
+
+#include <portal/engine/reference.h>
+#include "project/project.h"
+
+
+namespace portal
+{
+extern std::unique_ptr<Application> create_engine_application(Reference<Project>&& project, int argc, char** argv);
+
+inline ApplicationProperties from_project(Project& project)
+{
+    return ApplicationProperties{
+        .name = project.get_name(),
+        .width = project.get_settings().get_setting<size_t>("application.window.width", 1600),
+        .height =  project.get_settings().get_setting<size_t>("application.window.height", 900),
+    };
+}
+
+inline std::unique_ptr<Application> create_application(int argc, char** argv)
+{
+    // TODO: open project based on args or environment variables or something idk
+
+    auto project = Project::open_project(ProjectType::Editor, FileSystem::get_working_directory());
+    return create_engine_application(std::move(project), argc, argv);
+}
+}

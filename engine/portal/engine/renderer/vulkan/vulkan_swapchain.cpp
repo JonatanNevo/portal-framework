@@ -50,8 +50,9 @@ vk::PresentModeKHR choose_present_mode(const std::vector<vk::PresentModeKHR>& av
     return present_mode;
 }
 
-VulkanSwapchain::VulkanSwapchain(VulkanContext& context, const Reference<Surface>& surface) : context(context),
-                                                                                              surface(reference_cast<VulkanSurface>(surface))
+VulkanSwapchain::VulkanSwapchain(ProjectSettings& settings, VulkanContext& context, const Reference<Surface>& surface) : settings(settings),
+    context(context),
+    surface(reference_cast<VulkanSurface>(surface))
 {
     find_image_format_and_color_space();
     init_frame_resources();
@@ -544,7 +545,7 @@ void VulkanSwapchain::init_frame_resources()
     PORTAL_PROF_ZONE();
 
     // TODO: have different amount of frames in flight based on some config?
-    frames_in_flight = Settings::get().get_setting<size_t>("application.frames_in_flight", 3);
+    frames_in_flight = settings.get_setting<size_t>("application.frames_in_flight", 3);
 
     frame_resources.clear();
     frame_resources.reserve(frames_in_flight);

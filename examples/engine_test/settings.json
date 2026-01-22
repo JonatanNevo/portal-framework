@@ -1,15 +1,8 @@
 {
-    "application": {
-        "fullscreen": false,
-        "scheduler-threads": 0,
-        "window": {
-            "height": 900,
-            "width": 1600
-        }
-    },
-
-    "engine": {
+    "project": {
+        "name": "Engine Test",
         "starting_scene": "game/gltf-Scene-Scene",
+
         "include_engine_resources": true,
         "resources": [
             {
@@ -17,6 +10,15 @@
                 "type": "Folder"
             }
         ]
+    },
+
+    "application": {
+        "fullscreen": false,
+        "scheduler-threads": 0,
+        "window": {
+            "height": 900,
+            "width": 1600
+        }
     },
 
     "log-level": "Debug"

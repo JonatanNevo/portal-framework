@@ -86,8 +86,7 @@ SceneLoader::SceneLoader(ResourceRegistry& registry) : ResourceLoader(registry)
 Reference<Resource> SceneLoader::load(const SourceMetadata& meta, const ResourceSource& source)
 {
     const auto description = load_scene_description(meta, source);
-    const auto scene = make_reference<Scene>(meta.resource_id);
-    registry.configure_ecs_registry(scene->get_registry());
+    const auto scene = make_reference<Scene>(meta.resource_id, registry.get_ecs_registry());
 
     load_scene_nodes(scene->get_scene_entity(), scene->get_registry(), description);
     return scene;
@@ -105,12 +104,7 @@ public:
 
     void operator()(const TransformSceneComponent& transform_component)
     {
-        entity.patch_component<TransformComponent>(
-            [transform_component](auto& comp)
-            {
-                comp.set_matrix(transform_component.transform);
-            }
-        );
+        entity.add_component<TransformComponent>(transform_component.transform);
     }
 
     void operator()(const MeshSceneComponent& mesh_component)

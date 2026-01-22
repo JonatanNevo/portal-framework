@@ -23,9 +23,9 @@ StringId find_database_prefix(const StringId& resource_id)
     return STRING_ID(first_part);
 }
 
-void ResourceDatabaseFacade::register_database(const DatabaseDescription& description)
+void ResourceDatabaseFacade::register_database(const Project& project, const DatabaseDescription& description)
 {
-    auto&& database = ResourceDatabaseFactory::create(description);
+    auto&& database = ResourceDatabaseFactory::create(project, description);
     PORTAL_ASSERT(database, "Failed to create database");
     databases.emplace(database->get_name(), std::move(database));
 }

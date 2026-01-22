@@ -30,6 +30,7 @@ struct MaterialProperties
     std::unordered_set<StringId> global_descriptor_sets;
     size_t set_start_index = 0;
     size_t set_end_index = std::numeric_limits<size_t>::max();
+    size_t frames_in_flight = 3;
 
     Reference<Texture> default_texture;
 };

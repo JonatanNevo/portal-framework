@@ -15,7 +15,7 @@ namespace portal
 class ResourceDatabaseFacade final : public ResourceDatabase
 {
 public:
-    void register_database(const DatabaseDescription& description);
+    void register_database(const Project& project, const DatabaseDescription& description);
 
     std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) override;
     std::unique_ptr<resources::ResourceSource> create_source(StringId resource_id,SourceMetadata meta) override;

@@ -259,7 +259,7 @@ static void glfw_cursor_pos_callback(GLFWwindow* handle, double x_pos, double y_
     }
 }
 
-GlfwWindow::GlfwWindow(const WindowProperties& properties, const CallbackConsumers& consumers) : Window(properties, consumers)
+GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& properties, const CallbackConsumers& consumers) : Window(properties, consumers), settings(settings)
 {
     LOGGER_INFO("Creating window \"{}\" ({}x{})", properties.title.string, properties.extent.width, properties.extent.height);
 
@@ -369,7 +369,7 @@ Reference<renderer::Surface> GlfwWindow::create_surface(const renderer::vulkan::
         .min_frames_in_flight = properties.requested_frames_in_flight,
         .window = std::reference_wrapper{*this}
     };
-    return make_reference<renderer::vulkan::VulkanSurface>(context, props);
+    return make_reference<renderer::vulkan::VulkanSurface>(settings, context, props);
 }
 
 void GlfwWindow::process_events()

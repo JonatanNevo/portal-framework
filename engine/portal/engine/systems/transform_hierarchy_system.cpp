@@ -40,16 +40,21 @@ void TransformHierarchySystem::execute(ecs::Registry& registry)
         }
     );
 
-    for (auto&& [entity_raw, transform] : transforms_to_update.each())
+    for (auto&& [entity_raw, transform, relationship] : transforms_to_update.each())
     {
-        auto entity = registry.entity_from_id(entity_raw);
-        const auto& relationship = entity.get_component<RelationshipComponent>();
-
         auto parent_matrix = glm::mat4(1.0f);
         if (relationship.parent != null_entity)
         {
-            auto& parent_transform = relationship.parent.get_component<TransformComponent>();
-            parent_matrix = parent_transform.get_world_matrix();
+            if (relationship.parent.has_component<TransformComponent>())
+            {
+                auto& parent_transform = relationship.parent.get_component<TransformComponent>();
+                parent_matrix = parent_transform.get_world_matrix();
+            }
+            else
+            {
+                parent_matrix = glm::mat4(1.0f);
+            }
+
         }
         transform.calculate_world_matrix(parent_matrix);
     }

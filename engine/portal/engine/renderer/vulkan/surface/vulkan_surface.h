@@ -7,6 +7,10 @@
 #include "portal/engine/renderer/surface/surface.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 
+namespace portal {
+class ProjectSettings;
+}
+
 namespace portal::renderer::vulkan
 {
 /**
@@ -23,7 +27,7 @@ public:
      * @param context Vulkan context
      * @param properties Surface configuration
      */
-    explicit VulkanSurface(const VulkanContext& context, const SurfaceProperties& properties);
+    explicit VulkanSurface(ProjectSettings& settings, const VulkanContext& context, const SurfaceProperties& properties);
 
     /** @brief Gets surface capabilities */
     [[nodiscard]] const SurfaceCapabilities& get_capabilities() const override;

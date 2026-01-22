@@ -11,7 +11,7 @@
 
 namespace portal
 {
-class TransformHierarchySystem final : public ecs::System<TransformHierarchySystem, ecs::Owns<TransformDirtyTag>, ecs::Owns<TransformComponent>>
+class TransformHierarchySystem final : public ecs::System<TransformHierarchySystem, ecs::Owns<TransformDirtyTag>, ecs::Owns<TransformComponent>, ecs::Views<RelationshipComponent>>
 {
 public:
     static void execute(ecs::Registry& registry);

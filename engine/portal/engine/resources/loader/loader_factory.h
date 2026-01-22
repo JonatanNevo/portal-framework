@@ -13,6 +13,7 @@
 
 namespace portal
 {
+class Project;
 class RendererContext;
 class ResourceRegistry;
 }
@@ -36,7 +37,7 @@ public:
 class LoaderFactory
 {
 public:
-    LoaderFactory(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
+    LoaderFactory(const Project& project, ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
     ResourceLoader& get(const SourceMetadata& meta);
 
