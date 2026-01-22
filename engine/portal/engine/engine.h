@@ -27,18 +27,16 @@ class Engine : public Application, public WindowEventConsumer
 public:
     /**
      * @brief Constructs the engine.
+     * @param project
      * @param properties Application configuration.
      * @param editor If true, initializes in editor mode with EditorModule.
      */
-    explicit Engine(const ApplicationProperties& properties, bool editor);
+    explicit Engine(const Reference<Project>& project, const ApplicationProperties& properties, bool editor);
 
     ~Engine() override;
 
     /** @brief Initializes engine subsystems and modules. */
     void prepare() override;
-
-    /** @brief Sets up a scene for rendering. */
-    void setup_scene(ResourceReference<Scene> scene) const;
 
     /** @brief Processes window and input events. */
     void process_events() override;
@@ -49,8 +47,11 @@ public:
 
     [[nodiscard]] EngineContext& get_engine_context() const { return *engine_context; }
 
+protected:
+    ProjectSettings& get_settings() const override;
+
 private:
-    ecs::Registry ecs_registry{};
+    Reference<Project> project;
     std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;
     Reference<Window> window = nullptr;
     Reference<renderer::vulkan::VulkanSwapchain> swapchain = nullptr;

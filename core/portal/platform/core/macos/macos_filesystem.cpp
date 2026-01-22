@@ -157,24 +157,24 @@ std::filesystem::path FileSystem::get_root_path()
     return bundle_path;
 }
 
-std::filesystem::path FileSystem::get_data_home()
+std::filesystem::path FileSystem::get_data_home(const std::filesystem::path& app_name)
 {
-    return get_home() / "Library" / "Application Support" / PORTAL_APPLICATION_NAME;
+    return get_home() / "Library" / "Application Support" / app_name;
 }
 
-std::filesystem::path FileSystem::get_config_home()
+std::filesystem::path FileSystem::get_config_home(const std::filesystem::path& app_name)
 {
-    return get_home() / "Library" / "Application Support" / PORTAL_APPLICATION_NAME / "config";
+    return get_home() / "Library" / "Application Support" / app_name / "config";
 }
 
-std::filesystem::path FileSystem::get_cache_dir()
+std::filesystem::path FileSystem::get_cache_dir(const std::filesystem::path app_name)
 {
-    return get_home() / "Library" / "Caches" / PORTAL_APPLICATION_NAME;
+    return get_home() / "Library" / "Caches" / app_name;
 }
 
-std::filesystem::path FileSystem::get_state_dir()
+std::filesystem::path FileSystem::get_state_dir(const std::filesystem::path app_name)
 {
-    return get_home() / "Library" / "Application Support" / PORTAL_APPLICATION_NAME;
+    return get_home() / "Library" / "Application Support" / app_name;
 }
 
 std::filesystem::path FileSystem::get_desktop_folder()

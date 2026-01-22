@@ -16,6 +16,7 @@ class TransformComponent
 public:
     TransformComponent() = default;
     explicit TransformComponent(const glm::vec3& translation);
+    explicit TransformComponent(const glm::mat4& transform);
     TransformComponent(const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale);
 
     void set_matrix(const glm::mat4& matrix);

@@ -12,6 +12,8 @@
 
 namespace portal
 {
+class Project;
+
 namespace renderer
 {
     class ShaderVariant;
@@ -48,7 +50,7 @@ struct MaterialDetails
 class MaterialLoader final : public ResourceLoader
 {
 public:
-    MaterialLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
+    MaterialLoader(const Project& project, ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
     Reference<Resource> load(const SourceMetadata&, const ResourceSource&) override;
     static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
@@ -61,6 +63,7 @@ protected:
 private:
     const renderer::vulkan::VulkanContext& context;
 
+    const Project& project;
     Reference<renderer::vulkan::VulkanPipeline> transparent_pipeline;
     Reference<renderer::vulkan::VulkanPipeline> color_pipeline;
 };

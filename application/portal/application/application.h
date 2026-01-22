@@ -11,10 +11,12 @@
 #include <portal/core/strings/string_id.h>
 #include <portal/core/events/event_handler.h>
 
+#include "settings.h"
 #include "modules/module_stack.h"
 
 namespace portal
 {
+class Project;
 /**
  * @struct ApplicationProperties application.h portal/application/application.h
  * Configuration properties for Portal application initialization.
@@ -30,8 +32,6 @@ struct ApplicationProperties
     size_t height = 900;
 
     bool resizeable = true;
-
-    static ApplicationProperties from_settings();
 };
 
 /**
@@ -81,6 +81,8 @@ public:
     explicit Application(const ApplicationProperties& properties);
     virtual ~Application();
 
+    virtual void build_dependency_graph();
+
     virtual void prepare() {};
 
     /**
@@ -115,6 +117,9 @@ public:
      * @return true if the game loop should continue, false to exit
      */
     [[nodiscard]] virtual bool should_run() const;
+
+protected:
+    virtual ProjectSettings& get_settings() const = 0;
 
 protected:
     ApplicationProperties properties;

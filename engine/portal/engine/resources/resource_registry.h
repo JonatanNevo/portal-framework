@@ -30,7 +30,6 @@
 #include "portal/engine/reference.h"
 #include "portal/engine/ecs/registry.h"
 #include "portal/engine/modules/scheduler_module.h"
-#include "portal/engine/modules/system_orchestrator.h"
 #include "portal/engine/resources/resources/resource.h"
 
 namespace portal::renderer::vulkan
@@ -116,14 +115,15 @@ class ResourceRegistry
 public:
     /**
      * @brief Constructor
-     * @param orchestrator
+     * @param ecs_registry
      * @param scheduler
      * @param database
      * @param reference_manager
      * @param context Vulkan context for resource creation
      */
     ResourceRegistry(
-        SystemOrchestrator& orchestrator,
+        const Project& project,
+        ecs::Registry& ecs_registry,
         jobs::Scheduler& scheduler,
         ResourceDatabase& database,
         ReferenceManager& reference_manager,
@@ -242,8 +242,7 @@ public:
         );
     }
 
-    void configure_ecs_registry(ecs::Registry& ecs_registry) const;
-
+    [[nodiscard]] ecs::Registry& get_ecs_registry() const { return ecs_registry; }
 protected:
     /**
      * Gets a pointer to the resource from a handle, if the resource is invalid, returns the invalid state instead
@@ -279,7 +278,7 @@ private:
     template <ResourceConcept T>
     friend class ResourceReference;
 
-    SystemOrchestrator& orchestrator;
+    ecs::Registry& ecs_registry;
     jobs::Scheduler& scheduler;
     ResourceDatabase& database;
     ReferenceManager& reference_manager;

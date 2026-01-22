@@ -23,7 +23,7 @@ class ReferenceManager;
  * - ResourceRegistry for storing and accessing loaded resources
  *
  */
-class ResourcesModule final: public Module<SchedulerModule, SystemOrchestrator>
+class ResourcesModule final: public Module<SchedulerModule, ecs::Registry>
 {
 public:
     /**
@@ -31,12 +31,7 @@ public:
      * @param stack The module stack this module belongs to.
      * @param context The Vulkan context for GPU resource creation.
      */
-    ResourcesModule(ModuleStack& stack, renderer::vulkan::VulkanContext& context);
-
-    /**
-     * @brief Destructor.
-     */
-    ~ResourcesModule();
+    ResourcesModule(ModuleStack& stack, Project& project, renderer::vulkan::VulkanContext& context);
 
     /**
      * @brief Gets the resource registry.
@@ -45,7 +40,6 @@ public:
     [[nodiscard]] ResourceRegistry& get_registry() const { return *registry; }
 
 private:
-    std::unique_ptr<ResourceDatabaseFacade> database;
     std::unique_ptr<ReferenceManager> reference_manager;
     std::unique_ptr<ResourceRegistry> registry;
 };

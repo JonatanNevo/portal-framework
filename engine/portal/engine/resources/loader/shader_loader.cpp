@@ -61,13 +61,13 @@ Reference<Resource> ShaderLoader::load_precompiled_shader(const SourceMetadata&,
     //         .size = sizeof(vulkan::GPUDrawPushConstants)
     //     },
     //     .shader_module = std::make_shared<vk::raii::ShaderModule>(context->create_shader_module(shader->code)),
-    //     .entry_point = "vert_main"
+    //     .entry_point.h = "vert_main"
     // };
     //
     // shader->shader_data[vk::ShaderStageFlagBits::eFragment] = {
     //     .push_constant_range = {},
     //     .shader_module = std::make_shared<vk::raii::ShaderModule>(context->create_shader_module(shader->code)),
-    //     .entry_point = "frag_main"
+    //     .entry_point.h = "frag_main"
     // };
 
     return nullptr;

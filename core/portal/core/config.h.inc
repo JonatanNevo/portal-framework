@@ -29,10 +29,3 @@
 #ifndef PORTAL_DIST
 #cmakedefine PORTAL_DEBUG_ALLOCATIONS
 #endif
-
-namespace portal
-{
-
-extern const std::string_view PORTAL_APPLICATION_NAME;
-
-}

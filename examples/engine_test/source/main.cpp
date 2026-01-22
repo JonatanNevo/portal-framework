@@ -3,8 +3,7 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
-#include "portal/application/application.h"
-#include "portal/application/entry_point.h"
+#include "portal/engine/entry_point.h"
 
 #include "portal/engine/engine.h"
 #include "portal/engine/components/base.h"
@@ -16,10 +15,10 @@
 
 using namespace portal;
 
-std::unique_ptr<Application> portal::create_application(int, char**)
+std::unique_ptr<Application> portal::create_engine_application(Reference<Project>&& project, int, char**)
 {
-    const auto prop = ApplicationProperties::from_settings();
-    auto engine = std::make_unique<Engine>(prop, true);
+    const ApplicationProperties prop = from_project(*project);
+    auto engine = std::make_unique<Engine>(project, prop, true);
 
     // TODO: Should not be here
     auto& engine_context = engine->get_engine_context();
@@ -31,6 +30,8 @@ std::unique_ptr<Application> portal::create_application(int, char**)
     auto camera = scene->get_registry().create_entity(STRING_ID("Camera"));
     camera.add_component<PlayerTag>();
     camera.add_component<InputComponent>();
+    camera.add_component<TransformComponent>();
+    camera.add_component<RelationshipComponent>();
     auto& controller = camera.add_component<BaseCameraController>();
     auto& camera_comp = camera.add_component<CameraComponent>();
     camera.add_component<MainCameraTag>();

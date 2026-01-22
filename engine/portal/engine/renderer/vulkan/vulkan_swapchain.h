@@ -74,7 +74,7 @@ public:
      * @param context Vulkan context
      * @param surface Presentation surface
      */
-    VulkanSwapchain(VulkanContext& context, const Reference<Surface>& surface);
+    VulkanSwapchain(ProjectSettings& settings, VulkanContext& context, const Reference<Surface>& surface);
 
     /**
      * @brief Creates swapchain with requested dimensions and vsync
@@ -146,6 +146,7 @@ private:
     void clean_frame(const FrameContext& frame);
 
 private:
+    ProjectSettings& settings;
     VulkanContext& context;
     bool vsync = false;
 

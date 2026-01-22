@@ -8,6 +8,14 @@
 
 #include "entity.h"
 #include "system_base.h"
+#include "portal/application/modules/module.h"
+#include "portal/engine/components/base.h"
+#include "portal/engine/components/relationship.h"
+
+namespace portal
+{
+struct RelationshipComponent;
+}
 
 namespace portal::ecs
 {
@@ -56,7 +64,7 @@ namespace portal::ecs
  * @see Entity for component access and manipulation
  * @see System for defining game logic that operates on entities
  */
-class Registry
+class Registry final : public Module<>
 {
 public:
     constexpr static auto ENV_ENTITY_ID = "env";
@@ -68,12 +76,12 @@ public:
      * (RelationshipComponent, TransformComponent) to be attached to all
      * subsequently created entities.
      */
-    Registry();
+    Registry(ModuleStack& stack);
 
     /**
      * @brief Destroys the Registry and all associated entities.
      */
-    ~Registry();
+    ~Registry() override;
 
     /**
      * @brief Wraps a raw EnTT entity ID in a Portal Entity handle.
@@ -92,22 +100,21 @@ public:
      * returns the existing entity. If not found, creates a new top-level entity
      * with that name.
      *
-     * @param name The unique identifier for the entity
+     * @param entity_name The unique identifier for the entity
      * @return The found or newly created entity
      *
      * @note This creates a top-level entity (no parent) if creation is needed.
      * @see find_or_create_child for scoped creation under a parent
      */
-    Entity find_or_create(const StringId& name);
+    Entity find_or_create(const StringId& entity_name);
 
     /**
      * @brief Creates a new top-level entity.
      *
-     * Creates an entity with no parent. The entity automatically receives
-     * default components (RelationshipComponent, TransformComponent) and
-     * optionally a NameComponent if a name is provided.
+     * Creates an entity with no default components, only a name component if a name is provided
      *
      * @param name Optional unique identifier for the entity (defaults to INVALID_STRING_ID)
+     * @param components An optional list of additional components to add to the entity
      * @return The newly created entity
      *
      * @par Example:
@@ -116,7 +123,14 @@ public:
      * auto unnamed = registry.create_entity(); // Anonymous entity
      * @endcode
      */
-    Entity create_entity(const StringId& name = INVALID_STRING_ID);
+    template <typename... Components>
+    Entity create_entity(const StringId& name = INVALID_STRING_ID, Components&&... components)
+    {
+        if (name != INVALID_STRING_ID)
+            return make_entity<Components...>(NameComponent{name}, std::forward<Components>(components)...);
+        return make_entity<Components...>(std::forward<Components>(components)...);
+    }
+
 
     /**
      * @brief Finds a child entity by name, or creates it if it doesn't exist.
@@ -126,12 +140,12 @@ public:
      * a new child entity with that name.
      *
      * @param parent The parent entity to search under
-     * @param name The unique identifier for the child entity
+     * @param entity_name The unique identifier for the child entity
      * @return The found or newly created child entity
      *
      * @note The search is scoped to direct children only, not descendants.
      */
-    Entity find_or_create_child(Entity parent, const StringId& name);
+    Entity find_or_create_child(Entity parent, const StringId& entity_name);
 
     /**
      * @brief Creates a new entity as a child of the specified parent.
@@ -141,7 +155,7 @@ public:
      * linked into the parent's child list via RelationshipComponent.
      *
      * @param parent The parent entity
-     * @param name Optional unique identifier for the child entity
+     * @param entity_name Optional unique identifier for the child entity
      * @return The newly created child entity
      *
      * @par Example:
@@ -153,7 +167,7 @@ public:
      *
      * @see Entity::set_parent for reparenting existing entities
      */
-    Entity create_child_entity(Entity parent, const StringId& name = INVALID_STRING_ID);
+    Entity create_child_entity(Entity parent, const StringId& entity_name = INVALID_STRING_ID);
 
     /**
      * @brief Returns the special environment entity.
@@ -396,6 +410,17 @@ public:
      * @note Prefer Portal's Entity and Registry methods for typical usage.
      */
     [[nodiscard]] entt::registry& get_raw_registry() { return registry; }
+
+protected:
+    template <typename... Components>
+    Entity make_entity(Components&&... components)
+    {
+        PORTAL_PROF_ZONE();
+
+        auto entity = Entity{registry.create(), registry};
+        (entity.add_component<Components>(std::forward<Components>(components)), ...);
+        return entity;
+    }
 
 private:
     template <typename... T>

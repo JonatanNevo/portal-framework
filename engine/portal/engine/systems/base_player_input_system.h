@@ -19,11 +19,19 @@ class BasePlayerInputSystem : public ecs::System<
     >
 {
 public:
+    BasePlayerInputSystem(InputManager& input_manager);
+
     static void execute(ecs::Registry& registry);
 
     static void enable_mouse(const InputManager* input);
     static void disable_mouse(const InputManager* input);
 
+    void on_component_added(Entity entity, InputComponent& input_component) const;
+    void on_component_changed(Entity entity, InputComponent& input_component) const;
+
     [[nodiscard]] static StringId get_name() { return STRING_ID("Base Player Input"); };
+
+private:
+    InputManager& input_manager;
 };
 } // portal

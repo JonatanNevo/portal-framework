@@ -9,6 +9,8 @@
 
 namespace portal
 {
+BasePlayerInputSystem::BasePlayerInputSystem(InputManager& input_manager) : input_manager(input_manager) {}
+
 void BasePlayerInputSystem::execute(ecs::Registry& registry)
 {
     const auto player_group = group(registry);
@@ -57,5 +59,15 @@ void BasePlayerInputSystem::enable_mouse(const InputManager* input)
 void BasePlayerInputSystem::disable_mouse(const InputManager* input)
 {
     input->set_cursor_mode(CursorMode::Locked);
+}
+
+void BasePlayerInputSystem::on_component_added(Entity, InputComponent& input_component) const
+{
+    input_component.input_manager = &input_manager;
+}
+
+void BasePlayerInputSystem::on_component_changed(Entity, InputComponent& input_component) const
+{
+    input_component.input_manager = &input_manager;
 }
 } // portal

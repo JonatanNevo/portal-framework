@@ -11,34 +11,28 @@
 #include "portal/application/modules/module.h"
 #include "portal/input/input_manager.h"
 #include "portal/engine/ecs/registry.h"
+#include "portal/engine/systems/base_camera_system.h"
+#include "portal/engine/systems/base_player_input_system.h"
+#include "portal/engine/systems/scene_rendering_system.h"
+#include "portal/engine/systems/transform_hierarchy_system.h"
 
 namespace portal
 {
-class BasePlayerInputSystem;
-class BaseCameraSystem;
-class TransformHierarchySystem;
-class SceneRenderingSystem;
 
 // TODO: support dependencies between systems and parallel system execution
 // TODO: support dynamic system declaration
 // TODO: support creating system stack from file
-class SystemOrchestrator final : public TaggedModule<Tag<ModuleTags::Update, ModuleTags::FrameLifecycle>, SchedulerModule, InputManager>
+class SystemOrchestrator final : public TaggedModule<Tag<ModuleTags::Update, ModuleTags::FrameLifecycle>, ecs::Registry, SchedulerModule, InputManager>
 {
 public:
     explicit SystemOrchestrator(ModuleStack& stack);
-    ~SystemOrchestrator() override;
-
     void set_active_scene(Scene& scene);
     [[nodiscard]] Scene* get_active_scene() const { return active_scene; }
-
-    void register_systems(ecs::Registry& registry);
 
     void begin_frame(FrameContext& frame) override;
     void update(FrameContext& frame) override;
 
 private:
-    // TODO: support multiple registries in parallel?
-    ecs::Registry* active_registry = nullptr;
     Scene* active_scene = nullptr;
 
     std::unique_ptr<BasePlayerInputSystem> player_input_system;

@@ -11,12 +11,11 @@
 #include <vector>
 
 #include "portal/application/frame_context.h"
+#include "portal/application/modules/base_module.h"
 
 namespace portal
 {
 class Event;
-
-class BaseModule;
 
 // TODO: find a better name?
 // TODO: differentiate between using modules for dependency graph and memory allocation to using modules for polymorphisem flow control

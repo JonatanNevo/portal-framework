@@ -34,7 +34,7 @@ VulkanMaterial::VulkanMaterial(const MaterialProperties& properties, const Vulka
         .start_set = properties.set_start_index,
         .end_set = properties.set_end_index,
         .default_texture = properties.default_texture,
-        .frame_in_flights = Settings::get().get_setting<size_t>("application.frames_in_flight", 3)
+        .frame_in_flights = properties.frames_in_flight
     };
     descriptor_manager = VulkanDescriptorSetManager::create_unique(descriptor_prop, device);
 

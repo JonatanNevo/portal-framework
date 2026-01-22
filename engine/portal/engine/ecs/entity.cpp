@@ -17,6 +17,12 @@ Entity::Entity(const entt::handle handle) : handle(handle) {}
 
 void Entity::set_parent(Entity parent)
 {
+    if (!has_component<RelationshipComponent>())
+    {
+        PORTAL_ASSERT(false, "Entity does not have a RelationshipComponent");
+        return;
+    }
+
     auto current_parent = get_parent();
     if (current_parent == parent)
         return;
@@ -57,6 +63,12 @@ void Entity::set_parent(Entity parent)
 
 bool Entity::remove_child(Entity child)
 {
+    if (!has_component<RelationshipComponent>())
+    {
+        PORTAL_ASSERT(false, "Entity does not have a RelationshipComponent");
+        return false;
+    }
+
     auto& child_rel = child.get_component<RelationshipComponent>();
     auto& parent_rel = get_component<RelationshipComponent>();
 
@@ -116,6 +128,12 @@ bool Entity::operator==(const Entity& other) const
 
 Entity Entity::get_parent() const
 {
+    if (!has_component<RelationshipComponent>())
+    {
+        PORTAL_ASSERT(false, "Entity does not have a RelationshipComponent");
+        return null_entity;
+    }
+
     return {get_component<RelationshipComponent>().parent, *handle.registry()};
 }
 
@@ -126,16 +144,24 @@ entt::entity Entity::get_parent_id() const
 
 ChildRange Entity::children() const
 {
+    PORTAL_ASSERT(has_component<RelationshipComponent>(), "Entity does not have a RelationshipComponent");
     return ChildRange(*this);
 }
 
 RecursiveChildRange Entity::descendants() const
 {
+    PORTAL_ASSERT(has_component<RelationshipComponent>(), "Entity does not have a RelationshipComponent");
     return RecursiveChildRange(*this);
 }
 
 bool Entity::is_ancestor_of(const Entity other) const
 {
+    if (!has_component<RelationshipComponent>())
+    {
+        PORTAL_ASSERT(false, "Entity does not have a RelationshipComponent");
+        return false;
+    }
+
     auto& relationship = get_component<RelationshipComponent>();
 
     if (relationship.children == 0)

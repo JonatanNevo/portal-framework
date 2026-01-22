@@ -8,30 +8,16 @@
 #include <GLFW/glfw3.h>
 
 #include "settings.h"
-#include "portal/application/modules/base_module.h"
 #include "portal/core/log.h"
 #include "portal/core/debug/profile.h"
 
 namespace portal
 {
+class Project;
 class WindowResizeEvent;
 class WindowCloseEvent;
 
 static auto logger = Log::get_logger("Application");
-
-ApplicationProperties ApplicationProperties::from_settings()
-{
-    auto& settings = Settings::get();
-
-    const auto width = settings.get_setting<size_t>("application.window.width");
-    const auto height = settings.get_setting<size_t>("application.window.height");
-
-    return ApplicationProperties{
-        .name = STRING_ID(PORTAL_APPLICATION_NAME),
-        .width = width.value(),
-        .height = height.value()
-    };
-}
 
 Application::Application(const ApplicationProperties& properties) : properties(properties)
 {}
@@ -41,9 +27,14 @@ Application::~Application()
     modules.clean();
 }
 
+void Application::build_dependency_graph()
+{
+    modules.build_dependency_graph();
+}
+
 void Application::run()
 {
-    auto frames_in_flight = Settings::get().get_setting<size_t>("application.frames_in_flight", 3);
+    auto frames_in_flight =  get_settings().get_setting<size_t>("application.frames_in_flight", 3);
     try
     {
         should_stop.clear();

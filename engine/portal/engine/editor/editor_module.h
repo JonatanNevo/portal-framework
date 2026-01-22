@@ -41,6 +41,7 @@ class EditorModule final : public TaggedModule<
 public:
     EditorModule(
         ModuleStack& stack,
+        Project& project,
         renderer::vulkan::VulkanContext& context,
         renderer::vulkan::VulkanSwapchain& swapchain,
         const Window& window
@@ -53,6 +54,7 @@ public:
     void on_event(Event& event) override;
 
 private:
+    [[maybe_unused]] Project& project;
     [[maybe_unused]] const Window& window;
     renderer::vulkan::VulkanSwapchain& swapchain;
     RuntimeModule runtime_module;

@@ -34,7 +34,7 @@ DatabaseDescription DatabaseDescription::dearchive(ArchiveObject& archive)
     return description;
 }
 
-std::unique_ptr<ResourceDatabase> ResourceDatabaseFactory::create(const DatabaseDescription& description)
+std::unique_ptr<ResourceDatabase> ResourceDatabaseFactory::create(const Project& project, const DatabaseDescription& description)
 {
     switch (description.type)
     {
@@ -44,7 +44,7 @@ std::unique_ptr<ResourceDatabase> ResourceDatabaseFactory::create(const Database
 
     case DatabaseType::Folder:
         PORTAL_ASSERT(description.path.has_value(), "Invalid database description for Folder database");
-        return FolderResourceDatabase::create(description.path.value());
+        return FolderResourceDatabase::create(project, description.path.value());
     }
 
     return nullptr;

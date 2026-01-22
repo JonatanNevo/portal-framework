@@ -17,14 +17,16 @@ namespace portal
 {
 EditorModule::EditorModule(
     ModuleStack& stack,
+    Project& project,
     renderer::vulkan::VulkanContext& context,
     renderer::vulkan::VulkanSwapchain& swapchain,
     const Window& window
 )
     : TaggedModule(stack, STRING_ID("Editor Module")),
+      project(project),
       window(window),
       swapchain(swapchain),
-      runtime_module(stack, context, swapchain),
+      runtime_module(stack, project, context, swapchain),
       im_gui_renderer(get_dependency<ResourcesModule>().get_registry(), window, swapchain),
       viewport(swapchain, runtime_module)
 {
@@ -47,7 +49,8 @@ void EditorModule::gui_update(FrameContext& frame)
     io.ConfigWindowsResizeFromEdges = io.BackendFlags & ImGuiBackendFlags_HasMouseCursors;
 
 
-    constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize
+    constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoResize
         | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     const ImGuiViewport* imgui_viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(imgui_viewport->Pos);

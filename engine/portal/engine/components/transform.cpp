@@ -15,6 +15,11 @@ namespace portal
 {
 TransformComponent::TransformComponent(const glm::vec3& translation) : translation(translation) {}
 
+TransformComponent::TransformComponent(const glm::mat4& transform)
+{
+    set_matrix(transform);
+}
+
 TransformComponent::TransformComponent(const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale)
     : translation(translation), rotation(rotation), scale(scale), rotation_euler(glm::eulerAngles(rotation))
 {}

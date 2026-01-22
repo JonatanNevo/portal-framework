@@ -5,6 +5,7 @@
 
 #include "registry.h"
 
+#include "portal/application/modules/module_stack.h"
 #include "portal/core/debug/profile.h"
 #include "portal/engine/components/base.h"
 #include "portal/engine/components/relationship.h"
@@ -14,15 +15,11 @@ namespace portal::ecs
 {
 static auto logger = Log::get_logger("ECS Registry");
 
-Registry::Registry(): registry(), env_entity(registry.create())
+Registry::Registry(ModuleStack& stack) : TaggedModule(stack, STRING_ID("ECS Registry")), registry(), env_entity(registry.create())
 {
     // Entity that holds global values
     registry.emplace<NameComponent>(env_entity, STRING_ID(ENV_ENTITY_ID));
     registry.emplace<RelationshipComponent>(env_entity);
-
-    // All entities should have a relationship component, except the `scene` which is used as a global state
-    add_default_component<RelationshipComponent>();
-    add_default_component<TransformComponent>();
 }
 
 Registry::~Registry()
@@ -37,51 +34,52 @@ Entity Registry::entity_from_id(const entt::entity id)
     return Entity{id, registry};
 }
 
-Entity Registry::find_or_create(const StringId& name)
+Entity Registry::find_or_create(const StringId& entity_name)
 {
     for (auto&& [entity, tag] : view_raw<NameComponent>().each())
     {
-        if (tag.name == name)
+        if (tag.name == entity_name)
             return entity_from_id(entity);
     }
 
-    return create_entity(name);
-}
-
-Entity Registry::create_entity(const StringId& name)
-{
-    return create_child_entity({entt::handle{}}, name);
-}
-
-Entity Registry::find_or_create_child(const Entity parent, const StringId& name)
-{
-    for (auto&& [entity, tag] : view_raw<NameComponent>().each())
-    {
-        if (tag.name == name)
-            return entity_from_id(entity);
-    }
-
-    return create_child_entity(parent, name);
-}
-
-Entity Registry::create_child_entity(const Entity parent, const StringId& name)
-{
-    PORTAL_PROF_ZONE();
-
-    auto entity = Entity{registry.create(), registry};
-
-    if (name != INVALID_STRING_ID)
-        entity.add_component<NameComponent>(name);
-
-    if (parent)
-        entity.set_parent(parent);
-
-    return entity;
+    return create_entity(entity_name);
 }
 
 Entity Registry::get_env_entity() const
 {
     return Entity{env_entity, const_cast<entt::registry&>(registry)};
+}
+
+Entity Registry::find_or_create_child(Entity parent, const StringId& entity_name)
+{
+    PORTAL_PROF_ZONE();
+
+    for (auto&& [entity, tag] : view_raw<NameComponent>().each())
+    {
+        if (tag.name == entity_name)
+            return entity_from_id(entity);
+    }
+
+    return create_child_entity(parent, entity_name);
+}
+
+Entity Registry::create_child_entity(Entity parent, const StringId& entity_name)
+{
+    PORTAL_PROF_ZONE();
+
+    Entity child;
+    if (entity_name != INVALID_STRING_ID)
+        child = make_entity<NameComponent, RelationshipComponent>(
+            NameComponent{entity_name},
+            RelationshipComponent{}
+        );
+    else
+        child = make_entity<RelationshipComponent>(RelationshipComponent{});
+
+    if (parent)
+        child.set_parent(parent);
+
+    return child;
 }
 
 void Registry::destroy_entity(const Entity entity, const bool exclude_children)

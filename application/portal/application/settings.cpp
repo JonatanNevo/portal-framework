@@ -14,58 +14,43 @@
 
 namespace portal
 {
-static std::unique_ptr<Settings> g_settings;
-
 constexpr auto LOG_LEVEL_ENTRY = "log-level";
 
-void Settings::init(const SettingsArchiveType type, const std::filesystem::path& settings_file_name)
-{
-    if (g_settings)
-    {
-        throw std::runtime_error("Settings already initialized");
-    }
 
-    if (!FileSystem::exists(settings_file_name))
+ProjectSettings ProjectSettings::create_settings(
+    const SettingsArchiveType type,
+    const std::filesystem::path& working_directory,
+    const std::filesystem::path& settings_file_name
+)
+{
+    if (!FileSystem::exists(working_directory / settings_file_name))
     {
         throw std::runtime_error("Local settings file does not exist");
     }
 
-    const auto local_settings_path = std::filesystem::current_path() / "settings.json";
+    const auto local_settings_path = working_directory / settings_file_name;
     const auto mutable_settings_path = FileSystem::get_data_home() / settings_file_name;
 
-    g_settings =  std::unique_ptr<Settings>(new Settings(type, local_settings_path));
+    auto output = ProjectSettings(type, local_settings_path);
     if (FileSystem::exists(mutable_settings_path))
     {
-        auto user_settings = Settings(type, mutable_settings_path);
-        g_settings->update(user_settings);
-        g_settings->settings_path = mutable_settings_path;
+        auto user_settings = ProjectSettings(type, mutable_settings_path);
+        output.update(user_settings);
+        output.settings_path = mutable_settings_path;
     }
 
-    auto log_level_string = g_settings->get_setting<std::string>(LOG_LEVEL_ENTRY);
+    auto log_level_string = output.get_setting<std::string>(LOG_LEVEL_ENTRY);
     if (log_level_string)
     {
         const auto log_level = portal::from_string<Log::LogLevel>(*log_level_string);
         Log::set_default_log_level(log_level);
     }
 
-    get().debug_print();
+    output.debug_print();
+    return output;
 }
 
-void Settings::shutdown()
-{
-    g_settings.reset();
-}
-
-Settings& Settings::get()
-{
-    if (!g_settings)
-    {
-        throw std::runtime_error("Settings not initialized");
-    }
-    return *g_settings;
-}
-
-Settings::Settings(const SettingsArchiveType type, const std::filesystem::path& path) : type(type), settings_path(std::filesystem::absolute(path))
+ProjectSettings::ProjectSettings(const SettingsArchiveType type, const std::filesystem::path& path) : type(type), settings_path(std::filesystem::absolute(path))
 {
     switch (type)
     {
@@ -77,12 +62,32 @@ Settings::Settings(const SettingsArchiveType type, const std::filesystem::path& 
     load();
 }
 
-Settings::~Settings()
+ProjectSettings::~ProjectSettings()
 {
-    dump();
+    if (root)
+        dump();
 }
 
-void Settings::load()
+ProjectSettings::ProjectSettings(ProjectSettings&& other) noexcept
+    : ArchiveObject(std::move(other)),
+      type(other.type),
+      settings_path(std::move(other.settings_path)),
+      root(std::move(other.root)) {}
+
+ProjectSettings& ProjectSettings::operator=(ProjectSettings&& other) noexcept
+{
+    std::lock_guard lock_guard(lock);
+    std::lock_guard other_lock_guard(other.lock);
+
+    ArchiveObject::operator=(std::move(other));
+    type = other.type;
+    settings_path = std::move(other.settings_path);
+    root = std::move(other.root);
+
+    return *this;
+}
+
+void ProjectSettings::load()
 {
     switch (type)
     {
@@ -96,7 +101,7 @@ void Settings::load()
     }
 }
 
-void Settings::dump() const
+void ProjectSettings::dump() const
 {
     switch (type)
     {
@@ -110,12 +115,12 @@ void Settings::dump() const
     }
 }
 
-void Settings::debug_print() const
+void ProjectSettings::debug_print() const
 {
     debug_print("", *this);
 }
 
-void Settings::debug_print_scalar(const std::string& name, const reflection::Property& prop) const
+void ProjectSettings::debug_print_scalar(const std::string& name, const reflection::Property& prop) const
 {
     switch (prop.type)
     {
@@ -191,7 +196,7 @@ void Settings::debug_print_scalar(const std::string& name, const reflection::Pro
 }
 
 
-void Settings::debug_print_array(const std::string& name, const reflection::Property& prop) const
+void ProjectSettings::debug_print_array(const std::string& name, const reflection::Property& prop) const
 {
     switch (prop.type)
     {
@@ -293,7 +298,7 @@ void Settings::debug_print_array(const std::string& name, const reflection::Prop
     }
 }
 
-void Settings::debug_print(std::string base_name, const ArchiveObject& object) const
+void ProjectSettings::debug_print(std::string base_name, const ArchiveObject& object) const
 {
     for (auto& [key, prop] : object)
     {
@@ -343,13 +348,13 @@ void Settings::debug_print(std::string base_name, const ArchiveObject& object) c
     }
 }
 
-reflection::Property& Settings::get_property_from_map(const PropertyName name)
+reflection::Property& ProjectSettings::get_property_from_map(const PropertyName name)
 {
     std::lock_guard lock_guard(lock);
     return ArchiveObject::get_property_from_map(name);
 }
 
-reflection::Property& Settings::add_property_to_map(const PropertyName name, reflection::Property&& property)
+reflection::Property& ProjectSettings::add_property_to_map(const PropertyName name, reflection::Property&& property)
 {
     std::lock_guard lock_guard(lock);
     return ArchiveObject::add_property_to_map(name, std::move(property));

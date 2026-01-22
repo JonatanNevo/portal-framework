@@ -11,6 +11,8 @@
 
 namespace portal
 {
+class Project;
+
 enum class DatabaseType
 {
     Unknown,
@@ -35,6 +37,6 @@ struct DatabaseDescription
 class ResourceDatabaseFactory
 {
 public:
-    static std::unique_ptr<ResourceDatabase> create(const DatabaseDescription& description);
+    static std::unique_ptr<ResourceDatabase> create(const Project& project, const DatabaseDescription& description);
 };
 } // portal

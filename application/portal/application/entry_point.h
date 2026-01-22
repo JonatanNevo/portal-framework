@@ -32,7 +32,7 @@
 #include "portal/core/defines/preprocessor.h"
 #include "portal/core/files/file_system.h"
 
-extern std::unique_ptr<portal::Application> portal::create_application(int arc, char** argv);
+extern std::unique_ptr<portal::Application> portal::create_application(int argc, char** argv);
 
 namespace portal
 {
@@ -53,14 +53,14 @@ int main(int argc, char** argv)
     Log::init(
         {
             .default_log_level = Log::LogLevel::Trace,
-            .default_logger_name = PORTAL_APPLICATION_NAME
+            .default_logger_name = "portal"
         }
     );
-    Settings::init(SettingsArchiveType::Json, PORTAL_SETTINGS_FILE_NAME);
 
     try
     {
         auto application = create_application(argc, argv);
+        application->build_dependency_graph();
         application->run();
     }
     catch (std::exception& e)

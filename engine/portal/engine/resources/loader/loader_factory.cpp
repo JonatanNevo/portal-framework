@@ -16,11 +16,11 @@
 
 namespace portal::resources
 {
-LoaderFactory::LoaderFactory(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : stub_loader(registry), context(context)
+LoaderFactory::LoaderFactory(const Project& project, ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : stub_loader(registry), context(context)
 {
     loaders[ResourceType::Texture] = std::make_shared<TextureLoader>(registry, context);
     loaders[ResourceType::Shader] = std::make_shared<ShaderLoader>(registry, context);
-    loaders[ResourceType::Material] = std::make_shared<MaterialLoader>(registry, context);
+    loaders[ResourceType::Material] = std::make_shared<MaterialLoader>(project, registry, context);
     loaders[ResourceType::Mesh] = std::make_shared<MeshLoader>(registry, context);
     loaders[ResourceType::Scene] = std::make_shared<SceneLoader>(registry);
     loaders[ResourceType::Composite] = std::make_shared<GltfLoader>(registry, context);

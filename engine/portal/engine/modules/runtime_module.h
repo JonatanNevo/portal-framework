@@ -40,6 +40,7 @@ public:
      */
     RuntimeModule(
         ModuleStack& stack,
+        Project& project,
         renderer::vulkan::VulkanContext& context,
         renderer::vulkan::VulkanSwapchain& swapchain
     );
@@ -70,6 +71,7 @@ public:
     void inner_end_frame(FrameContext& frame, bool present = true);
 
 private:
+    [[maybe_unused]] Project& project;
     renderer::vulkan::VulkanSwapchain& swapchain;
 
     Renderer renderer;
