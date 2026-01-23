@@ -51,8 +51,8 @@ public:
     [[nodiscard]] std::filesystem::path get_resource_directory() const { return project_directory / properties.resource_directory; }
     [[nodiscard]] std::filesystem::path get_config_directory() const { return project_directory / properties.config_directory; }
 
-    [[nodiscard]] const std::filesystem::path& get_engine_resource_directory() const { return engine_resources_path; }
-    [[nodiscard]] const std::filesystem::path& get_engine_config_directory() const { return engine_config_path; }
+    [[nodiscard]] static std::filesystem::path get_engine_resource_directory();
+    [[nodiscard]] static std::filesystem::path get_engine_config_directory();
 
     [[nodiscard]] ResourceDatabase& get_resource_database() { return resource_database; }
     [[nodiscard]] const ResourceDatabase& get_resource_database() const { return resource_database; }
@@ -67,7 +67,5 @@ private:
     ProjectSettings settings;
 
     ResourceDatabaseFacade resource_database;
-    std::filesystem::path engine_resources_path;
-    std::filesystem::path engine_config_path;
 };
 } // portal
