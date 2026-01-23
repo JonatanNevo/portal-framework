@@ -9,6 +9,7 @@ This function automates the installation process for Portal modules, including:
 - Generating and installing CMake package config and version files
 - Installing file sets (HEADERS and optional additional_headers)
 - Installing associated resources
+- Setting config/resource prefix metadata for installed modules
 - Installing helper CMake scripts
 
 Synopsis
@@ -57,7 +58,11 @@ The function performs the following operations:
    ``PORTAL_RESOURCE_PREFIX`` property in the config file to allow consumers
    to locate resources correctly.
 
-4. **Helper Files**: Any files specified via the ``FILES`` argument are installed
+4. **Config Prefix**: If the target has ``PORTAL_HAS_CONFIG`` set, the generated
+   config file sets ``PORTAL_CONFIG_PREFIX`` on the imported target so consumers
+   can locate installed configs.
+
+5. **Helper Files**: Any files specified via the ``FILES`` argument are installed
    and automatically included in the generated config file.
 
 Installation Locations
@@ -169,6 +174,14 @@ function(portal_install_module MODULE_NAME)
         string(APPEND CONFIG_CONTENT "\n# Set resource prefix for portal::${MODULE_NAME}\n")
         string(APPEND CONFIG_CONTENT "set_target_properties(portal::${MODULE_NAME} PROPERTIES\n")
         string(APPEND CONFIG_CONTENT "    PORTAL_RESOURCE_PREFIX \"\${PACKAGE_PREFIX_DIR}/resources\"\n")
+        string(APPEND CONFIG_CONTENT ")\n")
+    endif ()
+
+    get_target_property(HAS_CONFIG ${TARGET_NAME} PORTAL_HAS_CONFIG)
+    if (HAS_CONFIG AND NOT HAS_CONFIG STREQUAL "PORTAL_HAS_CONFIG-NOTFOUND")
+        string(APPEND CONFIG_CONTENT "\n# Set config prefix for portal::${MODULE_NAME}\n")
+        string(APPEND CONFIG_CONTENT "set_target_properties(portal::${MODULE_NAME} PROPERTIES\n")
+        string(APPEND CONFIG_CONTENT "    PORTAL_CONFIG_PREFIX \"\${PACKAGE_PREFIX_DIR}/config\"\n")
         string(APPEND CONFIG_CONTENT ")\n")
     endif ()
 

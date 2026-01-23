@@ -64,6 +64,7 @@ portal_add_resources(portal-engine
         OUTPUT_NAME
             engine
 )
+portal_add_configs(portal-engine config)
 
 set_target_properties(portal-engine PROPERTIES PORTAL_ENGINE_VERSION ${PROJECT_VERSION})
 set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_ENGINE_VERSION)

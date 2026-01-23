@@ -13,9 +13,11 @@ This section is still under construction, everything is subject to change and mi
 
 portal-add-game
 portal-game-configure-installer
+portal-add-configs
 portal-add-resources
 portal-package-game
 portal-install-game
+portal-fetch-configs
 portal-fetch-resources
 portal-read-settings
 portal-setup-compile-configs

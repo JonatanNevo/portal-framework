@@ -40,7 +40,7 @@ The function performs the following operations:
    using ``GLOB_RECURSE``.
 
 2. **Custom Target Creation**: Creates a custom target named
-   ``<target_name>_copy_<output_name>`` that copies the resource directory to
+   ``<target_name>_copy_resources_<output_name>`` that copies the resource directory to
    ``$<TARGET_FILE_DIR:target>/resources/<output_name>/`` at build time.
 
 3. **Dependency Setup**: Adds the custom target as a dependency of the main target,

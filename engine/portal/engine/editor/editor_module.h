@@ -54,7 +54,10 @@ public:
     void on_event(Event& event) override;
 
 private:
-    [[maybe_unused]] Project& project;
+    void setup_layout_config();
+
+private:
+    Project& project;
     [[maybe_unused]] const Window& window;
     renderer::vulkan::VulkanSwapchain& swapchain;
     RuntimeModule runtime_module;
@@ -63,5 +66,7 @@ private:
 
     EditorContext editor_context;
     Viewport viewport;
+
+    std::string config_path_storage;
 };
 } // portal

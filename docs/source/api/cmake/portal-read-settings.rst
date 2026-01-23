@@ -36,17 +36,20 @@ The function performs the following operations:
    ``$<TARGET_FILE_DIR:target>/<filename>`` using ``copy_if_different`` for
    efficient incremental builds.
 
-3. **Configuration Parsing**: Reads and parses the JSON settings file to extract
-   engine configuration, specifically the ``engine.resources`` array.
+3. **Display Name**: Reads ``project.name`` from the settings JSON to set the
+   ``PORTAL_DISPLAY_NAME`` target property, defaulting to the target name on error.
 
-4. **Resource Configuration**: For each resource entry in the settings:
+4. **Configuration Parsing**: Reads and parses the JSON settings file to extract
+   resource entries from ``project.resources``.
+
+5. **Resource Configuration**: For each resource entry in the settings:
 
    - Extracts the ``type`` and ``path`` fields from the resource object
    - Validates that the path is relative (absolute paths are skipped)
    - Creates custom targets to copy resource directories to the runtime output
    - Registers resources with the ``PORTAL_RESOURCES`` property for installation
 
-5. **Target Dependencies**: Ensures the settings file and resources are copied
+6. **Target Dependencies**: Ensures the settings file and resources are copied
    during the build process by adding appropriate target dependencies.
 
 
