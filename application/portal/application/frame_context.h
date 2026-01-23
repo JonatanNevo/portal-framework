@@ -15,7 +15,6 @@
 #pragma once
 
 #include <any>
-#include <fastgltf/types.hpp>
 
 namespace portal
 {
