@@ -43,7 +43,7 @@ void SystemOrchestrator::update(FrameContext& frame)
 {
     auto& scheduler = get_dependency<SchedulerModule>().get_scheduler();
 
-    PORTAL_ASSERT(frame.active_registry != nullptr, "Invalid registry, cannot run systems");
+    PORTAL_ASSERT(frame.ecs_registry != nullptr, "Invalid registry, cannot run systems");
     player_input_system->_execute(frame, *frame.ecs_registry, scheduler, nullptr);
     camera_system->_execute(frame, *frame.ecs_registry, scheduler, nullptr);
     transform_system->_execute(frame, *frame.ecs_registry, scheduler, nullptr);

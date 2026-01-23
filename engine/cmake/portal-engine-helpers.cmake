@@ -1531,6 +1531,9 @@ function(portal_add_game TARGET_NAME)
     portal_fetch_resources(${TARGET_NAME} portal::engine)
     portal_fetch_configs(${TARGET_NAME} portal::engine)
 
+    portal_fetch_resources(${TARGET_NAME}_editor portal::engine)
+    portal_fetch_configs(${TARGET_NAME}_editor portal::engine)
+
     foreach (RESOURCE_PATH ${ARG_RESOURCE_PATHS})
         portal_add_resources(${TARGET_NAME} ${ARG_RESOURCE_PATHS})
     endforeach ()
