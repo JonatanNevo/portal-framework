@@ -6,6 +6,7 @@
 #include <sstream>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -14,6 +15,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
+
+#include <portal/core/glm.h>
 
 #include "portal/serialization/archive/json_archive.h"
 #include "portal/core/files/file_system.h"
@@ -652,6 +655,154 @@ SCENARIO("JsonArchive handles deep nesting")
                 REQUIRE(level == i);
                 read_current = child;
             }
+        }
+    }
+}
+
+SCENARIO("JsonArchive supports round-trip serialization for GLM matrices")
+{
+    GIVEN("A JsonArchive with GLM matrices")
+    {
+        JsonArchive write_archive;
+
+        THEN("mat2 can be written and read back successfully")
+        {
+            glm::mat2 original(1.0f, 2.0f, 3.0f, 4.0f);
+            write_archive.add_property("mat2_val", original);
+
+            std::stringstream ss;
+            write_archive.dump(ss);
+
+            JsonArchive read_archive;
+            read_archive.read(ss);
+
+            glm::mat2 retrieved;
+            REQUIRE(read_archive.get_property("mat2_val", retrieved));
+            for (int col = 0; col < 2; ++col)
+            {
+                for (int row = 0; row < 2; ++row)
+                {
+                    REQUIRE(retrieved[col][row] == original[col][row]);
+                }
+            }
+        }
+
+        THEN("mat3 can be written and read back successfully")
+        {
+            glm::mat3 original(
+                1.0f, 2.0f, 3.0f,
+                4.0f, 5.0f, 6.0f,
+                7.0f, 8.0f, 9.0f
+            );
+            write_archive.add_property("mat3_val", original);
+
+            std::stringstream ss;
+            write_archive.dump(ss);
+
+            JsonArchive read_archive;
+            read_archive.read(ss);
+
+            glm::mat3 retrieved;
+            REQUIRE(read_archive.get_property("mat3_val", retrieved));
+            for (int col = 0; col < 3; ++col)
+            {
+                for (int row = 0; row < 3; ++row)
+                {
+                    REQUIRE(retrieved[col][row] == original[col][row]);
+                }
+            }
+        }
+
+        THEN("mat4 can be written and read back successfully")
+        {
+            glm::mat4 original(
+                1.0f, 2.0f, 3.0f, 4.0f,
+                5.0f, 6.0f, 7.0f, 8.0f,
+                9.0f, 10.0f, 11.0f, 12.0f,
+                13.0f, 14.0f, 15.0f, 16.0f
+            );
+            write_archive.add_property("mat4_val", original);
+
+            std::stringstream ss;
+            write_archive.dump(ss);
+
+            JsonArchive read_archive;
+            read_archive.read(ss);
+
+            glm::mat4 retrieved;
+            REQUIRE(read_archive.get_property("mat4_val", retrieved));
+            for (int col = 0; col < 4; ++col)
+            {
+                for (int row = 0; row < 4; ++row)
+                {
+                    REQUIRE(retrieved[col][row] == original[col][row]);
+                }
+            }
+        }
+
+        THEN("dmat4 can be written and read back successfully")
+        {
+            glm::dmat4 original(
+                1.0, 2.0, 3.0, 4.0,
+                5.0, 6.0, 7.0, 8.0,
+                9.0, 10.0, 11.0, 12.0,
+                13.0, 14.0, 15.0, 16.0
+            );
+            write_archive.add_property("dmat4_val", original);
+
+            std::stringstream ss;
+            write_archive.dump(ss);
+
+            JsonArchive read_archive;
+            read_archive.read(ss);
+
+            glm::dmat4 retrieved;
+            REQUIRE(read_archive.get_property("dmat4_val", retrieved));
+            for (int col = 0; col < 4; ++col)
+            {
+                for (int row = 0; row < 4; ++row)
+                {
+                    REQUIRE(retrieved[col][row] == original[col][row]);
+                }
+            }
+        }
+
+        THEN("Multiple matrices can be serialized together")
+        {
+            glm::mat2 mat2_val(1.0f, 2.0f, 3.0f, 4.0f);
+            glm::mat3 mat3_val(
+                1.0f, 2.0f, 3.0f,
+                4.0f, 5.0f, 6.0f,
+                7.0f, 8.0f, 9.0f
+            );
+            glm::mat4 mat4_val(
+                1.0f, 2.0f, 3.0f, 4.0f,
+                5.0f, 6.0f, 7.0f, 8.0f,
+                9.0f, 10.0f, 11.0f, 12.0f,
+                13.0f, 14.0f, 15.0f, 16.0f
+            );
+
+            write_archive.add_property("mat2", mat2_val);
+            write_archive.add_property("mat3", mat3_val);
+            write_archive.add_property("mat4", mat4_val);
+
+            std::stringstream ss;
+            write_archive.dump(ss);
+
+            JsonArchive read_archive;
+            read_archive.read(ss);
+
+            glm::mat2 read_mat2;
+            glm::mat3 read_mat3;
+            glm::mat4 read_mat4;
+
+            REQUIRE(read_archive.get_property("mat2", read_mat2));
+            REQUIRE(read_archive.get_property("mat3", read_mat3));
+            REQUIRE(read_archive.get_property("mat4", read_mat4));
+
+            REQUIRE(read_mat2 == mat2_val);
+            REQUIRE(read_mat3 == mat3_val);
+            REQUIRE(read_mat4 == mat4_val);
         }
     }
 }

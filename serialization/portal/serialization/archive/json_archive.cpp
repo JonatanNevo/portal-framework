@@ -173,16 +173,196 @@ nlohmann::json JsonArchive::prepare_object(ArchiveObject* object)
             archive_object[key] = std::string(prop.value.as<const char*>());
             break;
         case reflection::PropertyContainerType::vector:
-            LOG_ERROR_TAG("Json Archiver", "Cannot archive vector to json");
+            serialize_vec(archive_object[key], prop);
             break;
         case reflection::PropertyContainerType::matrix:
-            LOG_ERROR_TAG("Json Archiver", "Cannot archive matrix to json");
+            serialize_mat(archive_object[key], prop);
             break;
         case reflection::PropertyContainerType::invalid:
             break;
         }
     }
     return archive_object;
+}
+
+void JsonArchive::serialize_vec(nlohmann::json& root, const reflection::Property& prop)
+{
+    switch (prop.type)
+    {
+    case reflection::PropertyType::integer8:
+        {
+            PORTAL_ASSERT(sizeof(uint8_t) <= sizeof(nlohmann::json::number_unsigned_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<uint8_t*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::integer16:
+        {
+            PORTAL_ASSERT(sizeof(uint16_t) <= sizeof(nlohmann::json::number_unsigned_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<uint16_t*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::integer32:
+        {
+            PORTAL_ASSERT(sizeof(uint32_t) <= sizeof(nlohmann::json::number_unsigned_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<uint32_t*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::integer64:
+        {
+            PORTAL_ASSERT(sizeof(uint64_t) <= sizeof(nlohmann::json::number_unsigned_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<uint64_t*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::floating32:
+        {
+            PORTAL_ASSERT(sizeof(float) <= sizeof(nlohmann::json::number_float_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_float_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<float*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::floating64:
+        {
+            PORTAL_ASSERT(sizeof(double) <= sizeof(nlohmann::json::number_float_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_float_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<double*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::integer128:
+        [[fallthrough]];
+    case reflection::PropertyType::binary:
+        [[fallthrough]];
+    case reflection::PropertyType::character:
+        [[fallthrough]];
+    case reflection::PropertyType::boolean:
+        [[fallthrough]];
+    case reflection::PropertyType::object:
+        [[fallthrough]];
+    case reflection::PropertyType::null_term_string:
+        [[fallthrough]];
+    case reflection::PropertyType::string:
+        [[fallthrough]];
+    case reflection::PropertyType::invalid:
+        LOG_ERROR_TAG("Json Archiver", "Invalid property type for vector: {}", prop.type);
+        break;
+    }
+}
+
+void JsonArchive::serialize_mat(nlohmann::json& root, const reflection::Property& prop)
+{
+    switch (prop.type)
+    {
+    case reflection::PropertyType::integer8:
+        {
+            PORTAL_ASSERT(sizeof(uint8_t) <= sizeof(nlohmann::json::number_unsigned_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<uint8_t*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::integer16:
+        {
+            PORTAL_ASSERT(sizeof(uint16_t) <= sizeof(nlohmann::json::number_unsigned_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<uint16_t*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::integer32:
+        {
+            PORTAL_ASSERT(sizeof(uint32_t) <= sizeof(nlohmann::json::number_unsigned_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<uint32_t*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::integer64:
+        {
+            PORTAL_ASSERT(sizeof(uint64_t) <= sizeof(nlohmann::json::number_unsigned_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<uint64_t*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::floating32:
+        {
+            PORTAL_ASSERT(sizeof(float) <= sizeof(nlohmann::json::number_float_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_float_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<float*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::floating64:
+        {
+            PORTAL_ASSERT(sizeof(double) <= sizeof(nlohmann::json::number_float_t), "Losing precision in json serialization");
+
+            std::vector<nlohmann::json::number_float_t> data(prop.elements_number);
+            for (size_t i = 0; i < prop.elements_number; ++i)
+                data[i] = *prop.value.as<double*>() + i;
+            root = data;
+
+            break;
+        }
+    case reflection::PropertyType::integer128:
+        [[fallthrough]];
+    case reflection::PropertyType::binary:
+        [[fallthrough]];
+    case reflection::PropertyType::character:
+        [[fallthrough]];
+    case reflection::PropertyType::boolean:
+        [[fallthrough]];
+    case reflection::PropertyType::object:
+        [[fallthrough]];
+    case reflection::PropertyType::null_term_string:
+        [[fallthrough]];
+    case reflection::PropertyType::string:
+        [[fallthrough]];
+    case reflection::PropertyType::invalid:
+        LOG_ERROR_TAG("Json Archiver", "Invalid property type for matrix: {}", prop.type);
+        break;
+    }
 }
 
 void JsonArchive::deserialize(const nlohmann::json& input)
@@ -205,22 +385,22 @@ void JsonArchive::deserialize_object(ArchiveObject* root, const nlohmann::json& 
                 break;
             }
         case nlohmann::detail::value_t::number_integer:
-            root->add_property<nlohmann::json::number_integer_t>(key, value);
+            root->add_property<nlohmann::json::number_integer_t>(key, value.get<nlohmann::json::number_integer_t>());
             break;
         case nlohmann::detail::value_t::number_unsigned:
-            root->add_property<nlohmann::json::number_unsigned_t>(key, value);
+            root->add_property<nlohmann::json::number_unsigned_t>(key, value.get<nlohmann::json::number_unsigned_t>());
             break;
         case nlohmann::detail::value_t::array:
             deserialize_array(root, key, value);
             break;
         case nlohmann::detail::value_t::string:
-            root->add_property<nlohmann::json::string_t>(key, value);
+            root->add_property<nlohmann::json::string_t>(key, value.get<nlohmann::json::string_t>());
             break;
         case nlohmann::detail::value_t::boolean:
-            root->add_property<nlohmann::json::boolean_t>(key, value);
+            root->add_property<nlohmann::json::boolean_t>(key, value.get<nlohmann::json::boolean_t>());
             break;
         case nlohmann::detail::value_t::number_float:
-            root->add_property<nlohmann::json::number_float_t>(key, value);
+            root->add_property<nlohmann::json::number_float_t>(key, value.get<nlohmann::json::number_float_t>());
             break;
         case nlohmann::detail::value_t::binary:
             root->add_binary_block(key, value);
