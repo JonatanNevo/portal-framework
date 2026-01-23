@@ -18,7 +18,7 @@ using namespace portal;
 std::unique_ptr<Application> portal::create_engine_application(Reference<Project>&& project, int, char**)
 {
     const ApplicationProperties prop = from_project(*project);
-    auto engine = std::make_unique<Engine>(project, prop, true);
+    auto engine = std::make_unique<Engine>(project, prop);
 
     // TODO: Should not be here
     auto& engine_context = engine->get_engine_context();

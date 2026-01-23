@@ -87,6 +87,9 @@
         "name" : "volk",
         "version>=" : "1.4.309.0"
       }, {
+        "name" : "argparse",
+        "version>=" : "3.2"
+      }, {
         "name" : "imguizmo",
         "version>=" : "2024-05-29#1"
       } ]

@@ -326,9 +326,9 @@ function(portal_add_configs TARGET_NAME CONFIG_PATH)
 
     if (IS_ABSOLUTE "${CONFIG_PATH}")
         set(CONFIG_SOURCE_PATH "${CONFIG_PATH}")
-    else()
+    else ()
         set(CONFIG_SOURCE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_PATH}")
-    endif()
+    endif ()
 
     file(GLOB_RECURSE CONFIG_FILES
             "${CONFIG_SOURCE_PATH}/*"
@@ -488,10 +488,10 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
     if (NOT RESOURCE_PREFIX OR RESOURCE_PREFIX STREQUAL "PORTAL_RESOURCE_PREFIX-NOTFOUND")
         # For local targets, use TARGET_FILE_DIR
         set(RESOURCE_BASE_PATH "$<TARGET_FILE_DIR:${TARGET_TO_FETCH}>/resources")
-    else()
+    else ()
         # For installed/imported targets, use the PORTAL_RESOURCE_PREFIX property
         set(RESOURCE_BASE_PATH "${RESOURCE_PREFIX}")
-    endif()
+    endif ()
 
     foreach (RESOURCE_PATH ${RESOURCES_TO_COPY})
         list(APPEND EXISTING_ADDITIONAL_RESOURCES "${RESOURCE_PATH}")
@@ -603,10 +603,10 @@ function(portal_fetch_configs TARGET_NAME TARGET_TO_FETCH)
     if (NOT CONFIG_PREFIX OR CONFIG_PREFIX STREQUAL "PORTAL_CONFIG_PREFIX-NOTFOUND")
         # For local targets, use TARGET_FILE_DIR
         set(CONFIG_BASE_PATH "$<TARGET_FILE_DIR:${TARGET_TO_FETCH}>/config")
-    else()
+    else ()
         # For installed/imported targets, use the PORTAL_RESOURCE_PREFIX property
         set(CONFIG_BASE_PATH "${CONFIG_PREFIX}")
-    endif()
+    endif ()
 
     set(_TARGET_TO_FETCH_NORMALIZED "${TARGET_TO_FETCH}")
     string(REPLACE "::" "_" _TARGET_TO_FETCH_NORMALIZED "${_TARGET_TO_FETCH_NORMALIZED}")
@@ -891,9 +891,9 @@ function(portal_install_game TARGET_NAME)
             COMPONENT ${TARGET_NAME}
             RUNTIME_DEPENDENCY_SET ${TARGET_NAME}_deps
             RUNTIME
-                DESTINATION .
+            DESTINATION .
             BUNDLE
-                DESTINATION .
+            DESTINATION .
     )
 
     message(STATUS "Vcpkg Installed Dir ${VCPKG_INSTALLED_DIR}")
@@ -1144,20 +1144,20 @@ macro(_find_icon_files STATIC_ICON LOGO_FILE)
     if (NOT ENGINE_RESOURCE_PREFIX OR ENGINE_RESOURCE_PREFIX STREQUAL "ENGINE_RESOURCE_PREFIX-NOTFOUND")
         # Fallback for local builds (not installed)
         set(ENGINE_RESOURCE_PREFIX "${CMAKE_SOURCE_DIR}/engine/resources")
-    else()
+    else ()
         # For installed targets, append the engine folder
         set(ENGINE_RESOURCE_PREFIX "${ENGINE_RESOURCE_PREFIX}/engine")
-    endif()
+    endif ()
 
     if (STATIC_ICON)
         cmake_path(REPLACE_EXTENSION STATIC_ICON "icns" OUTPUT_VARIABLE ICNS_FILE_CHECK)
         cmake_path(REPLACE_EXTENSION STATIC_ICON "ico" OUTPUT_VARIABLE ICO_FILE_CHECK)
         cmake_path(REPLACE_EXTENSION STATIC_ICON "png" OUTPUT_VARIABLE PNG_FILE_CHECK)
-    else()
+    else ()
         set(ICNS_FILE_CHECK "")
         set(ICO_FILE_CHECK "")
         set(PNG_FILE_CHECK "")
-    endif()
+    endif ()
 
     if (NOT LOGO_FILE)
         set(LOGO_FILE "")
@@ -1166,46 +1166,48 @@ macro(_find_icon_files STATIC_ICON LOGO_FILE)
     if (EXISTS "${ICNS_FILE_CHECK}")
         set(ICON_ICNS_FILE "${ICNS_FILE_CHECK}")
         message(STATUS "Using MacOS Icon: ${ICON_ICNS_FILE}")
-    else()
+    else ()
         set(ICON_ICNS_FILE "${ENGINE_RESOURCE_PREFIX}/portal_icon_64x64.icns")
         message(STATUS "Missing MacOS Icon, defaulting to: ${ICON_ICNS_FILE}")
-    endif()
+    endif ()
 
     if (EXISTS "${ICO_FILE_CHECK}")
         set(ICON_ICO_FILE "${ICO_FILE_CHECK}")
         message(STATUS "Using Windows Icon: ${ICON_ICO_FILE}")
-    else()
+    else ()
         set(ICON_ICO_FILE "${ENGINE_RESOURCE_PREFIX}/portal_icon_64x64.ico")
         message(STATUS "Missing Windows Icon, defaulting to: ${ICON_ICO_FILE}")
-    endif()
+    endif ()
 
     if (EXISTS "${PNG_FILE_CHECK}")
         set(ICON_PNG_FILE "${PNG_FILE_CHECK}")
         message(STATUS "Using png Icon: ${ICON_PNG_FILE}")
-    else()
+    else ()
         set(ICON_PNG_FILE "${ENGINE_RESOURCE_PREFIX}/portal_icon_64x64.png")
         message(STATUS "Missing png Icon, defaulting to: ${ICON_PNG_FILE}")
-    endif()
+    endif ()
 
     if (EXISTS "${LOGO_FILE}")
         set(LOGO_PNG_FILE "${LOGO_FILE}")
         message(STATUS "Using Logo: ${LOGO_FILE}")
-    else()
+    else ()
         set(LOGO_PNG_FILE "${ENGINE_RESOURCE_PREFIX}/portal_logo_dark.png")
         message(STATUS "Missing Logo, defaulting to: ${LOGO_PNG_FILE}")
-    endif()
+    endif ()
 endmacro()
 
 #[=======================================================================[.rst:
 portal_add_game
 ---------------
 
-Creates a complete Portal Engine game executable with automatic resource management,
-settings configuration, installation, and packaging.
+Creates a complete Portal Engine game executable plus a companion editor target with
+automatic resource management, settings configuration, installation, and packaging
+for the runtime target.
 
 This is the main entry point for creating game applications with the Portal Engine.
-It orchestrates executable creation, icon/logo resolution, resource fetching, settings
-processing, and automatic installation/packaging setup.
+It orchestrates runtime and editor executable creation, icon/logo resolution, resource
+fetching, settings processing, and automatic installation/packaging setup for the
+runtime target.
 
 Synopsis
 ^^^^^^^^
@@ -1288,51 +1290,54 @@ The function performs the following operations in order:
 
 2. **Executable Creation**:
 
-   - **macOS + MAKE_STANDALONE**: Creates MACOSX_BUNDLE with bundle properties
-   - **Windows + MAKE_STANDALONE**: Creates WIN32 executable (no console)
-   - **Otherwise**: Creates standard console executable
+   - **Runtime target**: Uses MACOSX_BUNDLE or WIN32 when ``MAKE_STANDALONE`` is set,
+     otherwise creates a standard console executable
+   - **Editor target**: Always creates ``<target_name>_editor`` as a standard console
+     executable using the same sources
 
 3. **Icon Resolution**: Calls ``_find_icon_files`` to locate platform-specific
-   icons or use Portal Engine defaults, then sets target properties:
+   icons or use Portal Engine defaults, then sets target properties on both targets:
 
    - ``PORTAL_WINDOWS_ICON``: Path to .ico file
    - ``PORTAL_MACOS_ICON``: Path to .icns file
    - ``PORTAL_LOGO``: Path to logo PNG
 
 4. **Standalone Define**: If ``MAKE_STANDALONE`` is set, defines
-   ``PORTAL_STANDALONE_EXE`` for conditional compilation.
+   ``PORTAL_STANDALONE_EXE`` for the runtime target.
 
-5. **Linking**: Links against ``portal::engine`` and any additional libraries.
+5. **Editor Define**: Defines ``PORTAL_BUILD_EDITOR`` for ``<target_name>_editor``.
 
-6. **Settings Configuration**:
+6. **Linking**: Links both targets against ``portal::engine`` and any additional libraries.
+
+7. **Settings Configuration** (runtime target only):
 
    - Resolves and validates the settings file path
    - Sets ``PORTAL_SETTINGS_PATH`` on the target
    - Calls ``portal_read_settings`` to parse settings and set ``PORTAL_DISPLAY_NAME``
 
-7. **macOS Bundle Properties**: If ``MAKE_STANDALONE`` is set, configures bundle
+8. **macOS Bundle Properties**: If ``MAKE_STANDALONE`` is set, configures bundle
    metadata using the resolved display name.
 
-8. **Engine Assets**: Fetches Portal Engine resources and configs via
+9. **Engine Assets**: Fetches Portal Engine resources and configs via
    ``portal_fetch_resources`` and ``portal_fetch_configs``.
 
-9. **Local Resources**: Adds user-specified resource paths via
+10. **Local Resources**: Adds user-specified resource paths via
    ``portal_add_resources``.
 
-10. **Local Configs**: Adds the local ``config/`` directory via
+11. **Local Configs**: Adds the local ``config/`` directory via
     ``portal_add_configs`` unless ``NO_CONFIG`` is set.
 
-11. **Config Definitions**: Calls ``portal_setup_compile_configs`` to generate
-    compile-time configuration constants.
+12. **Config Definitions**: Calls ``portal_setup_compile_configs`` to generate
+    compile-time configuration constants for both runtime and editor targets.
 
-12. **Installation**: Calls ``portal_install_game`` to set up installation rules.
+13. **Installation**: Calls ``portal_install_game`` to set up installation rules.
 
-13. **Packaging**: Calls ``portal_package_game`` to configure CPack.
+14. **Packaging**: Calls ``portal_package_game`` to configure CPack.
 
 Target Properties Set
 ^^^^^^^^^^^^^^^^^^^^^
 
-The function sets the following target properties:
+The function sets the following target properties on the runtime target:
 
 - ``PORTAL_WINDOWS_ICON``: Windows .ico file path
 - ``PORTAL_MACOS_ICON``: macOS .icns file path
@@ -1341,6 +1346,15 @@ The function sets the following target properties:
 - ``PORTAL_DISPLAY_NAME``: Display name parsed from the settings file
 - ``PORTAL_RESOURCES``: List of resource directories (via ``portal_read_settings``)
 - ``PORTAL_ADDITIONAL_RESOURCES``: Fetched resources (via ``portal_fetch_resources``)
+
+The function also creates ``<target_name>_editor`` and sets:
+
+- ``PORTAL_WINDOWS_ICON``: Windows .ico file path
+- ``PORTAL_MACOS_ICON``: macOS .icns file path
+- ``PORTAL_LOGO``: Logo PNG file path
+
+The editor target defines ``PORTAL_BUILD_EDITOR`` but does not receive settings,
+resource/config copy targets, installation, or packaging.
 
 macOS Bundle Properties (MAKE_STANDALONE only):
 
@@ -1378,7 +1392,8 @@ Full-featured standalone game with custom icons and resources:
 
 This will:
 
-- Create a standalone executable (no console on Windows, bundle on macOS)
+- Create a standalone runtime executable (no console on Windows, bundle on macOS)
+- Create a companion ``awesome-game_editor`` console executable for tooling
 - Use custom icons (or fallback to defaults)
 - Link against portal-engine and my-game-logic-lib
 - Fetch Portal Engine resources (shaders, fonts, etc.)
@@ -1389,12 +1404,13 @@ This will:
 Notes
 ^^^^^
 
-- Always links against ``portal::engine``
-- Automatically fetches Portal Engine resources
+- Always links both targets against ``portal::engine``
+- Automatically fetches Portal Engine resources for the runtime target
 - Settings file is required and must exist
 - Icons default to Portal Engine branding if not provided
 - ``MAKE_STANDALONE`` is recommended for distribution builds
 - Use ``NO_CONFIG`` to opt out of copying a local ``config/`` directory
+- The editor target is build-only and not installed or packaged
 
 See Also
 ^^^^^^^^
@@ -1407,6 +1423,55 @@ See Also
 - ``portal_package_game``: Configure CPack packaging
 
 #]=======================================================================]
+
+macro(_portal_configure_runtime_target)
+    if (APPLE AND ARG_MAKE_STANDALONE)
+        cmake_path(GET ICON_ICNS_FILE FILENAME BUNDLE_ICON_FILE)
+        set_source_files_properties(${ARG_STATIC_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+        add_executable(${TARGET_NAME} MACOSX_BUNDLE ${ARG_SOURCES} ${ARG_STATIC_ICON})
+    elseif (WIN32)
+        if (ARG_MAKE_STANDALONE)
+            add_executable(${TARGET_NAME} WIN32 ${ARG_SOURCES})
+        else ()
+            add_executable(${TARGET_NAME} ${ARG_SOURCES})
+        endif ()
+    else ()
+        add_executable(${TARGET_NAME} ${ARG_SOURCES})
+    endif ()
+
+    _find_icon_files(ARG_STATIC_ICON ARG_LOGO_FILE)
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_WINDOWS_ICON ${ICON_ICO_FILE})
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_MACOS_ICON ${ICON_ICNS_FILE})
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_LOGO ${LOGO_PNG_FILE})
+
+    if (ARG_MAKE_STANDALONE)
+        target_compile_definitions(${TARGET_NAME} PRIVATE PORTAL_STANDALONE_EXE)
+    endif ()
+
+    target_link_libraries(
+            ${TARGET_NAME}
+            portal::engine
+            ${ARG_LINK_LIBRARIES}
+    )
+endmacro()
+
+macro(_portal_configure_editor_target)
+    add_executable(${TARGET_NAME}_editor ${ARG_SOURCES})
+
+    _find_icon_files(ARG_STATIC_ICON ARG_LOGO_FILE)
+    set_target_properties(${TARGET_NAME}_editor PROPERTIES PORTAL_WINDOWS_ICON ${ICON_ICO_FILE})
+    set_target_properties(${TARGET_NAME}_editor PROPERTIES PORTAL_MACOS_ICON ${ICON_ICNS_FILE})
+    set_target_properties(${TARGET_NAME}_editor PROPERTIES PORTAL_LOGO ${LOGO_PNG_FILE})
+
+    target_link_libraries(
+            ${TARGET_NAME}_editor
+            portal::engine
+            ${ARG_LINK_LIBRARIES}
+    )
+    target_compile_definitions(${TARGET_NAME}_editor PRIVATE PORTAL_BUILD_EDITOR)
+endmacro()
+
 function(portal_add_game TARGET_NAME)
     set(options MAKE_STANDALONE NO_CONFIG)
     set(oneValueArgs
@@ -1436,37 +1501,8 @@ function(portal_add_game TARGET_NAME)
         set(ARG_LOGO_FILE "")
     endif ()
 
-    # TODO: add editor target
-    if (APPLE AND ARG_MAKE_STANDALONE)
-        cmake_path(GET ICON_ICNS_FILE FILENAME BUNDLE_ICON_FILE)
-        set_source_files_properties(${ARG_STATIC_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
-
-        add_executable(${TARGET_NAME} MACOSX_BUNDLE ${ARG_SOURCES} ${ARG_STATIC_ICON})
-    elseif (WIN32)
-        if (ARG_MAKE_STANDALONE)
-            add_executable(${TARGET_NAME} WIN32 ${ARG_SOURCES})
-        else()
-            add_executable(${TARGET_NAME} ${ARG_SOURCES})
-        endif()
-    else ()
-        add_executable(${TARGET_NAME} ${ARG_SOURCES})
-    endif ()
-
-    _find_icon_files(ARG_STATIC_ICON ARG_LOGO_FILE)
-    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_WINDOWS_ICON ${ICON_ICO_FILE})
-    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_MACOS_ICON ${ICON_ICNS_FILE})
-    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_LOGO ${LOGO_PNG_FILE})
-
-
-    if (ARG_MAKE_STANDALONE)
-        target_compile_definitions(${TARGET_NAME} PRIVATE PORTAL_STANDALONE_EXE)
-    endif ()
-
-    target_link_libraries(
-            ${TARGET_NAME}
-            portal::engine
-            ${ARG_LINK_LIBRARIES}
-    )
+    _portal_configure_runtime_target()
+    _portal_configure_editor_target()
 
     if (NOT ARG_SETTINGS_FILE)
         set(ARG_SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SETTINGS_FILE_NAME}")
@@ -1481,7 +1517,7 @@ function(portal_add_game TARGET_NAME)
     portal_read_settings(${TARGET_NAME})
     get_target_property(DISPLAY_NAME ${TARGET_NAME} PORTAL_DISPLAY_NAME)
 
-    if(APPLE AND ARG_MAKE_STANDALONE)
+    if (APPLE AND ARG_MAKE_STANDALONE)
         set_target_properties(${TARGET_NAME} PROPERTIES
                 MACOSX_BUNDLE TRUE
                 MACOSX_BUNDLE_IDENTIFIER com.portal.${TARGET_NAME}
@@ -1504,6 +1540,7 @@ function(portal_add_game TARGET_NAME)
     endif ()
 
     portal_setup_compile_configs(${TARGET_NAME} ${ARG_SETTINGS_FILE_NAME} ${ICON_PNG_FILE})
+    portal_setup_compile_configs(${TARGET_NAME}_editor ${ARG_SETTINGS_FILE_NAME} ${ICON_PNG_FILE})
 
     portal_install_game(${TARGET_NAME})
 
@@ -1514,3 +1551,4 @@ function(portal_add_game TARGET_NAME)
             CONTACT ${ARG_CONTACT}
     )
 endfunction()
+

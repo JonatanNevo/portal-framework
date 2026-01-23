@@ -29,9 +29,8 @@ public:
      * @brief Constructs the engine.
      * @param project
      * @param properties Application configuration.
-     * @param editor If true, initializes in editor mode with EditorModule.
      */
-    explicit Engine(const Reference<Project>& project, const ApplicationProperties& properties, bool editor);
+    explicit Engine(const Reference<Project>& project, const ApplicationProperties& properties);
 
     ~Engine() override;
 

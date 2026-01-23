@@ -19,7 +19,7 @@ namespace portal
 {
 static auto logger = Log::get_logger("Engine");
 
-Engine::Engine(const Reference<Project>& project, const ApplicationProperties& properties, bool editor) : Application(properties),
+Engine::Engine(const Reference<Project>& project, const ApplicationProperties& properties) : Application(properties),
     project(project)
 {
     // Creating Input
@@ -54,7 +54,7 @@ Engine::Engine(const Reference<Project>& project, const ApplicationProperties& p
     vulkan_context->get_device().add_present_queue(*surface);
     swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(project->get_settings(), *vulkan_context, surface);
 
-    if (editor)
+    if (project->get_type() == ProjectType::Editor)
         modules.add_module<EditorModule>(*project, *vulkan_context, *swapchain, *window);
     else
         modules.add_module<RuntimeModule>(*project, *vulkan_context, *swapchain);
