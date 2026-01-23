@@ -119,7 +119,7 @@ function(portal_install_module MODULE_NAME)
     set(CONFIG_TARGET ${TARGET_NAME}-config)
 
 
-    set (FILE_SETS HEADERS)
+    set(FILE_SETS HEADERS)
     get_target_property(HAS_ADDITIONAL_HEADERS ${TARGET_NAME} HEADER_SET_additional_headers)
     if (HAS_ADDITIONAL_HEADERS)
         install(
@@ -218,9 +218,18 @@ function(portal_install_module MODULE_NAME)
 
     foreach (RESOURCE_FOLDER IN LISTS RESOURCES_FOLDERS)
         install(
-            DIRECTORY "$<TARGET_FILE_DIR:${TARGET_NAME}>/resources/${RESOURCE_FOLDER}"
-            COMPONENT ${ARG_COMPONENT}
-            DESTINATION resources
+                DIRECTORY "$<TARGET_FILE_DIR:${TARGET_NAME}>/resources/${RESOURCE_FOLDER}"
+                COMPONENT ${ARG_COMPONENT}
+                DESTINATION resources
         )
     endforeach ()
+
+    get_target_property(HAS_CONFIG ${TARGET_NAME} PORTAL_HAS_CONFIG)
+    if (HAS_CONFIG)
+        install(
+                DIRECTORY "$<TARGET_FILE_DIR:${TARGET_NAME}>/config"
+                COMPONENT ${ARG_COMPONENT}
+                DESTINATION config
+        )
+    endif ()
 endfunction()
