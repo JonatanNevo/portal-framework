@@ -42,9 +42,29 @@ project-name
 
 ## Building And Running
 
-The easiest way to build the project is using the presets.
+### Portal Tool
 
-### Configuration
+Portal tool comes with cli tools to build and run the project.
+To run the editor, enter your project's directory and run:
+```shell
+portal-engine editor
+```
+This will build and start the editor in `development` build configuration. See the help menu for more options.
+
+To run the runtime, use:
+```shell
+portal-engine runtime
+```
+
+```{note}
+`portal-engine` is a utility cli that is installed alongside portal-tool, if `portal-tool` works for you, so should `portal-engine`!
+```
+
+### Manual
+
+Under the hood, portal-tool uses cmake to build the project.
+
+#### Configuration
 
 The default cmake generator is `Ninja Multi-Config`. to run it, use:
 ```console
@@ -53,7 +73,7 @@ cmake --preset ninja-multi
 
 This will create a `build` folder with the configurations for all build presets
 
-### Building
+#### Building
 
 The default build presets are `debug`, `development` and `dist`.
 * debug - debug build will build the project in debug with asserts and debugging symbols enabled
@@ -65,11 +85,19 @@ To build a specific preset:
 cmake --build build --preset <debug/development/dist>
 ```
 
-### Packaging
+#### Running
 
-```{note}
-You don't need to run the configuration and building steps before packaging, you can directly run the packaging workflow!
-```
+##### Editor
+
+By default, you can find the editor in `build/ninja-multi/<Configuration>` folder, the editor is expects to run from 
+the project root dir, or be provided with the `-p` argument, which will specify the project root dir.
+
+##### Runtime
+
+The runtime executable is located in `build/ninja-multi/<Configuration>` as well, unlike the editor it expects to run 
+from its bin dir, he searches for the resources file installed alongside it.
+
+### Packaging
 
 #### Installer Package
 The installer requires the QT Installer Framework, you can download it [here](https://doc.qt.io/qtinstallerframework/index.html)
