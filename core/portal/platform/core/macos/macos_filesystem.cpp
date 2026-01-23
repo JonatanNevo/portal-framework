@@ -157,12 +157,12 @@ std::filesystem::path FileSystem::get_root_path()
     return bundle_path;
 }
 
-std::filesystem::path FileSystem::get_data_home(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_data_home(const std::filesystem::path app_name)
 {
     return get_home() / "Library" / "Application Support" / app_name;
 }
 
-std::filesystem::path FileSystem::get_config_home(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_config_home(const std::filesystem::path app_name)
 {
     return get_home() / "Library" / "Application Support" / app_name / "config";
 }

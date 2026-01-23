@@ -175,22 +175,22 @@ std::filesystem::path FileSystem::get_root_path()
     return std::filesystem::current_path();
 }
 
-std::filesystem::path FileSystem::get_data_home(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_data_home(const std::filesystem::path app_name)
 {
     return get_appdata() / "portal" / app_name;
 }
 
-std::filesystem::path FileSystem::get_config_home(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_config_home(const std::filesystem::path app_name)
 {
     return get_appdata() / "portal" / app_name / "config";
 }
 
-std::filesystem::path FileSystem::get_cache_dir(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_cache_dir(const std::filesystem::path app_name)
 {
     return get_appdata_local() / "portal" / app_name / "cache";
 }
 
-std::filesystem::path FileSystem::get_state_dir(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_state_dir(const std::filesystem::path app_name)
 {
     return get_appdata_local() / "portal" / app_name;
 }
