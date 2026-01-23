@@ -113,12 +113,29 @@ namespace portal
 {
     constexpr std::string_view PORTAL_SETTINGS_FILE_NAME = "@SETTINGS_FILE@";
     constexpr std::string_view PORTAL_ICON_FILE_NAME = "@ICON_FILE@";
-    constexpr std::string_view PORTAL_ENGINE_LOCATION = "$<TARGET_FILE_DIR:portal::engine>";
+    constexpr std::string_view PORTAL_ENGINE_RESOURCES_LOCATION = "@RESOURCES@";
+    constexpr std::string_view PORTAL_ENGINE_CONFIG_LOCATION = "@CONFIG@";
 };
 ]=]
     )
+    get_target_property(RESOURCE_PREFIX portal::engine PORTAL_RESOURCE_PREFIX)
+    if (NOT RESOURCE_PREFIX OR RESOURCE_PREFIX STREQUAL "PORTAL_RESOURCE_PREFIX-NOTFOUND")
+        set(ENGINE_RESOURCES_PATH "$<TARGET_FILE_DIR:portal::engine>/resources")
+    else ()
+        set(ENGINE_RESOURCES_PATH "${RESOURCE_PREFIX}")
+    endif ()
+
+    get_target_property(CONFIG_PREFIX portal::engine PORTAL_CONFIG_PREFIX)
+    if (NOT CONFIG_PREFIX OR CONFIG_PREFIX STREQUAL "PORTAL_CONFIG_PREFIX-NOTFOUND")
+        set(ENGINE_CONFIG_PATH "$<TARGET_FILE_DIR:portal::engine>/config")
+    else ()
+        set(ENGINE_CONFIG_PATH "${CONFIG_PREFIX}")
+    endif ()
+
     string(REPLACE "@SETTINGS_FILE@" "${SETTINGS_FILE}" CONFIGURE_FILE "${CONFIGURE_FILE}")
     string(REPLACE "@ICON_FILE@" "${ICON_FILE}" CONFIGURE_FILE "${CONFIGURE_FILE}")
+    string(REPLACE "@RESOURCES@" "${ENGINE_RESOURCES_PATH}" CONFIGURE_FILE "${CONFIGURE_FILE}")
+    string(REPLACE "@CONFIG@" "${ENGINE_CONFIG_PATH}" CONFIGURE_FILE "${CONFIGURE_FILE}")
 
     set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_config_impl_$<CONFIG>.cpp)
 
