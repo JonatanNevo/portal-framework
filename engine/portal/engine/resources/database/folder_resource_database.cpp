@@ -58,9 +58,15 @@ std::filesystem::path validate_and_create_path(const Project& project, const std
     std::filesystem::path output;
 
     if (database_path.is_absolute())
+    {
+        LOGGER_TRACE("Opening absolute database: {}", database_path.generic_string());
         output = database_path;
+    }
     else
+    {
+        LOGGER_TRACE("Opening relative database: {} (resource dir: {})", database_path.generic_string(), project.get_resource_directory().generic_string());
         output = project.get_resource_directory() / database_path;
+    }
 
     if (!FileSystem::is_directory(output) && !FileSystem::create_directory(output))
     {
