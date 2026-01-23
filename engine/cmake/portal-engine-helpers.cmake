@@ -106,22 +106,23 @@ See Also
 
 #]=======================================================================]
 function(portal_setup_compile_configs TARGET_NAME SETTINGS_FILE ICON_FILE)
-    set(CONFIGURE_FILE "
+    set(CONFIGURE_FILE [=[
 // Auto generated file
 
 namespace portal
 {
-    constexpr std::string_view PORTAL_SETTINGS_FILE_NAME = \"@SETTINGS_FILE@\";
-    constexpr std::string_view PORTAL_ICON_FILE_NAME =  \"@ICON_FILE@\";
+    constexpr std::string_view PORTAL_SETTINGS_FILE_NAME = "@SETTINGS_FILE@";
+    constexpr std::string_view PORTAL_ICON_FILE_NAME = "@ICON_FILE@";
+    constexpr std::string_view PORTAL_ENGINE_LOCATION = "$<TARGET_FILE_DIR:portal::engine>";
 };
-"
+]=]
     )
+    string(REPLACE "@SETTINGS_FILE@" "${SETTINGS_FILE}" CONFIGURE_FILE "${CONFIGURE_FILE}")
+    string(REPLACE "@ICON_FILE@" "${ICON_FILE}" CONFIGURE_FILE "${CONFIGURE_FILE}")
 
-    set(INPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/config_impl.inc)
-    set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/config_impl.cpp)
-    file(WRITE "${INPUT_PATH}" "${CONFIGURE_FILE}")
+    set(OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}_config_impl_$<CONFIG>.cpp)
 
-    configure_file(${INPUT_PATH} ${OUTPUT_PATH} @ONLY)
+    file(GENERATE OUTPUT "${OUTPUT_PATH}" CONTENT "${CONFIGURE_FILE}" TARGET ${TARGET_NAME})
     target_sources(${TARGET_NAME} PRIVATE "${OUTPUT_PATH}")
 endfunction()
 

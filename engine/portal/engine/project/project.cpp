@@ -24,13 +24,21 @@ Reference<Project> Project::open_project(const ProjectType type, const std::file
     return project;
 }
 
+std::filesystem::path Project::get_engine_resource_directory()
+{
+    return std::filesystem::path(PORTAL_ENGINE_LOCATION) / "resources";
+}
+
+std::filesystem::path Project::get_engine_config_directory()
+{
+    return std::filesystem::path(PORTAL_ENGINE_LOCATION) / "config";
+}
+
 Project::Project(const ProjectType type, ProjectProperties project_properties, std::filesystem::path working_directory, ProjectSettings&& settings) :
     type(type),
     properties(std::move(project_properties)),
     project_directory(std::move(working_directory)),
-    settings(std::move(settings)),
-    engine_resources_path(FileSystem::get_working_directory() / "resources"), // TODO: is this the best way of handling this? maybe find it based on installation method
-    engine_config_path(FileSystem::get_working_directory() / "config")
+    settings(std::move(settings))
 {
     LOGGER_INFO("Opened {} project: {}", type, properties.name.string);
     if (type == ProjectType::Runtime)
@@ -40,8 +48,7 @@ Project::Project(const ProjectType type, ProjectProperties project_properties, s
 
     if (properties.include_engine_resources)
     {
-        // TODO: does this full path always work?
-        resource_database.register_database(*this, {DatabaseType::Folder, engine_resources_path / "engine"});
+        resource_database.register_database(*this, {DatabaseType::Folder, get_engine_resource_directory() / "engine"});
     }
 
     FileSystem::set_working_directory(project_directory);

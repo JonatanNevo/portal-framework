@@ -11,5 +11,6 @@ namespace portal
 {
 
 extern const std::string_view PORTAL_ICON_FILE_NAME;
+extern const std::string_view PORTAL_ENGINE_LOCATION;
 
 }
