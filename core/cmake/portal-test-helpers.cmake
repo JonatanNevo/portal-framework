@@ -112,7 +112,7 @@ function(portal_add_test_target TARGET_NAME)
             ${ARG_LIBRARIES}
     )
 
-    target_compile_definitions(${TARGET_NAME} PUBLIC PORTAL_TEST)
+    target_compile_definitions(${TEST_TARGET} PUBLIC PORTAL_TEST)
 
     include(Catch)
     catch_discover_tests(${TEST_TARGET})

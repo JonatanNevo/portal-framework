@@ -140,7 +140,8 @@ void VulkanRenderTarget::initialize()
             else
             {
                 color_images[attachment_index]->resize(width, height);
-                color_images[attachment_index]->create_per_layer_image_view();
+                if (color_images[attachment_index]->get_prop().layers > 1)
+                    color_images[attachment_index]->create_per_layer_image_view();
             }
 
             rendering_attachments.emplace_back(
