@@ -166,7 +166,7 @@ The function performs the following operations:
    using ``GLOB_RECURSE``.
 
 2. **Custom Target Creation**: Creates a custom target named
-   ``<target_name>_copy_<output_name>`` that copies the resource directory to
+   ``<target_name>_copy_resources_<output_name>`` that copies the resource directory to
    ``$<TARGET_FILE_DIR:target>/resources/<output_name>/`` at build time.
 
 3. **Dependency Setup**: Adds the custom target as a dependency of the main target,
@@ -233,7 +233,7 @@ function(portal_add_resources TARGET_NAME RESOURCE_PATH)
             "${CMAKE_CURRENT_SOURCE_DIR}/${RESOURCE_PATH}/*"
     )
 
-    set(RESOURCE_TARGET_NAME "${TARGET_NAME}_copy_${ARG_OUTPUT_NAME}")
+    set(RESOURCE_TARGET_NAME "${TARGET_NAME}_copy_resources_${ARG_OUTPUT_NAME}")
 
     add_custom_target(${RESOURCE_TARGET_NAME}
             COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -254,6 +254,101 @@ function(portal_add_resources TARGET_NAME RESOURCE_PATH)
     list(APPEND EXISTING_RESOURCES "${ARG_OUTPUT_NAME}")
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_RESOURCES "${EXISTING_RESOURCES}")
     set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_RESOURCES)
+endfunction()
+
+
+#[=======================================================================[.rst:
+portal_add_configs
+------------------
+
+Adds a config directory to a target and copies it to the runtime output directory.
+
+This function sets up automatic copying of configuration files to
+``$<TARGET_FILE_DIR:target>/config`` and marks the target as having config files
+for installation and downstream consumption.
+
+Synopsis
+^^^^^^^^
+
+.. code-block:: cmake
+
+  portal_add_configs(<target_name> <config_path>)
+
+Arguments
+^^^^^^^^^
+
+``<target_name>``
+  Name of the target to add configs to.
+
+``<config_path>``
+  Path to the config directory. If relative, it is interpreted relative to
+  ``CMAKE_CURRENT_SOURCE_DIR``. Absolute paths are accepted as-is.
+
+Behavior
+^^^^^^^^
+
+The function performs the following operations:
+
+1. **Config Discovery**: Recursively finds all files within ``<config_path>``
+   using ``GLOB_RECURSE``.
+
+2. **Custom Target Creation**: Creates a custom target named
+   ``<target_name>_copy_configs`` that copies the config directory to
+   ``$<TARGET_FILE_DIR:target>/config`` at build time.
+
+3. **Dependency Setup**: Adds the custom target as a dependency of the main target.
+
+4. **Property Tracking**: Sets ``PORTAL_HAS_CONFIG`` on the target and exports it
+   for installation and imported target use.
+
+Example Usage
+^^^^^^^^^^^^^
+
+.. code-block:: cmake
+
+  portal_add_configs(my-game ${CMAKE_CURRENT_SOURCE_DIR}/config)
+
+Notes
+^^^^^
+
+- Configs are copied to ``$<TARGET_FILE_DIR:target>/config``.
+- ``PORTAL_HAS_CONFIG`` is used by ``portal_fetch_configs`` and ``portal_install_module``.
+
+See Also
+^^^^^^^^
+
+- ``portal_fetch_configs``: Fetch configs from other Portal targets
+- ``portal_install_module``: Install module with config prefix
+
+#]=======================================================================]
+function(portal_add_configs TARGET_NAME CONFIG_PATH)
+    get_filename_component(CONFIG_DIR_NAME "${CONFIG_PATH}" NAME)
+
+    if (IS_ABSOLUTE "${CONFIG_PATH}")
+        set(CONFIG_SOURCE_PATH "${CONFIG_PATH}")
+    else()
+        set(CONFIG_SOURCE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_PATH}")
+    endif()
+
+    file(GLOB_RECURSE CONFIG_FILES
+            "${CONFIG_SOURCE_PATH}/*"
+    )
+
+    set(CONFIG_TARGET_NAME "${TARGET_NAME}_copy_configs")
+
+    add_custom_target(${CONFIG_TARGET_NAME}
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CONFIG_SOURCE_PATH}"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>/config"
+            DEPENDS ${CONFIG_FILES}
+            COMMENT "Copying configs for ${TARGET_NAME}: ${CONFIG_SOURCE_PATH} -> $<TARGET_FILE_DIR:${TARGET_NAME}>/config"
+            VERBATIM
+    )
+
+    add_dependencies(${TARGET_NAME} ${CONFIG_TARGET_NAME})
+
+    set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_HAS_CONFIG ON)
+    set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_HAS_CONFIG)
 endfunction()
 
 #[=======================================================================[.rst:
@@ -428,6 +523,113 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
     set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_ADDITIONAL_RESOURCES)
 endfunction()
 
+
+#[=======================================================================[.rst:
+portal_fetch_configs
+--------------------
+
+Copies config files from another Portal target (local or installed) to the current target's
+runtime directory.
+
+This function enables config sharing between Portal targets by copying the ``config/``
+folder from a dependency target (e.g., ``portal::engine``) to the current target. It works
+with both local in-tree targets and installed/imported Portal modules.
+
+Synopsis
+^^^^^^^^
+
+.. code-block:: cmake
+
+  portal_fetch_configs(<target_name> <target_to_fetch>)
+
+Arguments
+^^^^^^^^^
+
+``<target_name>``
+  Name of the target that will receive the fetched config files.
+
+``<target_to_fetch>``
+  Name of the Portal target to fetch config files from. Can be either a local
+  target or an installed target (e.g., ``portal::engine``, ``portal::core``).
+
+Behavior
+^^^^^^^^
+
+The function performs the following operations:
+
+1. **Config Validation**: Reads the ``PORTAL_HAS_CONFIG`` property from
+   ``<target_to_fetch>`` and errors if it is not set.
+
+2. **Path Resolution**: Determines the config base path:
+
+   - **Local targets**: Uses ``$<TARGET_FILE_DIR:target_to_fetch>/config``
+   - **Installed targets**: Uses the ``PORTAL_CONFIG_PREFIX`` property set during
+     installation
+
+3. **Custom Target Creation**: Creates a custom target named
+   ``<target_name>_fetch_config_from_<target_to_fetch>`` that copies the config
+   directory to ``$<TARGET_FILE_DIR:target_name>/config``.
+
+4. **Dependency Chain**: Ensures correct build order by depending on the source
+   copy target (if it exists) and the source target itself.
+
+Example Usage
+^^^^^^^^^^^^^
+
+.. code-block:: cmake
+
+  portal_fetch_configs(my-game portal::engine)
+
+Notes
+^^^^^
+
+- The ``PORTAL_CONFIG_PREFIX`` property is set by ``portal_install_module``.
+- Target namespace separators (``::``) are normalized to underscores for target names.
+
+See Also
+^^^^^^^^
+
+- ``portal_add_configs``: Add local config directory to a target
+- ``portal_install_module``: Install Portal modules (sets PORTAL_CONFIG_PREFIX)
+
+#]=======================================================================]
+function(portal_fetch_configs TARGET_NAME TARGET_TO_FETCH)
+    get_target_property(HAS_CONFIG ${TARGET_TO_FETCH} PORTAL_HAS_CONFIG)
+    if (NOT HAS_CONFIG)
+        message(FATAL_ERROR "Failed to find config from target ${TARGET_TO_FETCH}")
+    endif ()
+
+    get_target_property(CONFIG_PREFIX ${TARGET_TO_FETCH} PORTAL_CONFIG_PREFIX)
+    if (NOT CONFIG_PREFIX OR CONFIG_PREFIX STREQUAL "PORTAL_CONFIG_PREFIX-NOTFOUND")
+        # For local targets, use TARGET_FILE_DIR
+        set(CONFIG_BASE_PATH "$<TARGET_FILE_DIR:${TARGET_TO_FETCH}>/config")
+    else()
+        # For installed/imported targets, use the PORTAL_RESOURCE_PREFIX property
+        set(CONFIG_BASE_PATH "${CONFIG_PREFIX}")
+    endif()
+
+    set(_TARGET_TO_FETCH_NORMALIZED "${TARGET_TO_FETCH}")
+    string(REPLACE "::" "_" _TARGET_TO_FETCH_NORMALIZED "${_TARGET_TO_FETCH_NORMALIZED}")
+
+    set(FETCH_TARGET_NAME "${TARGET_NAME}_fetch_config_from_${_TARGET_TO_FETCH_NORMALIZED}")
+    set(SOURCE_COPY_TARGET "${TARGET_TO_FETCH}_copy_configs")
+
+    add_custom_target(${FETCH_TARGET_NAME}
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CONFIG_BASE_PATH}"
+            "$<TARGET_FILE_DIR:${TARGET_NAME}>/config"
+            COMMENT "Fetching configs for ${TARGET_NAME}: ${CONFIG_BASE_PATH} -> $<TARGET_FILE_DIR:${TARGET_NAME}>/config"
+            VERBATIM
+    )
+
+    if (TARGET ${SOURCE_COPY_TARGET})
+        add_dependencies(${FETCH_TARGET_NAME} ${SOURCE_COPY_TARGET})
+    endif ()
+    add_dependencies(${FETCH_TARGET_NAME} ${TARGET_TO_FETCH})
+
+    add_dependencies(${TARGET_NAME} ${FETCH_TARGET_NAME})
+endfunction()
+
 #[=======================================================================[.rst:
 portal_read_settings
 --------------------
@@ -465,17 +667,20 @@ The function performs the following operations:
    ``$<TARGET_FILE_DIR:target>/<filename>`` using ``copy_if_different`` for
    efficient incremental builds.
 
-3. **Configuration Parsing**: Reads and parses the JSON settings file to extract
-   engine configuration, specifically the ``engine.resources`` array.
+3. **Display Name**: Reads ``project.name`` from the settings JSON to set the
+   ``PORTAL_DISPLAY_NAME`` target property, defaulting to the target name on error.
 
-4. **Resource Configuration**: For each resource entry in the settings:
+4. **Configuration Parsing**: Reads and parses the JSON settings file to extract
+   resource entries from ``project.resources``.
+
+5. **Resource Configuration**: For each resource entry in the settings:
 
    - Extracts the ``type`` and ``path`` fields from the resource object
    - Validates that the path is relative (absolute paths are skipped)
    - Creates custom targets to copy resource directories to the runtime output
    - Registers resources with the ``PORTAL_RESOURCES`` property for installation
 
-5. **Target Dependencies**: Ensures the settings file and resources are copied
+6. **Target Dependencies**: Ensures the settings file and resources are copied
    during the build process by adding appropriate target dependencies.
 
 
@@ -536,6 +741,18 @@ function(portal_read_settings TARGET_NAME)
     add_dependencies(${TARGET_NAME} ${SETTINGS_COPY_TARGET_NAME})
 
     file(READ ${SETTINGS_PATH} SETTINGS_CONTENT)
+
+    # Read Name
+    string(JSON PROJECT_NAME ERROR_VARIABLE JSON_ERROR GET ${SETTINGS_CONTENT} project name)
+    if (JSON_ERROR)
+        message(STATUS "Error reading project name from settings: ${JSON_ERROR}, defaulting to target name")
+        set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_DISPLAY_NAME ${TARGET_NAME})
+    else ()
+        set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_DISPLAY_NAME ${PROJECT_NAME})
+    endif ()
+
+
+    # Read Resources
     string(JSON RESOURCES_LIST_LENGTH LENGTH ${SETTINGS_CONTENT} project resources)
     if (RESOURCES_LIST_LENGTH GREATER 0)
         math(EXPR RESOURCES_LIST_LAST_INDEX "${RESOURCES_LIST_LENGTH} - 1")
@@ -877,6 +1094,50 @@ function(portal_package_game TARGET_NAME DISPLAY_NAME)
     )
 endfunction()
 
+#[=======================================================================[.rst:
+_find_icon_files
+----------------
+
+Resolves platform-specific icon files and a logo image for a game target.
+
+This macro locates ``.icns``, ``.ico``, and ``.png`` icon files based on a base
+path and falls back to Portal Engine defaults when files are missing. It also
+resolves the logo PNG file with a default fallback.
+
+Synopsis
+^^^^^^^^
+
+.. code-block:: cmake
+
+  _find_icon_files(<static_icon_base> <logo_file>)
+
+Arguments
+^^^^^^^^^
+
+``<static_icon_base>``
+  Base path (without extension) for icon files. The macro checks for
+  ``.icns``, ``.ico``, and ``.png`` variants.
+
+``<logo_file>``
+  Path to a logo PNG file. If missing or empty, a Portal Engine default is used.
+
+Outputs
+^^^^^^^
+
+The macro sets the following variables in the caller's scope:
+
+- ``ICON_ICNS_FILE``: Path to the macOS icon file
+- ``ICON_ICO_FILE``: Path to the Windows icon file
+- ``ICON_PNG_FILE``: Path to the PNG icon file
+- ``LOGO_PNG_FILE``: Path to the logo PNG file
+
+Notes
+^^^^^
+
+- Defaults are sourced from ``portal::engine`` resources when available.
+- This is an internal helper macro used by ``portal_add_game``.
+
+#]=======================================================================]
 macro(_find_icon_files STATIC_ICON LOGO_FILE)
     # Get the resource prefix from portal-engine for default icons
     get_target_property(ENGINE_RESOURCE_PREFIX portal::engine PORTAL_RESOURCE_PREFIX)
@@ -954,7 +1215,7 @@ Synopsis
   portal_add_game(<target_name>
                   SOURCES <source>...
                   [MAKE_STANDALONE]
-                  [DISPLAY_NAME <name>]
+                  [NO_CONFIG]
                   [SETTINGS_FILE <path>]
                   [SETTINGS_FILE_NAME <filename>]
                   [STATIC_ICON <path>]
@@ -980,9 +1241,10 @@ Arguments
   - **macOS**: Creates a MACOSX_BUNDLE with proper bundle structure
   - **Linux**: No effect (standard executable)
 
-``DISPLAY_NAME <name>``
-  Optional. Human-readable name for the game (e.g., "My Awesome Game").
-  If not provided, defaults to ``<target_name>``.
+``NO_CONFIG``
+  Optional flag. Skips adding the local ``config/`` directory via
+  ``portal_add_configs``. Configs from dependencies (e.g., ``portal::engine``)
+  are still fetched.
 
 ``SETTINGS_FILE <path>``
   Optional. Path to the settings JSON file. If not specified, defaults to
@@ -1021,45 +1283,51 @@ Behavior
 
 The function performs the following operations in order:
 
-1. **Argument Defaults**: Sets default values for ``DISPLAY_NAME`` (target name)
-   and ``SETTINGS_FILE_NAME`` ("settings.json").
+1. **Argument Defaults**: Sets default values for ``SETTINGS_FILE_NAME``
+   ("settings.json") and initializes icon/logo inputs when not provided.
 
-2. **Icon Resolution**: Calls ``_find_icon_files`` to locate platform-specific
-   icons or use Portal Engine defaults.
-
-3. **Executable Creation**:
+2. **Executable Creation**:
 
    - **macOS + MAKE_STANDALONE**: Creates MACOSX_BUNDLE with bundle properties
    - **Windows + MAKE_STANDALONE**: Creates WIN32 executable (no console)
    - **Otherwise**: Creates standard console executable
 
-4. **Icon Properties**: Sets target properties:
+3. **Icon Resolution**: Calls ``_find_icon_files`` to locate platform-specific
+   icons or use Portal Engine defaults, then sets target properties:
 
    - ``PORTAL_WINDOWS_ICON``: Path to .ico file
    - ``PORTAL_MACOS_ICON``: Path to .icns file
    - ``PORTAL_LOGO``: Path to logo PNG
 
-5. **Standalone Define**: If ``MAKE_STANDALONE`` is set, defines
+4. **Standalone Define**: If ``MAKE_STANDALONE`` is set, defines
    ``PORTAL_STANDALONE_EXE`` for conditional compilation.
 
-6. **Linking**: Links against ``portal::engine`` and any additional libraries.
+5. **Linking**: Links against ``portal::engine`` and any additional libraries.
 
-7. **Engine Resources**: Fetches all Portal Engine resources via
-   ``portal_fetch_resources``.
+6. **Settings Configuration**:
 
-8. **Local Resources**: Adds user-specified resource paths via
+   - Resolves and validates the settings file path
+   - Sets ``PORTAL_SETTINGS_PATH`` on the target
+   - Calls ``portal_read_settings`` to parse settings and set ``PORTAL_DISPLAY_NAME``
+
+7. **macOS Bundle Properties**: If ``MAKE_STANDALONE`` is set, configures bundle
+   metadata using the resolved display name.
+
+8. **Engine Assets**: Fetches Portal Engine resources and configs via
+   ``portal_fetch_resources`` and ``portal_fetch_configs``.
+
+9. **Local Resources**: Adds user-specified resource paths via
    ``portal_add_resources``.
 
-9. **Settings Configuration**:
+10. **Local Configs**: Adds the local ``config/`` directory via
+    ``portal_add_configs`` unless ``NO_CONFIG`` is set.
 
-   - Validates settings file exists
-   - Sets ``PORTAL_SETTINGS_PATH`` property
-   - Calls ``portal_setup_compile_configs`` to generate config definitions
-   - Calls ``portal_read_settings`` to process and copy settings
+11. **Config Definitions**: Calls ``portal_setup_compile_configs`` to generate
+    compile-time configuration constants.
 
-10. **Installation**: Calls ``portal_install_game`` to set up installation rules.
+12. **Installation**: Calls ``portal_install_game`` to set up installation rules.
 
-11. **Packaging**: Calls ``portal_package_game`` to configure CPack.
+13. **Packaging**: Calls ``portal_package_game`` to configure CPack.
 
 Target Properties Set
 ^^^^^^^^^^^^^^^^^^^^^
@@ -1070,6 +1338,7 @@ The function sets the following target properties:
 - ``PORTAL_MACOS_ICON``: macOS .icns file path
 - ``PORTAL_LOGO``: Logo PNG file path
 - ``PORTAL_SETTINGS_PATH``: Settings JSON file path
+- ``PORTAL_DISPLAY_NAME``: Display name parsed from the settings file
 - ``PORTAL_RESOURCES``: List of resource directories (via ``portal_read_settings``)
 - ``PORTAL_ADDITIONAL_RESOURCES``: Fetched resources (via ``portal_fetch_resources``)
 
@@ -1099,7 +1368,6 @@ Full-featured standalone game with custom icons and resources:
   portal_add_game(awesome-game
                   SOURCES src/main.cpp src/game.cpp src/player.cpp
                   MAKE_STANDALONE
-                  DISPLAY_NAME "Awesome Game"
                   STATIC_ICON "${CMAKE_CURRENT_SOURCE_DIR}/icons/game_icon"
                   LOGO_FILE "${CMAKE_CURRENT_SOURCE_DIR}/icons/logo.png"
                   SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/config/game_settings.json"
@@ -1126,6 +1394,7 @@ Notes
 - Settings file is required and must exist
 - Icons default to Portal Engine branding if not provided
 - ``MAKE_STANDALONE`` is recommended for distribution builds
+- Use ``NO_CONFIG`` to opt out of copying a local ``config/`` directory
 
 See Also
 ^^^^^^^^
@@ -1139,12 +1408,11 @@ See Also
 
 #]=======================================================================]
 function(portal_add_game TARGET_NAME)
-    set(options MAKE_STANDALONE)
+    set(options MAKE_STANDALONE NO_CONFIG)
     set(oneValueArgs
             SETTINGS_FILE
             STATIC_ICON
             LOGO_FILE
-            DISPLAY_NAME
             SETTINGS_FILE_NAME
             VENDOR
             CONTACT
@@ -1155,10 +1423,6 @@ function(portal_add_game TARGET_NAME)
             LINK_LIBRARIES
     )
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    if(NOT ARG_DISPLAY_NAME)
-        set(ARG_DISPLAY_NAME ${TARGET_NAME})
-    endif ()
 
     if (NOT ARG_SETTINGS_FILE_NAME)
         set(ARG_SETTINGS_FILE_NAME "settings.json")
@@ -1172,22 +1436,12 @@ function(portal_add_game TARGET_NAME)
         set(ARG_LOGO_FILE "")
     endif ()
 
-    _find_icon_files(ARG_STATIC_ICON ARG_LOGO_FILE)
-
     # TODO: add editor target
     if (APPLE AND ARG_MAKE_STANDALONE)
         cmake_path(GET ICON_ICNS_FILE FILENAME BUNDLE_ICON_FILE)
         set_source_files_properties(${ARG_STATIC_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
         add_executable(${TARGET_NAME} MACOSX_BUNDLE ${ARG_SOURCES} ${ARG_STATIC_ICON})
-        set_target_properties(${TARGET_NAME} PROPERTIES
-                MACOSX_BUNDLE TRUE
-                MACOSX_BUNDLE_IDENTIFIER com.portal.${TARGET_NAME}
-                MACOSX_BUNDLE_BUNDLE_NAME ${ARG_DISPLAY_NAME}
-                MACOSX_BUNDLE_ICON_FILE ${BUNDLE_ICON_FILE}
-                MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
-                MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
-        )
     elseif (WIN32)
         if (ARG_MAKE_STANDALONE)
             add_executable(${TARGET_NAME} WIN32 ${ARG_SOURCES})
@@ -1198,9 +1452,11 @@ function(portal_add_game TARGET_NAME)
         add_executable(${TARGET_NAME} ${ARG_SOURCES})
     endif ()
 
+    _find_icon_files(ARG_STATIC_ICON ARG_LOGO_FILE)
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_WINDOWS_ICON ${ICON_ICO_FILE})
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_MACOS_ICON ${ICON_ICNS_FILE})
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_LOGO ${LOGO_PNG_FILE})
+
 
     if (ARG_MAKE_STANDALONE)
         target_compile_definitions(${TARGET_NAME} PRIVATE PORTAL_STANDALONE_EXE)
@@ -1212,12 +1468,6 @@ function(portal_add_game TARGET_NAME)
             ${ARG_LINK_LIBRARIES}
     )
 
-    portal_fetch_resources(${TARGET_NAME} portal::engine)
-
-    foreach (RESOURCE_PATH ${ARG_RESOURCE_PATHS})
-        portal_add_resources(${TARGET_NAME} ${ARG_RESOURCE_PATHS})
-    endforeach ()
-
     if (NOT ARG_SETTINGS_FILE)
         set(ARG_SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${ARG_SETTINGS_FILE_NAME}")
     endif ()
@@ -1228,15 +1478,38 @@ function(portal_add_game TARGET_NAME)
 
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_SETTINGS_PATH ${ARG_SETTINGS_FILE})
 
-    portal_setup_compile_configs(${TARGET_NAME} ${ARG_SETTINGS_FILE_NAME} ${ICON_PNG_FILE})
-
     portal_read_settings(${TARGET_NAME})
+    get_target_property(DISPLAY_NAME ${TARGET_NAME} PORTAL_DISPLAY_NAME)
+
+    if(APPLE AND ARG_MAKE_STANDALONE)
+        set_target_properties(${TARGET_NAME} PROPERTIES
+                MACOSX_BUNDLE TRUE
+                MACOSX_BUNDLE_IDENTIFIER com.portal.${TARGET_NAME}
+                MACOSX_BUNDLE_BUNDLE_NAME ${DISPLAY_NAME}
+                MACOSX_BUNDLE_ICON_FILE ${BUNDLE_ICON_FILE}
+                MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+                MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+        )
+    endif ()
+
+    portal_fetch_resources(${TARGET_NAME} portal::engine)
+    portal_fetch_configs(${TARGET_NAME} portal::engine)
+
+    foreach (RESOURCE_PATH ${ARG_RESOURCE_PATHS})
+        portal_add_resources(${TARGET_NAME} ${ARG_RESOURCE_PATHS})
+    endforeach ()
+
+    if (NOT ARG_NO_CONFIG)
+        portal_add_configs(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/config)
+    endif ()
+
+    portal_setup_compile_configs(${TARGET_NAME} ${ARG_SETTINGS_FILE_NAME} ${ICON_PNG_FILE})
 
     portal_install_game(${TARGET_NAME})
 
     portal_package_game(
             ${TARGET_NAME}
-            ${ARG_DISPLAY_NAME}
+            ${DISPLAY_NAME}
             VENDOR ${ARG_VENDOR}
             CONTACT ${ARG_CONTACT}
     )

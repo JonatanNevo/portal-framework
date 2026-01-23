@@ -11,6 +11,7 @@ This function automates the installation process for Portal modules, including:
 - Generating and installing CMake package config and version files
 - Installing file sets (HEADERS and optional additional_headers)
 - Installing associated resources
+- Setting config/resource prefix metadata for installed modules
 - Installing helper CMake scripts
 
 Synopsis
@@ -59,7 +60,11 @@ The function performs the following operations:
    ``PORTAL_RESOURCE_PREFIX`` property in the config file to allow consumers
    to locate resources correctly.
 
-4. **Helper Files**: Any files specified via the ``FILES`` argument are installed
+4. **Config Prefix**: If the target has ``PORTAL_HAS_CONFIG`` set, the generated
+   config file sets ``PORTAL_CONFIG_PREFIX`` on the imported target so consumers
+   can locate installed configs.
+
+5. **Helper Files**: Any files specified via the ``FILES`` argument are installed
    and automatically included in the generated config file.
 
 Installation Locations

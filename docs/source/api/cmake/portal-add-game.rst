@@ -18,7 +18,7 @@ Synopsis
   portal_add_game(<target_name>
                   SOURCES <source>...
                   [MAKE_STANDALONE]
-                  [DISPLAY_NAME <name>]
+                  [NO_CONFIG]
                   [SETTINGS_FILE <path>]
                   [SETTINGS_FILE_NAME <filename>]
                   [STATIC_ICON <path>]
@@ -44,9 +44,10 @@ Arguments
   - **macOS**: Creates a MACOSX_BUNDLE with proper bundle structure
   - **Linux**: No effect (standard executable)
 
-``DISPLAY_NAME <name>``
-  Optional. Human-readable name for the game (e.g., "My Awesome Game").
-  If not provided, defaults to ``<target_name>``.
+``NO_CONFIG``
+  Optional flag. Skips adding the local ``config/`` directory via
+  :ref:`portal_add_configs <portal-add-configs>`. Configs from dependencies
+  (e.g., ``portal::engine``) are still fetched.
 
 ``SETTINGS_FILE <path>``
   Optional. Path to the settings JSON file. If not specified, defaults to
@@ -85,45 +86,51 @@ Behavior
 
 The function performs the following operations in order:
 
-1. **Argument Defaults**: Sets default values for ``DISPLAY_NAME`` (target name)
-   and ``SETTINGS_FILE_NAME`` ("settings.json").
+1. **Argument Defaults**: Sets default values for ``SETTINGS_FILE_NAME``
+   ("settings.json") and initializes icon/logo inputs when not provided.
 
-2. **Icon Resolution**: Calls ``_find_icon_files`` to locate platform-specific
-   icons or use Portal Engine defaults.
-
-3. **Executable Creation**:
+2. **Executable Creation**:
 
    - **macOS + MAKE_STANDALONE**: Creates MACOSX_BUNDLE with bundle properties
    - **Windows + MAKE_STANDALONE**: Creates WIN32 executable (no console)
    - **Otherwise**: Creates standard console executable
 
-4. **Icon Properties**: Sets target properties:
+3. **Icon Resolution**: Calls ``_find_icon_files`` to locate platform-specific
+   icons or use Portal Engine defaults, then sets target properties:
 
    - ``PORTAL_WINDOWS_ICON``: Path to .ico file
    - ``PORTAL_MACOS_ICON``: Path to .icns file
    - ``PORTAL_LOGO``: Path to logo PNG
 
-5. **Standalone Define**: If ``MAKE_STANDALONE`` is set, defines
+4. **Standalone Define**: If ``MAKE_STANDALONE`` is set, defines
    ``PORTAL_STANDALONE_EXE`` for conditional compilation.
 
-6. **Linking**: Links against ``portal::engine`` and any additional libraries.
+5. **Linking**: Links against ``portal::engine`` and any additional libraries.
 
-7. **Engine Resources**: Fetches all Portal Engine resources via
-   ``portal_fetch_resources``.
+6. **Settings Configuration**:
 
-8. **Local Resources**: Adds user-specified resource paths via
+   - Resolves and validates the settings file path
+   - Sets ``PORTAL_SETTINGS_PATH`` property
+   - Calls ``portal_read_settings`` to process settings and set ``PORTAL_DISPLAY_NAME``
+
+7. **macOS Bundle Properties**: If ``MAKE_STANDALONE`` is set, configures bundle
+   metadata using the resolved display name.
+
+8. **Engine Assets**: Fetches Portal Engine resources and configs via
+   ``portal_fetch_resources`` and ``portal_fetch_configs``.
+
+9. **Local Resources**: Adds user-specified resource paths via
    ``portal_add_resources``.
 
-9. **Settings Configuration**:
+10. **Local Configs**: Adds the local ``config/`` directory via
+    :ref:`portal_add_configs <portal-add-configs>` unless ``NO_CONFIG`` is set.
 
-   - Validates settings file exists
-   - Sets ``PORTAL_SETTINGS_PATH`` property
-   - Calls ``portal_setup_compile_configs`` to generate config definitions
-   - Calls ``portal_read_settings`` to process and copy settings
+11. **Config Definitions**: Calls ``portal_setup_compile_configs`` to generate
+    compile-time configuration constants.
 
-10. **Installation**: Calls ``portal_install_game`` to set up installation rules.
+12. **Installation**: Calls ``portal_install_game`` to set up installation rules.
 
-11. **Packaging**: Calls ``portal_package_game`` to configure CPack.
+13. **Packaging**: Calls ``portal_package_game`` to configure CPack.
 
 Target Properties Set
 ^^^^^^^^^^^^^^^^^^^^^
@@ -134,6 +141,7 @@ The function sets the following target properties:
 - ``PORTAL_MACOS_ICON``: macOS .icns file path
 - ``PORTAL_LOGO``: Logo PNG file path
 - ``PORTAL_SETTINGS_PATH``: Settings JSON file path
+- ``PORTAL_DISPLAY_NAME``: Display name parsed from the settings file
 - ``PORTAL_RESOURCES``: List of resource directories (via ``portal_read_settings``)
 - ``PORTAL_ADDITIONAL_RESOURCES``: Fetched resources (via ``portal_fetch_resources``)
 
@@ -163,7 +171,6 @@ Full-featured standalone game with custom icons and resources:
   portal_add_game(awesome-game
                   SOURCES src/main.cpp src/game.cpp src/player.cpp
                   MAKE_STANDALONE
-                  DISPLAY_NAME "Awesome Game"
                   STATIC_ICON "${CMAKE_CURRENT_SOURCE_DIR}/icons/game_icon"
                   LOGO_FILE "${CMAKE_CURRENT_SOURCE_DIR}/icons/logo.png"
                   SETTINGS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/config/game_settings.json"
@@ -190,6 +197,7 @@ Notes
 - Settings file is required and must exist
 - Icons default to Portal Engine branding if not provided
 - ``MAKE_STANDALONE`` is recommended for distribution builds
+- Use ``NO_CONFIG`` to opt out of copying a local ``config/`` directory
 
 See Also
 ^^^^^^^^
@@ -197,6 +205,8 @@ See Also
 - :ref:`portal_setup_compile_configs <portal-setup-compile-configs>`: Generates configuration constants
 - :ref:`portal_add_resources <portal-add-resources>`: Add local resource directories
 - :ref:`portal_fetch_resources <portal-fetch-resources>`: Fetch resources from other targets
+- :ref:`portal_add_configs <portal-add-configs>`: Add local config directory
+- :ref:`portal_fetch_configs <portal-fetch-configs>`: Fetch configs from other targets
 - :ref:`portal_read_settings <portal-read-settings>`: Process settings file
 - :ref:`portal_install_game <portal-install-game>`: Set up installation rules
 - :ref:`portal_package_game <portal-package-game>`: Configure CPack packaging

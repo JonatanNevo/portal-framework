@@ -8,6 +8,8 @@
 #include <imgui_internal.h>
 #include "panel_manager.h"
 #include "panels/details_panel.h"
+#include "portal/core/files/file_system.h"
+#include "portal/engine/project/project.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/render_target/vulkan_render_target.h"
 #include "portal/engine/window/glfw_window.h"
@@ -15,6 +17,9 @@
 
 namespace portal
 {
+constexpr static auto DEFAULT_CONFIGS_NAME = "default_editor_imgui.ini";
+constexpr static auto CONFIGS_NAME = "editor_imgui.ini";
+
 EditorModule::EditorModule(
     ModuleStack& stack,
     Project& project,
@@ -30,6 +35,7 @@ EditorModule::EditorModule(
       im_gui_renderer(get_dependency<ResourcesModule>().get_registry(), window, swapchain),
       viewport(swapchain, runtime_module)
 {
+    setup_layout_config();
     panel_manager.add_panel<DetailsPanel>();
 }
 
@@ -102,5 +108,18 @@ void EditorModule::end_frame(FrameContext& frame)
 
 void EditorModule::on_event(Event&)
 {
+}
+
+void EditorModule::setup_layout_config()
+{
+    auto editor_config_path = project.get_config_directory() / CONFIGS_NAME;
+    if (!FileSystem::exists(editor_config_path))
+    {
+        // TODO: we should copy the default from the installed location (immutable) into the working directory (mutable)
+        FileSystem::copy(project.get_config_directory() / DEFAULT_CONFIGS_NAME, editor_config_path);
+    }
+    auto& io = ImGui::GetIO();
+    config_path_storage = editor_config_path.string();
+    io.IniFilename = config_path_storage.c_str();
 }
 } // portal
