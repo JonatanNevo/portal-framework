@@ -23,6 +23,8 @@
  * @endcode
  */
 #pragma once
+
+#include <argparse/argparse.hpp>
 #include <portal/application/entry_point.h>
 
 #include <portal/engine/reference.h>
@@ -38,15 +40,36 @@ inline ApplicationProperties from_project(Project& project)
     return ApplicationProperties{
         .name = project.get_name(),
         .width = project.get_settings().get_setting<size_t>("application.window.width", 1600),
-        .height =  project.get_settings().get_setting<size_t>("application.window.height", 900),
+        .height = project.get_settings().get_setting<size_t>("application.window.height", 900),
     };
 }
 
 inline std::unique_ptr<Application> create_application(int argc, char** argv)
 {
+#ifdef PORTAL_BUILD_EDITOR
     // TODO: open project based on args or environment variables or something idk
+    argparse::ArgumentParser parser("Portal Engine");
+    parser.add_argument("-p", "--project")
+          .help("Path to the project folder")
+          .default_value(FileSystem::get_working_directory().string());
 
-    auto project = Project::open_project(ProjectType::Editor, FileSystem::get_working_directory());
+    try
+    {
+        parser.parse_args(argc, argv);
+    }
+    catch (const std::exception& err)
+    {
+        LOG_ERROR("Error in parsing arguments: {}", err.what());
+        std::exit(1);
+    }
+
+    std::filesystem::path working_directory = parser.get<std::string>("-p");
+    auto project = Project::open_project(ProjectType::Editor, working_directory);
+#else
+    // TODO: embed project settings into executable
+    auto project = Project::open_project(ProjectType::Runtime, FileSystem::get_working_directory());
+#endif
+
     return create_engine_application(std::move(project), argc, argv);
 }
 }

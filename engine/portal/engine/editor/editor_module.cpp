@@ -115,8 +115,7 @@ void EditorModule::setup_layout_config()
     auto editor_config_path = project.get_config_directory() / CONFIGS_NAME;
     if (!FileSystem::exists(editor_config_path))
     {
-        // TODO: we should copy the default from the installed location (immutable) into the working directory (mutable)
-        FileSystem::copy(project.get_config_directory() / DEFAULT_CONFIGS_NAME, editor_config_path);
+        FileSystem::copy(project.get_engine_config_directory() / DEFAULT_CONFIGS_NAME, editor_config_path);
     }
     auto& io = ImGui::GetIO();
     config_path_storage = editor_config_path.string();

@@ -51,6 +51,7 @@ portal_add_module(engine
             EnTT
             volk
             imguizmo
+            argparse
 
         COMPLEX_DEPENDENCIES
             VulkanHeaders|LINK|Vulkan::Headers

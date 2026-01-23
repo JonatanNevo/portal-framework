@@ -1,8 +1,12 @@
 {
     "dirty": 0,
+    "ignored_extensions": [
+        ".bin"
+    ],
+    "ignored_files": [
+        ".gitkeep"
+    ],
     "name": "game",
-    "ignored_extensions": [".bin"],
-    "ignored_files": [".gitkeep"],
     "resource_count": 34,
     "version": 1
 }
