@@ -84,6 +84,9 @@ protected:
     nlohmann::json prepare_json();
     static nlohmann::json prepare_object(ArchiveObject* object);
 
+    static void serialize_vec(nlohmann::json& root, const reflection::Property& prop);
+    static void serialize_mat(nlohmann::json& root, const reflection::Property& prop);
+
     void deserialize(const nlohmann::json& input);
     void deserialize_object(ArchiveObject* root, const nlohmann::json& input);
     void deserialize_array(ArchiveObject* root, const std::string& key, const nlohmann::json& array);

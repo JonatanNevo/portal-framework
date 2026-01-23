@@ -198,8 +198,7 @@ public:
      * @param name Property name identifier for serialization/deserialization
      * @param t The scalar value to serialize
      */
-    template <typename T>
-        requires(std::integral<T> || std::floating_point<T>) && (!std::is_same_v<T, bool>)
+    template <typename T> requires(std::integral<T> || std::floating_point<T>) && (!std::is_same_v<T, bool>)
     void add_property(const PropertyName& name, const T& t)
     {
         add_property_to_map(name, {Buffer::create<T>(t), reflection::get_property_type<T>(), reflection::PropertyContainerType::scalar, 1});
@@ -225,7 +224,7 @@ public:
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (size_t i = 0; i < t.size(); ++i)
             {
-                auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 if constexpr (ArchiveableConcept<ValueT>)
                     t[i].archive(*object);
                 else
@@ -239,12 +238,13 @@ public:
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (size_t i = 0; i < t.size(); ++i)
             {
-                auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 object->add_property("v", t[i]);
             }
 
-            constexpr auto property_type = (reflection::String<ValueT>) ? reflection::PropertyType::null_term_string
-                                                                        : reflection::get_property_type<ValueT>();
+            constexpr auto property_type = (reflection::String<ValueT>)
+                                               ? reflection::PropertyType::null_term_string
+                                               : reflection::get_property_type<ValueT>();
 
             add_property_to_map(name, {std::move(buffer), property_type, reflection::PropertyContainerType::array, t.size()});
         }
@@ -273,7 +273,7 @@ public:
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (size_t i = 0; i < t.size(); ++i)
             {
-                auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 if constexpr (ArchiveableConcept<ValueT>)
                     t[i].archive(*object);
                 else
@@ -287,12 +287,13 @@ public:
             Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (size_t i = 0; i < t.size(); ++i)
             {
-                auto* object = new (buffer.as<ArchiveObject*>() + i) ArchiveObject();
+                auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 object->add_property("v", t[i]);
             }
 
-            constexpr auto property_type = (reflection::String<ValueT>) ? reflection::PropertyType::null_term_string
-                                                                        : reflection::get_property_type<ValueT>();
+            constexpr auto property_type = (reflection::String<ValueT>)
+                                               ? reflection::PropertyType::null_term_string
+                                               : reflection::get_property_type<ValueT>();
 
             add_property_to_map(name, {std::move(buffer), property_type, reflection::PropertyContainerType::array, t.size()});
         }
@@ -313,66 +314,49 @@ public:
     {
         add_property_to_map(
             name,
-            {Buffer::copy(t.data(), t.size() + 1),
-             reflection::PropertyType::character,
-             reflection::PropertyContainerType::null_term_string,
-             t.size() + 1});
+            {
+                Buffer::copy(t.data(), t.size() + 1),
+                reflection::PropertyType::character,
+                reflection::PropertyContainerType::null_term_string,
+                t.size() + 1
+            }
+        );
     }
 
     /**
-     * @brief Adds a GLM vec1 property (single-component vector).
+     * @brief Adds a glm vec property
      *
-     * @tparam T GLM vec1 type (e.g., glm::vec1, glm::ivec1)
+     * @tparam T GLM vec type (e.g., glm::vec1, glm::ivec1)
      * @param name Property name identifier
      * @param t The vector to serialize
      */
-    template <reflection::GlmVec1 T>
+    template <reflection::IsVec T>
     void add_property(const PropertyName& name, const T& t)
     {
+        constexpr auto element_number = T::length();
+
         add_property_to_map(
-            name, {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::vector, 1});
+            name,
+            {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::vector, element_number}
+        );
     }
 
     /**
-     * @brief Adds a GLM vec2 property (two-component vector).
+     * @brief Adds a glm matrix property
      *
-     * @tparam T GLM vec2 type (e.g., glm::vec2, glm::ivec2, glm::dvec2)
+     * @tparam T GLM matrix type (e.g., glm::mat2, glm::dmat3)
      * @param name Property name identifier
-     * @param t The vector to serialize
+     * @param t The matrix to serialize
      */
-    template <reflection::GlmVec2 T>
+    template <reflection::IsMatrix T>
     void add_property(const PropertyName& name, const T& t)
     {
-        add_property_to_map(
-            name, {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::vector, 2});
-    }
+        constexpr auto element_number = T::length() * T::col_type::length();
 
-    /**
-     * @brief Adds a GLM vec3 property (three-component vector).
-     *
-     * @tparam T GLM vec3 type (e.g., glm::vec3, glm::ivec3, glm::dvec3)
-     * @param name Property name identifier
-     * @param t The vector to serialize
-     */
-    template <reflection::GlmVec3 T>
-    void add_property(const PropertyName& name, const T& t)
-    {
         add_property_to_map(
-            name, {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::vector, 3});
-    }
-
-    /**
-     * @brief Adds a GLM vec4 property (four-component vector).
-     *
-     * @tparam T GLM vec4 type (e.g., glm::vec4, glm::ivec4, glm::dvec4)
-     * @param name Property name identifier
-     * @param t The vector to serialize
-     */
-    template <reflection::GlmVec4 T>
-    void add_property(const PropertyName& name, const T& t)
-    {
-        add_property_to_map(
-            name, {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::vector, 4});
+            name,
+            {Buffer::create<T>(t), reflection::get_property_type<typename T::value_type>(), reflection::PropertyContainerType::matrix, element_number}
+        );
     }
 
     /**
@@ -385,8 +369,7 @@ public:
      * @param name Property name identifier
      * @param t The map to serialize
      */
-    template <reflection::Map T>
-        requires std::is_convertible_v<typename T::key_type, PropertyName>
+    template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
     void add_property(const PropertyName& name, const T& t)
     {
         auto* child = create_child(name);
@@ -406,8 +389,7 @@ public:
      * @param name Property name identifier
      * @param e The enum value to serialize
      */
-    template <typename T>
-        requires std::is_enum_v<T>
+    template <typename T> requires std::is_enum_v<T>
     void add_property(const PropertyName& name, const T& e)
     {
         add_property(name, portal::to_string(e));
@@ -515,6 +497,15 @@ public:
         }
     }
 
+    template <typename T>
+    void add_property(const PropertyName& name, const std::optional<T>& optional_t)
+    {
+        if (optional_t.has_value())
+        {
+            add_property(name, optional_t.value());
+        }
+    }
+
     /**
      * @brief Retrieves an enum property deserialized from its string representation.
      *
@@ -525,8 +516,7 @@ public:
      * @param out Output parameter to store the enum value
      * @return true if property exists and conversion succeeds, false otherwise
      */
-    template <typename T>
-        requires std::is_enum_v<T>
+    template <typename T> requires std::is_enum_v<T>
     bool get_property(const PropertyName& name, T& out)
     {
         std::string out_string;
@@ -547,8 +537,7 @@ public:
      * @param out Output parameter to store the value
      * @return true if property exists and type matches, false otherwise
      */
-    template <typename T>
-        requires(std::integral<T>) && (!std::is_same_v<T, bool>)
+    template <typename T> requires(std::integral<T>) && (!std::is_same_v<T, bool>)
     bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = get_property_from_map(name);
@@ -570,8 +559,7 @@ public:
      * @param out Output parameter to store the value
      * @return true if property exists and is numeric, false otherwise
      */
-    template <typename T>
-        requires std::floating_point<T>
+    template <typename T> requires std::floating_point<T>
     bool get_property(const PropertyName& name, T& out)
     {
         const auto& property = get_property_from_map(name);
@@ -683,88 +671,77 @@ public:
     }
 
     /**
-     * @brief Retrieves a GLM vec1 property (single-component vector).
+     * @brief Retrieves a GLM vec property
      *
-     * @tparam T GLM vec1 type (e.g., glm::vec1, glm::ivec1)
+     * Handles both native storage (from add_property<IsVec>) and array storage (from JSON deserialization).
+     *
+     * @tparam T GLM vec type (e.g., glm::vec3, glm::ivec3)
      * @param name Property name identifier
      * @param out Output parameter to store the vector
-     * @return true if property exists and is a 1-component vector, false otherwise
+     * @return true if a property exists and is an n-component vector, false otherwise
      */
-    template <reflection::GlmVec1 T>
+    template <reflection::IsVec T>
     bool get_property(const PropertyName& name, T& out)
     {
+        constexpr auto element_number = T::length();
+
         const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
 
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
-        PORTAL_ASSERT(property.elements_number == 1, "Property {} elements number mismatch", name);
+        // Native storage (from add_property<IsVec>)
+        if (property.container_type == reflection::PropertyContainerType::vector)
+        {
+            PORTAL_ASSERT(property.elements_number == element_number, "Property {} elements number mismatch", name);
+            out = T(*property.value.as<T*>());
+            return true;
+        }
 
-        out = T(*property.value.as<T*>());
-        return true;
+        // Array storage (from JSON deserialization)
+        if (property.container_type == reflection::PropertyContainerType::array)
+        {
+            return format_vec<T>(name, property, out);
+        }
+
+        LOG_ERROR_TAG("Serialization", "Property {} container type mismatch (expected vector or array)", name);
+        return false;
     }
 
     /**
-     * @brief Retrieves a GLM vec2 property (two-component vector).
+     * @brief Retrieves a GLM matrix property
      *
-     * @tparam T GLM vec2 type (e.g., glm::vec2, glm::ivec2, glm::dvec2)
+     * Handles both native storage (from add_property<IsMatrix>) and array storage (from JSON deserialization).
+     *
+     * @tparam T GLM matrix type (e.g., glm::mat2, glm::dmat3)
      * @param name Property name identifier
-     * @param out Output parameter to store the vector
-     * @return true if property exists and is a 2-component vector, false otherwise
+     * @param out Output parameter to store the matrix
+     * @return true if a property exists and is an n-component matrix, false otherwise
      */
-    template <reflection::GlmVec2 T>
+    template <reflection::IsMatrix T>
     bool get_property(const PropertyName& name, T& out)
     {
+        constexpr auto element_number = T::length() * T::col_type::length();
+
         const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)
             return false;
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
-        PORTAL_ASSERT(property.elements_number == 2, "Property {} elements number mismatch", name);
 
-        out = T(*property.value.as<T*>());
-        return true;
-    }
+        // Native storage (from add_property<IsMatrix>)
+        if (property.container_type == reflection::PropertyContainerType::matrix)
+        {
+            PORTAL_ASSERT(property.elements_number == element_number, "Property {} elements number mismatch", name);
+            out = T(*property.value.as<T*>());
+            return true;
+        }
 
-    /**
-     * @brief Retrieves a GLM vec3 property (three-component vector).
-     *
-     * @tparam T GLM vec3 type (e.g., glm::vec3, glm::ivec3, glm::dvec3)
-     * @param name Property name identifier
-     * @param out Output parameter to store the vector
-     * @return true if property exists and is a 3-component vector, false otherwise
-     */
-    template <reflection::GlmVec3 T>
-    bool get_property(const PropertyName& name, T& out)
-    {
-        const auto& property = get_property_from_map(name);
-        if (property.type == reflection::PropertyType::invalid)
-            return false;
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
-        PORTAL_ASSERT(property.elements_number == 3, "Property {} elements number mismatch", name);
+        // Array storage (from JSON deserialization)
+        if (property.container_type == reflection::PropertyContainerType::array)
+        {
+            return format_mat<T>(name, property, out);
+        }
 
-        out = T(*property.value.as<T*>());
-        return true;
-    }
-
-    /**
-     * @brief Retrieves a GLM vec4 property (four-component vector).
-     *
-     * @tparam T GLM vec4 type (e.g., glm::vec4, glm::ivec4, glm::dvec4)
-     * @param name Property name identifier
-     * @param out Output parameter to store the vector
-     * @return true if property exists and is a 4-component vector, false otherwise
-     */
-    template <reflection::GlmVec4 T>
-    bool get_property(const PropertyName& name, T& out)
-    {
-        const auto& property = get_property_from_map(name);
-        if (property.type == reflection::PropertyType::invalid)
-            return false;
-        PORTAL_ASSERT(property.container_type == reflection::PropertyContainerType::vector, "Property {} container type mismatch", name);
-        PORTAL_ASSERT(property.elements_number == 4, "Property {} elements number mismatch", name);
-
-        out = T(*property.value.as<T*>());
-        return true;
+        LOG_ERROR_TAG("Serialization", "Property {} container type mismatch (expected matrix or array)", name);
+        return false;
     }
 
     /**
@@ -778,8 +755,7 @@ public:
      * @param out Output map to populate
      * @return true if property exists and is an object, false otherwise
      */
-    template <reflection::Map T>
-        requires std::is_convertible_v<typename T::key_type, PropertyName>
+    template <reflection::Map T> requires std::is_convertible_v<typename T::key_type, PropertyName>
     bool get_property(const PropertyName& name, T& out)
     {
         using ValueType = T::mapped_type;
@@ -935,6 +911,17 @@ public:
         }
     }
 
+    template <typename T>
+    void get_property(const PropertyName& name, std::optional<T>& optional_t)
+    {
+        T value;
+        const bool found = get_property(name, value);
+        if (found)
+            optional_t = std::optional<T>{std::move(value)};
+        else
+            optional_t = std::nullopt;
+    }
+
     /**
      * @brief Creates a new child ArchiveObject and adds it as a property.
      *
@@ -965,8 +952,7 @@ public:
     auto end() const { return property_map.end(); }
 
 protected:
-    template <typename T, typename ValueType>
-        requires(reflection::Vector<T> || reflection::SmallVector<T>)
+    template <typename T, typename ValueType> requires(reflection::Vector<T> || reflection::SmallVector<T>)
     bool format_array(const PropertyName& name, const reflection::Property& prop, T& out) const
     {
         const auto& [value, type, container_type, elements_number] = prop;
@@ -994,6 +980,63 @@ protected:
                     return false;
                 }
                 out.push_back(static_cast<ValueType>(v));
+            }
+        }
+        return true;
+    }
+
+    template <reflection::IsVec T>
+    bool format_vec(const PropertyName& name, const reflection::Property& prop, T& out) const
+    {
+        constexpr auto element_number = T::length();
+        const auto& [value, type, container_type, elements_number] = prop;
+
+        if (elements_number != element_number)
+        {
+            LOG_ERROR_TAG("Serialization", "Property {} array size {} does not match vec size {}", name, elements_number, element_number);
+            return false;
+        }
+
+        auto* objects = value.as<ArchiveObject*>();
+        for (size_t i = 0; i < element_number; ++i)
+        {
+            typename T::value_type v;
+            if (!objects[i].get_property("v", v))
+            {
+                LOG_ERROR_TAG("Serialization", "Failed to get element {} from array for vec property {}", i, name);
+                return false;
+            }
+            out[static_cast<typename T::length_type>(i)] = v;
+        }
+        return true;
+    }
+
+    template <reflection::IsMatrix T>
+    bool format_mat(const PropertyName& name, const reflection::Property& prop, T& out) const
+    {
+        constexpr auto cols = T::length();
+        constexpr auto rows = T::col_type::length();
+        constexpr auto element_number = cols * rows;
+        const auto& [value, type, container_type, elements_number] = prop;
+
+        if (elements_number != element_number)
+        {
+            LOG_ERROR_TAG("Serialization", "Property {} array size {} does not match matrix size {}", name, elements_number, element_number);
+            return false;
+        }
+
+        auto* objects = value.as<ArchiveObject*>();
+        for (size_t col = 0; col < cols; ++col)
+        {
+            for (size_t row = 0; row < rows; ++row)
+            {
+                typename T::value_type v;
+                if (!objects[col * rows + row].get_property("v", v))
+                {
+                    LOG_ERROR_TAG("Serialization", "Failed to get element [{},{}] from array for matrix property {}", col, row, name);
+                    return false;
+                }
+                out[col][row] = v;
             }
         }
         return true;

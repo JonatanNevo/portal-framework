@@ -285,6 +285,93 @@ SCENARIO("Archive can handle complex types")
             }
         }
 
+        THEN("`add_property<glm::mat2>` is called")
+        {
+            glm::mat2 value(1.0f, 2.0f, 3.0f, 4.0f);
+            archive.add_property("test_mat2", value);
+
+            THEN("A mat2 is inserted")
+            {
+                glm::mat2 retrieved;
+                REQUIRE(archive.get_property("test_mat2", retrieved));
+                REQUIRE(retrieved[0][0] == value[0][0]);
+                REQUIRE(retrieved[0][1] == value[0][1]);
+                REQUIRE(retrieved[1][0] == value[1][0]);
+                REQUIRE(retrieved[1][1] == value[1][1]);
+            }
+        }
+
+        THEN("`add_property<glm::mat3>` is called")
+        {
+            glm::mat3 value(
+                1.0f, 2.0f, 3.0f,
+                4.0f, 5.0f, 6.0f,
+                7.0f, 8.0f, 9.0f
+            );
+            archive.add_property("test_mat3", value);
+
+            THEN("A mat3 is inserted")
+            {
+                glm::mat3 retrieved;
+                REQUIRE(archive.get_property("test_mat3", retrieved));
+                for (int col = 0; col < 3; ++col)
+                {
+                    for (int row = 0; row < 3; ++row)
+                    {
+                        REQUIRE(retrieved[col][row] == value[col][row]);
+                    }
+                }
+            }
+        }
+
+        THEN("`add_property<glm::mat4>` is called")
+        {
+            glm::mat4 value(
+                1.0f, 2.0f, 3.0f, 4.0f,
+                5.0f, 6.0f, 7.0f, 8.0f,
+                9.0f, 10.0f, 11.0f, 12.0f,
+                13.0f, 14.0f, 15.0f, 16.0f
+            );
+            archive.add_property("test_mat4", value);
+
+            THEN("A mat4 is inserted")
+            {
+                glm::mat4 retrieved;
+                REQUIRE(archive.get_property("test_mat4", retrieved));
+                for (int col = 0; col < 4; ++col)
+                {
+                    for (int row = 0; row < 4; ++row)
+                    {
+                        REQUIRE(retrieved[col][row] == value[col][row]);
+                    }
+                }
+            }
+        }
+
+        THEN("`add_property<glm::dmat4>` is called")
+        {
+            glm::dmat4 value(
+                1.0, 2.0, 3.0, 4.0,
+                5.0, 6.0, 7.0, 8.0,
+                9.0, 10.0, 11.0, 12.0,
+                13.0, 14.0, 15.0, 16.0
+            );
+            archive.add_property("test_dmat4", value);
+
+            THEN("A dmat4 is inserted")
+            {
+                glm::dmat4 retrieved;
+                REQUIRE(archive.get_property("test_dmat4", retrieved));
+                for (int col = 0; col < 4; ++col)
+                {
+                    for (int row = 0; row < 4; ++row)
+                    {
+                        REQUIRE(retrieved[col][row] == value[col][row]);
+                    }
+                }
+            }
+        }
+
         THEN("`add_property<std::unordered_map>` is called")
         {
             const std::unordered_map<std::string, int> values = {
