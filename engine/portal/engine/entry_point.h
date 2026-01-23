@@ -48,7 +48,7 @@ inline std::unique_ptr<Application> create_application(int argc, char** argv)
 {
 #ifdef PORTAL_BUILD_EDITOR
     // TODO: open project based on args or environment variables or something idk
-    argparse::ArgumentParser parser("Portal Engine");
+    argparse::ArgumentParser parser("portal-engine", PORTAL_ENGINE_VERSION);
     parser.add_argument("-p", "--project")
           .help("Path to the project folder")
           .default_value(FileSystem::get_working_directory().string());

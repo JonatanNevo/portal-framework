@@ -227,7 +227,7 @@ function(portal_install_module MODULE_NAME)
     get_target_property(HAS_CONFIG ${TARGET_NAME} PORTAL_HAS_CONFIG)
     if (HAS_CONFIG)
         install(
-                DIRECTORY "$<TARGET_FILE_DIR:${TARGET_NAME}>/config"
+                DIRECTORY "$<TARGET_FILE_DIR:${TARGET_NAME}>/config/"
                 COMPONENT ${ARG_COMPONENT}
                 DESTINATION config
         )
