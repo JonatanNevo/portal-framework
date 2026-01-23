@@ -197,22 +197,22 @@ std::filesystem::path FileSystem::get_root_path()
 }
 
 
-std::filesystem::path FileSystem::get_data_home(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_data_home(const std::filesystem::path app_name)
 {
     return get_linux_folder_default("XDG_DATA_HOME", ".local/share") / "portal" / app_name;
 }
 
-std::filesystem::path FileSystem::get_config_home(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_config_home(const std::filesystem::path app_name)
 {
     return get_linux_folder_default("XDG_CONFIG_HOME", ".config") / "portal" / app_name;
 }
 
-std::filesystem::path FileSystem::get_cache_dir(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_cache_dir(const std::filesystem::path app_name)
 {
     return get_linux_folder_default("XDG_CACHE_HOME", ".cache") / "portal" / app_name;
 }
 
-std::filesystem::path FileSystem::get_state_dir(const std::filesystem::path& app_name)
+std::filesystem::path FileSystem::get_state_dir(const std::filesystem::path app_name)
 {
     return get_linux_folder_default("XDG_STATE_HOME", ".local/state") / "portal" / app_name;
 }

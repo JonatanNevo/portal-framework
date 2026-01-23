@@ -106,7 +106,7 @@ public:
      *
      * @return The base folder for storing program data.
      */
-    static std::filesystem::path get_data_home(const std::filesystem::path& app_name = "");
+    static std::filesystem::path get_data_home(std::filesystem::path app_name = "");
 
 
     /**
@@ -117,7 +117,7 @@ public:
      *
      * @return The base folder for storing config data.
      */
-    static std::filesystem::path get_config_home(const std::filesystem::path& app_name = "");
+    static std::filesystem::path get_config_home(std::filesystem::path app_name = "");
 
     /**
      * Retrieves the base folder for storing cache files.
@@ -128,7 +128,7 @@ public:
      * Note that it is recommended to append "cache" after the program name to prevent conflicting with "StateDir" under Windows
      * @return The base folder for storing data that do not need to be backed up and might be deleted.
      */
-    static std::filesystem::path get_cache_dir(const std::filesystem::path& app_name = "");
+    static std::filesystem::path get_cache_dir(std::filesystem::path app_name = "");
 
     /**
      * Retrieves the base folder used for state files.
@@ -139,7 +139,7 @@ public:
      *
      * @return The base folder for storing data that do not need to be backed up but should not be regularly deleted either.
      */
-    static std::filesystem::path get_state_dir(const std::filesystem::path& app_name = "");
+    static std::filesystem::path get_state_dir(std::filesystem::path app_name = "");
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////// Global Platform Paths //////////////////////////////////////////////////////////////////////////////////////
