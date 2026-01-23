@@ -63,7 +63,7 @@ inline std::unique_ptr<Application> create_application(int argc, char** argv)
         std::exit(1);
     }
 
-    std::filesystem::path working_directory = parser.get<std::string>("-p");
+    auto working_directory = std::filesystem::absolute(parser.get<std::string>("-p"));
     auto project = Project::open_project(ProjectType::Editor, working_directory);
 #else
     // TODO: embed project settings into executable
