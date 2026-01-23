@@ -7,6 +7,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
+#include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
 #include "portal/application/frame_context.h"
 #include "portal/engine/renderer/rendering_context.h"
@@ -121,7 +122,7 @@ void VulkanRenderTarget::initialize()
             if (prop.existing_images.contains(attachment_index))
             {
                 depth_image = reference_cast<VulkanImage>(prop.existing_images.at(attachment_index));
-                PORTAL_ASSERT(utils::is_depth_format(depth_image->get_format()), "Trying to attach non-depth image as depth attachment");
+                PORTAL_ASSERT(utils::is_depth_format(to_format(depth_image->get_format())), "Trying to attach non-depth image as depth attachment");
             }
             else
             {
@@ -133,7 +134,7 @@ void VulkanRenderTarget::initialize()
             if (prop.existing_images.contains(attachment_index))
             {
                 const auto color_image = reference_cast<VulkanImage>(prop.existing_images.at(attachment_index));
-                PORTAL_ASSERT(!utils::is_depth_format(color_image->get_format()), "Trying to attach depth image as color attachment");
+                PORTAL_ASSERT(!utils::is_depth_format(to_format(color_image->get_format())), "Trying to attach depth image as color attachment");
                 color_images[attachment_index] = color_image;
             }
             else
