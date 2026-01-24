@@ -30,7 +30,7 @@ MaterialLoader::MaterialLoader(const Project& project, ResourceRegistry& registr
 {
 }
 
-Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const ResourceSource& source)
+ResourceData MaterialLoader::load(const SourceMetadata& meta, Reference<ResourceSource> source)
 {
     auto material_meta = std::get<MaterialMetadata>(meta.meta);
 
@@ -51,7 +51,7 @@ Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const Resou
 
     MaterialDetails details;
     if (meta.format == SourceFormat::Memory)
-        details = load_details_from_memory(source);
+        details = load_details_from_memory(*source);
     else
         throw std::runtime_error("Unknown material format");
 
@@ -87,8 +87,9 @@ Reference<Resource> MaterialLoader::load(const SourceMetadata& meta, const Resou
     else
         material->set_pipeline(reference_cast<renderer::vulkan::VulkanPipeline>(create_pipeline(STRING_ID("color_pipeline"), variant, true)));
 
-    return material;
+    return {material, source, meta};
 }
+
 
 void MaterialLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource&)
 {
@@ -97,6 +98,8 @@ void MaterialLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource&
         .shader = STRING_ID("engine/shaders/pbr")
     };
 }
+
+void MaterialLoader::save(const ResourceData&) {}
 
 MaterialDetails MaterialLoader::load_details_from_memory(const ResourceSource& source)
 {

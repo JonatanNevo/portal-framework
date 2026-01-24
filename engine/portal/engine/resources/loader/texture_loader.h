@@ -24,8 +24,9 @@ class TextureLoader final : public ResourceLoader
 public:
     TextureLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
-    Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
+    ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source) override;
     static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
+    void save(const ResourceData& resource_data) override;
 
 protected:
     /**

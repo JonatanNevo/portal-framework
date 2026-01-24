@@ -59,9 +59,9 @@ TextureLoader::TextureLoader(ResourceRegistry& registry, const renderer::vulkan:
     create_standalone_texture(renderer::Texture::MISSING_TEXTURE_ID, pixels, missing_extent);
 }
 
-Reference<Resource> TextureLoader::load(const SourceMetadata& meta, const ResourceSource& source)
+ResourceData TextureLoader::load(const SourceMetadata& meta, Reference<ResourceSource> source)
 {
-    auto data = source.load();
+    auto data = source->load();
     int width, height, n_channels;
     void* image_data = nullptr;
     renderer::ImageFormat format;
@@ -83,7 +83,7 @@ Reference<Resource> TextureLoader::load(const SourceMetadata& meta, const Resour
     {
         LOGGER_ERROR("Failed to load texture: {}", meta.resource_id);
         stbi_image_free(image_data);
-        return nullptr;
+        return ResourceData{};
     }
 
     renderer::TextureProperties properties = {
@@ -104,7 +104,7 @@ Reference<Resource> TextureLoader::load(const SourceMetadata& meta, const Resour
     auto texture = make_reference<renderer::vulkan::VulkanTexture>(meta.resource_id, properties, Buffer{image_data, size}, context);
 
     stbi_image_free(image_data);
-    return texture;
+    return ResourceData{texture, source, meta};
 }
 
 void TextureLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& source)
@@ -134,6 +134,8 @@ void TextureLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& 
 
     stbi_image_free(image_data);
 }
+
+void TextureLoader::save(const ResourceData&) {}
 
 void TextureLoader::create_standalone_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const
 {

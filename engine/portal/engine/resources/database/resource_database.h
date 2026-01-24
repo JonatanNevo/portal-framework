@@ -21,6 +21,7 @@
 #include <llvm/ADT/SmallVector.h>
 
 #include "portal/application/modules/module.h"
+#include "portal/engine/reference.h"
 #include "portal/engine/renderer/image/image_types.h"
 #include "portal/engine/resources/resources/resource.h"
 #include "portal/serialization/archive.h"
@@ -259,7 +260,7 @@ public:
      * @param meta Metadata describing the resource
      * @return Unique pointer to a ResourceSource for reading bytes
      */
-    virtual std::unique_ptr<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) = 0;
+    virtual Reference<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) = 0;
 
     [[nodiscard]] virtual StringId get_name() const = 0;
 };

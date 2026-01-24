@@ -196,10 +196,10 @@ DatabaseError FolderResourceDatabase::remove(const StringId resource_id)
 }
 
 
-std::unique_ptr<resources::ResourceSource> FolderResourceDatabase::create_source(StringId, const SourceMetadata meta)
+Reference<resources::ResourceSource> FolderResourceDatabase::create_source(StringId, const SourceMetadata meta)
 {
     // TODO: if source starts with 'http://' use network source
-    return std::make_unique<resources::FileSource>(root_path / meta.source.string);
+    return make_reference<resources::FileSource>(root_path / meta.source.string);
 }
 
 void FolderResourceDatabase::populate()

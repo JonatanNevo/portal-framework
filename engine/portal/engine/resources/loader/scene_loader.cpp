@@ -18,6 +18,60 @@
 
 namespace portal::resources
 {
+
+struct SerMeshComp
+{
+    StringId mesh_id;
+    std::vector<StringId> materials;
+};
+
+void NodeDescription::archive(ArchiveObject& archive) const
+{
+    archive.add_property("name", name);
+    archive.add_property("children", children);
+    archive.add_property("parent", parent);
+
+    auto* child = archive.create_child("components");
+    for (auto& comp : components)
+    {
+        match(comp,
+           [&](const TransformSceneComponent& transform)
+           {
+               child->add_property("transform", transform);
+           },
+           [&](const MeshSceneComponent& mesh)
+           {
+               child->add_property("mesh", mesh);
+           }
+           );
+    }
+}
+
+NodeDescription NodeDescription::dearchive(ArchiveObject& archive)
+{
+    NodeDescription description;
+    archive.get_property("name", description.name);
+    archive.get_property("children", description.children);
+    archive.get_property("parent", description.parent);
+
+    auto* components = archive.get_object("components");
+    for (auto& [name, _] : *components)
+    {
+        if (name == "transform")
+        {
+            auto& variant = description.components.emplace_back(TransformSceneComponent());
+            components->get_property("transform", std::get<TransformSceneComponent>(variant));
+        }
+        else if (name == "mesh")
+        {
+            auto& variant = description.components.emplace_back(MeshSceneComponent());
+            components->get_property("mesh", std::get<MeshSceneComponent>(variant));
+        }
+    }
+
+    return description;
+}
+
 void NodeDescription::serialize(Serializer& serializer) const
 {
     serializer.add_value(name);
@@ -83,13 +137,24 @@ NodeDescription NodeDescription::deserialize(Deserializer& deserializer)
 SceneLoader::SceneLoader(ResourceRegistry& registry) : ResourceLoader(registry)
 {}
 
-Reference<Resource> SceneLoader::load(const SourceMetadata& meta, const ResourceSource& source)
+ResourceData SceneLoader::load(const SourceMetadata& meta, Reference<ResourceSource> source)
 {
-    const auto description = load_scene_description(meta, source);
+    const auto description = load_scene_description(meta, *source);
     const auto scene = make_reference<Scene>(meta.resource_id, registry.get_ecs_registry());
 
     load_scene_nodes(scene->get_scene_entity(), scene->get_registry(), description);
-    return scene;
+    return {scene, source, meta};
+}
+
+void SceneLoader::save(const ResourceData& resource_data)
+{
+    const auto scene = reference_cast<Scene>(resource_data.resource);
+    const auto dirty = resource_data.dirty;
+
+    if (dirty & ResourceDirtyBits::DataChange)
+    {
+        // TODO: save the scene to disk
+    }
 }
 
 class NodeComponentVisitor

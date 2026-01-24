@@ -30,7 +30,8 @@ class StubLoader final : public ResourceLoader
 public:
     explicit StubLoader(ResourceRegistry& registry) : ResourceLoader(registry) {}
 
-    Reference<Resource> load(const SourceMetadata&, const ResourceSource&) override { return nullptr; }
+    ResourceData load(const SourceMetadata&, Reference<ResourceSource>) override { return {}; };
+    void save(const ResourceData&) override {};
 };
 
 

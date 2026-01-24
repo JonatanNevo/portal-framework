@@ -18,7 +18,7 @@ public:
     void register_database(const Project& project, const DatabaseDescription& description);
 
     std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) override;
-    std::unique_ptr<resources::ResourceSource> create_source(StringId resource_id,SourceMetadata meta) override;
+    Reference<resources::ResourceSource> create_source(StringId resource_id,SourceMetadata meta) override;
 
     DatabaseError add(StringId resource_id, SourceMetadata meta) override;
     DatabaseError remove(StringId resource_id) override;

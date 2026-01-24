@@ -12,7 +12,7 @@ namespace portal::resources
 MeshLoader::MeshLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : ResourceLoader(registry), context(context)
 {}
 
-Reference<Resource> MeshLoader::load(const SourceMetadata& meta, const ResourceSource& source)
+ResourceData MeshLoader::load(const SourceMetadata& meta, Reference<ResourceSource> source)
 {
     auto [vertices, indexes, submeshes] = load_mesh_data(meta, source);
 
@@ -81,8 +81,10 @@ Reference<Resource> MeshLoader::load(const SourceMetadata& meta, const ResourceS
         }
     );
 
-    return make_reference<MeshGeometry>(meta.resource_id, std::move(geometry));
+    return {make_reference<MeshGeometry>(meta.resource_id, std::move(geometry)), source, meta};
 }
+
+void MeshLoader::save(const ResourceData&) {}
 
 MeshData MeshLoader::load_mesh_data(const SourceMetadata& meta, const ResourceSource& source)
 {

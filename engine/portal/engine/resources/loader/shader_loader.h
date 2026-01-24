@@ -21,7 +21,8 @@ class ShaderLoader final : public ResourceLoader
 public:
     ShaderLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
-    Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
+     ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source) override;
+    void save(const ResourceData& resource_data) override;
 
 protected:
     [[nodiscard]] Reference<Resource> load_shader(const SourceMetadata& meta, const ResourceSource& source) const;
