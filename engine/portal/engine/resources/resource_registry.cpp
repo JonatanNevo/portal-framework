@@ -38,7 +38,7 @@ ResourceRegistry::~ResourceRegistry() noexcept
     std::unordered_map<StringId, WeakReference<Resource>> weak_resources;
     weak_resources.reserve(resources.size());
     for (auto& [resource_name, ref] : resources)
-        weak_resources[resource_name] = ref;
+        weak_resources[resource_name] = ref.resource;
 
     resources.clear();
 
@@ -81,7 +81,7 @@ std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource
 {
     std::lock_guard guard(lock);
     if (resources.contains(id))
-        return resources.at(id);
+        return resources.at(id).resource;
 
     if (pending_resources.contains(id))
         return std::unexpected{ResourceState::Pending};

@@ -28,14 +28,19 @@ SystemOrchestrator::SystemOrchestrator(ModuleStack& stack)
     scene_rendering_system->register_to(registry);
 }
 
-void SystemOrchestrator::set_active_scene(Scene& scene)
+void SystemOrchestrator::clean()
 {
-    active_scene = &scene;
+    active_scene = {};
+}
+
+void SystemOrchestrator::set_active_scene(const ResourceReference<Scene>& scene)
+{
+    active_scene = scene;
 }
 
 void SystemOrchestrator::begin_frame(FrameContext& frame)
 {
-    PORTAL_ASSERT(active_scene != nullptr, "Invalid scene, cannot run systems");
+    PORTAL_ASSERT(active_scene.get_state() == ResourceState::Loaded, "Invalid scene, cannot run systems");
     frame.ecs_registry = &get_dependency<ecs::Registry>();
 }
 

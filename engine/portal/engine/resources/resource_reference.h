@@ -213,12 +213,16 @@ public:
         reference_manager = std::exchange(other.reference_manager, std::nullopt);
         registry = std::exchange(other.registry, std::nullopt);
 
-        PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
-        PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
-        PORTAL_ASSERT(state != ResourceState::Loaded || resource != nullptr, "Resource is empty");
+        if (state != ResourceState::Null)
+        {
+            PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
+            PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
+            PORTAL_ASSERT(state != ResourceState::Loaded || resource != nullptr, "Resource is empty");
 
-        if (resource_id != INVALID_STRING_ID && reference_manager.has_value())
-            reference_manager.value().get().move_reference(resource_id, &other, this);
+            if (resource_id != INVALID_STRING_ID && reference_manager.has_value())
+                reference_manager.value().get().move_reference(resource_id, &other, this);
+        }
+
         return *this;
     }
 

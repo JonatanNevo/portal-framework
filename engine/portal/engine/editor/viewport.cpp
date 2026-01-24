@@ -19,6 +19,7 @@
 #include "portal/engine/renderer/vulkan/render_target/vulkan_render_target.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
+#include "portal/engine/scene/scene_context.h"
 #include "portal/third_party/font_awsome/IconsFontAwesome6.h"
 
 
@@ -70,6 +71,8 @@ Viewport::~Viewport()
 
 void Viewport::on_gui_update(const FrameContext& frame)
 {
+    auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(640.f, 360.f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
     if (ImGui::Begin("Viewport"))
@@ -87,7 +90,7 @@ void Viewport::on_gui_update(const FrameContext& frame)
 
             if (recreated)
             {
-                frame.active_scene->set_viewport_bounds({0, 0, viewport_size.x, viewport_size.y});
+                scene->set_viewport_bounds({0, 0, viewport_size.x, viewport_size.y});
                 const auto vulkan_image = reference_cast<renderer::vulkan::VulkanImage>(viewport_render_target->get_image(0));
                 const auto& info = vulkan_image->get_image_info();
                 vulkan_image->update_descriptor();
@@ -296,7 +299,7 @@ void Viewport::draw_central_toolbar()
 
 void Viewport::draw_gizmos(const FrameContext& frame)
 {
-    auto* scene = frame.active_scene;
+    const auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
 
     if (gizmo_type == -1)
         return;

@@ -442,7 +442,7 @@ Job<> GltfLoader::load_texture(
     if (!source)
         co_return;
 
-    auto job = registry.load_direct(image_meta, *source);
+    auto job = registry.load_direct(image_meta, source);
     co_await job;
     auto res = job.result();
     if (!res)
@@ -451,7 +451,7 @@ Job<> GltfLoader::load_texture(
         co_return;
     }
 
-    const auto texture_resource = res.value();
+    const auto texture_resource = res.value().resource;
     const auto vulkan_texture = reference_cast<renderer::vulkan::VulkanTexture>(texture_resource);
 
     auto sampler_index = texture.samplerIndex;
@@ -520,7 +520,7 @@ Job<> GltfLoader::load_material(
         details.metallic_texture = texture_meta.resource_id;
     }
 
-    MemorySource source{Buffer(&details, sizeof(details))};
+    auto source = make_reference<MemorySource>(Buffer(&details, sizeof(details)));
     co_await registry.load_direct(material_meta, source);
 }
 
@@ -643,7 +643,7 @@ Job<> GltfLoader::load_mesh(
         mesh_data.submeshes.push_back(submesh);
     }
 
-    MemorySource source{Buffer(&mesh_data, sizeof(mesh_data))};
+    auto source = make_reference<MemorySource>(Buffer(&mesh_data, sizeof(mesh_data)));
     co_await registry.load_direct(mesh_meta, source);
 }
 
@@ -755,7 +755,8 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
                 serializer.add_value(scene_desc);
 
                 auto serial_data = ss.str();
-                MemorySource source{Buffer(serial_data.data(), serial_data.size())};
+
+                auto source = make_reference<MemorySource>(Buffer(serial_data.data(), serial_data.size()));
                 co_await registry.load_direct(scene_meta, source);
             }(scene_description, scene_metadata)
         );

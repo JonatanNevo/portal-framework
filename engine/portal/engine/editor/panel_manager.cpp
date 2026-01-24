@@ -16,9 +16,12 @@
 #include "portal/engine/components/mesh.h"
 #include "portal/engine/components/transform.h"
 #include "portal/engine/scene/scene.h"
+#include "portal/engine/scene/scene_context.h"
 
 namespace portal
 {
+struct SceneContext;
+
 void draw_node(
     Entity entity,
     Entity scope,
@@ -107,6 +110,8 @@ void PanelManager::on_gui_render(EditorContext& editor_context, FrameContext& fr
 
 void PanelManager::print_scene_graph(ecs::Registry& registry, const FrameContext& frame)
 {
+    const auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
+
     const auto relationship_group = registry.group<NameComponent>(entt::get<RelationshipComponent, TransformComponent>);
     relationship_group.sort(
         [&registry](const entt::entity lhs_raw, const entt::entity rhs_raw)
@@ -121,7 +126,12 @@ void PanelManager::print_scene_graph(ecs::Registry& registry, const FrameContext
         }
     );
 
-    ImGui::Begin("Scene");
+    bool show_changes = static_cast<bool>(scene.get_dirty() & ResourceDirtyBits::StateChange);
+
+    std::string window_title = show_changes
+                                   ? "Scene*###Scene"
+                                   : "Scene###Scene";
+    ImGui::Begin(window_title.c_str());
 
     ImGui::Text("Scene Graph");
     ImGui::Separator();
@@ -133,7 +143,7 @@ void PanelManager::print_scene_graph(ecs::Registry& registry, const FrameContext
         if (relationship.parent != null_entity)
             continue;
 
-        draw_node(registry.entity_from_id(entity), frame.active_scene->get_scene_entity(), node_id, relationship, name_comp, transform);
+        draw_node(registry.entity_from_id(entity), scene->get_scene_entity(), node_id, relationship, name_comp, transform);
     }
     ImGui::End();
 }

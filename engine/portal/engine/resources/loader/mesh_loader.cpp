@@ -14,7 +14,7 @@ MeshLoader::MeshLoader(ResourceRegistry& registry, const renderer::vulkan::Vulka
 
 ResourceData MeshLoader::load(const SourceMetadata& meta, Reference<ResourceSource> source)
 {
-    auto [vertices, indexes, submeshes] = load_mesh_data(meta, source);
+    auto [vertices, indexes, submeshes] = load_mesh_data(meta, *source);
 
     MeshGeometryData geometry{
         .vertices = std::move(vertices),

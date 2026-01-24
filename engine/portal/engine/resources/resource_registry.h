@@ -208,7 +208,7 @@ public:
         auto ref = make_reference<T>(std::forward<Args>(args)...);
 
         std::lock_guard guard(lock);
-        resources[id] = ref;
+        resources[id] = {ref};
         return ref;
     }
 
@@ -230,8 +230,8 @@ public:
         return resources | std::ranges::views::filter(
             [](auto& it)
             {
-                auto& [name, resource] = it;
-                auto typed_resource = reference_cast<T>(resource);
+                auto& [name, resource_data] = it;
+                auto typed_resource = reference_cast<T>(resource_data.resource);
                 return typed_resource != nullptr;
             }
         ) | std::ranges::views::transform(
