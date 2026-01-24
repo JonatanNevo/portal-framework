@@ -39,7 +39,7 @@ public:
     DatabaseError add(StringId resource_id, SourceMetadata meta) override;
     DatabaseError remove(StringId resource_id) override;
 
-    std::unique_ptr<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) override;
+    Reference<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) override;
 
 protected:
     FolderResourceDatabase(

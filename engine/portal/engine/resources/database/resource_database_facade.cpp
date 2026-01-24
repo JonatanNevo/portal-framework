@@ -60,7 +60,7 @@ DatabaseError ResourceDatabaseFacade::remove(const StringId resource_id)
     return DatabaseErrorBit::DatabaseMissing;
 }
 
-std::unique_ptr<resources::ResourceSource> ResourceDatabaseFacade::create_source(StringId resource_id, SourceMetadata meta)
+Reference<resources::ResourceSource> ResourceDatabaseFacade::create_source(StringId resource_id, SourceMetadata meta)
 {
     const auto prefix = find_database_prefix(resource_id);
     if (databases.contains(prefix))

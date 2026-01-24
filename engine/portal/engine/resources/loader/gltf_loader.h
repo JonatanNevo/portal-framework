@@ -122,7 +122,7 @@ public:
      * @note This method blocks until the GLTF is parsed and child jobs are dispatched
      * @note Child resources load asynchronously on the job system
      */
-    Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
+    ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source) override;
 
     /**
      * @brief Enrich metadata by discovering child resources in a GLTF file
@@ -145,10 +145,12 @@ public:
      */
     static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
 
+    void save(const ResourceData& resource_data) override;
+
 protected:
     static fastgltf::Asset load_asset(const SourceMetadata& meta, fastgltf::GltfDataGetter& data);
 
-    static std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> find_image_source(
+    static std::pair<SourceMetadata, Reference<ResourceSource>> find_image_source(
         const std::filesystem::path& base_name,
         const std::filesystem::path& base_path,
         const fastgltf::Asset& asset,

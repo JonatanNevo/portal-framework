@@ -42,6 +42,8 @@ struct NodeDescription
 
     std::vector<std::variant<TransformSceneComponent, MeshSceneComponent>> components{};
 
+    void archive(ArchiveObject& archive) const;
+    static NodeDescription dearchive(ArchiveObject& archive);
     void serialize(Serializer& serializer) const;
     static NodeDescription deserialize(Deserializer& deserializer);
 };
@@ -56,11 +58,13 @@ class SceneLoader final : public ResourceLoader
 {
 public:
     explicit SceneLoader(ResourceRegistry& registry);
-    Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
+    ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source) override;
+    void save(const ResourceData& resource_data) override;
 
 protected:
     void load_scene_nodes(Entity scene_entity, ecs::Registry& ecs_registry, SceneDescription description) const;
 
-    static SceneDescription load_scene_description(const SourceMetadata& meta, const ResourceSource& source);
+    static SceneDescription load_scene_description(const SourceMetadata& meta, const ResourceSource& source);public:
+
 };
 }

@@ -14,8 +14,9 @@ class FontLoader final: public ResourceLoader
 public:
     explicit FontLoader(ResourceRegistry& registry);
 
-    Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
+    ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source)  override;
     static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
+    void save(const ResourceData& resource_data) override;
 };
 
 } // portal

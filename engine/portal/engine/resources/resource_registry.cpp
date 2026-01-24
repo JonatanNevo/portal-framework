@@ -52,7 +52,7 @@ ResourceRegistry::~ResourceRegistry() noexcept
     }
 }
 
-Job<Reference<Resource>> ResourceRegistry::load_direct(const SourceMetadata& meta, const resources::ResourceSource& source)
+Job<resources::ResourceData> ResourceRegistry::load_direct(const SourceMetadata& meta, const Reference<resources::ResourceSource> source)
 {
     // TODO: add check that the resource does not exist already?
     LOGGER_TRACE("Creating resource: {} of type: {}", meta.resource_id, meta.type);
@@ -60,16 +60,16 @@ Job<Reference<Resource>> ResourceRegistry::load_direct(const SourceMetadata& met
     auto& loader = loader_factory.get(meta);
 
     // TODO: have load as a coroutine as well?
-    auto resource = loader.load(meta, source);
-    if (!resource)
+    auto resource_data = loader.load(meta, source);
+    if (!resource_data.resource)
     {
         LOGGER_ERROR("Failed to load resource: {}", meta.resource_id);
-        co_return nullptr;
+        co_return {};
     }
 
     std::lock_guard guard(lock);
-    resources[meta.resource_id] = resource;
-    co_return resource;
+    resources[meta.resource_id] = resource_data;
+    co_return resource_data;
 }
 
 void ResourceRegistry::wait_all(const std::span<Job<>> jobs) const
@@ -137,10 +137,10 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
 
     const auto source = database.create_source(resource_id, *meta);
 
-    auto job = load_direct(*meta, *source);
+    auto job = load_direct(*meta, source);
     co_await job;
-    auto resource = job.result();
-    if (!resource || resource.value() == nullptr)
+    auto resource_data = job.result();
+    if (!resource_data || resource_data.value().resource == nullptr)
     {
         std::lock_guard guard(lock);
         errored_resources.insert(resource_id);
@@ -150,6 +150,18 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
 
     std::lock_guard guard(lock);
     pending_resources.erase(resource_id);
-    co_return resource.value();
+    co_return resource_data.value().resource;
+}
+
+void ResourceRegistry::set_dirty(const StringId& resource_id, const ResourceDirtyFlags flags)
+{
+    std::lock_guard guard(lock);
+    resources[resource_id].dirty |= flags;
+}
+
+ResourceDirtyFlags ResourceRegistry::get_dirty(const StringId& resource_id)
+{
+    std::lock_guard guard(lock);
+    return resources[resource_id].dirty;
 }
 } // portal

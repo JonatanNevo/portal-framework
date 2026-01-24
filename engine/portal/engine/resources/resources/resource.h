@@ -34,17 +34,17 @@ struct FlagTraits<ResourceDirtyBits>
 class Resource
 {
 public:
-    explicit Resource(const StringId& id) : id(id) {}
+    explicit Resource(const StringId& id) : id(id), dirty_flags(ResourceDirtyBits::Clean) {}
     virtual ~Resource() = default;
 
     static ResourceType static_type() { return ResourceType::Unknown; }
-
     [[nodiscard]] const StringId& get_id() const { return id; }
 
     bool operator==(const Resource& other) const;
 
 protected:
     const StringId id;
+    ResourceDirtyFlags dirty_flags;
 };
 
 #define DECLARE_RESOURCE(type) static portal::ResourceType static_type() { return type; }

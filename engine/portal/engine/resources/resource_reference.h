@@ -249,6 +249,22 @@ public:
         return state;
     }
 
+    ResourceDirtyFlags get_dirty() const
+    {
+        if (state != ResourceState::Loaded)
+            return ResourceDirtyBits::Clean;
+
+        return registry->get().get_dirty(resource_id);
+    }
+
+    void set_dirty(const ResourceDirtyFlags dirty) const
+    {
+        if (state != ResourceState::Loaded)
+            return;
+
+        return registry->get().set_dirty(resource_id, dirty);
+    }
+
     /**
      * Checks if the resource in valid in the registry (loaded)
      * @note this function will lazily load the resource into the reference if the resource was unloaded before and now is loaded

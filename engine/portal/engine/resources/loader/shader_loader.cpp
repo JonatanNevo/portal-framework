@@ -22,17 +22,18 @@ static auto logger = Log::get_logger("Resources");
 ShaderLoader::ShaderLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : ResourceLoader(registry), context(context)
 {}
 
-
-Reference<Resource> ShaderLoader::load(const SourceMetadata& meta, const ResourceSource& source)
+ResourceData ShaderLoader::load(const SourceMetadata& meta, const Reference<ResourceSource> source)
 {
     if (meta.format == SourceFormat::Shader)
-        return load_shader(meta, source);
+        return {load_shader(meta, *source), source, meta};
     if (meta.format == SourceFormat::PrecompiledShader)
-        return load_precompiled_shader(meta, source);
+        return {load_precompiled_shader(meta, *source), source, meta};
 
     LOGGER_ERROR("Unknown shader format: {}", meta.format);
-    return nullptr;
+    return {};
 }
+
+void ShaderLoader::save(const ResourceData&) {}
 
 Reference<Resource> ShaderLoader::load_shader(const SourceMetadata& meta, const ResourceSource& source) const
 {

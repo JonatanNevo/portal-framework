@@ -23,7 +23,8 @@ class MeshLoader final : public ResourceLoader
 public:
     MeshLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
-    Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) override;
+    ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source)override;
+    void save(const ResourceData& resource_data) override;
 
 protected:
     MeshData load_mesh_data(const SourceMetadata& meta, const ResourceSource& source);

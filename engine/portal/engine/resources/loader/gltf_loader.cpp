@@ -75,6 +75,76 @@ GltfLoader::GltfLoader(ResourceRegistry& registry, const renderer::vulkan::Vulka
 {
 }
 
+ResourceData GltfLoader::load(const SourceMetadata& meta, Reference<ResourceSource> source)
+{
+    PORTAL_PROF_ZONE();
+
+    const auto parent_path = std::filesystem::path(meta.resource_id.string).parent_path();
+    auto relative_name = [&parent_path](const auto& part, ResourceType type)
+    {
+        return create_name_relative(parent_path, part, type);
+    };
+
+    const auto data = source->load();
+    auto data_result = fastgltf::GltfDataBuffer::FromBytes(data.as<std::byte*>(), data.size);
+    if (!data_result)
+    {
+        LOGGER_ERROR("Failed to load glTF from: {}, error: {}", meta.resource_id, fastgltf::getErrorMessage(data_result.error()));
+        return {};
+    }
+
+    const auto gltf = load_asset(meta, data_result.get());
+
+    auto composite_meta = std::get<CompositeMetadata>(meta.meta);
+
+    llvm::SmallVector<Job<>> texture_jobs{};
+    texture_jobs.reserve(gltf.textures.size());
+    for (auto& texture : gltf.textures)
+    {
+        auto texture_name = relative_name(texture.name.c_str(), ResourceType::Texture);
+        if (composite_meta.children.contains(texture_name))
+        {
+            auto texture_meta = composite_meta.children.at(texture_name);
+            texture_jobs.emplace_back(load_texture(texture_meta, gltf, texture));
+        }
+    }
+    registry.wait_all(texture_jobs);
+
+    llvm::SmallVector<Job<>> material_jobs{};
+    material_jobs.reserve(gltf.materials.size());
+    for (auto& material : gltf.materials)
+    {
+        auto material_metadata = composite_meta.children.at(relative_name(material.name.c_str(), ResourceType::Material));
+        material_jobs.emplace_back(load_material(material_metadata, gltf, material));
+    }
+    registry.wait_all(material_jobs);
+
+
+    llvm::SmallVector<Job<>> mesh_jobs{};
+    mesh_jobs.reserve(gltf.materials.size());
+    for (auto& mesh : gltf.meshes)
+    {
+        auto mesh_metadata = composite_meta.children.at(relative_name(mesh.name.c_str(), ResourceType::Mesh));
+        mesh_jobs.emplace_back(load_mesh(mesh_metadata, gltf, mesh));
+    }
+    registry.wait_all(mesh_jobs);
+
+    load_scenes(meta, gltf);
+
+
+    auto composite = make_reference<Composite>(meta.resource_id);
+    for (auto& child_meta : composite_meta.children | std::views::values)
+    {
+        auto resource = registry.get<Resource>(child_meta.resource_id);
+        if (resource.get_state() != ResourceState::Loaded)
+            LOGGER_ERROR("Failed to load resource: {}", child_meta.resource_id);
+
+        composite->set_resource(child_meta.type, child_meta.resource_id, resource);
+    }
+
+    return {composite, source, meta};
+}
+
 void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& source)
 {
     CompositeMetadata composite_meta;
@@ -217,75 +287,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
     meta.meta = std::move(composite_meta);
 }
 
-Reference<Resource> GltfLoader::load(const SourceMetadata& meta, const ResourceSource& source)
-{
-    PORTAL_PROF_ZONE();
-
-    const auto parent_path = std::filesystem::path(meta.resource_id.string).parent_path();
-    auto relative_name = [&parent_path](const auto& part, ResourceType type)
-    {
-        return create_name_relative(parent_path, part, type);
-    };
-
-    const auto data = source.load();
-    auto data_result = fastgltf::GltfDataBuffer::FromBytes(data.as<std::byte*>(), data.size);
-    if (!data_result)
-    {
-        LOGGER_ERROR("Failed to load glTF from: {}, error: {}", meta.resource_id, fastgltf::getErrorMessage(data_result.error()));
-        return nullptr;
-    }
-
-    const auto gltf = load_asset(meta, data_result.get());
-
-    auto composite_meta = std::get<CompositeMetadata>(meta.meta);
-
-    llvm::SmallVector<Job<>> texture_jobs{};
-    texture_jobs.reserve(gltf.textures.size());
-    for (auto& texture : gltf.textures)
-    {
-        auto texture_name = relative_name(texture.name.c_str(), ResourceType::Texture);
-        if (composite_meta.children.contains(texture_name))
-        {
-            auto texture_meta = composite_meta.children.at(texture_name);
-            texture_jobs.emplace_back(load_texture(texture_meta, gltf, texture));
-        }
-    }
-    registry.wait_all(texture_jobs);
-
-    llvm::SmallVector<Job<>> material_jobs{};
-    material_jobs.reserve(gltf.materials.size());
-    for (auto& material : gltf.materials)
-    {
-        auto material_metadata = composite_meta.children.at(relative_name(material.name.c_str(), ResourceType::Material));
-        material_jobs.emplace_back(load_material(material_metadata, gltf, material));
-    }
-    registry.wait_all(material_jobs);
-
-
-    llvm::SmallVector<Job<>> mesh_jobs{};
-    mesh_jobs.reserve(gltf.materials.size());
-    for (auto& mesh : gltf.meshes)
-    {
-        auto mesh_metadata = composite_meta.children.at(relative_name(mesh.name.c_str(), ResourceType::Mesh));
-        mesh_jobs.emplace_back(load_mesh(mesh_metadata, gltf, mesh));
-    }
-    registry.wait_all(mesh_jobs);
-
-    load_scenes(meta, gltf);
-
-
-    auto composite = make_reference<Composite>(meta.resource_id);
-    for (auto& child_meta : composite_meta.children | std::views::values)
-    {
-        auto resource = registry.get<Resource>(child_meta.resource_id);
-        if (resource.get_state() != ResourceState::Loaded)
-            LOGGER_ERROR("Failed to load resource: {}", child_meta.resource_id);
-
-        composite->set_resource(child_meta.type, child_meta.resource_id, resource);
-    }
-
-    return composite;
-}
+void GltfLoader::save(const ResourceData&) {}
 
 fastgltf::Asset GltfLoader::load_asset(const SourceMetadata& meta, fastgltf::GltfDataGetter& data)
 {
@@ -307,14 +309,14 @@ fastgltf::Asset GltfLoader::load_asset(const SourceMetadata& meta, fastgltf::Glt
     return std::move(load.get());
 }
 
-std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_image_source(
+std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_source(
     const std::filesystem::path& base_name,
     const std::filesystem::path& base_path,
     const fastgltf::Asset& asset,
     const fastgltf::Texture& texture
 )
 {
-    std::unique_ptr<ResourceSource> image_source = nullptr;
+    Reference<ResourceSource> image_source = nullptr;
     SourceMetadata image_source_meta{};
 
     auto image_index = texture.imageIndex;
@@ -361,7 +363,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
                 .format = SourceFormat::Memory,
             };
 
-            image_source = std::make_unique<MemorySource>(Buffer(array_source.bytes.data(), array_source.bytes.size()));
+            image_source = make_reference<MemorySource>(Buffer(array_source.bytes.data(), array_source.bytes.size()));
         },
         [&](const fastgltf::sources::Vector& vector_source)
         {
@@ -372,7 +374,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
                 .format = SourceFormat::Memory,
             };
 
-            image_source = std::make_unique<MemorySource>(Buffer(vector_source.bytes.data(), vector_source.bytes.size()));
+            image_source = make_reference<MemorySource>(Buffer(vector_source.bytes.data(), vector_source.bytes.size()));
         },
         [&](const fastgltf::sources::BufferView& buffer_view_source)
         {
@@ -392,7 +394,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
                             .format = SourceFormat::Memory,
                         };
 
-                        image_source = std::make_unique<MemorySource>(Buffer(data_ptr, data_size));
+                        image_source = make_reference<MemorySource>(Buffer(data_ptr, data_size));
                     },
                     [&](const fastgltf::sources::Vector& vector_buffer)
                     {
@@ -406,7 +408,7 @@ std::pair<SourceMetadata, std::unique_ptr<ResourceSource>> GltfLoader::find_imag
                             .format = SourceFormat::Memory,
                         };
 
-                        image_source = std::make_unique<MemorySource>(Buffer(data_ptr, data_size));
+                        image_source = make_reference<MemorySource>(Buffer(data_ptr, data_size));
                     },
                     [&](auto&&)
                     {
@@ -667,13 +669,15 @@ void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) 
             node_description.components.emplace_back(
                 MeshSceneComponent{
                     STRING_ID(create_name(mesh.name, ResourceType::Mesh)),
-                    std::ranges::to<std::vector>(mesh.primitives | std::views::transform(
-                        [&asset, &create_name](const auto& primitive)
-                        {
-                            auto& material = asset.materials[primitive.materialIndex.value()];
-                            return STRING_ID(create_name(material.name, ResourceType::Material));
-                        }
-                    ))
+                    std::ranges::to<std::vector>(
+                        mesh.primitives | std::views::transform(
+                            [&asset, &create_name](const auto& primitive)
+                            {
+                                auto& material = asset.materials[primitive.materialIndex.value()];
+                                return STRING_ID(create_name(material.name, ResourceType::Material));
+                            }
+                        )
+                    )
                 }
             );
         }

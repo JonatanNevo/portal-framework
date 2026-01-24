@@ -217,9 +217,9 @@ public:
      *
      * @param meta The source metadata
      * @param source A type erased source
-     * @return A pointer to the created resource
+     * @return The created resource data
      */
-    Job<Reference<Resource>> load_direct(const SourceMetadata& meta, const resources::ResourceSource& source);
+    Job<resources::ResourceData> load_direct(const SourceMetadata& meta, Reference<resources::ResourceSource> source);
 
     // TODO: remove from here
     void wait_all(std::span<Job<>> jobs) const;
@@ -278,6 +278,9 @@ private:
     template <ResourceConcept T>
     friend class ResourceReference;
 
+    void set_dirty(const StringId& resource_id, ResourceDirtyFlags flags);
+    ResourceDirtyFlags get_dirty(const StringId& resource_id);
+
     ecs::Registry& ecs_registry;
     jobs::Scheduler& scheduler;
     ResourceDatabase& database;
@@ -286,7 +289,7 @@ private:
     SpinLock lock;
     // Resource container, all resource are managed
     // TODO: use custom allocator to have the resources next to each other on the heap
-    std::unordered_map<StringId, Reference<Resource>> resources;
+    std::unordered_map<StringId, resources::ResourceData> resources;
     llvm::DenseSet<StringId> pending_resources;
     llvm::DenseSet<StringId> errored_resources;
 

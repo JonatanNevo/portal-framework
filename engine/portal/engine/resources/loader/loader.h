@@ -17,6 +17,7 @@
 
 #pragma once
 #include "portal/engine/reference.h"
+#include "portal/engine/resources/database/resource_database.h"
 
 namespace portal
 {
@@ -29,6 +30,14 @@ class ResourceRegistry;
 namespace portal::resources
 {
 class ResourceSource;
+
+struct ResourceData
+{
+    Reference<Resource> resource = nullptr;
+    Reference<ResourceSource> source = nullptr;
+    SourceMetadata metadata{};
+    ResourceDirtyFlags dirty = ResourceDirtyBits::Clean;
+};
 
 /**
  * @class ResourceLoader
@@ -92,12 +101,23 @@ public:
      *
      * @param meta Metadata about the resource (type, format, dependencies, etc.)
      * @param source Abstraction for reading the source bytes (file, memory, etc.)
-     * @return Reference<Resource> if successful, nullptr on error
+     * @return ResourceData if successful, nullptr on error
      *
      * @note The returned resource is managed by Reference (std::shared_ptr)
      * @note Implementations should be thread-safe for reading from the source
      */
-    virtual Reference<Resource> load(const SourceMetadata& meta, const ResourceSource& source) = 0;
+    virtual ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source) = 0;
+
+    /**
+     * @brief Saves a resource to a source.
+     *
+     * This method blocks the calling thread until the save operation is complete.
+     *
+     * This method will fetch the resource's dirty state and will update the source (if supported) based on it.
+     *
+     * @param resource The resource to save
+     */
+    virtual void save(const ResourceData& resource_data) = 0;
 
 protected:
     /** @brief Reference to the registry for loading dependent resources */
