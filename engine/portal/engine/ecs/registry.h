@@ -10,12 +10,6 @@
 #include "system_base.h"
 #include "portal/application/modules/module.h"
 #include "portal/engine/components/base.h"
-#include "portal/engine/components/relationship.h"
-
-namespace portal
-{
-struct RelationshipComponent;
-}
 
 namespace portal::ecs
 {

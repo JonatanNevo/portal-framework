@@ -38,7 +38,7 @@ Buffer FileSource::load(const size_t offset, const size_t size) const
     return FileSystem::read_chunk(file_path, offset, size);
 }
 
-std::unique_ptr<std::istream> FileSource::stream() const
+std::unique_ptr<std::istream> FileSource::istream() const
 {
     if (!std::filesystem::exists(file_path))
     {
@@ -47,6 +47,17 @@ std::unique_ptr<std::istream> FileSource::stream() const
     }
 
     auto&& file = std::make_unique<std::ifstream>(file_path, std::ios::binary);
+    return file;
+}
+
+void FileSource::save(const Buffer data, const size_t offset)
+{
+    FileSystem::write_file(file_path, data, offset);
+}
+
+std::unique_ptr<std::ostream> FileSource::ostream()
+{
+    auto&& file = std::make_unique<std::ofstream>(file_path, std::ios::binary);
     return file;
 }
 } // portal

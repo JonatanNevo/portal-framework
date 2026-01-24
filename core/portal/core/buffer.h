@@ -96,10 +96,11 @@ struct Buffer
         return std::move(buffer);
     }
 
-    [[nodiscard]] static Buffer copy(const Buffer& other)
+    [[nodiscard]] static Buffer copy(const Buffer& other, const size_t offset = 0)
     {
+        PORTAL_ASSERT(offset + other.size <= other.size, "Buffer overflow");
         Buffer&& buffer = allocate(other.size);
-        std::memcpy(const_cast<void*>(buffer.data), other.data, other.size);
+        std::memcpy(static_cast<std::byte*>(const_cast<void*>(buffer.data)) + offset, other.data, other.size);
         return std::move(buffer);
     }
 

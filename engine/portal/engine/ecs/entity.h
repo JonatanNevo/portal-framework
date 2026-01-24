@@ -13,6 +13,9 @@
 
 namespace portal
 {
+class Deserializer;
+class Serializer;
+class ArchiveObject;
 /**
  * @brief Lightweight wrapper around EnTT's handle providing Portal's component access API.
  *
@@ -495,6 +498,13 @@ public:
      * @return Reference to the entt::registry
      */
     [[nodiscard]] entt::registry& get_registry() const;
+
+    void serialize(Serializer& archive);
+    static Entity deserialize(Deserializer& archive);
+
+    void archive(ArchiveObject& archive);
+    static Entity deserialize(ArchiveObject& archive);
+
 
 private:
     entt::handle handle{};

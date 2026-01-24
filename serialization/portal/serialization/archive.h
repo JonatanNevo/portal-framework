@@ -268,9 +268,16 @@ public:
     void add_property(const PropertyName& name, const T& t)
     {
         using ValueT = typename T::value_type;
+        Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
+
+        constexpr auto property_type = (reflection::String<ValueT>)
+                                           ? reflection::PropertyType::null_term_string
+                                           : (ArchiveableConcept<ValueT> || ExternalArchiveableConcept<ValueT> || std::same_as<ValueT, ArchiveObject>)
+                                           ? reflection::PropertyType::object
+                                           : reflection::get_property_type<ValueT>();
+
         if constexpr (ArchiveableConcept<ValueT> || ExternalArchiveableConcept<ValueT>)
         {
-            Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (size_t i = 0; i < t.size(); ++i)
             {
                 auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
@@ -279,24 +286,24 @@ public:
                 else
                     Archivable<ValueT>::archive(t[i], *object);
             }
-
-            add_property_to_map(name, {std::move(buffer), reflection::PropertyType::object, reflection::PropertyContainerType::array, t.size()});
+        }
+        if constexpr (std::same_as<ValueT, ArchiveObject>)
+        {
+            for (size_t i = 0; i < t.size(); ++i)
+            {
+                new(buffer.as<ArchiveObject*>() + i) ArchiveObject(std::move(t[i]));
+            }
         }
         else
         {
-            Buffer buffer = Buffer::allocate(t.size() * sizeof(ArchiveObject));
             for (size_t i = 0; i < t.size(); ++i)
             {
                 auto* object = new(buffer.as<ArchiveObject*>() + i) ArchiveObject();
                 object->add_property("v", t[i]);
             }
-
-            constexpr auto property_type = (reflection::String<ValueT>)
-                                               ? reflection::PropertyType::null_term_string
-                                               : reflection::get_property_type<ValueT>();
-
-            add_property_to_map(name, {std::move(buffer), property_type, reflection::PropertyContainerType::array, t.size()});
         }
+
+        add_property_to_map(name, {std::move(buffer), property_type, reflection::PropertyContainerType::array, t.size()});
     }
 
     /**
@@ -966,6 +973,14 @@ protected:
                     out.push_back(ValueType::dearchive(objects[i]));
                 else
                     out.push_back(Archivable<ValueType>::dearchive(objects[i]));
+            }
+        }
+        if constexpr (std::same_as<ValueType, ArchiveObject>)
+        {
+            for (size_t i = 0; i < elements_number; ++i)
+            {
+                auto* objects = value.as<ArchiveObject*>();
+                out.emplace_back(std::move(objects[i]));
             }
         }
         else

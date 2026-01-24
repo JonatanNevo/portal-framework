@@ -6,6 +6,7 @@
 #pragma once
 
 #include <portal/engine/ecs/entity.h>
+#include "register_component.h"
 
 namespace portal
 {
@@ -19,5 +20,13 @@ struct RelationshipComponent
 
     // Parent
     Entity parent = null_entity;
+
+    void archive(ArchiveObject& archive, Entity entity, ecs::Registry& registry) const;
+    static RelationshipComponent dearchive(ArchiveObject& archive, Entity entity, ecs::Registry& registry);
+
+    void serialize(Serializer& serialize) const;
+    static RelationshipComponent deserialize(Deserializer& archive);
 };
+
+REGISTER_COMPONENT(RelationshipComponent);
 }

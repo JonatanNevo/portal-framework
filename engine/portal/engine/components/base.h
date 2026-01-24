@@ -15,12 +15,12 @@ class InputManager;
 struct NameComponent
 {
     StringId name;
-    const char* icon = ICON_FA_CUBE;
+    std::string_view icon = ICON_FA_CUBE;
 };
 
 struct PlayerTag
 {
-    const int id = 0;
+    int id = 0;
 };
 
 struct SceneTag {};

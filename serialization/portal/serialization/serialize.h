@@ -843,7 +843,7 @@ public:
                 [&]<size_t I>()
                 {
                     auto& field = glz::get_member(output, glz::get<I>(glz::to_tie(output)));
-                    get_value<std::remove_cvref_t<decltype(field)>>(field);
+                    get_value(field);
                 }
             );
         }

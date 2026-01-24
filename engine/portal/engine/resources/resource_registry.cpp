@@ -52,6 +52,16 @@ ResourceRegistry::~ResourceRegistry() noexcept
     }
 }
 
+void ResourceRegistry::save(const StringId& resource_id)
+{
+    {
+        std::lock_guard guard(lock);
+        if (resources.contains(resource_id) || pending_resources.contains(resource_id))
+            return;
+    }
+    save_resource(resources.at(resource_id));
+}
+
 Job<resources::ResourceData> ResourceRegistry::load_direct(const SourceMetadata& meta, const Reference<resources::ResourceSource> source)
 {
     // TODO: add check that the resource does not exist already?
@@ -75,6 +85,23 @@ Job<resources::ResourceData> ResourceRegistry::load_direct(const SourceMetadata&
 void ResourceRegistry::wait_all(const std::span<Job<>> jobs) const
 {
     scheduler.wait_for_jobs(jobs);
+}
+
+void ResourceRegistry::save_resource(resources::ResourceData& resource_data)
+{
+    {
+        std::lock_guard guard(lock);
+        if (resource_data.dirty == ResourceDirtyBits::Clean)
+            return;
+    }
+
+    auto& loader = loader_factory.get(resource_data.metadata);
+    loader.save(resource_data);
+
+    {
+        std::lock_guard guard(lock);
+        resource_data.dirty = ResourceDirtyBits::Clean;
+    }
 }
 
 std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource(const StringId& id)

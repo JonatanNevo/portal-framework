@@ -62,9 +62,9 @@ public:
 
     static std::filesystem::path get_unique_file_name(const std::filesystem::path& path);
 
-    static bool write_file(const std::filesystem::path& path, const Buffer& buffer);
-    static bool write_file(const std::filesystem::path& path, const std::vector<uint8_t>& data);
-    static bool write_file(const std::filesystem::path& path, const std::string& data);
+    static bool write_file(const std::filesystem::path& path, const Buffer& buffer, size_t offset = 0);
+    static bool write_file(const std::filesystem::path& path, const std::vector<uint8_t>& data, size_t offset = 0);
+    static bool write_file(const std::filesystem::path& path, const std::string& data, size_t offset = 0);
 
     static Buffer read_chunk(const std::filesystem::path& path, size_t offset, size_t count);
     static Buffer read_file_binary(const std::filesystem::path& path);
