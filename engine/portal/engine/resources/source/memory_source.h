@@ -11,13 +11,17 @@ namespace portal::resources
 class MemorySource final : public ResourceSource
 {
 public:
+    MemorySource() = default;
     explicit MemorySource(Buffer&& data);
 
     [[nodiscard]] Buffer load() const override;
     [[nodiscard]] Buffer load(size_t offset, size_t size) const override;
-    [[nodiscard]] std::unique_ptr<std::istream> stream() const override;
+    [[nodiscard]] std::unique_ptr<std::istream> istream() const override;
+
+    void save(Buffer data, size_t offset) override;
+    [[nodiscard]] std::unique_ptr<std::ostream> ostream() override;
 
 protected:
-    Buffer data;
+    Buffer buffer;
 };
 } // portal

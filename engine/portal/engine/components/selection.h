@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "register_component.h"
 #include "portal/engine/ecs/entity.h"
 
 namespace portal
@@ -14,5 +15,4 @@ struct SelectionComponent
 {
     Entity selected_entity;
 };
-
 }

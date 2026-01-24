@@ -211,7 +211,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
         {
             auto title_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
             ImGui::AlignTextToFramePadding();
-            ImGui::Text("%s Name:", icon);
+            ImGui::Text("%s Name:", icon.data());
         }
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
 

@@ -6,6 +6,8 @@
 #pragma once
 #include <glm/vec3.hpp>
 
+#include "register_component.h"
+
 namespace portal
 {
 struct SpeedComponent

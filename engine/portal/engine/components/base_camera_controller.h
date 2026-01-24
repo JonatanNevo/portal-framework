@@ -7,6 +7,8 @@
 
 #include <portal/core/glm.h>
 
+#include "register_component.h"
+
 namespace portal
 {
 class BaseCameraController

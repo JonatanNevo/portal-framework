@@ -186,7 +186,7 @@ std::filesystem::path FileSystem::get_unique_file_name(const std::filesystem::pa
     }
 }
 
-bool FileSystem::write_file(const std::filesystem::path& path, const Buffer& buffer)
+bool FileSystem::write_file(const std::filesystem::path& path, const Buffer& buffer, const size_t offset)
 {
     const auto abs_path = std::filesystem::absolute(path);
     // create directory if it doesn't exist
@@ -202,21 +202,23 @@ bool FileSystem::write_file(const std::filesystem::path& path, const Buffer& buf
         return false;
     }
 
+    file.seekp(static_cast<std::streamoff>(offset), std::ios::beg);
     file.write(static_cast<const char*>(buffer.data), static_cast<std::streamsize>(buffer.size));
     file.close();
 
     return true;
 }
 
-bool FileSystem::write_file(const std::filesystem::path& path, const std::string& data)
+bool FileSystem::write_file(const std::filesystem::path& path, const std::vector<uint8_t>& data, const size_t offset)
 {
-    return write_file(path, Buffer(const_cast<void*>(static_cast<const void*>(data.data())), data.size()));
+    return write_file(path, Buffer(const_cast<void*>(static_cast<const void*>(data.data())), data.size()), offset);
 }
 
-bool FileSystem::write_file(const std::filesystem::path& path, const std::vector<uint8_t>& data)
+bool FileSystem::write_file(const std::filesystem::path& path, const std::string& data, const size_t offset)
 {
-    return write_file(path, Buffer(const_cast<void*>(static_cast<const void*>(data.data())), data.size()));
+    return write_file(path, Buffer(const_cast<void*>(static_cast<const void*>(data.data())), data.size()), offset);
 }
+
 
 Buffer FileSystem::read_chunk(const std::filesystem::path& path, size_t offset, size_t count)
 {

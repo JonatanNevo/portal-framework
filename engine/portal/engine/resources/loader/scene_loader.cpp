@@ -14,11 +14,11 @@
 #include "portal/engine/resources/source/resource_source.h"
 #include "portal/engine/scene/scene.h"
 #include "portal/serialization/serialize.h"
+#include "portal/serialization/archive/json_archive.h"
 #include "portal/serialization/serialize/binary_serialization.h"
 
 namespace portal::resources
 {
-
 struct SerMeshComp
 {
     StringId mesh_id;
@@ -34,16 +34,17 @@ void NodeDescription::archive(ArchiveObject& archive) const
     auto* child = archive.create_child("components");
     for (auto& comp : components)
     {
-        match(comp,
-           [&](const TransformSceneComponent& transform)
-           {
-               child->add_property("transform", transform);
-           },
-           [&](const MeshSceneComponent& mesh)
-           {
-               child->add_property("mesh", mesh);
-           }
-           );
+        match(
+            comp,
+            [&](const TransformSceneComponent& transform)
+            {
+                child->add_property("transform", transform);
+            },
+            [&](const MeshSceneComponent& mesh)
+            {
+                child->add_property("mesh", mesh);
+            }
+        );
     }
 }
 
@@ -81,7 +82,8 @@ void NodeDescription::serialize(Serializer& serializer) const
     serializer.add_value<size_t>(components.size());
     for (auto component : components)
     {
-        match(component,
+        match(
+            component,
             [&](const TransformSceneComponent& transform)
             {
                 serializer.add_value("TransformSceneComponent");
@@ -93,7 +95,7 @@ void NodeDescription::serialize(Serializer& serializer) const
                 serializer.add_value(mesh.mesh_id);
                 serializer.add_value(mesh.materials);
             }
-            );
+        );
     }
 }
 
@@ -149,11 +151,55 @@ ResourceData SceneLoader::load(const SourceMetadata& meta, Reference<ResourceSou
 void SceneLoader::save(const ResourceData& resource_data)
 {
     const auto scene = reference_cast<Scene>(resource_data.resource);
+    auto& registry = scene->get_registry();
+    auto& raw_registry = scene->get_registry().get_raw_registry();
     const auto dirty = resource_data.dirty;
 
-    if (dirty & ResourceDirtyBits::DataChange)
+    if (dirty & ResourceDirtyBits::DataChange | ResourceDirtyBits::StateChange)
     {
-        // TODO: save the scene to disk
+        JsonArchive archive;
+        archive.add_property("name", scene->get_id());
+
+        std::vector<ArchiveObject> nodes;
+        for (auto descendant : scene->get_scene_entity().descendants())
+        {
+            auto& object = nodes.emplace_back(ArchiveObject{});
+            if (descendant.has_component<NameComponent>())
+            {
+                auto& [name, icon] = descendant.get_component<NameComponent>();
+                object.add_property("name", name);
+                object.add_property("icon", icon);
+            }
+            else
+            {
+                object.add_property("name", "Unnamed");
+                object.add_property("icon", ICON_FA_CUBE);
+            }
+
+            for (auto&& [type_id, storage] : raw_registry.storage())
+            {
+                auto type = entt::resolve(storage.info());
+                if (type)
+                {
+                    auto result = type.invoke(
+                        STRING_ID("archive").id,
+                        {},
+                        entt::forward_as_meta(descendant),
+                        entt::forward_as_meta(object),
+                        entt::forward_as_meta(registry)
+                    );
+
+                    if (!result)
+                    {
+                        LOG_WARN("Failed to invoke archive for type: {}", type.name());
+                    }
+                }
+            }
+        }
+        archive.add_property("nodes", nodes);
+
+        auto out_stream = resource_data.source->ostream();
+        archive.dump(*out_stream);
     }
 }
 

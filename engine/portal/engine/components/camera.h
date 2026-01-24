@@ -7,6 +7,8 @@
 
 #include <portal/core/glm.h>
 
+#include "register_component.h"
+
 namespace portal
 {
 enum class ProjectionType
@@ -35,4 +37,6 @@ struct CameraComponent
     void calculate_view(glm::vec3 position, glm::vec3 forward_direction);
     void set_viewport_bounds(glm::uvec4 bounds);
 };
+
+REGISTER_COMPONENT(MainCameraTag);
 } // portal

@@ -8,6 +8,7 @@
 #include "portal/engine/ecs/system.h"
 
 #include "portal/engine/components/transform.h"
+#include "portal/engine/components/relationship.h"
 
 namespace portal
 {
