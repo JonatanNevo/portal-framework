@@ -11,6 +11,7 @@
 #include "portal/application/modules/module.h"
 #include "portal/input/input_manager.h"
 #include "portal/engine/ecs/registry.h"
+#include "portal/engine/scene/scene.h"
 #include "portal/engine/systems/base_camera_system.h"
 #include "portal/engine/systems/base_player_input_system.h"
 #include "portal/engine/systems/scene_rendering_system.h"
@@ -26,14 +27,16 @@ class SystemOrchestrator final : public TaggedModule<Tag<ModuleTags::Update, Mod
 {
 public:
     explicit SystemOrchestrator(ModuleStack& stack);
-    void set_active_scene(Scene& scene);
-    [[nodiscard]] Scene* get_active_scene() const { return active_scene; }
+    void clean();
+
+    void set_active_scene(const ResourceReference<Scene>& scene);
+    [[nodiscard]] ResourceReference<Scene> get_active_scene() const { return active_scene; }
 
     void begin_frame(FrameContext& frame) override;
     void update(FrameContext& frame) override;
 
 private:
-    Scene* active_scene = nullptr;
+    ResourceReference<Scene> active_scene;
 
     std::unique_ptr<BasePlayerInputSystem> player_input_system;
     std::unique_ptr<BaseCameraSystem> camera_system;

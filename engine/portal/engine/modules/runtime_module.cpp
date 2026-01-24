@@ -7,6 +7,7 @@
 
 #include "resources_module.h"
 #include "portal/engine/project/project.h"
+#include "portal/engine/scene/scene_context.h"
 
 namespace portal
 {
@@ -30,7 +31,7 @@ RuntimeModule::~RuntimeModule()
 void RuntimeModule::begin_frame(FrameContext& frame)
 {
     frame.rendering_context = swapchain.prepare_frame(frame);
-    frame.active_scene = get_dependency<SystemOrchestrator>().get_active_scene();
+    frame.scene_context = SceneContext{get_dependency<SystemOrchestrator>().get_active_scene()};
 }
 
 void RuntimeModule::post_update(FrameContext& frame)

@@ -8,6 +8,7 @@
 #include "portal/engine/components/camera.h"
 #include "portal/engine/renderer/rendering_context.h"
 #include "portal/engine/scene/scene.h"
+#include "portal/engine/scene/scene_context.h"
 
 namespace portal
 {
@@ -20,7 +21,7 @@ void SceneRenderingSystem::execute(FrameContext& frame, ecs::Registry& registry)
 void SceneRenderingSystem::update_global_descriptors(FrameContext& frame, ecs::Registry& registry)
 {
     auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
-    const auto* scene = frame.active_scene;
+    const auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
 
     // Camera information
     {

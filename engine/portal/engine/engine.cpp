@@ -76,6 +76,8 @@ Engine::~Engine()
     // engine_context->get_renderer().cleanup();
 
     engine_context->get_ecs_registry().clear();
+    engine_context->get_system_orchestrator().clean();
+
     modules.clean();
     swapchain.reset();
 
@@ -90,7 +92,7 @@ void Engine::prepare()
     {
         auto scene_reference = engine_context->get_resource_registry().immediate_load<Scene>(scene_id);
         scene_reference->set_viewport_bounds({0, 0, swapchain->get_width(), swapchain->get_height()});
-        engine_context->get_system_orchestrator().set_active_scene(*scene_reference);
+        engine_context->get_system_orchestrator().set_active_scene(scene_reference);
     }
     else
     {
@@ -98,7 +100,7 @@ void Engine::prepare()
         // Take the first scene
         auto scene = engine_context->get_resource_registry().list_all_resources_of_type<Scene>() | std::ranges::views::take(1);
         scene.front()->set_viewport_bounds({0, 0, swapchain->get_width(), swapchain->get_height()});
-        engine_context->get_system_orchestrator().set_active_scene(*scene.front());
+        engine_context->get_system_orchestrator().set_active_scene(scene.front());
     }
 }
 

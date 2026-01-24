@@ -12,6 +12,7 @@
 #include "portal/engine/project/project.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/render_target/vulkan_render_target.h"
+#include "portal/engine/scene/scene_context.h"
 #include "portal/engine/window/glfw_window.h"
 #include "portal/serialization/archive/json_archive.h"
 
@@ -42,7 +43,7 @@ EditorModule::EditorModule(
 void EditorModule::begin_frame(FrameContext& frame)
 {
     frame.rendering_context = swapchain.prepare_frame(frame);
-    frame.active_scene = get_dependency<SystemOrchestrator>().get_active_scene();
+    frame.scene_context = SceneContext{get_dependency<SystemOrchestrator>().get_active_scene()};
 
     auto render_target = swapchain.get_current_render_target(false);
     im_gui_renderer.begin_frame(frame, render_target);

@@ -12,6 +12,7 @@
 #include "portal/engine/editor/editor_context.h"
 #include "portal/engine/editor/selection_manager.h"
 #include "portal/engine/scene/scene.h"
+#include "portal/engine/scene/scene_context.h"
 #include "portal/third_party/font_awsome/IconsFontAwesome6.h"
 
 
@@ -130,7 +131,7 @@ void transform_vec3_slider(
     ImGui::Columns(1);
 }
 
-void show_transform_controls(const EditorContext& context, Entity entity)
+void show_transform_controls(const ResourceReference<Scene>& active_scene, const EditorContext& context, Entity entity)
 {
     auto& transform = entity.get_component<TransformComponent>();
 
@@ -147,6 +148,7 @@ void show_transform_controls(const EditorContext& context, Entity entity)
                     comp.set_translation(vector);
                 }
             );
+            active_scene.set_dirty(ResourceDirtyBits::DataChange);
         }
     );
 
@@ -162,6 +164,7 @@ void show_transform_controls(const EditorContext& context, Entity entity)
                     comp.set_rotation_euler(vector);
                 }
             );
+            active_scene.set_dirty(ResourceDirtyBits::DataChange);
         }
     );
 
@@ -177,6 +180,7 @@ void show_transform_controls(const EditorContext& context, Entity entity)
                     comp.set_scale(vector);
                 }
             );
+            active_scene.set_dirty(ResourceDirtyBits::DataChange);
         },
         1.0f
     );
@@ -185,12 +189,19 @@ void show_transform_controls(const EditorContext& context, Entity entity)
 
 void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
 {
-    ImGui::SetNextWindowSizeConstraints({350, 50}, {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()});
-    imgui::ScopedWindow details_window(ICON_FA_SLIDERS " Details");
+    auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
 
-    if (!SelectionSystem::has_selection(frame.active_scene->get_scene_entity()))
+    bool show_changes = static_cast<bool>(scene.get_dirty() & ResourceDirtyBits::DataChange);
+
+    ImGui::SetNextWindowSizeConstraints({350, 50}, {std::numeric_limits<float>::max(), std::numeric_limits<float>::max()});
+    std::string window_title = show_changes
+                                   ? ICON_FA_SLIDERS " Details*###Details"
+                                   : ICON_FA_SLIDERS " Details###Details";
+    imgui::ScopedWindow details_window(window_title.c_str());
+
+    if (!SelectionSystem::has_selection(scene->get_scene_entity()))
         return;
-    auto selected_entity = SelectionSystem::get_selected_entity(frame.active_scene->get_scene_entity());
+    auto selected_entity = SelectionSystem::get_selected_entity(scene->get_scene_entity());
 
     auto frame_background = context.theme.scoped_color(ImGuiCol_FrameBg, imgui::ThemeColors::Primary2);
 
@@ -219,9 +230,9 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
         context,
         ICON_FA_ARROWS_UP_DOWN_LEFT_RIGHT " Transform",
         selected_entity,
-        [](const EditorContext& editor_context, const Entity& entity)
+        [&scene](const EditorContext& editor_context, const Entity& entity)
         {
-            show_transform_controls(editor_context, entity);
+            show_transform_controls(scene, editor_context, entity);
         }
     );
 
@@ -229,7 +240,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
         context,
         ICON_FA_VIDEO " Camera",
         selected_entity,
-        [](const EditorContext& editor_context, Entity& entity)
+        [&scene](const EditorContext& editor_context, Entity& entity)
         {
             auto& camera = entity.get_component<CameraComponent>();
             bool changed = false;
@@ -302,6 +313,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
             if (changed)
             {
                 camera.calculate_projection();
+                scene.set_dirty(ResourceDirtyBits::DataChange);
             }
         }
     );

@@ -74,12 +74,13 @@ struct FrameContext
     // TODO: have in `ecs_context` instead of in global context?
     ecs::Registry* ecs_registry = nullptr;
 
-    // TODO: have in `scene_context` instead of in global context?
-    Scene* active_scene = nullptr;
-
     // When rendering_context is set, it should be a `renderer::RenderingContext`
     // TODO: this might cause performance issues, especially since any can use dynamic allocations without custom allocators, investigate
     std::any rendering_context = std::any{};
+
+    // When scene_context is set, it should be a `SceneContext`
+    std::any scene_context = std::any{};
+
 
     // TODO: add a custom stack allocator that will handle all of the frame's allocations
 };
