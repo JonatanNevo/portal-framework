@@ -1041,12 +1041,12 @@ protected:
         }
 
         auto* objects = value.as<ArchiveObject*>();
-        for (size_t col = 0; col < cols; ++col)
+        for (typename T::length_type col = 0; col < cols; ++col)
         {
-            for (size_t row = 0; row < rows; ++row)
+            for (typename T::length_type row = 0; row < rows; ++row)
             {
                 typename T::value_type v;
-                if (!objects[col * rows + row].get_property("v", v))
+                if (!objects[static_cast<size_t>(col * rows + row)].get_property("v", v))
                 {
                     LOG_ERROR_TAG("Serialization", "Failed to get element [{},{}] from array for matrix property {}", col, row, name);
                     return false;

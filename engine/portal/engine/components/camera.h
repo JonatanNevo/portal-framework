@@ -36,7 +36,14 @@ struct CameraComponent
     void calculate_projection();
     void calculate_view(glm::vec3 position, glm::vec3 forward_direction);
     void set_viewport_bounds(glm::uvec4 bounds);
+
+    void archive(ArchiveObject& archive) const;
+    static CameraComponent dearchive(ArchiveObject& archive);
+
+    void serialize(Serializer& serialize) const;
+    static CameraComponent deserialize(Deserializer& archive);
 };
 
 REGISTER_COMPONENT(MainCameraTag);
+REGISTER_COMPONENT(CameraComponent);
 } // portal

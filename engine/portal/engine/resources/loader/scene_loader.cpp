@@ -8,6 +8,7 @@
 #include "portal/core/buffer_stream.h"
 #include "portal/core/variant.h"
 #include "portal/engine/components/mesh.h"
+#include "portal/engine/components/relationship.h"
 #include "portal/engine/components/transform.h"
 #include "portal/engine/resources/database/resource_database.h"
 #include "portal/engine/resources/resources/mesh_geometry.h"
@@ -139,19 +140,29 @@ NodeDescription NodeDescription::deserialize(Deserializer& deserializer)
 SceneLoader::SceneLoader(ResourceRegistry& registry) : ResourceLoader(registry)
 {}
 
-ResourceData SceneLoader::load(const SourceMetadata& meta, Reference<ResourceSource> source)
+ResourceData SceneLoader::load(const SourceMetadata& meta, const Reference<ResourceSource> source)
 {
-    const auto description = load_scene_description(meta, *source);
     const auto scene = make_reference<Scene>(meta.resource_id, registry.get_ecs_registry());
 
-    load_scene_nodes(scene->get_scene_entity(), scene->get_registry(), description);
+    if (meta.format == SourceFormat::Scene)
+    {
+        load_portal_scene(scene->get_registry(), *source);
+    }
+    else if (meta.format == SourceFormat::Memory)
+    {
+        const auto description = load_scene_description(meta, *source);
+        load_scene_nodes(scene->get_scene_entity(), scene->get_registry(), description);
+    }
+    else
+        PORTAL_ASSERT(false, "Unsupported scene format: {}", meta.format);
+
     return {scene, source, meta};
 }
 
-void SceneLoader::save(const ResourceData& resource_data)
+void SceneLoader::save(ResourceData& resource_data)
 {
     const auto scene = reference_cast<Scene>(resource_data.resource);
-    auto& registry = scene->get_registry();
+    auto& ecs_registry = scene->get_registry();
     auto& raw_registry = scene->get_registry().get_raw_registry();
     const auto dirty = resource_data.dirty;
 
@@ -182,11 +193,11 @@ void SceneLoader::save(const ResourceData& resource_data)
                 if (type)
                 {
                     auto result = type.invoke(
-                        STRING_ID("archive").id,
+                        static_cast<entt::id_type>(STRING_ID("archive").id),
                         {},
                         entt::forward_as_meta(descendant),
                         entt::forward_as_meta(object),
-                        entt::forward_as_meta(registry)
+                        entt::forward_as_meta(ecs_registry)
                     );
 
                     if (!result)
@@ -200,6 +211,116 @@ void SceneLoader::save(const ResourceData& resource_data)
 
         auto out_stream = resource_data.source->ostream();
         archive.dump(*out_stream);
+
+
+        for (auto descendant : scene->get_scene_entity().descendants())
+        {
+            std::vector<StringId> dependencies;
+            for (auto&& [type_id, storage] : raw_registry.storage())
+            {
+                auto type = entt::resolve(storage.info());
+                if (type)
+                {
+                    auto result = type.invoke(
+                        static_cast<entt::id_type>(STRING_ID("find_dependencies").id),
+                        {},
+                        entt::forward_as_meta(descendant)
+                    );
+                    if (result)
+                    {
+                        auto result_vec = result.cast<std::vector<StringId>>();
+                        dependencies.insert(
+                            dependencies.end(),
+                            result_vec.begin(),
+                            result_vec.end()
+                        );
+                    }
+                }
+            }
+
+            resource_data.metadata.dependencies.insert(resource_data.metadata.dependencies.end(), dependencies.begin(), dependencies.end());
+        }
+
+        std::unordered_set unique_elements(resource_data.metadata.dependencies.begin(), resource_data.metadata.dependencies.end());
+        resource_data.metadata.dependencies = std::ranges::to<llvm::SmallVector<StringId>>(unique_elements);
+
+        // TODO: This should be in the resource source class
+        JsonArchive meta_archive;
+        resource_data.metadata.archive(meta_archive);
+        const auto metadata_path = fmt::format("{}.pmeta", resource_data.metadata.full_source_path.string);
+        meta_archive.dump(std::filesystem::path(metadata_path));
+    }
+}
+
+void SceneLoader::load_portal_scene(ecs::Registry& ecs_registry, const ResourceSource& source) const
+{
+    auto stream = source.istream();
+
+    JsonArchive archive;
+    archive.read(*stream);
+
+    std::vector<ArchiveObject> nodes;
+    archive.get_property("nodes", nodes);
+
+    // First pass only to create the entities with the correct names
+    for (auto& object : nodes)
+    {
+        StringId name;
+        std::string icon;
+        object.get_property("name", name);
+        object.get_property("icon", icon);
+
+        auto entity = ecs_registry.create_entity();
+        entity.add_component<NameComponent>(name, icon);
+    }
+
+    // Component Serialization pass
+    for (auto& object : nodes)
+    {
+        StringId name;
+        object.get_property("name", name);
+        auto entity = ecs_registry.find_by_name(name);
+        PORTAL_ASSERT(entity.has_value(), "Failed to find entity with name: {}", name);
+
+        for (const auto& comp_name : object | std::views::keys)
+        {
+            auto type = entt::resolve(static_cast<entt::id_type>(STRING_ID(comp_name).id));
+            if (type)
+            {
+                auto result = type.invoke(
+                    static_cast<entt::id_type>(STRING_ID("dearchive").id),
+                    {},
+                    entt::forward_as_meta(*entity),
+                    entt::forward_as_meta(object),
+                    entt::forward_as_meta(ecs_registry)
+                );
+
+                if (!result)
+                {
+                    LOG_WARN("Failed to invoke dearchive for type: {}", type.name());
+                }
+            }
+        }
+    }
+
+    // Post-Serialization pass
+    for (auto& object : nodes)
+    {
+        StringId name;
+        object.get_property("name", name);
+        auto entity = ecs_registry.find_by_name(name);
+        PORTAL_ASSERT(entity.has_value(), "Failed to find entity with name: {}", name);
+
+        for (const auto& comp_name : object | std::views::keys)
+        {
+            auto type = entt::resolve(static_cast<entt::id_type>(STRING_ID(comp_name).id));
+            type.invoke(
+                static_cast<entt::id_type>(STRING_ID("post_serialization").id),
+                {},
+                entt::forward_as_meta(*entity),
+                entt::forward_as_meta(registry)
+            );
+        }
     }
 }
 
@@ -246,16 +367,22 @@ void SceneLoader::load_scene_nodes(Entity scene_entity, ecs::Registry& ecs_regis
     {
         Entity entity;
         if (node_description.parent.has_value())
+        {
             entity = ecs_registry.find_or_create_child(
                 ecs_registry.find_or_create_child(scene_entity, *node_description.parent),
                 node_description.name
             );
+        }
         else
+        {
             entity = ecs_registry.find_or_create_child(scene_entity, node_description.name);
+        }
+
 
         for (auto& child : node_description.children)
         {
             auto child_entity = ecs_registry.find_or_create(child);
+            child_entity.get_or_add_component<RelationshipComponent>();
             child_entity.set_parent(entity);
         }
 

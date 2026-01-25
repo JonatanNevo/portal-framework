@@ -1,0 +1,1648 @@
+{
+    "name": "game/default-scene",
+    "nodes": [
+        {
+            "icon": "",
+            "name": "node-King_B",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-King_Black"
+                ],
+                "mesh": "game/gltf-Mesh-King_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03142297640442848,
+                    0.0174538753926754,
+                    0.22009074687957764
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-King_W",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-King_White"
+                ],
+                "mesh": "game/gltf-Mesh-King_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03176186978816986,
+                    0.01745394617319107,
+                    -0.22027580440044403
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Queen_B",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Queen_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Queen_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.030731208622455597,
+                    0.01762339472770691,
+                    0.21983970701694489
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Queen_W",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Queen_White"
+                ],
+                "mesh": "game/gltf-Mesh-Queen_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.03090556710958481,
+                    0.01686232164502144,
+                    -0.22027580440044403
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Chessboard",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Chessboard"
+                ],
+                "mesh": "game/gltf-Mesh-Chessboard",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_W1",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_W1"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.21845926344394684,
+                    0.014926999807357788,
+                    -0.15599016845226288
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_W1",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_W1"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_W2",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_W2"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.15633293986320496,
+                    0.014926999807357788,
+                    -0.15608981251716614
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_W2",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_W2"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_W3",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_W3"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.09358328580856323,
+                    0.014926999807357788,
+                    -0.09414908289909363
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_W3",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_W3"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_W4",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_W4"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.03124999813735485,
+                    0.014926999807357788,
+                    -0.03124999813735485
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_W4",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_W4"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03124999813735485,
+                    -0.014926999807357788,
+                    0.03124999813735485
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_W5",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_W5"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.031169699504971504,
+                    0.014926999807357788,
+                    -0.1564261019229889
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_W5",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_W5"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03124999813735485,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_W6",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_W6"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.09379050135612488,
+                    0.014926999807357788,
+                    -0.1562434285879135
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_W6",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_W6"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_W7",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_W7"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.1564229130744934,
+                    0.014927003532648087,
+                    -0.1564216911792755
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_W7",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_W7"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_W8",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_W8"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.21923202276229858,
+                    0.014927007257938385,
+                    -0.15629565715789795
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_W8",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_W8"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_White"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_B1",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_B1"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.21923202276229858,
+                    0.014927007257938385,
+                    0.15638446807861328
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_B1",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_B1"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_B2",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_B2"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.15673714876174927,
+                    0.014927007257938385,
+                    0.15617261826992035
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_B2",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_B2"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_B3",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_B3"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.09381857514381409,
+                    0.014927007257938385,
+                    0.1562785506248474
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_B3",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_B3"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_B4",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_B4"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03132370114326477,
+                    0.014927007257938385,
+                    0.09357181191444397
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_B4",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_B4"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_B5",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_B5"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.031245321035385132,
+                    0.014927007257938385,
+                    0.15634210407733917
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_B5",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_B5"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03124999813735485,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_B6",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_B6"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.09381434321403503,
+                    0.014927007257938385,
+                    0.15609847009181976
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_B6",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_B6"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_B7",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_B7"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.15611860156059265,
+                    0.014927007257938385,
+                    0.15625736117362976
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_B7",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_B7"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Body_B8",
+            "portal::RelationshipComponent": {
+                "children": [
+                    "node-Pawn_Top_B8"
+                ],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Body_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Body_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.21876174211502075,
+                    0.014927007257938385,
+                    0.15628913044929504
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Pawn_Top_B8",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "node-Pawn_Body_B8"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Pawn_Top_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Pawn_Top_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.03125,
+                    -0.014926999807357788,
+                    0.03125
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Castle_B1",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Castle_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Castle_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.21881157159805298,
+                    0.01800301857292652,
+                    0.21959251165390015
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Castle_B2",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Castle_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Castle_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.22001203894615173,
+                    0.01800301857292652,
+                    0.2196142077445984
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Castle_W1",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Castle_White"
+                ],
+                "mesh": "game/gltf-Mesh-Castle_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.21969175338745117,
+                    0.016820574179291725,
+                    -0.21970760822296143
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Castle_W2",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Castle_White"
+                ],
+                "mesh": "game/gltf-Mesh-Castle_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.21860846877098083,
+                    0.01710103079676628,
+                    -0.22002007067203522
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Knight_B1",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Knight_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Knight_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.15675804018974304,
+                    0.01697981357574463,
+                    0.22001084685325623
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Knight_B2",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Knight_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Knight_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.1584867238998413,
+                    0.01697981357574463,
+                    0.2197423279285431
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Knight_W1",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Knight_White"
+                ],
+                "mesh": "game/gltf-Mesh-Knight_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    3.1415927410125732,
+                    -8.742277657347586e-08,
+                    3.1415927410125732
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.15809699892997742,
+                    0.016979999840259552,
+                    -0.22098299860954285
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Knight_W2",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Knight_White"
+                ],
+                "mesh": "game/gltf-Mesh-Knight_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    3.1415927410125732,
+                    -8.742277657347586e-08,
+                    3.1415927410125732
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.15665100514888763,
+                    0.016979999840259552,
+                    -0.22008299827575684
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Bishop_B1",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Bishop_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Bishop_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.09403245151042938,
+                    0.01697981357574463,
+                    0.21908524632453918
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Bishop_B2",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Bishop_Black"
+                ],
+                "mesh": "game/gltf-Mesh-Bishop_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.08951026201248169,
+                    0.01697981357574463,
+                    0.21954728662967682
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Bishop_W1",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Bishop_White"
+                ],
+                "mesh": "game/gltf-Mesh-Bishop_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.090296670794487,
+                    0.01697981357574463,
+                    -0.2176361083984375
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "node-Bishop_W2",
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/gltf-Material-Bishop_White"
+                ],
+                "mesh": "game/gltf-Mesh-Bishop_Shared",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    -0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.09416553378105164,
+                    0.01697981357574463,
+                    -0.22063007950782776
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "Camera",
+            "portal::BaseCameraController": {
+                "forward_direction": [
+                    0.5400000214576721,
+                    -0.41999998688697815,
+                    -0.7200000286102295
+                ],
+                "rotation_speed": 0.30000001192092896,
+                "speed": 2.0
+            },
+            "portal::CameraComponent": {
+                "far_clip": 0.017500000074505806,
+                "near_clip": 10000.0,
+                "vertical_fov": 35.0
+            },
+            "portal::MainCameraTag": true,
+            "portal::PlayerTag": {
+                "id": 0
+            },
+            "portal::RelationshipComponent": {
+                "children": [],
+                "parent": "game/default-scene"
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -0.5099999904632568,
+                    0.4000000059604645,
+                    0.7400000095367432
+                ]
+            }
+        }
+    ]
+}

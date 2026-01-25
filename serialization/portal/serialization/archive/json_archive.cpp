@@ -195,7 +195,7 @@ void JsonArchive::serialize_vec(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<uint8_t*>() + i;
+                data[i] = prop.value.as<uint8_t*>()[i];
             root = data;
 
             break;
@@ -206,7 +206,7 @@ void JsonArchive::serialize_vec(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<uint16_t*>() + i;
+                data[i] = prop.value.as<uint16_t*>()[i];
             root = data;
 
             break;
@@ -217,7 +217,7 @@ void JsonArchive::serialize_vec(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<uint32_t*>() + i;
+                data[i] = prop.value.as<uint32_t*>()[i];
             root = data;
 
             break;
@@ -228,7 +228,7 @@ void JsonArchive::serialize_vec(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<uint64_t*>() + i;
+                data[i] = prop.value.as<uint64_t*>()[i];
             root = data;
 
             break;
@@ -239,7 +239,7 @@ void JsonArchive::serialize_vec(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_float_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<float*>() + i;
+                data[i] = prop.value.as<float*>()[i];
             root = data;
 
             break;
@@ -250,7 +250,7 @@ void JsonArchive::serialize_vec(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_float_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<double*>() + i;
+                data[i] = prop.value.as<double*>()[i];
             root = data;
 
             break;
@@ -285,7 +285,7 @@ void JsonArchive::serialize_mat(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<uint8_t*>() + i;
+                data[i] = prop.value.as<uint8_t*>()[i];
             root = data;
 
             break;
@@ -296,7 +296,7 @@ void JsonArchive::serialize_mat(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<uint16_t*>() + i;
+                data[i] = prop.value.as<uint16_t*>()[i];
             root = data;
 
             break;
@@ -307,7 +307,7 @@ void JsonArchive::serialize_mat(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<uint32_t*>() + i;
+                data[i] = prop.value.as<uint32_t*>()[i];
             root = data;
 
             break;
@@ -318,7 +318,7 @@ void JsonArchive::serialize_mat(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_unsigned_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<uint64_t*>() + i;
+                data[i] = prop.value.as<uint64_t*>()[i];
             root = data;
 
             break;
@@ -329,7 +329,7 @@ void JsonArchive::serialize_mat(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_float_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<float*>() + i;
+                data[i] = prop.value.as<float*>()[i];
             root = data;
 
             break;
@@ -340,7 +340,7 @@ void JsonArchive::serialize_mat(nlohmann::json& root, const reflection::Property
 
             std::vector<nlohmann::json::number_float_t> data(prop.elements_number);
             for (size_t i = 0; i < prop.elements_number; ++i)
-                data[i] = *prop.value.as<double*>() + i;
+                data[i] = prop.value.as<double*>()[i];
             root = data;
 
             break;

@@ -117,7 +117,7 @@ public:
      *
      * @param resource The resource to save
      */
-    virtual void save(const ResourceData& resource_data) = 0;
+    virtual void save(ResourceData& resource_data) = 0;
 
 protected:
     /** @brief Reference to the registry for loading dependent resources */

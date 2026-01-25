@@ -102,6 +102,39 @@ void Engine::prepare()
         scene.front()->set_viewport_bounds({0, 0, swapchain->get_width(), swapchain->get_height()});
         engine_context->get_system_orchestrator().set_active_scene(scene.front());
     }
+
+    auto scene = engine_context->get_resource_registry().immediate_load<Scene>(STRING_ID("game/default-scene"));
+    auto camera = scene->get_main_camera_entity();
+    camera.add_component<InputComponent>();
+
+    for (auto entity_id: scene->get_registry().view<entt::entity>())
+    {
+        Entity entity = Entity{entity_id, scene->get_registry().get_raw_registry()};
+        LOG_INFO_TAG("ECS", "Entity: {}", static_cast<entt::id_type>(entity));
+
+        if (entity.has_component<NameComponent>())
+        {
+            auto& name_comp = entity.get_component<NameComponent>();
+            LOG_INFO_TAG("ECS", "name -> {} {}", name_comp.icon, name_comp.name);
+        }
+        else
+        {
+            LOG_INFO_TAG("ECS", "\tname -> Unnamed");
+        }
+
+        for (auto&& [type_id, storage] : scene->get_registry().get_raw_registry().storage())
+        {
+            auto type = entt::resolve(storage.info());
+            if (type)
+            {
+                auto result = type.invoke(
+                    static_cast<entt::id_type>(STRING_ID("print").id),
+                    {},
+                    entt::forward_as_meta(entity)
+                );
+            }
+        }
+    }
 }
 
 void Engine::process_events()

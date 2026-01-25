@@ -58,10 +58,12 @@ class SceneLoader final : public ResourceLoader
 {
 public:
     explicit SceneLoader(ResourceRegistry& registry);
+
     ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source) override;
-    void save(const ResourceData& resource_data) override;
+    void save(ResourceData& resource_data) override;
 
 protected:
+    void load_portal_scene(ecs::Registry& ecs_registry, const ResourceSource& source) const;
     void load_scene_nodes(Entity scene_entity, ecs::Registry& ecs_registry, SceneDescription description) const;
 
     static SceneDescription load_scene_description(const SourceMetadata& meta, const ResourceSource& source);public:

@@ -19,6 +19,8 @@
 #pragma once
 
 #include "resources/resource.h"
+#include <portal/serialization/serialize.h>
+#include <portal/serialization/archive.h>
 
 #include "reference_manager.h"
 #include "resource_registry.h"
@@ -139,6 +141,9 @@ public:
     /** @brief Nullptr constructor - creates a Null reference */
     explicit ResourceReference(std::nullptr_t) : ResourceReference() {};
 
+    ResourceReference(const StringId& resource_id)
+        : resource_id(resource_id), state(ResourceState::Missing) {}
+
     ~ResourceReference()
     {
         if (resource_id != INVALID_STRING_ID && reference_manager.has_value())
@@ -167,12 +172,15 @@ public:
         state(std::exchange(other.state, ResourceState::Unknown)),
         resource(std::exchange(other.resource, nullptr))
     {
-        PORTAL_ASSERT(resource_id != INVALID_STRING_ID, "Resource handle is invalid");
-        PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
-        PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
-        PORTAL_ASSERT(state != ResourceState::Loaded || resource != nullptr, "Resource is empty");
+        if (state != ResourceState::Null && state != ResourceState::Missing)
+        {
+            PORTAL_ASSERT(resource_id != INVALID_STRING_ID, "Resource handle is invalid");
+            PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
+            PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
+            PORTAL_ASSERT(state != ResourceState::Loaded || resource != nullptr, "Resource is empty");
 
-        reference_manager.value().get().move_reference(resource_id, &other, this);
+            reference_manager.value().get().move_reference(resource_id, &other, this);
+        }
     }
 
     ResourceReference& operator=(const ResourceReference& other)
@@ -213,7 +221,7 @@ public:
         reference_manager = std::exchange(other.reference_manager, std::nullopt);
         registry = std::exchange(other.registry, std::nullopt);
 
-        if (state != ResourceState::Null)
+        if (state != ResourceState::Null && state != ResourceState::Missing)
         {
             PORTAL_ASSERT(reference_manager.has_value(), "Invalid reference manager");
             PORTAL_ASSERT(registry.has_value(), "Invalid resource registry");
@@ -354,6 +362,8 @@ public:
         return ResourceReference<U>(resource_id, registry.value().get(), reference_manager.value().get());
     }
 
+    [[nodiscard]] StringId get_resource_id() const { return resource_id; }
+
 private:
     friend class ResourceRegistry;
     friend class ReferenceManager;
@@ -391,3 +401,25 @@ private:
     mutable Reference<T> resource = nullptr;
 };
 }
+
+
+template <typename T>
+struct fmt::formatter<portal::ResourceReference<T>>
+{
+    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const portal::ResourceReference<T>& ref, FormatContext& ctx) const
+    {
+        return fmt::format_to(
+            ctx.out(),
+            "ResourceReference<{}>(id={}, state={})",
+            glz::type_name<T>,
+            ref.get_resource_id(),
+            ref.get_state()
+        );
+    }
+};

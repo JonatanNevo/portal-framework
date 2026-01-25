@@ -15,7 +15,7 @@ class InputManager;
 struct NameComponent
 {
     StringId name;
-    std::string_view icon = ICON_FA_CUBE;
+    std::string icon = ICON_FA_CUBE;
 };
 
 struct PlayerTag

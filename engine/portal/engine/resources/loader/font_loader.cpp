@@ -38,5 +38,5 @@ void FontLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource&)
     meta.meta = FontMetadata{};
 }
 
-void FontLoader::save(const ResourceData&) {}
+void FontLoader::save(ResourceData&) {}
 } // portal

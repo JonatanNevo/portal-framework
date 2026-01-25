@@ -84,7 +84,7 @@ ResourceData MeshLoader::load(const SourceMetadata& meta, Reference<ResourceSour
     return {make_reference<MeshGeometry>(meta.resource_id, std::move(geometry)), source, meta};
 }
 
-void MeshLoader::save(const ResourceData&) {}
+void MeshLoader::save(ResourceData&) {}
 
 MeshData MeshLoader::load_mesh_data(const SourceMetadata& meta, const ResourceSource& source)
 {

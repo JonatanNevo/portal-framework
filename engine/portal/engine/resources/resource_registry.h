@@ -162,8 +162,7 @@ public:
     template <ResourceConcept T>
     ResourceReference<T> immediate_load(StringId resource_id)
     {
-        auto type = utils::to_resource_type<T>();
-        create_resource_immediate(resource_id, type);
+        create_resource_immediate(resource_id);
 
         auto reference = ResourceReference<T>(resource_id, *this, reference_manager);
         return reference;
@@ -221,7 +220,7 @@ public:
      * @param source A type erased source
      * @return The created resource data
      */
-    Job<resources::ResourceData> load_direct(const SourceMetadata& meta, Reference<resources::ResourceSource> source);
+    Job<resources::ResourceData> load_direct(SourceMetadata meta, Reference<resources::ResourceSource> source);
 
     // TODO: remove from here
     void wait_all(std::span<Job<>> jobs) const;
@@ -271,10 +270,9 @@ protected:
      * If the resource exists already (either in pending or loaded), returns the existing handle
      *
      * @param resource_id The resource id.
-     * @param type The type of the resource.
      * @return A handle to the resource
      */
-    void create_resource_immediate(const StringId& resource_id, ResourceType type);
+    void create_resource_immediate(const StringId& resource_id);
 
     Job<Reference<Resource>> load_resource(StringId handle);
 
@@ -300,3 +298,5 @@ private:
     resources::LoaderFactory loader_factory;
 };
 } // portal
+
+

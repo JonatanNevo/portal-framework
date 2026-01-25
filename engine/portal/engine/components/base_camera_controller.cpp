@@ -5,6 +5,9 @@
 
 #include "base_camera_controller.h"
 
+#include "camera.h"
+#include "transform.h"
+
 namespace portal
 {
 void BaseCameraController::move_up(float scale)
@@ -75,5 +78,40 @@ void BaseCameraController::mark_as_moving()
 void BaseCameraController::mark_as_stopped_moving()
 {
     should_move = false;
+}
+
+void BaseCameraController::archive(ArchiveObject& archive) const
+{
+    archive.add_property("forward_direction", forward_direction);
+    archive.add_property("speed", speed);
+    archive.add_property("rotation_speed", rotation_speed);
+}
+
+
+BaseCameraController BaseCameraController::dearchive(ArchiveObject& archive)
+{
+    BaseCameraController comp;
+    archive.get_property("forward_direction", comp.forward_direction);
+    archive.get_property("speed", comp.speed);
+    archive.get_property("rotation_speed", comp.rotation_speed);
+    return comp;
+}
+
+void BaseCameraController::serialize(Serializer&) const
+{
+    throw std::runtime_error("Not implemented");
+}
+
+BaseCameraController BaseCameraController::deserialize(Deserializer&)
+{
+    throw std::runtime_error("Not implemented");
+}
+
+void BaseCameraController::post_serialization(Entity entity, ResourceRegistry&) const
+{
+    auto& transform = entity.get_component<TransformComponent>();
+    auto& camera = entity.get_component<CameraComponent>();
+
+    camera.calculate_view(transform.get_translation(), forward_direction);
 }
 } // portal

@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <glaze/reflection/get_name.hpp>
+
 #include "llvm/ADT/SmallVector.h"
 #include "portal/core/debug/assert.h"
 #include "portal/core/strings/string_id.h"
@@ -126,7 +128,7 @@ public:
     template <typename T, typename... Args>
     T& add_component(Args&&... args)
     {
-        PORTAL_ASSERT(!has_component<T>(), "Entity already has component of type T");
+        PORTAL_ASSERT(!has_component<T>(), "Entity already has component of type {}", glz::type_name<T>);
         return handle.emplace<T>(std::forward<Args>(args)...);
     }
 
@@ -149,7 +151,8 @@ public:
     template <typename T> requires std::is_empty_v<T>
     void add_component()
     {
-        PORTAL_ASSERT(!has_component<T>(), "Entity already has component of type T");
+        if (has_component<T>())
+            return;
         handle.emplace<T>();
     }
 
@@ -181,6 +184,41 @@ public:
     {
         PORTAL_ASSERT(has_component<T>(), "Entity does not have component of type T");
         return handle.patch<T>(std::forward<Func>(func)...);
+    }
+
+    template <typename T, typename... Args>
+    void patch_or_add_component(Args&&... args)
+    {
+        if (has_component<T>())
+        {
+            patch_component<T>([&](T& comp) { comp = T{std::forward<Args>(args)...}; });
+        }
+        else
+        {
+            add_component<T>(std::forward<Args>(args)...);
+        }
+    }
+
+    /**
+     * @brief Retrieves a reference to a component or adds a new component if it doesn't exist.
+     *
+     * Returns a reference to the specified component type.
+     * If the component doesn't exist, a new one is created with the provided args.
+     *
+     * @tparam T The component type to retrieve
+     * @param args Arguments to pass to the component constructor if it doesn't exist
+     * @return Reference to the component
+     *
+     * @par Example:
+     * @code
+     * auto& transform = entity.get_or_add_component<TransformComponent>();
+     * transform.position = vec3{10, 0, 0};
+     * @endcode
+     */
+    template <typename T, typename... Args>
+    T& get_or_add_component(Args&&... args) const
+    {
+        return handle.get_or_emplace<T>(std::forward<Args>(args)...);
     }
 
     /**
@@ -267,7 +305,7 @@ public:
     template <typename T>
     [[nodiscard]] T& get_component()
     {
-        PORTAL_ASSERT(has_component<T>(), "Entity does not have component of type T");
+        PORTAL_ASSERT(has_component<T>(), "Entity does not have component of type {}", glz::type_name<T>);
         return handle.get<T>();
     }
 
@@ -499,13 +537,6 @@ public:
      */
     [[nodiscard]] entt::registry& get_registry() const;
 
-    void serialize(Serializer& archive);
-    static Entity deserialize(Deserializer& archive);
-
-    void archive(ArchiveObject& archive);
-    static Entity deserialize(ArchiveObject& archive);
-
-
 private:
     entt::handle handle{};
 
@@ -514,3 +545,30 @@ private:
 
 static const Entity null_entity{};
 } // portal
+
+template <>
+struct fmt::formatter<portal::Entity>
+{
+    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const portal::Entity& entity, FormatContext& ctx) const
+    {
+        if (entity == portal::null_entity)
+        {
+            return fmt::format_to(
+                ctx.out(),
+                "Entity(null)"
+            );
+        }
+
+        return fmt::format_to(
+            ctx.out(),
+            "Entity({})",
+            static_cast<entt::id_type>(entity.get_id())
+        );
+    }
+};

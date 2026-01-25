@@ -16,7 +16,7 @@ public:
 
     ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source)  override;
     static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
-    void save(const ResourceData& resource_data) override;
+    void save(ResourceData& resource_data) override;
 };
 
 } // portal

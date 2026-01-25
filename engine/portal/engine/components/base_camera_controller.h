@@ -26,19 +26,27 @@ public:
     [[nodiscard]] bool is_moving() const { return should_move && moved; }
 
     glm::vec3 position_delta = glm::vec3{0.f};
-    glm::vec3 forward_direction = glm::vec3{0.54, -0.42, -0.72};
-
     glm::vec2 mouse_delta{0.f, 0.f};
 
+    glm::vec3 forward_direction = glm::vec3{0.54, -0.42, -0.72};
     float speed = 2.f;
     float rotation_speed = 0.3f;
 
     bool moved = false;
 
+    void archive(ArchiveObject& archive) const;
+    static BaseCameraController dearchive(ArchiveObject& archive);
+
+    void serialize(Serializer& serialize) const;
+    static BaseCameraController deserialize(Deserializer& archive);
+
+    void post_serialization(Entity entity, ResourceRegistry& reg) const;
 private:
     glm::vec2 last_mouse_position{0.f, 0.f};
 
     bool should_move = false;
     bool reset_mouse_on_next_move = false;
 };
+
+REGISTER_COMPONENT(BaseCameraController);
 } // portal

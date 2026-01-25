@@ -137,13 +137,13 @@ void PanelManager::print_scene_graph(ecs::Registry& registry, const FrameContext
     ImGui::Separator();
     int node_id = 0;
 
-    for (auto&& [entity, name_comp, relationship, transform] : relationship_group.each())
+    auto scene_entity = scene->get_scene_entity();
+    for (auto child : scene_entity.children())
     {
-        // Iterating only on the root entities
-        if (relationship.parent != null_entity)
-            continue;
-
-        draw_node(registry.entity_from_id(entity), scene->get_scene_entity(), node_id, relationship, name_comp, transform);
+        auto& relationship = child.get_component<RelationshipComponent>();
+        auto& name_comp = child.get_component<NameComponent>();
+        auto& transform = child.get_component<TransformComponent>();
+        draw_node(child, scene->get_scene_entity(), node_id, relationship, name_comp, transform);
     }
     ImGui::End();
 }

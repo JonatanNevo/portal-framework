@@ -36,13 +36,20 @@ Entity Registry::entity_from_id(const entt::entity id)
 
 Entity Registry::find_or_create(const StringId& entity_name)
 {
+    const auto entity = find_by_name(entity_name);
+    if (!entity.has_value())
+        return create_entity(entity_name);
+    return entity.value();
+}
+
+std::optional<Entity> Registry::find_by_name(const StringId& entity_name)
+{
     for (auto&& [entity, tag] : view_raw<NameComponent>().each())
     {
         if (tag.name == entity_name)
             return entity_from_id(entity);
     }
-
-    return create_entity(entity_name);
+    return std::nullopt;
 }
 
 Entity Registry::get_env_entity() const

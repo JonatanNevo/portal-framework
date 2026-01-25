@@ -5,6 +5,8 @@
 
 #include "camera.h"
 
+#include "transform.h"
+
 namespace portal
 {
 void CameraComponent::calculate_projection()
@@ -21,8 +23,8 @@ void CameraComponent::calculate_view(glm::vec3 position, glm::vec3 forward_direc
 
 void CameraComponent::set_viewport_bounds(glm::uvec4 bounds)
 {
-    const float new_width = static_cast<float>(bounds.z - bounds.x);
-    const float new_height = static_cast<float>(bounds.w - bounds.y);
+    const auto new_width = static_cast<float>(bounds.z - bounds.x);
+    const auto new_height = static_cast<float>(bounds.w - bounds.y);
 
     if (new_width != width || new_height != height)
     {
@@ -31,5 +33,31 @@ void CameraComponent::set_viewport_bounds(glm::uvec4 bounds)
 
         calculate_projection();
     }
+}
+
+void CameraComponent::archive(ArchiveObject& archive) const
+{
+    archive.add_property("vertical_fov", vertical_fov);
+    archive.add_property("near_clip", near_clip);
+    archive.add_property("far_clip", far_clip);
+}
+
+CameraComponent CameraComponent::dearchive(ArchiveObject& archive)
+{
+    CameraComponent comp;
+    archive.get_property("vertical_fov", comp.vertical_fov);
+    archive.get_property("near_clip", comp.near_clip);
+    archive.get_property("far_clip", comp.far_clip);
+    return comp;
+}
+
+void CameraComponent::serialize(Serializer&) const
+{
+    throw std::runtime_error("Not implemented");
+}
+
+CameraComponent CameraComponent::deserialize(Deserializer&)
+{
+    throw std::runtime_error("Not implemented");
 }
 } // portal

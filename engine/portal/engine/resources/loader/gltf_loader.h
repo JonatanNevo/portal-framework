@@ -145,20 +145,21 @@ public:
      */
     static void enrich_metadata(SourceMetadata& meta, const ResourceSource& source);
 
-    void save(const ResourceData& resource_data) override;
+    void save(ResourceData& resource_data) override;
 
 protected:
     static fastgltf::Asset load_asset(const SourceMetadata& meta, fastgltf::GltfDataGetter& data);
 
     static std::pair<SourceMetadata, Reference<ResourceSource>> find_image_source(
+        StringId composite_id,
         const std::filesystem::path& base_name,
         const std::filesystem::path& base_path,
         const fastgltf::Asset& asset,
         const fastgltf::Texture& texture
     );
 
-    Job<> load_texture(SourceMetadata texture_meta, const fastgltf::Asset& asset, const fastgltf::Texture& texture) const;
-    Job<> load_material(SourceMetadata material_meta, const fastgltf::Asset& asset, const fastgltf::Material& material) const;
+    Job<> load_texture(StringId composite_id, SourceMetadata texture_meta, const fastgltf::Asset& asset, const fastgltf::Texture& texture) const;
+    Job<> load_material(StringId composite_id, SourceMetadata material_meta, const fastgltf::Asset& asset, const fastgltf::Material& material) const;
     Job<> load_mesh(SourceMetadata mesh_meta, const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) const;
     void load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) const;
 

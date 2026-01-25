@@ -24,7 +24,7 @@ public:
     MeshLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context);
 
     ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source)override;
-    void save(const ResourceData& resource_data) override;
+    void save(ResourceData& resource_data) override;
 
 protected:
     MeshData load_mesh_data(const SourceMetadata& meta, const ResourceSource& source);

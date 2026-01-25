@@ -19,6 +19,7 @@ public:
     TransformComponent() = default;
     explicit TransformComponent(const glm::vec3& translation);
     explicit TransformComponent(const glm::mat4& transform);
+    TransformComponent(const glm::vec3& translation, const glm::vec3& rotation_euler, const glm::vec3& scale);
     TransformComponent(const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale);
 
     void set_matrix(const glm::mat4& matrix);
@@ -36,6 +37,14 @@ public:
     [[nodiscard]] const glm::vec3& get_rotation_euler() const;
     [[nodiscard]] const glm::vec3& get_scale() const;
 
+    void archive(ArchiveObject& archive) const;
+    static TransformComponent dearchive(ArchiveObject& archive);
+
+    void serialize(Serializer& serialize) const;
+    static TransformComponent deserialize(Deserializer& archive);
+
+    void post_serialization(Entity entity, ResourceRegistry& reg);
+
 private:
     glm::vec3 translation = glm::vec3(0.0f);
     glm::quat rotation = glm::identity<glm::quat>();
@@ -48,3 +57,17 @@ private:
     glm::mat4 world_matrix = glm::mat4(1.0f);
 };
 } // portal
+
+template<>
+struct fmt::formatter<portal::TransformComponent>
+{
+    static constexpr auto parse(const format_parse_context& ctx) -> decltype(ctx.begin())
+    {
+        return ctx.begin();
+    }
+
+    static auto format(const portal::TransformComponent& transform, format_context& ctx) -> decltype(ctx.out())
+    {
+        return fmt::format_to(ctx.out(), "TransformComponent(translation={}, rotation={}, scale={})", transform.get_translation(), transform.get_rotation_euler(), transform.get_scale());
+    }
+};

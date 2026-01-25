@@ -145,6 +145,8 @@ enum class ResourceState: uint8_t
      */
     Error   = 4,
 
+    Unloaded = 5,
+
     /**
      * @brief Special state for default-constructed or null references
      *
@@ -208,7 +210,9 @@ enum class SourceFormat: uint8_t
     Shader,            // Shader files, e.g. slang
     PrecompiledShader, // Precompiled shader files, e.g. spv
     Glft,              // GLTF files
-    FontFile           // A font file, e.g. TTF
+    FontFile,          // A font file, e.g. TTF
+    Scene,             // A json scene file
+    BinaryScene        // A binary scene file
 };
 
 namespace utils

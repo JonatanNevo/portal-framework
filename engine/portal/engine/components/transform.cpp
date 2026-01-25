@@ -13,11 +13,21 @@ auto wrap_to_pi(const glm::vec3 v)
 
 namespace portal
 {
+REGISTER_COMPONENT(TransformComponent);
+
 TransformComponent::TransformComponent(const glm::vec3& translation) : translation(translation) {}
 
 TransformComponent::TransformComponent(const glm::mat4& transform)
 {
     set_matrix(transform);
+}
+
+TransformComponent::TransformComponent(const glm::vec3& translation, const glm::vec3& rotation_euler, const glm::vec3& scale)
+    : translation(translation),
+      rotation(glm::quat(rotation_euler)),
+      scale(scale),
+      rotation_euler(rotation_euler)
+{
 }
 
 TransformComponent::TransformComponent(const glm::vec3& translation, const glm::quat& rotation, const glm::vec3& scale)
@@ -134,5 +144,45 @@ const glm::vec3& TransformComponent::get_rotation_euler() const
 const glm::vec3& TransformComponent::get_scale() const
 {
     return scale;
+}
+
+void TransformComponent::archive(ArchiveObject& archive) const
+{
+    archive.add_property("translation", translation);
+    archive.add_property("rotation", get_rotation_euler());
+    archive.add_property("scale", scale);
+}
+
+TransformComponent TransformComponent::dearchive(ArchiveObject& archive)
+{
+    glm::vec3 translation, scale, rotation_euler;
+    archive.get_property("translation", translation);
+    archive.get_property("rotation", rotation_euler);
+    archive.get_property("scale", scale);
+
+    return TransformComponent(translation, rotation_euler, scale);;
+}
+
+
+void TransformComponent::serialize(Serializer& serialize) const
+{
+    serialize.add_value(translation);
+    serialize.add_value(rotation_euler);
+    serialize.add_value(scale);
+}
+
+TransformComponent TransformComponent::deserialize(Deserializer& archive)
+{
+    glm::vec3 translation, rotation_euler, scale;
+    archive.get_value(translation);
+    archive.get_value(rotation_euler);
+    archive.get_value(scale);
+
+    return TransformComponent(translation, rotation_euler, scale);
+}
+
+void TransformComponent::post_serialization(Entity entity, ResourceRegistry&)
+{
+    entity.add_component<TransformDirtyTag>();
 }
 } // portal

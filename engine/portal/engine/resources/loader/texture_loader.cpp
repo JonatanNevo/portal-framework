@@ -135,7 +135,7 @@ void TextureLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& 
     stbi_image_free(image_data);
 }
 
-void TextureLoader::save(const ResourceData&) {}
+void TextureLoader::save(ResourceData&) {}
 
 void TextureLoader::create_standalone_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const
 {
