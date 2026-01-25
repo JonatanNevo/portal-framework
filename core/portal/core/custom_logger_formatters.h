@@ -6,6 +6,7 @@
 #pragma once
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include "portal/core/glm.h"
 #include "portal/core/common.h"
 
@@ -89,6 +90,111 @@ struct formatter<glm::vec4>
         return presentation == 'f'
                    ? fmt::format_to(ctx.out(), "({:.3f}, {:.3f}, {:.3f}, {:.3f})", vec.x, vec.y, vec.z, vec.w)
                    : fmt::format_to(ctx.out(), "({:.3e}, {:.3e}, {:.3e}, {:.3e})", vec.x, vec.y, vec.z, vec.w);
+    }
+};
+
+template <>
+struct formatter<glm::mat2>
+{
+    char presentation = 'f';
+
+    constexpr auto parse(const format_parse_context& ctx)
+    {
+        auto it = ctx.begin();
+        const auto end = ctx.end();
+        if (it != end && (*it == 'f' || *it == 'e'))
+            presentation = *it++;
+
+        if (it != end && *it != '}')
+            throw format_error("invalid format");
+
+        return it;
+    }
+
+    template <typename FormatContext>
+    auto format(const glm::mat2& mat, FormatContext& ctx) const
+    {
+        return presentation == 'f'
+                   ? fmt::format_to(ctx.out(),
+                         "[({:.3f}, {:.3f}), ({:.3f}, {:.3f})]",
+                         mat[0][0], mat[0][1],
+                         mat[1][0], mat[1][1])
+                   : fmt::format_to(ctx.out(),
+                         "[({:.3e}, {:.3e}), ({:.3e}, {:.3e})]",
+                         mat[0][0], mat[0][1],
+                         mat[1][0], mat[1][1]);
+    }
+};
+
+template <>
+struct formatter<glm::mat3>
+{
+    char presentation = 'f';
+
+    constexpr auto parse(const format_parse_context& ctx)
+    {
+        auto it = ctx.begin();
+        const auto end = ctx.end();
+        if (it != end && (*it == 'f' || *it == 'e'))
+            presentation = *it++;
+
+        if (it != end && *it != '}')
+            throw format_error("invalid format");
+
+        return it;
+    }
+
+    template <typename FormatContext>
+    auto format(const glm::mat3& mat, FormatContext& ctx) const
+    {
+        return presentation == 'f'
+                   ? fmt::format_to(ctx.out(),
+                         "[({:.3f}, {:.3f}, {:.3f}), ({:.3f}, {:.3f}, {:.3f}), ({:.3f}, {:.3f}, {:.3f})]",
+                         mat[0][0], mat[0][1], mat[0][2],
+                         mat[1][0], mat[1][1], mat[1][2],
+                         mat[2][0], mat[2][1], mat[2][2])
+                   : fmt::format_to(ctx.out(),
+                         "[({:.3e}, {:.3e}, {:.3e}), ({:.3e}, {:.3e}, {:.3e}), ({:.3e}, {:.3e}, {:.3e})]",
+                         mat[0][0], mat[0][1], mat[0][2],
+                         mat[1][0], mat[1][1], mat[1][2],
+                         mat[2][0], mat[2][1], mat[2][2]);
+    }
+};
+
+template <>
+struct formatter<glm::mat4>
+{
+    char presentation = 'f';
+
+    constexpr auto parse(const format_parse_context& ctx)
+    {
+        auto it = ctx.begin();
+        const auto end = ctx.end();
+        if (it != end && (*it == 'f' || *it == 'e'))
+            presentation = *it++;
+
+        if (it != end && *it != '}')
+            throw format_error("invalid format");
+
+        return it;
+    }
+
+    template <typename FormatContext>
+    auto format(const glm::mat4& mat, FormatContext& ctx) const
+    {
+        return presentation == 'f'
+                   ? fmt::format_to(ctx.out(),
+                         "[({:.3f}, {:.3f}, {:.3f}, {:.3f}), ({:.3f}, {:.3f}, {:.3f}, {:.3f}), ({:.3f}, {:.3f}, {:.3f}, {:.3f}), ({:.3f}, {:.3f}, {:.3f}, {:.3f})]",
+                         mat[0][0], mat[0][1], mat[0][2], mat[0][3],
+                         mat[1][0], mat[1][1], mat[1][2], mat[1][3],
+                         mat[2][0], mat[2][1], mat[2][2], mat[2][3],
+                         mat[3][0], mat[3][1], mat[3][2], mat[3][3])
+                   : fmt::format_to(ctx.out(),
+                         "[({:.3e}, {:.3e}, {:.3e}, {:.3e}), ({:.3e}, {:.3e}, {:.3e}, {:.3e}), ({:.3e}, {:.3e}, {:.3e}, {:.3e}), ({:.3e}, {:.3e}, {:.3e}, {:.3e})]",
+                         mat[0][0], mat[0][1], mat[0][2], mat[0][3],
+                         mat[1][0], mat[1][1], mat[1][2], mat[1][3],
+                         mat[2][0], mat[2][1], mat[2][2], mat[2][3],
+                         mat[3][0], mat[3][1], mat[3][2], mat[3][3]);
     }
 };
 

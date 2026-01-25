@@ -315,7 +315,7 @@ std::tuple<std::expected<Results, JobResultStatus>...> Scheduler::wait_for_jobs(
     std::apply(
         [&](auto&... job)
         {
-            (job_list.push_back(JobBase::handle_type::from_address(job.handle.address())), ...);
+            ((job_list.push_back(JobBase::handle_type::from_address(job.handle.address())), job.set_dispatched()), ...);
         },
         jobs
     );

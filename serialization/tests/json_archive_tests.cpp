@@ -659,6 +659,62 @@ SCENARIO("JsonArchive handles deep nesting")
     }
 }
 
+SCENARIO("JsonArchive supports round-trip serialization for GLM vectors")
+{
+    GIVEN("A JsonArchive with GLM vectors")
+    {
+        JsonArchive write_archive;
+
+        THEN("vec2 can be written and read back successfully")
+        {
+            glm::vec2 original(1.1f, 2.2f);
+            write_archive.add_property("vec2_val", original);
+
+            std::stringstream ss;
+            write_archive.dump(ss);
+
+            JsonArchive read_archive;
+            read_archive.read(ss);
+            glm::vec2 retrieved;
+            REQUIRE(read_archive.get_property("vec2_val", retrieved));
+            for (int i = 0; i < 2; ++i)
+                REQUIRE(retrieved[i] == original[i]);
+        }
+
+        THEN("vec3 can be written and read back successfully")
+        {
+            glm::vec3 original(3.3f, 2.2f, 1.1f);
+            write_archive.add_property("vec3_val", original);
+
+            std::stringstream ss;
+            write_archive.dump(ss);
+
+            JsonArchive read_archive;
+            read_archive.read(ss);
+            glm::vec3 retrieved;
+            REQUIRE(read_archive.get_property("vec3_val", retrieved));
+            for (int i = 0; i < 3; ++i)
+                REQUIRE(retrieved[i] == original[i]);
+        }
+
+        THEN("vec4 can be written and read back successfully")
+        {
+            glm::vec4 original(1.1f, 2.2f, 4.4f, 3.3f);
+            write_archive.add_property("vec4_val", original);
+
+            std::stringstream ss;
+            write_archive.dump(ss);
+
+            JsonArchive read_archive;
+            read_archive.read(ss);
+            glm::vec4 retrieved;
+            REQUIRE(read_archive.get_property("vec4_val", retrieved));
+            for (int i = 0; i < 4; ++i)
+                REQUIRE(retrieved[i] == original[i]);
+        }
+    }
+}
+
 SCENARIO("JsonArchive supports round-trip serialization for GLM matrices")
 {
     GIVEN("A JsonArchive with GLM matrices")
@@ -690,9 +746,15 @@ SCENARIO("JsonArchive supports round-trip serialization for GLM matrices")
         THEN("mat3 can be written and read back successfully")
         {
             glm::mat3 original(
-                1.0f, 2.0f, 3.0f,
-                4.0f, 5.0f, 6.0f,
-                7.0f, 8.0f, 9.0f
+                1.0f,
+                2.0f,
+                3.0f,
+                4.0f,
+                5.0f,
+                6.0f,
+                7.0f,
+                8.0f,
+                9.0f
             );
             write_archive.add_property("mat3_val", original);
 
@@ -716,10 +778,22 @@ SCENARIO("JsonArchive supports round-trip serialization for GLM matrices")
         THEN("mat4 can be written and read back successfully")
         {
             glm::mat4 original(
-                1.0f, 2.0f, 3.0f, 4.0f,
-                5.0f, 6.0f, 7.0f, 8.0f,
-                9.0f, 10.0f, 11.0f, 12.0f,
-                13.0f, 14.0f, 15.0f, 16.0f
+                1.0f,
+                2.0f,
+                3.0f,
+                4.0f,
+                5.0f,
+                6.0f,
+                7.0f,
+                8.0f,
+                9.0f,
+                10.0f,
+                11.0f,
+                12.0f,
+                13.0f,
+                14.0f,
+                15.0f,
+                16.0f
             );
             write_archive.add_property("mat4_val", original);
 
@@ -743,10 +817,22 @@ SCENARIO("JsonArchive supports round-trip serialization for GLM matrices")
         THEN("dmat4 can be written and read back successfully")
         {
             glm::dmat4 original(
-                1.0, 2.0, 3.0, 4.0,
-                5.0, 6.0, 7.0, 8.0,
-                9.0, 10.0, 11.0, 12.0,
-                13.0, 14.0, 15.0, 16.0
+                1.0,
+                2.0,
+                3.0,
+                4.0,
+                5.0,
+                6.0,
+                7.0,
+                8.0,
+                9.0,
+                10.0,
+                11.0,
+                12.0,
+                13.0,
+                14.0,
+                15.0,
+                16.0
             );
             write_archive.add_property("dmat4_val", original);
 
@@ -771,15 +857,33 @@ SCENARIO("JsonArchive supports round-trip serialization for GLM matrices")
         {
             glm::mat2 mat2_val(1.0f, 2.0f, 3.0f, 4.0f);
             glm::mat3 mat3_val(
-                1.0f, 2.0f, 3.0f,
-                4.0f, 5.0f, 6.0f,
-                7.0f, 8.0f, 9.0f
+                1.0f,
+                2.0f,
+                3.0f,
+                4.0f,
+                5.0f,
+                6.0f,
+                7.0f,
+                8.0f,
+                9.0f
             );
             glm::mat4 mat4_val(
-                1.0f, 2.0f, 3.0f, 4.0f,
-                5.0f, 6.0f, 7.0f, 8.0f,
-                9.0f, 10.0f, 11.0f, 12.0f,
-                13.0f, 14.0f, 15.0f, 16.0f
+                1.0f,
+                2.0f,
+                3.0f,
+                4.0f,
+                5.0f,
+                6.0f,
+                7.0f,
+                8.0f,
+                9.0f,
+                10.0f,
+                11.0f,
+                12.0f,
+                13.0f,
+                14.0f,
+                15.0f,
+                16.0f
             );
 
             write_archive.add_property("mat2", mat2_val);

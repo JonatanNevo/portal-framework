@@ -50,11 +50,6 @@ void TransformHierarchySystem::execute(ecs::Registry& registry)
                 auto& parent_transform = relationship.parent.get_component<TransformComponent>();
                 parent_matrix = parent_transform.get_world_matrix();
             }
-            else
-            {
-                parent_matrix = glm::mat4(1.0f);
-            }
-
         }
         transform.calculate_world_matrix(parent_matrix);
     }

@@ -33,7 +33,7 @@ ResourceData ShaderLoader::load(const SourceMetadata& meta, const Reference<Reso
     return {};
 }
 
-void ShaderLoader::save(const ResourceData&) {}
+void ShaderLoader::save(ResourceData&) {}
 
 Reference<Resource> ShaderLoader::load_shader(const SourceMetadata& meta, const ResourceSource& source) const
 {

@@ -64,7 +64,11 @@ std::filesystem::path validate_and_create_path(const Project& project, const std
     }
     else
     {
-        LOGGER_TRACE("Opening relative database: {} (resource dir: {})", database_path.generic_string(), project.get_resource_directory().generic_string());
+        LOGGER_TRACE(
+            "Opening relative database: {} (resource dir: {})",
+            database_path.generic_string(),
+            project.get_resource_directory().generic_string()
+        );
         output = project.get_resource_directory() / database_path;
     }
 
@@ -198,6 +202,17 @@ DatabaseError FolderResourceDatabase::remove(const StringId resource_id)
 
 Reference<resources::ResourceSource> FolderResourceDatabase::create_source(StringId, const SourceMetadata meta)
 {
+    // TODO: support partial composite loading (loading only parts of the composite)
+    // if (meta.source.string.starts_with("composite://"))
+    // {
+    //     auto source_view = std::string_view(meta.source.string);
+    //     source_view.remove_prefix(std::strlen("composite://"));
+    //
+    //     auto composite_id = STRING_ID(source_view.substr(0, source_view.find("/gltf")));
+    //     auto metadata = resources.at(composite_id);
+    //     return make_reference<resources::FileSource>(root_path / metadata.source.string);
+    // }
+
     // TODO: if source starts with 'http://' use network source
     return make_reference<resources::FileSource>(root_path / meta.source.string);
 }
@@ -220,11 +235,24 @@ void FolderResourceDatabase::populate()
                 resource_metadata.full_source_path = STRING_ID((root_path / entry.path()).replace_extension("").generic_string());
                 resources[resource_metadata.resource_id] = resource_metadata;
 
+                if (resource_metadata.type == ResourceType::Composite)
+                    populate_from_composite(resource_metadata);
+
                 // TODO: update to new version if necessary
                 resource_metadata.archive(archiver);
                 archiver.dump(entry.path());
             }
         }
+    }
+}
+
+void FolderResourceDatabase::populate_from_composite(const SourceMetadata& meta)
+{
+    auto [children, _] = std::get<CompositeMetadata>(meta.meta);
+    for (auto& [name, source_meta] : children)
+    {
+        source_meta.full_source_path = meta.resource_id;
+        resources[STRING_ID(name)] = source_meta;
     }
 }
 

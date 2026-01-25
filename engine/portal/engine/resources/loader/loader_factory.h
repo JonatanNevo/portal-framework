@@ -31,7 +31,7 @@ public:
     explicit StubLoader(ResourceRegistry& registry) : ResourceLoader(registry) {}
 
     ResourceData load(const SourceMetadata&, Reference<ResourceSource>) override { return {}; };
-    void save(const ResourceData&) override {};
+    void save(ResourceData&) override {};
 };
 
 

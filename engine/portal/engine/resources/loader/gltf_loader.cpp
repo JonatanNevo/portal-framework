@@ -105,7 +105,7 @@ ResourceData GltfLoader::load(const SourceMetadata& meta, Reference<ResourceSour
         if (composite_meta.children.contains(texture_name))
         {
             auto texture_meta = composite_meta.children.at(texture_name);
-            texture_jobs.emplace_back(load_texture(texture_meta, gltf, texture));
+            texture_jobs.emplace_back(load_texture(meta.resource_id, texture_meta, gltf, texture));
         }
     }
     registry.wait_all(texture_jobs);
@@ -115,7 +115,7 @@ ResourceData GltfLoader::load(const SourceMetadata& meta, Reference<ResourceSour
     for (auto& material : gltf.materials)
     {
         auto material_metadata = composite_meta.children.at(relative_name(material.name.c_str(), ResourceType::Material));
-        material_jobs.emplace_back(load_material(material_metadata, gltf, material));
+        material_jobs.emplace_back(load_material(meta.resource_id, material_metadata, gltf, material));
     }
     registry.wait_all(material_jobs);
 
@@ -129,15 +129,14 @@ ResourceData GltfLoader::load(const SourceMetadata& meta, Reference<ResourceSour
     }
     registry.wait_all(mesh_jobs);
 
-    load_scenes(meta, gltf);
-
+    // load_scenes(meta, gltf);
 
     auto composite = make_reference<Composite>(meta.resource_id);
     for (auto& child_meta : composite_meta.children | std::views::values)
     {
         auto resource = registry.get<Resource>(child_meta.resource_id);
-        if (resource.get_state() != ResourceState::Loaded)
-            LOGGER_ERROR("Failed to load resource: {}", child_meta.resource_id);
+        // if (resource.get_state() != ResourceState::Loaded)
+        //     LOGGER_ERROR("Failed to load resource: {}", child_meta.resource_id);
 
         composite->set_resource(child_meta.type, child_meta.resource_id, resource);
     }
@@ -175,7 +174,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
         const auto& [_, name] = gltf.images[image_index.value()];
         auto texture_name = texture.name.empty() ? name : texture.name;
 
-        auto [image_meta, image_source] = find_image_source(base_name, parent_path, gltf, texture);
+        auto [image_meta, image_source] = find_image_source(meta.resource_id, base_name, parent_path, gltf, texture);
         if (image_source)
         {
             LoaderFactory::enrich_metadata(image_meta, *image_source);
@@ -190,13 +189,13 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
         if (material.pbrData.baseColorTexture.has_value())
         {
             auto texture = gltf.textures[material.pbrData.baseColorTexture.value().textureIndex];
-            auto [texture_meta, _] = find_image_source(base_name, parent_path, gltf, texture);
+            auto [texture_meta, _] = find_image_source(meta.resource_id,base_name, parent_path, gltf, texture);
             dependencies.push_back(texture_meta.resource_id);
         }
         if (material.pbrData.metallicRoughnessTexture.has_value())
         {
             auto texture = gltf.textures[material.pbrData.metallicRoughnessTexture.value().textureIndex];
-            auto [texture_meta, _] = find_image_source(base_name, parent_path, gltf, texture);
+            auto [texture_meta, _] = find_image_source(meta.resource_id,base_name, parent_path, gltf, texture);
             dependencies.push_back(texture_meta.resource_id);
         }
 
@@ -205,7 +204,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
             .resource_id = resource_id,
             .type = ResourceType::Material,
             .dependencies = dependencies,
-            .source = STRING_ID(fmt::format("mem://gltf-material/{}", material.name)),
+            .source = STRING_ID(fmt::format("composite://{}/gltf/material/{}",meta.resource_id.string, material.name)),
             .format = SourceFormat::Memory
         };
 
@@ -235,7 +234,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
             .resource_id = resource_id,
             .type = ResourceType::Mesh,
             .dependencies = dependencies,
-            .source = STRING_ID(fmt::format("mem://gltf-mesh/{}", mesh.name.c_str())),
+            .source = STRING_ID(fmt::format("composite://{}/gltf/mesh/{}", meta.resource_id.string, mesh.name.c_str())),
             .format = SourceFormat::Memory
         };
 
@@ -274,7 +273,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
             .resource_id = resource_id,
             .type = ResourceType::Scene,
             .dependencies = dependencies,
-            .source = STRING_ID(fmt::format("mem://gltf-scene/{}", scene.name)),
+            .source = STRING_ID(fmt::format("composite://{}/gltf/scene/{}", meta.resource_id.string, scene.name)),
             .format = SourceFormat::Memory
         };
 
@@ -287,7 +286,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
     meta.meta = std::move(composite_meta);
 }
 
-void GltfLoader::save(const ResourceData&) {}
+void GltfLoader::save(ResourceData&) {}
 
 fastgltf::Asset GltfLoader::load_asset(const SourceMetadata& meta, fastgltf::GltfDataGetter& data)
 {
@@ -310,6 +309,7 @@ fastgltf::Asset GltfLoader::load_asset(const SourceMetadata& meta, fastgltf::Glt
 }
 
 std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_source(
+    StringId composite_id,
     const std::filesystem::path& base_name,
     const std::filesystem::path& base_path,
     const fastgltf::Asset& asset,
@@ -359,7 +359,7 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
             image_source_meta = SourceMetadata{
                 .resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture)),
                 .type = ResourceType::Texture,
-                .source = STRING_ID(fmt::format("mem://gltf-texture/array/{}", texture_name)),
+                .source = STRING_ID(fmt::format("composite://{}/gltf/texture/array/{}", composite_id.string, texture_name)),
                 .format = SourceFormat::Memory,
             };
 
@@ -370,7 +370,7 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
             image_source_meta = SourceMetadata{
                 .resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture)),
                 .type = ResourceType::Texture,
-                .source = STRING_ID(fmt::format("mem://gltf-texture/vector/{}", texture_name)),
+                .source = STRING_ID(fmt::format("composite://{}/gltf/texture/vector/{}", composite_id.string, texture_name)),
                 .format = SourceFormat::Memory,
             };
 
@@ -390,7 +390,7 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
                         image_source_meta = SourceMetadata{
                             .resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture)),
                             .type = ResourceType::Texture,
-                            .source = STRING_ID(fmt::format("mem://gltf-texture/view/array/{}", texture_name)),
+                            .source = STRING_ID(fmt::format("composite://{}/gltf/texture/view/array/{}", composite_id.string, texture_name)),
                             .format = SourceFormat::Memory,
                         };
 
@@ -404,7 +404,7 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
                         image_source_meta = SourceMetadata{
                             .resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture)),
                             .type = ResourceType::Texture,
-                            .source = STRING_ID(fmt::format("mem://gltf-texture/view/vector/{}", texture_name)),
+                            .source = STRING_ID(fmt::format("composite://{}/gltf/texture/view/vector/{}", composite_id.string, texture_name)),
                             .format = SourceFormat::Memory,
                         };
 
@@ -425,6 +425,7 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
 }
 
 Job<> GltfLoader::load_texture(
+    StringId composite_id,
     SourceMetadata texture_meta,
     const fastgltf::Asset& asset,
     const fastgltf::Texture& texture
@@ -436,7 +437,7 @@ Job<> GltfLoader::load_texture(
     if (registry.get<renderer::vulkan::VulkanTexture>(texture_name).get_state() == ResourceState::Loaded)
         co_return;
 
-    const auto result = find_image_source(base_name, parent_path, asset, texture);
+    const auto result = find_image_source(composite_id, base_name, parent_path, asset, texture);
     auto& image_meta = result.first;
     auto& source = result.second;
     if (!source)
@@ -474,6 +475,7 @@ Job<> GltfLoader::load_texture(
 }
 
 Job<> GltfLoader::load_material(
+    StringId composite_id,
     SourceMetadata material_meta,
     const fastgltf::Asset& asset,
     const fastgltf::Material& material
@@ -509,14 +511,14 @@ Job<> GltfLoader::load_material(
     if (material.pbrData.baseColorTexture.has_value())
     {
         auto texture = asset.textures[material.pbrData.baseColorTexture.value().textureIndex];
-        auto [texture_meta, _] = find_image_source(base_name, parent_path, asset, texture);
+        auto [texture_meta, _] = find_image_source(composite_id, base_name, parent_path, asset, texture);
         details.color_texture = texture_meta.resource_id;
     }
 
     if (material.pbrData.metallicRoughnessTexture.has_value())
     {
         auto texture = asset.textures[material.pbrData.metallicRoughnessTexture.value().textureIndex];
-        auto [texture_meta, _] = find_image_source(base_name, parent_path, asset, texture);
+        auto [texture_meta, _] = find_image_source(composite_id, base_name, parent_path, asset, texture);
         details.metallic_texture = texture_meta.resource_id;
     }
 

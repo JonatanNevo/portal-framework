@@ -62,7 +62,7 @@ void ResourceRegistry::save(const StringId& resource_id)
     save_resource(resources.at(resource_id));
 }
 
-Job<resources::ResourceData> ResourceRegistry::load_direct(const SourceMetadata& meta, const Reference<resources::ResourceSource> source)
+Job<resources::ResourceData> ResourceRegistry::load_direct(SourceMetadata meta, const Reference<resources::ResourceSource> source)
 {
     // TODO: add check that the resource does not exist already?
     LOGGER_TRACE("Creating resource: {} of type: {}", meta.resource_id, meta.type);
@@ -116,6 +116,9 @@ std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource
     if (errored_resources.contains(id))
         return std::unexpected{ResourceState::Error};
 
+    if (database.find(id).has_value())
+        return std::unexpected{ResourceState::Unloaded};
+
     LOG_ERROR("Attempted to get resource with handle {} that does not exist", id);
     return std::unexpected{ResourceState::Missing};
 }
@@ -131,7 +134,7 @@ void ResourceRegistry::create_resource(const StringId& resource_id, [[maybe_unus
     scheduler.dispatch_job(load_resource(resource_id));
 }
 
-void ResourceRegistry::create_resource_immediate(const StringId& resource_id, [[maybe_unused]] ResourceType type)
+void ResourceRegistry::create_resource_immediate(const StringId& resource_id)
 {
     {
         std::lock_guard guard(lock);
@@ -152,8 +155,8 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
         pending_resources.insert(resource_id);
     }
 
-    const auto meta = database.find(resource_id);
-    if (!meta)
+    const auto meta_result = database.find(resource_id);
+    if (!meta_result)
     {
         std::lock_guard guard(lock);
         LOGGER_ERROR("Failed to find metadata for resource with id: {}", resource_id);
@@ -162,16 +165,26 @@ Job<Reference<Resource>> ResourceRegistry::load_resource(const StringId resource
         co_return nullptr;
     }
 
-    const auto source = database.create_source(resource_id, *meta);
+    SourceMetadata meta = *meta_result;
+    // TODO these checks should be done in the database
+    if (meta.source.string.starts_with("composite://"))
+    {
+        auto source_view = std::string_view(meta_result->source.string);
+        source_view.remove_prefix(std::strlen("composite://"));
 
-    auto job = load_direct(*meta, source);
+        const auto composite_id = STRING_ID(source_view.substr(0, source_view.find("/gltf")));
+        meta = database.find(composite_id).value();
+    }
+
+    const auto source = database.create_source(meta.resource_id, meta);
+    auto job = load_direct(meta, source);
     co_await job;
     auto resource_data = job.result();
     if (!resource_data || resource_data.value().resource == nullptr)
     {
         std::lock_guard guard(lock);
-        errored_resources.insert(resource_id);
-        pending_resources.erase(resource_id);
+        errored_resources.insert(meta.resource_id);
+        pending_resources.erase(meta.resource_id);
         co_return nullptr;
     }
 

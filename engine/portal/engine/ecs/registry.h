@@ -94,13 +94,23 @@ public:
      * returns the existing entity. If not found, creates a new top-level entity
      * with that name.
      *
-     * @param entity_name The unique identifier for the entity
+     * @param entity_name The name for the entity
      * @return The found or newly created entity
      *
      * @note This creates a top-level entity (no parent) if creation is needed.
      * @see find_or_create_child for scoped creation under a parent
      */
     Entity find_or_create(const StringId& entity_name);
+
+    /**
+     * @brief Find an entity by name.
+     *
+     * Searches for an entity with the specified name in the registry.
+     *
+     * @param entity_name The name for the entity.
+     * @reaturn The entity if found, std::nullopt otherwise
+     */
+    std::optional<Entity> find_by_name(const StringId& entity_name);
 
     /**
      * @brief Creates a new top-level entity.

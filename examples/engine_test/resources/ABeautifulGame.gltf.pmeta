@@ -12,7 +12,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Bishop_Black",
-                "source": "mem://gltf-material/Bishop_Black",
+                "source": "composite://game/ABeautifulGame/gltf/material/Bishop_Black",
                 "type": "Material"
             },
             "game/gltf-Material-Bishop_White": {
@@ -26,7 +26,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Bishop_White",
-                "source": "mem://gltf-material/Bishop_White",
+                "source": "composite://game/ABeautifulGame/gltf/material/Bishop_White",
                 "type": "Material"
             },
             "game/gltf-Material-Castle_Black": {
@@ -40,7 +40,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Castle_Black",
-                "source": "mem://gltf-material/Castle_Black",
+                "source": "composite://game/ABeautifulGame/gltf/material/Castle_Black",
                 "type": "Material"
             },
             "game/gltf-Material-Castle_White": {
@@ -54,7 +54,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Castle_White",
-                "source": "mem://gltf-material/Castle_White",
+                "source": "composite://game/ABeautifulGame/gltf/material/Castle_White",
                 "type": "Material"
             },
             "game/gltf-Material-Chessboard": {
@@ -68,7 +68,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Chessboard",
-                "source": "mem://gltf-material/Chessboard",
+                "source": "composite://game/ABeautifulGame/gltf/material/Chessboard",
                 "type": "Material"
             },
             "game/gltf-Material-King_Black": {
@@ -82,7 +82,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-King_Black",
-                "source": "mem://gltf-material/King_Black",
+                "source": "composite://game/ABeautifulGame/gltf/material/King_Black",
                 "type": "Material"
             },
             "game/gltf-Material-King_White": {
@@ -96,7 +96,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-King_White",
-                "source": "mem://gltf-material/King_White",
+                "source": "composite://game/ABeautifulGame/gltf/material/King_White",
                 "type": "Material"
             },
             "game/gltf-Material-Knight_Black": {
@@ -110,7 +110,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Knight_Black",
-                "source": "mem://gltf-material/Knight_Black",
+                "source": "composite://game/ABeautifulGame/gltf/material/Knight_Black",
                 "type": "Material"
             },
             "game/gltf-Material-Knight_White": {
@@ -124,7 +124,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Knight_White",
-                "source": "mem://gltf-material/Knight_White",
+                "source": "composite://game/ABeautifulGame/gltf/material/Knight_White",
                 "type": "Material"
             },
             "game/gltf-Material-Pawn_Body_Black": {
@@ -138,7 +138,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Pawn_Body_Black",
-                "source": "mem://gltf-material/Pawn_Body_Black",
+                "source": "composite://game/ABeautifulGame/gltf/material/Pawn_Body_Black",
                 "type": "Material"
             },
             "game/gltf-Material-Pawn_Body_White": {
@@ -152,7 +152,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Pawn_Body_White",
-                "source": "mem://gltf-material/Pawn_Body_White",
+                "source": "composite://game/ABeautifulGame/gltf/material/Pawn_Body_White",
                 "type": "Material"
             },
             "game/gltf-Material-Pawn_Top_Black": {
@@ -165,7 +165,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Pawn_Top_Black",
-                "source": "mem://gltf-material/Pawn_Top_Black",
+                "source": "composite://game/ABeautifulGame/gltf/material/Pawn_Top_Black",
                 "type": "Material"
             },
             "game/gltf-Material-Pawn_Top_White": {
@@ -178,7 +178,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Pawn_Top_White",
-                "source": "mem://gltf-material/Pawn_Top_White",
+                "source": "composite://game/ABeautifulGame/gltf/material/Pawn_Top_White",
                 "type": "Material"
             },
             "game/gltf-Material-Queen_Black": {
@@ -192,7 +192,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Queen_Black",
-                "source": "mem://gltf-material/Queen_Black",
+                "source": "composite://game/ABeautifulGame/gltf/material/Queen_Black",
                 "type": "Material"
             },
             "game/gltf-Material-Queen_White": {
@@ -206,7 +206,7 @@
                     "shader": "engine/shaders/pbr"
                 },
                 "resource_id": "game/gltf-Material-Queen_White",
-                "source": "mem://gltf-material/Queen_White",
+                "source": "composite://game/ABeautifulGame/gltf/material/Queen_White",
                 "type": "Material"
             },
             "game/gltf-Mesh-Bishop_Shared": {
@@ -215,7 +215,7 @@
                 ],
                 "format": "Memory",
                 "resource_id": "game/gltf-Mesh-Bishop_Shared",
-                "source": "mem://gltf-mesh/Bishop_Shared",
+                "source": "composite://game/ABeautifulGame/gltf/mesh/Bishop_Shared",
                 "type": "Mesh"
             },
             "game/gltf-Mesh-Castle_Shared": {
@@ -224,7 +224,7 @@
                 ],
                 "format": "Memory",
                 "resource_id": "game/gltf-Mesh-Castle_Shared",
-                "source": "mem://gltf-mesh/Castle_Shared",
+                "source": "composite://game/ABeautifulGame/gltf/mesh/Castle_Shared",
                 "type": "Mesh"
             },
             "game/gltf-Mesh-Chessboard": {
@@ -233,7 +233,7 @@
                 ],
                 "format": "Memory",
                 "resource_id": "game/gltf-Mesh-Chessboard",
-                "source": "mem://gltf-mesh/Chessboard",
+                "source": "composite://game/ABeautifulGame/gltf/mesh/Chessboard",
                 "type": "Mesh"
             },
             "game/gltf-Mesh-King_Shared": {
@@ -242,7 +242,7 @@
                 ],
                 "format": "Memory",
                 "resource_id": "game/gltf-Mesh-King_Shared",
-                "source": "mem://gltf-mesh/King_Shared",
+                "source": "composite://game/ABeautifulGame/gltf/mesh/King_Shared",
                 "type": "Mesh"
             },
             "game/gltf-Mesh-Knight_Shared": {
@@ -251,7 +251,7 @@
                 ],
                 "format": "Memory",
                 "resource_id": "game/gltf-Mesh-Knight_Shared",
-                "source": "mem://gltf-mesh/Knight_Shared",
+                "source": "composite://game/ABeautifulGame/gltf/mesh/Knight_Shared",
                 "type": "Mesh"
             },
             "game/gltf-Mesh-Pawn_Body_Shared": {
@@ -260,7 +260,7 @@
                 ],
                 "format": "Memory",
                 "resource_id": "game/gltf-Mesh-Pawn_Body_Shared",
-                "source": "mem://gltf-mesh/Pawn_Body_Shared",
+                "source": "composite://game/ABeautifulGame/gltf/mesh/Pawn_Body_Shared",
                 "type": "Mesh"
             },
             "game/gltf-Mesh-Pawn_Top_Shared": {
@@ -269,7 +269,7 @@
                 ],
                 "format": "Memory",
                 "resource_id": "game/gltf-Mesh-Pawn_Top_Shared",
-                "source": "mem://gltf-mesh/Pawn_Top_Shared",
+                "source": "composite://game/ABeautifulGame/gltf/mesh/Pawn_Top_Shared",
                 "type": "Mesh"
             },
             "game/gltf-Mesh-Queen_Shared": {
@@ -278,7 +278,7 @@
                 ],
                 "format": "Memory",
                 "resource_id": "game/gltf-Mesh-Queen_Shared",
-                "source": "mem://gltf-mesh/Queen_Shared",
+                "source": "composite://game/ABeautifulGame/gltf/mesh/Queen_Shared",
                 "type": "Mesh"
             },
             "game/gltf-Scene-Scene": {
@@ -335,7 +335,7 @@
                 ],
                 "format": "Memory",
                 "resource_id": "game/gltf-Scene-Scene",
-                "source": "mem://gltf-scene/Scene",
+                "source": "composite://game/ABeautifulGame/gltf/scene/Scene",
                 "type": "Scene"
             }
         },

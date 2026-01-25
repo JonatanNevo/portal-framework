@@ -49,6 +49,7 @@ protected:
     );
 
     void populate();
+    void populate_from_composite(const SourceMetadata& meta);
 
     DatabaseError validate();
     [[nodiscard]] DatabaseError validate_metadata(const SourceMetadata& meta) const;

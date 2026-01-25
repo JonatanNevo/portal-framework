@@ -17,12 +17,6 @@ Entity::Entity(const entt::handle handle) : handle(handle) {}
 
 void Entity::set_parent(Entity parent)
 {
-    if (!has_component<RelationshipComponent>())
-    {
-        PORTAL_ASSERT(false, "Entity does not have a RelationshipComponent");
-        return;
-    }
-
     auto current_parent = get_parent();
     if (current_parent == parent)
         return;
@@ -30,12 +24,12 @@ void Entity::set_parent(Entity parent)
     if (current_parent)
         current_parent.remove_child(*this);
 
-    auto& relationship = get_component<RelationshipComponent>();
+    auto& relationship = get_or_add_component<RelationshipComponent>();
     relationship.parent = parent;
 
     if (parent)
     {
-        auto& parent_rel = parent.get_component<RelationshipComponent>();
+        auto& parent_rel = parent.get_or_add_component<RelationshipComponent>();
 
         if (parent_rel.children == 0)
         {
@@ -128,13 +122,8 @@ bool Entity::operator==(const Entity& other) const
 
 Entity Entity::get_parent() const
 {
-    if (!has_component<RelationshipComponent>())
-    {
-        PORTAL_ASSERT(false, "Entity does not have a RelationshipComponent");
-        return null_entity;
-    }
-
-    return {get_component<RelationshipComponent>().parent, *handle.registry()};
+    auto& comp = get_or_add_component<RelationshipComponent>();
+    return {comp.parent, *handle.registry()};
 }
 
 entt::entity Entity::get_parent_id() const

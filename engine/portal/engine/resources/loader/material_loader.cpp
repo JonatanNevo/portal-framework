@@ -99,7 +99,7 @@ void MaterialLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource&
     };
 }
 
-void MaterialLoader::save(const ResourceData&) {}
+void MaterialLoader::save(ResourceData&) {}
 
 MaterialDetails MaterialLoader::load_details_from_memory(const ResourceSource& source)
 {

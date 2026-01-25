@@ -18,6 +18,7 @@ static std::vector<std::pair<std::unordered_set<std::string_view>, std::pair<Res
     {{".spv"}, {ResourceType::Shader, SourceFormat::PrecompiledShader}},
     {{".glb", ".gltf"}, {ResourceType::Composite, SourceFormat::Glft}},
     {{".ttf"}, {ResourceType::Font, SourceFormat::FontFile}},
+    {{".pscene"}, {ResourceType::Scene, SourceFormat::Scene}}
 };
 
 

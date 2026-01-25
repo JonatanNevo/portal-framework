@@ -345,7 +345,7 @@ SCENARIO("BinarySerializer can serialize GLM types")
 
         THEN("glm::vec3 is round-tripped")
         {
-            glm::vec3 original(1.0f, 2.0f, 3.0f);
+            glm::vec3 original(1.1234f, 2.23456f, 3.34567f);
             serializer.add_value(original);
 
             glm::vec3 deserialized;
