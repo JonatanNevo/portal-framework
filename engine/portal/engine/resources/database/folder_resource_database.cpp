@@ -309,6 +309,15 @@ DatabaseError FolderResourceDatabase::validate()
                     LOGGER_WARN("Corrupt metadata: {}", relative_path.generic_string());
                     corrupt_meta.insert(file_as_string_id);
                 }
+
+                if (meta.type == ResourceType::Composite)
+                {
+                    auto [children, _] = std::get<CompositeMetadata>(meta.meta);
+                    for (auto& source_meta : children | std::views::values)
+                    {
+                        corresponding_meta[source_meta.source] = true;
+                    }
+                }
             }
         }
     }
@@ -317,6 +326,8 @@ DatabaseError FolderResourceDatabase::validate()
     if (!std::ranges::all_of(corresponding_meta | std::views::values, [](const bool value) { return value; }))
     {
         LOGGER_WARN("Found some stale metadate in database");
+        for (auto name : corresponding_meta | std::views::filter([](auto it) { return it.second; }) | std::views::keys)
+            LOGGER_WARN("Resource: '{}' is missing metadata", name);
         error |= DatabaseErrorBit::StaleMetadata;
     }
 
