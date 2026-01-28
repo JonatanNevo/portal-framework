@@ -991,7 +991,7 @@ protected:
                 ValueType v;
                 if (!objects[i].get_property("v", v))
                 {
-                    LOG_ERROR_TAG("Serialization", "Failed to get property from ArchiveObject {}", name);
+                    LOG_ERROR_TAG("Serialization", "Failed to get property from ArchiveObject '{}'", name);
                     return false;
                 }
                 out.push_back(static_cast<ValueType>(v));
