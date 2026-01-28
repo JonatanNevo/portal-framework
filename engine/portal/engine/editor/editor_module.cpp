@@ -15,6 +15,7 @@
 #include "portal/engine/scene/scene_context.h"
 #include "portal/engine/window/glfw_window.h"
 #include "portal/serialization/archive/json_archive.h"
+#include "portal/third_party/imgui/ImGuiNotify.h"
 
 namespace portal
 {
@@ -91,6 +92,16 @@ void EditorModule::gui_update(FrameContext& frame)
     viewport.on_gui_update(frame);
 
     ImGui::End();
+
+    {
+        imgui::ScopedStyle disable_round_windows(ImGuiStyleVar_WindowRounding, 0.f);
+        imgui::ScopedStyle disable_borders(ImGuiStyleVar_WindowBorderSize, 0.f);
+
+        auto background_color = editor_context.theme.scoped_color(ImGuiCol_WindowBg, imgui::ThemeColors::Background3);
+        auto button_color = editor_context.theme.scoped_color(ImGuiCol_Button, imgui::ThemeColors::Background3);
+
+        ImGui::RenderNotifications();
+    }
 }
 
 void EditorModule::post_update(FrameContext& frame)
