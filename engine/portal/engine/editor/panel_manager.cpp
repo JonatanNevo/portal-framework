@@ -8,6 +8,8 @@
 #include <imgui.h>
 #include <entt/entt.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <portal/third_party/imgui/ImGuiNotify.h>
+
 
 #include "selection_manager.h"
 #include "portal/engine/engine_context.h"
@@ -98,9 +100,16 @@ void draw_node(
 
 void PanelManager::on_gui_render(EditorContext& editor_context, FrameContext& frame)
 {
-    for (const auto& panel: panels)
+    for (const auto& panel : panels)
     {
         panel->on_gui_render(editor_context, frame);
+    }
+
+    static bool showed_notification = false;
+    if (!showed_notification)
+    {
+        ImGui::InsertNotification({ImGuiToastType::Success, 3000, "That is a success! %s", "(Format here)"});
+        showed_notification = true;
     }
 
     print_scene_graph(*frame.ecs_registry, frame);
@@ -180,6 +189,4 @@ void PanelManager::print_stats_block(ecs::Registry&, FrameContext& frame)
     ImGui::Text("draws %i", frame.stats.drawcall_count);
     ImGui::End();
 }
-
-
 } // portal

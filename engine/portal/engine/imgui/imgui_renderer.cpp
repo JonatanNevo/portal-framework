@@ -50,7 +50,7 @@ ImGuiRenderer::ImGuiRenderer(ResourceRegistry& resource_registry, const Window& 
 
         ImGuiFontConfiguration roboto_default{
             .name = STRING_ID("Default"),
-            .size = 15.f,
+            .size = 16.f,
             .font = resource_registry.immediate_load<Font>(STRING_ID("engine/fonts/Roboto/Roboto-Regular")),
         };
         ImGuiFonts::add(roboto_default, true);

@@ -20,9 +20,9 @@ file(GLOB_RECURSE ENGINE_THIRD_PARTY_HEADERS CONFIGURE_DEPENDS "portal/third_par
 
 # Disable warnings for third-party code
 if (MSVC)
-    set_source_files_properties(${ENGINE_THIRD_PARTY_SOURCES} PROPERTIES COMPILE_FLAGS "/W0")
+    set_source_files_properties(${ENGINE_THIRD_PARTY_SOURCES} ${ENGINE_THIRD_PARTY_HEADERS} PROPERTIES COMPILE_FLAGS "/W0")
 else ()
-    set_source_files_properties(${ENGINE_THIRD_PARTY_SOURCES} PROPERTIES COMPILE_FLAGS "-w")
+    set_source_files_properties(${ENGINE_THIRD_PARTY_SOURCES} ${ENGINE_THIRD_PARTY_HEADERS} PROPERTIES COMPILE_FLAGS "-w")
 endif ()
 
 option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
