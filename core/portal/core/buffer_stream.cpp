@@ -65,28 +65,69 @@ std::streampos BufferStreamReader::seekoff(const std::streamoff off, const seekd
     return new_pos;
 }
 
-BufferStreamWriter::BufferStreamWriter(Buffer& buffer) : std::ostream(this), buffer(buffer), position(0)
+BufferStreamWriter::BufferStreamWriter(size_t initial_capacity)
+    : std::ostream(this),
+      managed_buffer(Buffer::allocate(initial_capacity))
 {
-    if (buffer.data)
+    if (managed_buffer.data)
         setp(
-            buffer.as<char*>(),
-            buffer.as<char*>() + buffer.size
+            managed_buffer.as<char*>(),
+            managed_buffer.as<char*>() + managed_buffer.size
         );
 }
 
-std::streambuf::int_type BufferStreamWriter::overflow(std::streambuf::int_type)
+std::streambuf::int_type BufferStreamWriter::overflow(std::streambuf::int_type ch)
 {
-    return std::streambuf::traits_type::eof();
+    if (ch == traits_type::eof())
+        return traits_type::eof();
+
+    const size_t current_pos = get_position();
+
+    // Grow the buffer
+    grow(current_pos + 1);
+
+    // Write the character
+    *pptr() = static_cast<char>(ch);
+    pbump(1);
+
+    return ch;
 }
 
 std::streamsize BufferStreamWriter::xsputn(const char* s, std::streamsize n)
 {
-    if (position + n > buffer.size)
-        return 0;
+    const size_t current_pos = get_position();
+    const size_t required_size = current_pos + n;
 
-    buffer.write(s, n, position);
-    position += n;
+    // Grow if necessary
+    if (required_size > managed_buffer.size)
+        grow(required_size);
+
+    std::memcpy(pptr(), s, n);
     pbump(static_cast<int>(n));
+
     return n;
+}
+
+void BufferStreamWriter::grow(size_t min_capacity)
+{
+    const size_t current_pos = get_position();
+
+    // Grow by 1.5x or to min_capacity, whichever is larger
+    const size_t new_capacity = (std::max)(min_capacity, managed_buffer.size + managed_buffer.size / 2);
+
+    Buffer new_buffer = Buffer::allocate(new_capacity);
+    if (current_pos > 0 && managed_buffer.data)
+        std::memcpy(new_buffer.data_ptr(), managed_buffer.data, current_pos);
+
+    managed_buffer = std::move(new_buffer);
+
+    // Reset stream buffer pointers
+    setp(
+        managed_buffer.as<char*>(),
+        managed_buffer.as<char*>() + managed_buffer.size
+    );
+
+    // Advance to current position
+    pbump(static_cast<int>(current_pos));
 }
 }

@@ -30,18 +30,21 @@ private:
 class BufferStreamWriter final : std::streambuf, public std::ostream
 {
 public:
-    explicit BufferStreamWriter(Buffer& buffer);
-    Buffer get_buffer() const { return {buffer.data, position}; }
+    explicit BufferStreamWriter(size_t initial_capacity = 1024);
+    Buffer get_buffer() const { return Buffer::copy(managed_buffer.data, get_position()); }
 
-    size_t size() const { return position; }
-    bool full() const { return position == buffer.size; }
+    size_t size() const { return get_position(); }
+    size_t capacity() const { return managed_buffer.size; }
 
 protected:
     std::streambuf::int_type overflow(std::streambuf::int_type ch) override;
     std::streamsize xsputn(const char* s, std::streamsize n) override;
 
 private:
-    Buffer& buffer;
-    size_t position;
+    void grow(size_t min_capacity);
+    size_t get_position() const { return pptr() - pbase(); }
+
+private:
+    Buffer managed_buffer;
 };
 }
