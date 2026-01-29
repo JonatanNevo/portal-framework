@@ -39,6 +39,7 @@ Engine::Engine(const Reference<Project>& project, const ApplicationProperties& p
     const WindowProperties window_properties{
         .title = properties.name,
         .extent = {properties.width, properties.height},
+        .decorated = project->get_type() != ProjectType::Editor,
         .requested_frames_in_flight = settings.get_setting<size_t>("application.frames_in_flight", 3),
     };
     window = make_reference<GlfwWindow>(project->get_settings(), window_properties, CallbackConsumers{*this, input});
@@ -57,7 +58,7 @@ Engine::Engine(const Reference<Project>& project, const ApplicationProperties& p
     if (project->get_type() == ProjectType::Editor)
         modules.add_module<EditorModule>(*project, *vulkan_context, *swapchain, *window);
     else
-        modules.add_module<RuntimeModule>(*project, *vulkan_context, *swapchain);
+        modules.add_module<RuntimeModule>(*project, *vulkan_context, *swapchain, *window);
 
     // TODO: make a O(1) lookup inside the module stack, will make this class redundant
     engine_context = std::make_unique<EngineContext>(
@@ -107,34 +108,34 @@ void Engine::prepare()
     auto camera = scene->get_main_camera_entity();
     camera.add_component<InputComponent>();
 
-    for (auto entity_id: scene->get_registry().view<entt::entity>())
-    {
-        Entity entity = Entity{entity_id, scene->get_registry().get_raw_registry()};
-        LOG_INFO_TAG("ECS", "Entity: {}", static_cast<entt::id_type>(entity));
-
-        if (entity.has_component<NameComponent>())
-        {
-            auto& name_comp = entity.get_component<NameComponent>();
-            LOG_INFO_TAG("ECS", "name -> {} {}", name_comp.icon, name_comp.name);
-        }
-        else
-        {
-            LOG_INFO_TAG("ECS", "\tname -> Unnamed");
-        }
-
-        for (auto&& [type_id, storage] : scene->get_registry().get_raw_registry().storage())
-        {
-            auto type = entt::resolve(storage.info());
-            if (type)
-            {
-                auto result = type.invoke(
-                    static_cast<entt::id_type>(STRING_ID("print").id),
-                    {},
-                    entt::forward_as_meta(entity)
-                );
-            }
-        }
-    }
+    // for (auto entity_id: scene->get_registry().view<entt::entity>())
+    // {
+    //     Entity entity = Entity{entity_id, scene->get_registry().get_raw_registry()};
+    //     LOG_INFO_TAG("ECS", "Entity: {}", static_cast<entt::id_type>(entity));
+    //
+    //     if (entity.has_component<NameComponent>())
+    //     {
+    //         auto& name_comp = entity.get_component<NameComponent>();
+    //         LOG_INFO_TAG("ECS", "name -> {} {}", name_comp.icon, name_comp.name);
+    //     }
+    //     else
+    //     {
+    //         LOG_INFO_TAG("ECS", "\tname -> Unnamed");
+    //     }
+    //
+    //     for (auto&& [type_id, storage] : scene->get_registry().get_raw_registry().storage())
+    //     {
+    //         auto type = entt::resolve(storage.info());
+    //         if (type)
+    //         {
+    //             auto result = type.invoke(
+    //                 static_cast<entt::id_type>(STRING_ID("print").id),
+    //                 {},
+    //                 entt::forward_as_meta(entity)
+    //             );
+    //         }
+    //     }
+    // }
 }
 
 void Engine::process_events()

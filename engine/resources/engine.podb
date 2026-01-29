@@ -3,12 +3,11 @@
     "ignored_extensions": [],
     "ignored_files": [
         "LICENSE.txt",
-        "portal_icon_64x64.png",
         "portal_icon_64x64.icns",
         "portal_icon_64x64.ico",
         "portal_logo_dark.png"
     ],
     "name": "engine",
-    "resource_count": 16,
+    "resource_count": 21,
     "version": 1
 }

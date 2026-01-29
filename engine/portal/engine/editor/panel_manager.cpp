@@ -105,13 +105,6 @@ void PanelManager::on_gui_render(EditorContext& editor_context, FrameContext& fr
         panel->on_gui_render(editor_context, frame);
     }
 
-    static bool showed_notification = false;
-    if (!showed_notification)
-    {
-        ImGui::InsertNotification({ImGuiToastType::Success, 3000, "That is a success! %s", "(Format here)"});
-        showed_notification = true;
-    }
-
     print_scene_graph(*frame.ecs_registry, frame);
     print_controls(*frame.ecs_registry);
     print_stats_block(*frame.ecs_registry, frame);

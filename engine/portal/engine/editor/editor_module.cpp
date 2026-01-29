@@ -27,17 +27,23 @@ EditorModule::EditorModule(
     Project& project,
     renderer::vulkan::VulkanContext& context,
     renderer::vulkan::VulkanSwapchain& swapchain,
-    const Window& window
+    Window& window
 )
     : TaggedModule(stack, STRING_ID("Editor Module")),
       project(project),
-      window(window),
       swapchain(swapchain),
-      runtime_module(stack, project, context, swapchain),
+      runtime_module(stack, project, context, swapchain, window),
       im_gui_renderer(get_dependency<ResourcesModule>().get_registry(), window, swapchain),
+      editor_context(
+          {},
+          SnapshotManager{get_dependency<ResourcesModule>().get_registry()},
+          window
+      ),
+      titlebar(get_dependency<ResourcesModule>().get_registry()),
       viewport(swapchain, runtime_module)
 {
     setup_layout_config();
+    editor_context.restore_default_settings.connect<&EditorModule::restore_default_layout>(this);
     panel_manager.add_panel<DetailsPanel>();
 }
 
@@ -45,6 +51,7 @@ void EditorModule::begin_frame(FrameContext& frame)
 {
     frame.rendering_context = swapchain.prepare_frame(frame);
     frame.scene_context = SceneContext{get_dependency<SystemOrchestrator>().get_active_scene()};
+    editor_context.snapshot_manager.set_scene_id(get_dependency<SystemOrchestrator>().get_active_scene().get_resource_id());
 
     auto render_target = swapchain.get_current_render_target(false);
     im_gui_renderer.begin_frame(frame, render_target);
@@ -56,18 +63,21 @@ void EditorModule::gui_update(FrameContext& frame)
     ImGuiStyle& style = ImGui::GetStyle();
     io.ConfigWindowsResizeFromEdges = io.BackendFlags & ImGuiBackendFlags_HasMouseCursors;
 
+    titlebar.on_gui_render(editor_context, frame);
 
     constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoResize
         | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     const ImGuiViewport* imgui_viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(imgui_viewport->Pos);
-    ImGui::SetNextWindowSize(imgui_viewport->Size);
+
+    const float titlebar_height = titlebar.get_height();
+    ImGui::SetNextWindowPos(ImVec2(imgui_viewport->Pos.x, imgui_viewport->Pos.y + titlebar_height));
+    ImGui::SetNextWindowSize(ImVec2(imgui_viewport->Size.x, imgui_viewport->Size.y - titlebar_height));
     ImGui::SetNextWindowViewport(imgui_viewport->ID);
 
 #ifdef PORTAL_PLATFORM_WINDOWS
     // TODO: this can be a generic function on the window class
-    const auto& vulkan_window = dynamic_cast<const GlfwWindow&>(window);
+    const auto& vulkan_window = dynamic_cast<const GlfwWindow&>(editor_context.window);
     bool is_maximized = glfwGetWindowAttrib(vulkan_window.get_handle(), GLFW_MAXIMIZED) == GLFW_TRUE;
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, is_maximized ? ImVec2(6.0f, 6.0f) : ImVec2(1.0f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
@@ -113,7 +123,8 @@ void EditorModule::end_frame(FrameContext& frame)
 {
     im_gui_renderer.end_frame(frame);
 
-    swapchain.present(frame);
+    if (!editor_context.window.is_minimized())
+        swapchain.present(frame);
 
     im_gui_renderer.render_subwindows();
 }
@@ -132,5 +143,21 @@ void EditorModule::setup_layout_config()
     auto& io = ImGui::GetIO();
     config_path_storage = editor_config_path.string();
     io.IniFilename = config_path_storage.c_str();
+}
+
+void EditorModule::restore_default_layout()
+{
+    auto editor_config_path = project.get_config_directory() / CONFIGS_NAME;
+    auto default_config_path = project.get_engine_config_directory() / DEFAULT_CONFIGS_NAME;
+
+    if (FileSystem::exists(default_config_path))
+    {
+        FileSystem::copy(default_config_path, editor_config_path);
+
+        ImGui::GetIO().IniFilename = nullptr;
+        config_path_storage = editor_config_path.string();
+        ImGui::LoadIniSettingsFromDisk(config_path_storage.c_str());
+        ImGui::GetIO().IniFilename = config_path_storage.c_str();
+    }
 }
 } // portal

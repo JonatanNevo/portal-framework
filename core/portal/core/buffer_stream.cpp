@@ -108,12 +108,53 @@ std::streamsize BufferStreamWriter::xsputn(const char* s, std::streamsize n)
     return n;
 }
 
+std::streampos BufferStreamWriter::seekoff(const std::streamoff off, const seekdir dir, const openmode which)
+{
+    if (!(which & out))
+        return std::streampos(-1);
+
+    const size_t current_pos = get_position();
+    std::streampos new_pos;
+
+    switch (dir)
+    {
+    case beg:
+        new_pos = off;
+        break;
+    case cur:
+        new_pos = current_pos + off;
+        break;
+    case end:
+        new_pos = current_pos + off;  // For writer, "end" is the current write position
+        break;
+    default:
+        return {-1};
+    }
+
+    if (new_pos < 0 || new_pos > static_cast<std::streampos>(buffer.size))
+        return {-1};
+
+    // Reset and advance to new position
+    setp(buffer.as<char*>(), buffer.as<char*>() + buffer.size);
+    pbump(static_cast<int>(new_pos));
+
+    return new_pos;
+}
+
+std::streampos BufferStreamWriter::seekpos(const std::streampos pos, const openmode which)
+{
+    return seekoff(pos, beg, which);
+}
+
 void BufferStreamWriter::grow(size_t min_capacity)
 {
     const size_t current_pos = get_position();
 
     // Grow by 1.5x or to min_capacity, whichever is larger
-    buffer.resize(std::max(min_capacity, buffer.size + buffer.size / 2));
+    if (buffer.size == 0 )
+        buffer.resize(std::max(min_capacity, INITIAL_CAPACITY));
+    else
+        buffer.resize(std::max(min_capacity, buffer.size + buffer.size / 2));
 
     // Reset stream buffer pointers
     setp(

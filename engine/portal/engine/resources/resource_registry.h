@@ -170,6 +170,10 @@ public:
 
     void save(const StringId& resource_id);
 
+    void load_snapshot(const StringId& resource_id, Buffer snapshot_data);
+    Buffer snapshot(const StringId& resource_id);
+
+
     // TODO: Unload
 
     /**
@@ -246,6 +250,8 @@ public:
     [[nodiscard]] ecs::Registry& get_ecs_registry() const { return ecs_registry; }
 
     void save_resource(resources::ResourceData& resource_data);
+    Buffer snapshot_resource(const resources::ResourceData& resource_data);
+
 protected:
     /**
      * Gets a pointer to the resource from a handle, if the resource is invalid, returns the invalid state instead

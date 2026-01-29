@@ -39,6 +39,14 @@ std::string_view StringRegistry::find(const uint64_t id)
     return INVALID_STRING_VIEW;
 }
 
+void StringRegistry::debug_print()
+{
+    for (auto& [id, string] : get_entries())
+    {
+        LOG_DEBUG_TAG("String Registry", "0x{:x} = \"{}\"", id, string);
+    }
+}
+
 std::pmr::memory_resource* StringRegistry::get_allocator()
 {
     // Initial size of 64k bytes

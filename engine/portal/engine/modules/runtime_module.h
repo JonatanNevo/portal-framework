@@ -35,14 +35,17 @@ public:
     /**
      * @brief Constructs the runtime module.
      * @param stack The module stack this module belongs to.
+     * @param project
      * @param context The Vulkan context.
      * @param swapchain The swapchain for presentation.
+     * @param window
      */
     RuntimeModule(
         ModuleStack& stack,
         Project& project,
         renderer::vulkan::VulkanContext& context,
-        renderer::vulkan::VulkanSwapchain& swapchain
+        renderer::vulkan::VulkanSwapchain& swapchain,
+        Window& window
     );
 
     ~RuntimeModule() override;
@@ -71,6 +74,7 @@ public:
     void inner_end_frame(FrameContext& frame, bool present = true);
 
 private:
+    Window& window;
     [[maybe_unused]] Project& project;
     renderer::vulkan::VulkanSwapchain& swapchain;
 

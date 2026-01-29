@@ -97,14 +97,20 @@ BaseCameraController BaseCameraController::dearchive(ArchiveObject& archive)
     return comp;
 }
 
-void BaseCameraController::serialize(Serializer&) const
+void BaseCameraController::serialize(Serializer& serialize) const
 {
-    throw std::runtime_error("Not implemented");
+    serialize.add_value(forward_direction);
+    serialize.add_value(speed);
+    serialize.add_value(rotation_speed);
 }
 
-BaseCameraController BaseCameraController::deserialize(Deserializer&)
+BaseCameraController BaseCameraController::deserialize(Deserializer& deserializer)
 {
-    throw std::runtime_error("Not implemented");
+    BaseCameraController comp;
+    deserializer.get_value(comp.forward_direction);
+    deserializer.get_value(comp.speed);
+    deserializer.get_value(comp.rotation_speed);
+    return comp;
 }
 
 void BaseCameraController::post_serialization(Entity entity, ResourceRegistry&) const

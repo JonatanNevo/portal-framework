@@ -40,8 +40,8 @@ struct CameraComponent
     void archive(ArchiveObject& archive) const;
     static CameraComponent dearchive(ArchiveObject& archive);
 
-    void serialize(Serializer& serialize) const;
-    static CameraComponent deserialize(Deserializer& archive);
+    void serialize(Serializer& serializer) const;
+    static CameraComponent deserialize(Deserializer& deserializer);
 };
 
 REGISTER_COMPONENT(MainCameraTag);

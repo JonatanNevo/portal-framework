@@ -13,8 +13,6 @@
 
 #include "portal/core/debug/profile.h"
 #include "portal/application/settings.h"
-#include "portal/engine/renderer/renderer_context.h"
-#include "portal/engine/renderer/shaders/shader_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/resources/loader/loader_factory.h"
@@ -649,120 +647,120 @@ Job<> GltfLoader::load_mesh(
     co_await registry.load_direct(mesh_meta, source);
 }
 
-void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) const
-{
-    const auto parent_path = std::filesystem::path(meta.resource_id.string).parent_path();
-    auto create_name = [&parent_path](const auto& part, ResourceType type)
-    {
-        return create_name_relative(parent_path, part, type);
-    };
-
-    std::vector<NodeDescription> nodes;
-    for (auto& node : asset.nodes)
-    {
-        NodeDescription node_description{
-            .name = STRING_ID(fmt::format("node-{}", node.name))
-        };
-
-        if (node.meshIndex.has_value())
-        {
-            auto& mesh = asset.meshes[node.meshIndex.value()];
-
-            node_description.components.emplace_back(
-                MeshSceneComponent{
-                    STRING_ID(create_name(mesh.name, ResourceType::Mesh)),
-                    std::ranges::to<std::vector>(
-                        mesh.primitives | std::views::transform(
-                            [&asset, &create_name](const auto& primitive)
-                            {
-                                auto& material = asset.materials[primitive.materialIndex.value()];
-                                return STRING_ID(create_name(material.name, ResourceType::Material));
-                            }
-                        )
-                    )
-                }
-            );
-        }
-
-        std::visit(
-            fastgltf::visitor{
-                [&node_description](fastgltf::math::fmat4x4 matrix) mutable
-                {
-                    TransformSceneComponent transform_component;
-                    transform_component.transform = glm::make_mat4(matrix.data());
-                    node_description.components.emplace_back(transform_component);
-                },
-
-                [&](fastgltf::TRS transform)
-                {
-                    glm::vec3 tl(
-                        transform.translation[0],
-                        transform.translation[1],
-                        transform.translation[2]
-                    );
-                    glm::quat rot(
-                        transform.rotation[3],
-                        transform.rotation[0],
-                        transform.rotation[1],
-                        transform.rotation[2]
-                    );
-                    glm::vec3 sc(transform.scale[0], transform.scale[1], transform.scale[2]);
-
-                    glm::mat4 tm = glm::translate(glm::mat4(1.f), tl);
-                    glm::mat4 rm = glm::toMat4(rot);
-                    glm::mat4 sm = glm::scale(glm::mat4(1.f), sc);
-
-                    node_description.components.emplace_back(TransformSceneComponent{.transform = tm * rm * sm});
-                }
-            },
-            node.transform
-        );
-
-        nodes.emplace_back(node_description);
-    }
-
-    for (size_t i = 0; i < asset.nodes.size(); i++)
-    {
-        const fastgltf::Node& node = asset.nodes[i];
-        auto& scene_node = nodes[i];
-
-        for (auto& c : node.children)
-        {
-            scene_node.children.push_back(nodes[c].name);
-            nodes[c].parent = scene_node.name;
-        }
-    }
-
-    // Due to design differences between my implementation and glTF's implementation we copy all defines nodes for each scene.
-    // In my implementation, each node exists only in one scene (as it does not hold data, only pointers to components),
-    // While glTF's allows multiple scenes to hold the same node.
-
-    llvm::SmallVector<Job<>> scene_jobs;
-    scene_jobs.reserve(asset.scenes.size());
-    auto composite_meta = std::get<CompositeMetadata>(meta.meta);
-
-    for (const auto& [nodeIndices, name] : asset.scenes)
-    {
-        auto& scene_metadata = composite_meta.children.at(create_name(name.c_str(), ResourceType::Scene));
-        // TODO: filter nodes per `nodeIndices`
-        SceneDescription scene_description;
-        scene_description.nodes = nodes;
-        scene_description.scene_nodes_ids = std::vector(nodeIndices.begin(), nodeIndices.end());
-
-        scene_jobs.emplace_back(
-            [this](SceneDescription scene_desc, SourceMetadata scene_meta) -> Job<>
-            {
-                std::stringstream ss;
-                BinarySerializer serializer{ss};
-                serializer.add_value(scene_desc);
-
-                auto serial_data = ss.str();
-
-                auto source = make_reference<MemorySource>(Buffer(serial_data.data(), serial_data.size()));
-                co_await registry.load_direct(scene_meta, source);
-            }(scene_description, scene_metadata)
-        );
-    }
-    registry.wait_all(scene_jobs);
-}
+// void GltfLoader::load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) const
+// {
+//     const auto parent_path = std::filesystem::path(meta.resource_id.string).parent_path();
+//     auto create_name = [&parent_path](const auto& part, ResourceType type)
+//     {
+//         return create_name_relative(parent_path, part, type);
+//     };
+//
+//     std::vector<NodeDescription> nodes;
+//     for (auto& node : asset.nodes)
+//     {
+//         NodeDescription node_description{
+//             .name = STRING_ID(fmt::format("node-{}", node.name))
+//         };
+//
+//         if (node.meshIndex.has_value())
+//         {
+//             auto& mesh = asset.meshes[node.meshIndex.value()];
+//
+//             node_description.components.emplace_back(
+//                 MeshSceneComponent{
+//                     STRING_ID(create_name(mesh.name, ResourceType::Mesh)),
+//                     std::ranges::to<std::vector>(
+//                         mesh.primitives | std::views::transform(
+//                             [&asset, &create_name](const auto& primitive)
+//                             {
+//                                 auto& material = asset.materials[primitive.materialIndex.value()];
+//                                 return STRING_ID(create_name(material.name, ResourceType::Material));
+//                             }
+//                         )
+//                     )
+//                 }
+//             );
+//         }
+//
+//         std::visit(
+//             fastgltf::visitor{
+//                 [&node_description](fastgltf::math::fmat4x4 matrix) mutable
+//                 {
+//                     TransformSceneComponent transform_component;
+//                     transform_component.transform = glm::make_mat4(matrix.data());
+//                     node_description.components.emplace_back(transform_component);
+//                 },
+//
+//                 [&](fastgltf::TRS transform)
+//                 {
+//                     glm::vec3 tl(
+//                         transform.translation[0],
+//                         transform.translation[1],
+//                         transform.translation[2]
+//                     );
+//                     glm::quat rot(
+//                         transform.rotation[3],
+//                         transform.rotation[0],
+//                         transform.rotation[1],
+//                         transform.rotation[2]
+//                     );
+//                     glm::vec3 sc(transform.scale[0], transform.scale[1], transform.scale[2]);
+//
+//                     glm::mat4 tm = glm::translate(glm::mat4(1.f), tl);
+//                     glm::mat4 rm = glm::toMat4(rot);
+//                     glm::mat4 sm = glm::scale(glm::mat4(1.f), sc);
+//
+//                     node_description.components.emplace_back(TransformSceneComponent{.transform = tm * rm * sm});
+//                 }
+//             },
+//             node.transform
+//         );
+//
+//         nodes.emplace_back(node_description);
+//     }
+//
+//     for (size_t i = 0; i < asset.nodes.size(); i++)
+//     {
+//         const fastgltf::Node& node = asset.nodes[i];
+//         auto& scene_node = nodes[i];
+//
+//         for (auto& c : node.children)
+//         {
+//             scene_node.children.push_back(nodes[c].name);
+//             nodes[c].parent = scene_node.name;
+//         }
+//     }
+//
+//     // Due to design differences between my implementation and glTF's implementation we copy all defines nodes for each scene.
+//     // In my implementation, each node exists only in one scene (as it does not hold data, only pointers to components),
+//     // While glTF's allows multiple scenes to hold the same node.
+//
+//     llvm::SmallVector<Job<>> scene_jobs;
+//     scene_jobs.reserve(asset.scenes.size());
+//     auto composite_meta = std::get<CompositeMetadata>(meta.meta);
+//
+//     for (const auto& [nodeIndices, name] : asset.scenes)
+//     {
+//         auto& scene_metadata = composite_meta.children.at(create_name(name.c_str(), ResourceType::Scene));
+//         // TODO: filter nodes per `nodeIndices`
+//         SceneDescription scene_description;
+//         scene_description.nodes = nodes;
+//         scene_description.scene_nodes_ids = std::vector(nodeIndices.begin(), nodeIndices.end());
+//
+//         scene_jobs.emplace_back(
+//             [this](SceneDescription scene_desc, SourceMetadata scene_meta) -> Job<>
+//             {
+//                 std::stringstream ss;
+//                 BinarySerializer serializer{ss};
+//                 serializer.add_value(scene_desc);
+//
+//                 auto serial_data = ss.str();
+//
+//                 auto source = make_reference<MemorySource>(Buffer(serial_data.data(), serial_data.size()));
+//                 co_await registry.load_direct(scene_meta, source);
+//             }(scene_description, scene_metadata)
+//         );
+//     }
+//     registry.wait_all(scene_jobs);
+// }
 } // portal

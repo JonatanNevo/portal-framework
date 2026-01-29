@@ -50,7 +50,7 @@ void StaticMeshComponent::serialize(Serializer& serializer) const
 {
     serializer.add_value(mesh->get_id());
     serializer.add_value(
-        std::ranges::to<std::vector>(materials | std::views::transform([](const auto& material) { return material->get_id().string; }))
+        std::ranges::to<std::vector>(materials | std::views::transform([](const auto& material) { return material->get_id(); }))
     );
     serializer.add_value(visible);
 }
@@ -60,14 +60,14 @@ StaticMeshComponent StaticMeshComponent::deserialize(Deserializer& serializer)
     StaticMeshComponent comp;
 
     StringId mesh_id;
-    std::vector<std::string> material_ids;
+    std::vector<StringId> material_ids;
     serializer.get_value(mesh_id);
     serializer.get_value(material_ids);
     serializer.get_value(comp.visible);
 
     comp.mesh = ResourceReference<MeshGeometry>(mesh_id);
     comp.materials = std::ranges::to<std::vector>(
-        material_ids | std::views::transform([](const auto& string) { return ResourceReference<renderer::Material>(STRING_ID(string)); })
+        material_ids | std::views::transform([](const auto& id) { return ResourceReference<renderer::Material>(id); })
     );
     return comp;
 }

@@ -131,7 +131,6 @@ struct Buffer
 
     PORTAL_FORCE_INLINE void release()
     {
-        PORTAL_ASSERT(allocated, "Releasing unallocated buffer");
         if (data)
             delete[] static_cast<uint8_t*>(data_ptr());
         data = nullptr;

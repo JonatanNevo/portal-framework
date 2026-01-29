@@ -385,6 +385,7 @@ bool GlfwWindow::should_close() const
 void GlfwWindow::close()
 {
     glfwSetWindowShouldClose(handle, GLFW_TRUE);
+    consumers.window.get().on_close();
 }
 
 /**
@@ -411,6 +412,16 @@ float GlfwWindow::get_dpi_factor() const
 void GlfwWindow::maximize()
 {
     glfwMaximizeWindow(handle);
+}
+
+void GlfwWindow::restore()
+{
+    glfwRestoreWindow(handle);
+}
+
+void GlfwWindow::minimize()
+{
+    glfwIconifyWindow(handle);
 }
 
 void GlfwWindow::center_window()
@@ -451,6 +462,16 @@ glm::vec2 GlfwWindow::get_position() const
 GLFWwindow* GlfwWindow::get_handle() const
 {
     return handle;
+}
+
+bool GlfwWindow::is_maximised() const
+{
+    return glfwGetWindowAttrib(handle, GLFW_MAXIMIZED) != 0;
+}
+
+bool GlfwWindow::is_minimized() const
+{
+    return glfwGetWindowAttrib(handle, GLFW_ICONIFIED) != 0;
 }
 
 void GlfwWindow::on_event(Event& event)

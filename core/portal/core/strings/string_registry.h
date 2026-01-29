@@ -85,6 +85,8 @@ public:
      */
     static std::string_view find(uint64_t id);
 
+    static void debug_print();
+
 private:
     static std::pmr::memory_resource* get_allocator();
     static std::pmr::unordered_map<uint64_t, std::pmr::string>& get_entries();

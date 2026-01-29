@@ -27,7 +27,7 @@ struct TransformVec3Consts
 
 template <typename Func>
 void transform_vec3_slider(
-    const EditorContext& context,
+    EditorContext& context,
     const char* label,
     glm::vec3 vector,
     const Func& on_changed,
@@ -36,6 +36,16 @@ void transform_vec3_slider(
 {
     constexpr TransformVec3Consts consts{};
     imgui::ScopedID scoped_id(label);
+
+    auto on_activate = [&]() mutable
+    {
+        context.snapshot_manager.prepare_snapshot(STRING_ID(fmt::format("Update {}", label)));
+    };
+
+    auto on_deactivate = [&]() mutable
+    {
+        context.snapshot_manager.commit_snapshot();
+    };
 
     ImGui::AlignTextToFramePadding();
     ImGui::Columns(2);
@@ -65,16 +75,24 @@ void transform_vec3_slider(
             {
                 auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Secondary2);
                 imgui::ScopedFont bold_font(STRING_ID("Bold"));
-                if (ImGui::Button("X", button_size))
-                {
+                auto button_clicked = ImGui::Button("X", button_size);
+                if (ImGui::IsItemActivated())
+                    on_activate();
+                if (button_clicked)
                     on_changed({reset_val, vector.y, vector.z});
-                }
+                if (ImGui::IsItemDeactivated())
+                    on_deactivate();
             }
             ImGui::SameLine();
-            if (ImGui::DragFloat("##X", &vector.x, 0.01f))
-            {
+
+            auto drag_changed = ImGui::DragFloat("##X", &vector.x, 0.01f);
+            if (ImGui::IsItemActivated())
+                on_activate();
+            if (drag_changed)
                 on_changed(vector);
-            }
+            if (ImGui::IsItemDeactivatedAfterEdit())
+                on_deactivate();
+
             ImGui::SameLine();
             ImGui::PopItemWidth();
         }
@@ -89,16 +107,24 @@ void transform_vec3_slider(
             {
                 imgui::ScopedFont bold_font(STRING_ID("Bold"));
                 auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Secondary2);
-                if (ImGui::Button("Y", button_size))
-                {
-                    on_changed({vector.y, reset_val, vector.z});
-                }
+                auto button_clicked = ImGui::Button("Y", button_size);
+                if (ImGui::IsItemActivated())
+                    on_activate();
+                if (button_clicked)
+                    on_changed({reset_val, vector.y, vector.z});
+                if (ImGui::IsItemDeactivated())
+                    on_deactivate();
             }
             ImGui::SameLine();
-            if (ImGui::DragFloat("##Y", &vector.y, 0.01f))
-            {
+
+            auto drag_changed = ImGui::DragFloat("##Y", &vector.y, 0.01f);
+            if (ImGui::IsItemActivated())
+                on_activate();
+            if (drag_changed)
                 on_changed(vector);
-            }
+            if (ImGui::IsItemDeactivatedAfterEdit())
+                on_deactivate();
+
             ImGui::SameLine();
             ImGui::PopItemWidth();
         }
@@ -114,16 +140,24 @@ void transform_vec3_slider(
             {
                 imgui::ScopedFont bold_font(STRING_ID("Bold"));
                 auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Secondary2);
-                if (ImGui::Button("Z", button_size))
-                {
+                auto button_clicked = ImGui::Button("Z", button_size);
+                if (ImGui::IsItemActivated())
+                    on_activate();
+                if (button_clicked)
                     on_changed({vector.x, vector.y, reset_val});
-                }
+                if (ImGui::IsItemDeactivated())
+                    on_deactivate();
             }
             ImGui::SameLine();
-            if (ImGui::DragFloat("##Z", &vector.z, 0.01f))
-            {
+
+            auto drag_changed = ImGui::DragFloat("##Z", &vector.z, 0.01f);
+            if (ImGui::IsItemActivated())
+                on_activate();
+            if (drag_changed)
                 on_changed(vector);
-            }
+            if (ImGui::IsItemDeactivatedAfterEdit())
+                on_deactivate();
+
             ImGui::SameLine();
             ImGui::PopItemWidth();
         }
@@ -131,8 +165,9 @@ void transform_vec3_slider(
     ImGui::Columns(1);
 }
 
-void show_transform_controls(const ResourceReference<Scene>& active_scene, const EditorContext& context, Entity entity)
+void show_transform_controls(const ResourceReference<Scene>& active_scene, EditorContext& context, Entity entity)
 {
+    static SnapshotManager::SnapshotData snapshot_data;
     auto& transform = entity.get_component<TransformComponent>();
 
     imgui::ScopedStyle item_spacing(ImGuiStyleVar_ItemSpacing, ImVec2{5, 2});
@@ -230,7 +265,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
         context,
         ICON_FA_ARROWS_UP_DOWN_LEFT_RIGHT " Transform",
         selected_entity,
-        [&scene](const EditorContext& editor_context, const Entity& entity)
+        [&scene](EditorContext& editor_context, const Entity& entity)
         {
             show_transform_controls(scene, editor_context, entity);
         }

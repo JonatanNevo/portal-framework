@@ -38,7 +38,7 @@ public:
     static BaseCameraController dearchive(ArchiveObject& archive);
 
     void serialize(Serializer& serialize) const;
-    static BaseCameraController deserialize(Deserializer& archive);
+    static BaseCameraController deserialize(Deserializer& deserializer);
 
     void post_serialization(Entity entity, ResourceRegistry& reg) const;
 private:
