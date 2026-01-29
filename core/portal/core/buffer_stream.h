@@ -16,7 +16,7 @@ class BufferStreamReader final : std::streambuf, public std::istream
 {
 public:
     explicit BufferStreamReader(const Buffer& buffer);
-    size_t position() const { return _position; }
+    [[nodiscard]] size_t position() const { return _position; }
 
 protected:
     std::streamsize xsgetn(char* s, std::streamsize n) override;
@@ -30,11 +30,11 @@ private:
 class BufferStreamWriter final : std::streambuf, public std::ostream
 {
 public:
-    explicit BufferStreamWriter(size_t initial_capacity = 1024);
-    Buffer get_buffer() const { return Buffer::copy(managed_buffer.data, get_position()); }
+    explicit BufferStreamWriter(Buffer& buffer);
+    [[nodiscard]] Buffer get_buffer() const { return Buffer::copy(buffer.data, get_position()); }
 
-    size_t size() const { return get_position(); }
-    size_t capacity() const { return managed_buffer.size; }
+    [[nodiscard]] size_t size() const { return get_position(); }
+    [[nodiscard]] size_t capacity() const { return buffer.size; }
 
 protected:
     std::streambuf::int_type overflow(std::streambuf::int_type ch) override;
@@ -42,9 +42,9 @@ protected:
 
 private:
     void grow(size_t min_capacity);
-    size_t get_position() const { return pptr() - pbase(); }
+    [[nodiscard]] size_t get_position() const { return pptr() - pbase(); }
 
 private:
-    Buffer managed_buffer;
+    Buffer& buffer;
 };
 }

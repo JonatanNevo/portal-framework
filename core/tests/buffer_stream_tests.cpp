@@ -165,7 +165,8 @@ TEST_CASE("BufferStreamWriter operations", "[buffer_stream]")
 {
     SECTION("basic write operations")
     {
-        portal::BufferStreamWriter writer(10);
+        portal::Buffer buffer = portal::Buffer::allocate(10);
+        portal::BufferStreamWriter writer(buffer);
         REQUIRE(writer.size() == 0);
         REQUIRE(writer.capacity() == 10);
 
@@ -186,7 +187,8 @@ TEST_CASE("BufferStreamWriter operations", "[buffer_stream]")
 
     SECTION("write multiple bytes")
     {
-        portal::BufferStreamWriter writer(10);
+        portal::Buffer buffer = portal::Buffer::allocate(10);
+        portal::BufferStreamWriter writer(buffer);
 
         const std::vector<uint8_t> data{10, 20, 30};
         writer.write(reinterpret_cast<const char*>(data.data()), data.size());
@@ -209,7 +211,8 @@ TEST_CASE("BufferStreamWriter operations", "[buffer_stream]")
 
         const TestStruct data{42, 3.14f, 'X'};
 
-        portal::BufferStreamWriter writer(sizeof(TestStruct));
+        portal::Buffer buffer = portal::Buffer::allocate(sizeof(TestStruct));
+        portal::BufferStreamWriter writer(buffer);
         writer.write(reinterpret_cast<const char*>(&data), sizeof(TestStruct));
 
         const portal::Buffer result = writer.get_buffer();
@@ -222,7 +225,8 @@ TEST_CASE("BufferStreamWriter operations", "[buffer_stream]")
 
     SECTION("automatic growth on overflow")
     {
-        portal::BufferStreamWriter writer(2);
+        portal::Buffer buffer = portal::Buffer::allocate(2);
+        portal::BufferStreamWriter writer(buffer);
         REQUIRE(writer.capacity() == 2);
 
         const std::vector<uint8_t> data{10, 20, 30, 40, 50};
@@ -242,7 +246,8 @@ TEST_CASE("BufferStreamWriter operations", "[buffer_stream]")
 
     SECTION("automatic growth with single character overflow")
     {
-        portal::BufferStreamWriter writer(2);
+        portal::Buffer buffer = portal::Buffer::allocate(2);
+        portal::BufferStreamWriter writer(buffer);
 
         writer.put('A');
         writer.put('B');
@@ -261,7 +266,8 @@ TEST_CASE("BufferStreamWriter operations", "[buffer_stream]")
 
     SECTION("multiple growth cycles")
     {
-        portal::BufferStreamWriter writer(4);
+        portal::Buffer buffer = portal::Buffer::allocate(4);
+        portal::BufferStreamWriter writer(buffer);
 
         for (int i = 0; i < 100; ++i)
         {
@@ -281,7 +287,8 @@ TEST_CASE("BufferStreamWriter operations", "[buffer_stream]")
 
     SECTION("get buffer returns correct size")
     {
-        portal::BufferStreamWriter writer(10);
+        portal::Buffer buffer = portal::Buffer::allocate(10);
+        portal::BufferStreamWriter writer(buffer);
         const std::vector<uint8_t> data{1, 2, 3, 4};
         writer.write(reinterpret_cast<const char*>(data.data()), data.size());
 
@@ -294,16 +301,10 @@ TEST_CASE("BufferStreamWriter operations", "[buffer_stream]")
         }
     }
 
-    SECTION("default constructor uses default capacity")
-    {
-        portal::BufferStreamWriter writer;
-        REQUIRE(writer.capacity() == 1024);
-        REQUIRE(writer.size() == 0);
-    }
-
     SECTION("stream operator writes and grows")
     {
-        portal::BufferStreamWriter writer(5);
+        portal::Buffer buffer = portal::Buffer::allocate(5);
+        portal::BufferStreamWriter writer(buffer);
         writer << "Hello, World!";
 
         REQUIRE(writer.size() >= 13);
@@ -326,6 +327,16 @@ TEST_CASE("Empty buffer operations", "[buffer_stream]")
         reader.read(reinterpret_cast<char*>(&value), sizeof(value));
         REQUIRE(value == 123);
     }
+
+    SECTION("writing to empty buffer")
+    {
+        portal::BufferStreamWriter writer(buffer);
+        REQUIRE(buffer.data == nullptr);
+        uint8_t value = 123;
+        writer.write(reinterpret_cast<char*>(&value), sizeof(value));
+        REQUIRE(buffer.data != nullptr);
+        REQUIRE(buffer.size == 1);
+    }
 }
 
 TEST_CASE("BufferStream write and read integration", "[buffer_stream]")
@@ -333,12 +344,10 @@ TEST_CASE("BufferStream write and read integration", "[buffer_stream]")
     SECTION("write then read")
     {
         portal::Buffer buffer;
-
         {
-            portal::BufferStreamWriter writer(10);
+            portal::BufferStreamWriter writer(buffer);
             const std::vector<uint8_t> data{10, 20, 30, 40};
             writer.write(reinterpret_cast<const char*>(data.data()), data.size());
-            buffer = portal::Buffer::copy(writer.get_buffer());
         }
 
         {
