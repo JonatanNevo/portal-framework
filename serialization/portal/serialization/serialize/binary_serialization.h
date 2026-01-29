@@ -9,7 +9,7 @@
 namespace portal
 {
 /** @brief Magic bytes identifying Portal Serialization format ("PS") */
-constexpr std::string_view MAGIC = "PS";
+constexpr std::array MAGIC = {'P', 'S'};
 
 /** @brief Binary format version number (currently 1) */
 constexpr uint8_t VERSION = 1;
@@ -68,6 +68,8 @@ public:
 
 protected:
     void add_property(reflection::Property property) override;
+    size_t reserve_slot(reflection::Property property) override;
+    void write_at(size_t position, const void* data, size_t size) override;
 
 private:
     BinarySerializationParams params;

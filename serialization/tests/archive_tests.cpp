@@ -540,7 +540,7 @@ SCENARIO("Archive can handle custom types")
     }
 }
 
-SCENARIO("Archive handles empty containers corretly")
+SCENARIO("Archive handles empty containers correctly")
 {
     GIVEN("An archive object")
     {

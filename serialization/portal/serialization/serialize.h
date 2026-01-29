@@ -19,6 +19,49 @@ class Serializer;
 class Deserializer;
 
 /**
+ * @brief Handle for a reserved slot in the serializer stream.
+ *
+ * When you need to write a value that depends on data written after it
+ * (e.g., list size before the list elements in lazy evaluation), use
+ * reserve() to create a slot, write the dependent data, then call write()
+ * on the slot to fill in the reserved space.
+ *
+ * @code
+ * auto size_slot = serializer.reserve<size_t>();
+ * size_t count = 0;
+ * for (const auto& item : lazy_list) {
+ *     serializer.add_value(item);
+ *     count++;
+ * }
+ * size_slot.write(count);
+ * @endcode
+ *
+ * @tparam T The type of value reserved (must be a scalar type)
+ */
+template <typename T>
+class ReservedSlot
+{
+public:
+    /**
+     * @brief Write the value to the reserved slot.
+     *
+     * This writes the value at the reserved position without affecting
+     * the current write position. Can be called at any time after reserving.
+     *
+     * @param value The value to write
+     */
+    void write(const T& value);
+
+private:
+    friend class Serializer;
+    ReservedSlot(Serializer* serializer, const size_t position)
+        : serializer(serializer), position(position) {}
+
+    Serializer* serializer;
+    size_t position;
+};
+
+/**
  * @brief Non-intrusive serialization customization point.
  *
  * Specialize this template to enable serialization for types you don't control.
@@ -537,9 +580,73 @@ public:
         add_value(id.id);
     }
 
+    /**
+     * @brief Reserve space for a value to be written later.
+     *
+     * This is useful for writing values that depend on data written after them,
+     * such as list sizes in lazy evaluation scenarios where the count isn't known upfront.
+     *
+     * @code
+     * auto size_slot = serializer.reserve<size_t>();
+     * size_t count = 0;
+     * for (const auto& item : lazy_list) {
+     *     serializer.add_value(item);
+     *     count++;
+     * }
+     * size_slot.write(count);
+     * @endcode
+     *
+     * @tparam T The type of value to reserve space for (must be integral or floating-point)
+     * @return A ReservedSlot handle to write the value later
+     */
+    template <typename T> requires std::integral<T> || std::floating_point<T>
+    ReservedSlot<T> reserve()
+    {
+        size_t pos = reserve_slot(
+            reflection::Property{
+                Buffer{nullptr, sizeof(T)},
+                reflection::get_property_type<T>(),
+                reflection::PropertyContainerType::scalar,
+                1
+            }
+        );
+        return ReservedSlot<T>(this, pos);
+    }
+
 protected:
     virtual void add_property(reflection::Property property) = 0;
+
+    /**
+     * @brief Reserve space for a value and return the position where the value data will be written.
+     *
+     * Implementations should write placeholder metadata and value bytes based on the property,
+     * then return the position where the actual value data starts (after any metadata).
+     *
+     * @param property The property describing the reserved value (buffer will be empty/null)
+     * @return The byte position where the value data starts
+     */
+    virtual size_t reserve_slot(reflection::Property property) = 0;
+
+    /**
+     * @brief Write data at a specific position without changing the current write position.
+     *
+     * Used by ReservedSlot to fill in reserved values after subsequent data has been written.
+     *
+     * @param position The byte position to write at
+     * @param data Pointer to the data to write
+     * @param size Number of bytes to write
+     */
+    virtual void write_at(size_t position, const void* data, size_t size) = 0;
+
+    template <typename T>
+    friend class ReservedSlot;
 };
+
+template <typename T>
+void ReservedSlot<T>::write(const T& value)
+{
+    serializer->write_at(position, &value, sizeof(T));
+}
 
 /**
  * @brief Base class for sequential binary deserialization (stream-based).

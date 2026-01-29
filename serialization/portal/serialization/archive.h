@@ -287,7 +287,7 @@ public:
                     Archivable<ValueT>::archive(t[i], *object);
             }
         }
-        if constexpr (std::same_as<ValueT, ArchiveObject>)
+        else if constexpr (std::same_as<ValueT, ArchiveObject>)
         {
             for (size_t i = 0; i < t.size(); ++i)
             {
@@ -975,7 +975,7 @@ protected:
                     out.push_back(Archivable<ValueType>::dearchive(objects[i]));
             }
         }
-        if constexpr (std::same_as<ValueType, ArchiveObject>)
+        else if constexpr (std::same_as<ValueType, ArchiveObject>)
         {
             for (size_t i = 0; i < elements_number; ++i)
             {

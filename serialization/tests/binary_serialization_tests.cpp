@@ -691,3 +691,171 @@ SCENARIO("Non-intrusive serialization concepts are correctly detected")
         STATIC_REQUIRE_FALSE(SerializableConcept<ExternalPacket>);
     }
 }
+
+SCENARIO("BinarySerializer can reserve slots for deferred writing")
+{
+    GIVEN("A BinarySerializer writing to a stringstream")
+    {
+        std::stringstream ss;
+        BinarySerializer serializer(ss);
+
+        THEN("A reserved size_t slot can be written later")
+        {
+            auto size_slot = serializer.reserve<size_t>();
+            size_t count = 42;
+            size_slot.write(count);
+
+            size_t deserialized;
+            BinaryDeserializer deserializer(ss);
+            deserializer.get_value(deserialized);
+
+            REQUIRE(deserialized == count);
+        }
+
+        THEN("Reserved slot works with data written after it")
+        {
+            // Reserve space for the count
+            auto count_slot = serializer.reserve<size_t>();
+
+            // Write some items and count them
+            size_t count = 0;
+            for (int i = 0; i < 5; ++i)
+            {
+                serializer.add_value(i * 10);
+                ++count;
+            }
+
+            // Write the count back to the reserved slot
+            count_slot.write(count);
+
+            // Deserialize and verify
+            BinaryDeserializer deserializer(ss);
+
+            size_t deserialized_count;
+            deserializer.get_value(deserialized_count);
+            REQUIRE(deserialized_count == 5);
+
+            for (int i = 0; i < 5; ++i)
+            {
+                int value;
+                deserializer.get_value(value);
+                REQUIRE(value == i * 10);
+            }
+        }
+
+        THEN("Multiple reserved slots can be used")
+        {
+            auto slot1 = serializer.reserve<int>();
+            auto slot2 = serializer.reserve<float>();
+            serializer.add_value(std::string("middle"));
+            auto slot3 = serializer.reserve<double>();
+
+            // Write values in different order than reserved
+            slot3.write(3.14159);
+            slot1.write(42);
+            slot2.write(2.718f);
+
+            BinaryDeserializer deserializer(ss);
+
+            int val1;
+            float val2;
+            std::string middle;
+            double val3;
+
+            deserializer.get_value(val1);
+            deserializer.get_value(val2);
+            deserializer.get_value(middle);
+            deserializer.get_value(val3);
+
+            REQUIRE(val1 == 42);
+            REQUIRE_THAT(val2, WithinRel(2.718f));
+            REQUIRE(middle == "middle");
+            REQUIRE_THAT(val3, WithinRel(3.14159));
+        }
+
+        THEN("Reserve works with different integral types")
+        {
+            auto slot_i8 = serializer.reserve<int8_t>();
+            auto slot_u16 = serializer.reserve<uint16_t>();
+            auto slot_i32 = serializer.reserve<int32_t>();
+            auto slot_u64 = serializer.reserve<uint64_t>();
+
+            slot_i8.write(static_cast<int8_t>(-42));
+            slot_u16.write(static_cast<uint16_t>(1234));
+            slot_i32.write(-987654);
+            slot_u64.write(static_cast<uint64_t>(0xDEADBEEFCAFEBABE));
+
+            BinaryDeserializer deserializer(ss);
+
+            int8_t val_i8;
+            uint16_t val_u16;
+            int32_t val_i32;
+            uint64_t val_u64;
+
+            deserializer.get_value(val_i8);
+            deserializer.get_value(val_u16);
+            deserializer.get_value(val_i32);
+            deserializer.get_value(val_u64);
+
+            REQUIRE(val_i8 == -42);
+            REQUIRE(val_u16 == 1234);
+            REQUIRE(val_i32 == -987654);
+            REQUIRE(val_u64 == 0xDEADBEEFCAFEBABE);
+        }
+
+        THEN("Reserve works with floating point types")
+        {
+            auto slot_f = serializer.reserve<float>();
+            auto slot_d = serializer.reserve<double>();
+
+            slot_f.write(1.23456f);
+            slot_d.write(9.87654321);
+
+            BinaryDeserializer deserializer(ss);
+
+            float val_f;
+            double val_d;
+
+            deserializer.get_value(val_f);
+            deserializer.get_value(val_d);
+
+            REQUIRE_THAT(val_f, WithinRel(1.23456f));
+            REQUIRE_THAT(val_d, WithinRel(9.87654321));
+        }
+
+        THEN("Lazy list serialization pattern works correctly")
+        {
+            // This is the primary use case: serialize a lazy-evaluated list
+            // where we don't know the count until we've iterated
+
+            auto count_slot = serializer.reserve<size_t>();
+
+            // Simulate lazy evaluation - we don't know the count upfront
+            std::vector<std::string> lazy_items = {"apple", "banana", "cherry", "date"};
+            size_t count = 0;
+
+            for (const auto& item : lazy_items)
+            {
+                serializer.add_value(item);
+                ++count;
+            }
+
+            // Now write the count we discovered
+            count_slot.write(count);
+
+            // Deserialize
+            BinaryDeserializer deserializer(ss);
+
+            size_t deserialized_count;
+            deserializer.get_value(deserialized_count);
+            REQUIRE(deserialized_count == lazy_items.size());
+
+            for (size_t i = 0; i < deserialized_count; ++i)
+            {
+                std::string item;
+                deserializer.get_value(item);
+                REQUIRE(item == lazy_items[i]);
+            }
+        }
+    }
+}

@@ -64,7 +64,7 @@ struct Header
 {
     using HeaderSizeT = uint32_t;
 
-    std::string_view magic = MAGIC;
+    std::array<char, 2> magic = MAGIC;
     uint8_t version = VERSION;
     BinarySerializationParams params;
 
@@ -80,12 +80,12 @@ struct Header
 
     static Header deserialize(const HeaderSizeT serialized)
     {
-        char magic[2];
+        std::array<char, 2> magic;
         magic[0] = static_cast<char>(serialized & 0xFF);
         magic[1] = static_cast<char>((serialized >> 8) & 0xFF);
         const auto version = static_cast<uint8_t>((serialized >> 16) & 0xFF);
         const auto params = decode_params(static_cast<uint8_t>((serialized >> 24) & 0xFF));
-        const auto header = Header{.magic = std::string_view(magic, 2), .version = version, .params = params};
+        const auto header = Header{.magic = magic, .version = version, .params = params};
         validate_header(header);
         return header;
     }
@@ -154,6 +154,39 @@ void BinarySerializer::add_property(const reflection::Property property)
         output.write(reinterpret_cast<const char*>(&property.elements_number), element_number_size(params));
     }
     output.write(static_cast<const char*>(property.value.data), static_cast<int64_t>(property.value.size));
+}
+
+size_t BinarySerializer::reserve_slot(const reflection::Property property)
+{
+    // Write metadata (same as add_property but with placeholder value)
+    output.write(reinterpret_cast<const char*>(&property.container_type), 1);
+    output.write(reinterpret_cast<const char*>(&property.type), 1);
+    if (should_encode_element_number(params, property.container_type))
+    {
+        output.write(reinterpret_cast<const char*>(&property.elements_number), element_number_size(params));
+    }
+
+    // Record position where value data starts
+    const size_t value_position = output.tellp();
+
+    // Write placeholder zeros for the value
+    llvm::SmallVector<char> zeros(property.value.size);
+    output.write(zeros.data(), zeros.size());
+
+    return value_position;
+}
+
+void BinarySerializer::write_at(const size_t position, const void* data, const size_t size)
+{
+    // Save current position
+    const auto current_pos = output.tellp();
+
+    // Seek to reserved position and write data
+    output.seekp(static_cast<std::streamoff>(position));
+    output.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
+
+    // Restore position
+    output.seekp(current_pos);
 }
 
 
