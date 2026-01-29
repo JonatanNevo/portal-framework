@@ -265,7 +265,7 @@ public:
      * @see create_child_entity for creating entities with parents
      * @see RelationshipComponent for implementation details
      */
-    void set_parent(Entity parent);
+    void set_parent(Entity parent) const;
 
     /**
      * @brief Removes a child from this entity's child list.
@@ -513,6 +513,8 @@ public:
      * @see children() for direct children only
      */
     [[nodiscard]] RecursiveChildRange descendants() const;
+
+    [[nodiscard]] size_t descendants_count() const;
 
     /**
      * @brief Checks if this entity is an ancestor of another.

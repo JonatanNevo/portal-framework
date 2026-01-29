@@ -15,7 +15,7 @@ Entity::Entity(const entt::entity entity, entt::registry& reg) : handle(reg, ent
 
 Entity::Entity(const entt::handle handle) : handle(handle) {}
 
-void Entity::set_parent(Entity parent)
+void Entity::set_parent(const Entity parent) const
 {
     auto current_parent = get_parent();
     if (current_parent == parent)
@@ -141,6 +141,16 @@ RecursiveChildRange Entity::descendants() const
 {
     PORTAL_ASSERT(has_component<RelationshipComponent>(), "Entity does not have a RelationshipComponent");
     return RecursiveChildRange(*this);
+}
+
+size_t Entity::descendants_count() const
+{
+    // TODO: this is super not efficient
+    PORTAL_ASSERT(has_component<RelationshipComponent>(), "Entity does not have a RelationshipComponent");
+    size_t count = 0;
+    for ([[maybe_unused]] auto _ : descendants())
+        ++count;
+    return count;
 }
 
 bool Entity::is_ancestor_of(const Entity other) const

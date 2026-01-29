@@ -35,4 +35,5 @@ std::unique_ptr<std::ostream> MemorySource::ostream()
 {
     return std::make_unique<BufferStreamWriter>(buffer);
 }
+
 } // portal

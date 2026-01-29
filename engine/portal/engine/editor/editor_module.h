@@ -7,6 +7,7 @@
 #include "editor_context.h"
 #include "panel_manager.h"
 #include "viewport.h"
+#include "panels/window_titlebar.h"
 #include "portal/application/modules/module.h"
 #include "portal/engine/imgui/imgui_renderer.h"
 #include "portal/engine/modules/resources_module.h"
@@ -15,7 +16,6 @@
 
 namespace portal
 {
-
 /**
  * @brief Top-level module for the editor application.
  *
@@ -44,7 +44,7 @@ public:
         Project& project,
         renderer::vulkan::VulkanContext& context,
         renderer::vulkan::VulkanSwapchain& swapchain,
-        const Window& window
+        Window& window
     );
 
     void begin_frame(FrameContext& frame) override;
@@ -55,18 +55,18 @@ public:
 
 private:
     void setup_layout_config();
+    void restore_default_layout();
 
 private:
     Project& project;
-    [[maybe_unused]] const Window& window;
     renderer::vulkan::VulkanSwapchain& swapchain;
+    std::string config_path_storage;  // Must be declared before im_gui_renderer for proper destruction order
     RuntimeModule runtime_module;
     ImGuiRenderer im_gui_renderer;
     PanelManager panel_manager;
 
     EditorContext editor_context;
+    WindowTitlebar titlebar;
     Viewport viewport;
-
-    std::string config_path_storage;
 };
 } // portal

@@ -117,12 +117,16 @@ public:
     [[nodiscard]] virtual float get_content_scale_factor() const;
 
     virtual void maximize() = 0;
+    virtual void restore() = 0;
+    virtual void minimize() = 0;
     virtual void center_window() = 0;
 
     virtual void set_vsync(bool enable) = 0;
     virtual void set_resizeable(bool enable) = 0;
     virtual void set_title(StringId title) = 0;
 
+    [[nodiscard]] virtual bool is_maximised() const = 0;
+    [[nodiscard]] virtual bool is_minimized() const = 0;
     [[nodiscard]] virtual glm::vec2 get_position() const = 0;
     [[nodiscard]] size_t get_width() const { return properties.extent.width; };
     [[nodiscard]] size_t get_height() const { return properties.extent.height; };

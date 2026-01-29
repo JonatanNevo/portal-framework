@@ -24,7 +24,7 @@ private:
     // TODO: use the same way `std::hash` works and have each component implement some struct in order to facilitate this instead of passing a function
     template <typename T, typename Func>
     static void draw_component(
-        const EditorContext& context,
+        EditorContext& context,
         const std::string_view title,
         Entity& entity,
         Func&& draw_func,

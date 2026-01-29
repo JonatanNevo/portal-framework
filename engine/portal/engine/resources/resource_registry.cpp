@@ -10,6 +10,7 @@
 #include "portal/engine/modules/system_orchestrator.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/resources/source/file_source.h"
+#include "source/memory_source.h"
 
 namespace portal
 {
@@ -56,10 +57,22 @@ void ResourceRegistry::save(const StringId& resource_id)
 {
     {
         std::lock_guard guard(lock);
-        if (resources.contains(resource_id) || pending_resources.contains(resource_id))
+        if (!resources.contains(resource_id))
             return;
     }
+
     save_resource(resources.at(resource_id));
+}
+
+Buffer ResourceRegistry::snapshot(const StringId& resource_id)
+{
+    {
+        std::lock_guard guard(lock);
+        if (!resources.contains(resource_id))
+            return {};
+    }
+
+    return snapshot_resource(resources.at(resource_id));
 }
 
 Job<resources::ResourceData> ResourceRegistry::load_direct(SourceMetadata meta, const Reference<resources::ResourceSource> source)
@@ -103,6 +116,31 @@ void ResourceRegistry::save_resource(resources::ResourceData& resource_data)
         resource_data.dirty = ResourceDirtyBits::Clean;
     }
 }
+
+Buffer ResourceRegistry::snapshot_resource(const resources::ResourceData& resource_data)
+{
+
+    const auto source = make_reference<resources::MemorySource>();
+    auto& loader = loader_factory.get(resource_data.metadata);
+    loader.snapshot(resource_data, source);
+
+    return Buffer::copy(source->load());
+}
+
+void ResourceRegistry::load_snapshot(const StringId& resource_id, Buffer snapshot_data)
+{
+    {
+        std::lock_guard guard(lock);
+        if (!resources.contains(resource_id))
+            return;
+    }
+
+    auto& resource_data = resources.at(resource_id);
+    const auto source = make_reference<resources::MemorySource>(std::move(snapshot_data));
+    auto& loader = loader_factory.get(resource_data.metadata);
+    loader.load_snapshot(resource_data, source);
+}
+
 
 std::expected<Reference<Resource>, ResourceState> ResourceRegistry::get_resource(const StringId& id)
 {

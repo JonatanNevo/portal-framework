@@ -21,11 +21,11 @@ struct RelationshipComponent
     // Parent
     Entity parent = null_entity;
 
-    void archive(ArchiveObject& archive, Entity entity, ecs::Registry& ecs_reg) const;
+    void archive(ArchiveObject& archive) const;
     static RelationshipComponent dearchive(ArchiveObject& archive, Entity entity, ecs::Registry& ecs_reg);
 
     void serialize(Serializer& serialize) const;
-    static RelationshipComponent deserialize(Deserializer& archive);
+    static RelationshipComponent deserialize(Deserializer& deserializer, Entity entity, ecs::Registry& ecs_reg);
 };
 
 REGISTER_COMPONENT(RelationshipComponent);

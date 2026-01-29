@@ -8,6 +8,7 @@
 #include "resources_module.h"
 #include "portal/engine/project/project.h"
 #include "portal/engine/scene/scene_context.h"
+#include "portal/engine/window/window.h"
 
 namespace portal
 {
@@ -15,9 +16,11 @@ RuntimeModule::RuntimeModule(
     ModuleStack& stack,
     Project& project,
     renderer::vulkan::VulkanContext& context,
-    renderer::vulkan::VulkanSwapchain& swapchain
+    renderer::vulkan::VulkanSwapchain& swapchain,
+    Window& window
 )
     : TaggedModule(stack, STRING_ID("Runtime Module")),
+      window(window),
       project(project),
       swapchain(swapchain),
       renderer(project.get_settings(), context, get_dependency<ResourcesModule>().get_registry())
@@ -50,6 +53,9 @@ void RuntimeModule::on_event(Event&)
 
 void RuntimeModule::inner_post_update(FrameContext& frame, const Reference<renderer::RenderTarget>& render_target)
 {
+    if (window.is_minimized())
+        return;
+
     renderer.begin_frame(frame, render_target);
     renderer.post_update(frame);
 }
@@ -57,6 +63,9 @@ void RuntimeModule::inner_post_update(FrameContext& frame, const Reference<rende
 void RuntimeModule::inner_end_frame(FrameContext& frame, const bool present)
 {
     renderer.end_frame(frame);
+
+    if (window.is_minimized())
+        return;
 
     if (present)
         swapchain.present(frame);

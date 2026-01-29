@@ -161,7 +161,7 @@ protected:
     Job<> load_texture(StringId composite_id, SourceMetadata texture_meta, const fastgltf::Asset& asset, const fastgltf::Texture& texture) const;
     Job<> load_material(StringId composite_id, SourceMetadata material_meta, const fastgltf::Asset& asset, const fastgltf::Material& material) const;
     Job<> load_mesh(SourceMetadata mesh_meta, const fastgltf::Asset& asset, const fastgltf::Mesh& mesh) const;
-    void load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) const;
+    // void load_scenes(SourceMetadata meta, const fastgltf::Asset& asset) const;
 
 protected:
     const renderer::vulkan::VulkanContext& context;

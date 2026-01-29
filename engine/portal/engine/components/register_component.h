@@ -82,7 +82,6 @@ static void dearchive_component(
     [[maybe_unused]] ecs::Registry& ecs_reg
 )
 {
-    LOG_INFO("DEARCHIVE: {}", glz::type_name<T>);
     if constexpr (std::is_empty_v<T>)
     {
         // Tag components have no data to dearchive, just add the component
@@ -110,8 +109,12 @@ static void dearchive_component(
 
         if (entity.has_component<T>())
         {
-            T& comp = entity.get_component<T>();
-            inner_serialize(comp, entity, archive, ecs_reg);
+            entity.patch_component<T>(
+                [&](T& comp)
+                {
+                    inner_serialize(comp, entity, archive, ecs_reg);
+                }
+            );
         }
         else
         {
@@ -122,14 +125,14 @@ static void dearchive_component(
 }
 
 template <typename T>
-static void serialize_component(
+static bool serialize_component(
     Entity entity,
     Serializer& serializer,
     [[maybe_unused]] ecs::Registry& ecs_reg
 )
 {
     if (!entity.has_component<T>())
-        return;
+        return false;
 
     serializer.add_value(STRING_ID(glz::type_name<T>));
     if constexpr (std::is_empty_v<T>)
@@ -149,12 +152,15 @@ static void serialize_component(
             serializer.add_value(comp);
         }
     }
+
+    return true;
 }
 
 template <typename T>
 static void deserialize_component(
     Entity entity,
-    Deserializer& deserializer
+    Deserializer& deserializer,
+    [[maybe_unused]] ecs::Registry& ecs_reg
 )
 {
     if constexpr (std::is_empty_v<T>)
@@ -166,9 +172,37 @@ static void deserialize_component(
     }
     else
     {
-        T out_component{};
-        deserializer.get_value(out_component);
-        entity.patch_or_add_component<T>(std::move(out_component));
+        auto inner_deserialize = [](
+            T& comp,
+            [[maybe_unused]] Entity& entity,
+            [[maybe_unused]] Deserializer& deserializer,
+            [[maybe_unused]] ecs::Registry& ecs_reg
+        )
+        {
+            if constexpr (details::DearchiveableComponentConcept<T>)
+            {
+                comp = T::deserialize(deserializer, entity, ecs_reg);
+            }
+            else
+            {
+                deserializer.get_value<T>(comp);
+            }
+        };
+
+        if (entity.has_component<T>())
+        {
+            entity.patch_component<T>(
+                [&](T& comp)
+                {
+                    inner_deserialize(comp, entity, deserializer, ecs_reg);
+                }
+            );
+        }
+        else
+        {
+            T& comp = entity.add_component<T>();
+            inner_deserialize(comp, entity, deserializer, ecs_reg);
+        }
     }
 }
 

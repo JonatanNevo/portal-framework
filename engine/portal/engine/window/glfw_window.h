@@ -33,6 +33,8 @@ public:
     [[nodiscard]] float get_dpi_factor() const override;
 
     void maximize() override;
+    void restore() override;
+    void minimize() override;
     void center_window() override;
 
     void set_vsync(bool enable) override;
@@ -42,6 +44,8 @@ public:
     [[nodiscard]] glm::vec2 get_position() const override;
 
     [[nodiscard]] GLFWwindow* get_handle() const;
+    [[nodiscard]] bool is_maximised() const override;
+    [[nodiscard]] bool is_minimized() const override;
 
 private:
     ProjectSettings& settings;

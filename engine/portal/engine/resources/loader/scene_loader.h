@@ -4,12 +4,7 @@
 //
 
 #pragma once
-#include <variant>
-
-#include "llvm/ADT/SmallVector.h"
-#include "portal/core/glm.h"
 #include "portal/engine/resources/loader/loader.h"
-#include "portal/core/strings/string_id.h"
 #include "portal/engine/ecs/registry.h"
 
 namespace portal
@@ -23,36 +18,6 @@ class RendererContext;
 
 namespace portal::resources
 {
-struct TransformSceneComponent
-{
-    glm::mat4 transform = glm::identity<glm::mat4>();
-};
-
-struct MeshSceneComponent
-{
-    StringId mesh_id;
-    std::vector<StringId> materials;
-};
-
-struct NodeDescription
-{
-    StringId name;
-    std::vector<StringId> children{};
-    std::optional<StringId> parent = std::nullopt;
-
-    std::vector<std::variant<TransformSceneComponent, MeshSceneComponent>> components{};
-
-    void archive(ArchiveObject& archive) const;
-    static NodeDescription dearchive(ArchiveObject& archive);
-    void serialize(Serializer& serializer) const;
-    static NodeDescription deserialize(Deserializer& deserializer);
-};
-
-struct SceneDescription
-{
-    std::vector<NodeDescription> nodes;
-    std::vector<size_t> scene_nodes_ids;
-};
 
 class SceneLoader final : public ResourceLoader
 {
@@ -62,11 +27,18 @@ public:
     ResourceData load(const SourceMetadata& meta, Reference<ResourceSource> source) override;
     void save(ResourceData& resource_data) override;
 
+    void load_snapshot(const ResourceData& resource_data, Reference<ResourceSource> snapshot_source) override;
+    void snapshot(const ResourceData& resource_data, Reference<ResourceSource> snapshot_source) override;
+
+
 protected:
-    void load_portal_scene(ecs::Registry& ecs_registry, const ResourceSource& source) const;
-    void load_scene_nodes(Entity scene_entity, ecs::Registry& ecs_registry, SceneDescription description) const;
+    static void archive_scene(const Reference<Scene>& scene, ArchiveObject& archive);
+    static void serialize_scene(const Reference<Scene>& scene, Serializer& serializer);
 
-    static SceneDescription load_scene_description(const SourceMetadata& meta, const ResourceSource& source);public:
+    void dearchive_scene(const Reference<Scene>& scene, ArchiveObject& archive) const;
+    void deserialize_scene(const Reference<Scene>& scene, Deserializer& deserializer) const;
 
+    void load_portal_scene(const Reference<Scene>& scene, const ResourceSource& source) const;
+    void load_binary_portal_scene(const Reference<Scene>& scene, const ResourceSource& source) const;
 };
 }

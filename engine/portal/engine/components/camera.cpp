@@ -51,13 +51,19 @@ CameraComponent CameraComponent::dearchive(ArchiveObject& archive)
     return comp;
 }
 
-void CameraComponent::serialize(Serializer&) const
+void CameraComponent::serialize(Serializer& serializer) const
 {
-    throw std::runtime_error("Not implemented");
+    serializer.add_value(vertical_fov);
+    serializer.add_value(near_clip);
+    serializer.add_value(far_clip);
 }
 
-CameraComponent CameraComponent::deserialize(Deserializer&)
+CameraComponent CameraComponent::deserialize(Deserializer& deserializer)
 {
-    throw std::runtime_error("Not implemented");
+    CameraComponent comp;
+    deserializer.get_value(comp.vertical_fov);
+    deserializer.get_value(comp.near_clip);
+    deserializer.get_value(comp.far_clip);
+    return comp;
 }
 } // portal

@@ -18,7 +18,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
+#include "spdlog/fmt/bin_to_hex.h"
 
+#include "portal/core/buffer_stream.h"
 #include "portal/serialization/serialize/binary_serialization.h"
 
 using namespace portal;
@@ -694,10 +696,12 @@ SCENARIO("Non-intrusive serialization concepts are correctly detected")
 
 SCENARIO("BinarySerializer can reserve slots for deferred writing")
 {
-    GIVEN("A BinarySerializer writing to a stringstream")
+    GIVEN("A BinarySerializer writing to a buffer")
     {
-        std::stringstream ss;
-        BinarySerializer serializer(ss);
+        Buffer buffer;
+        BufferStreamWriter writer(buffer);
+        BufferStreamReader reader(buffer);
+        BinarySerializer serializer(writer);
 
         THEN("A reserved size_t slot can be written later")
         {
@@ -706,7 +710,7 @@ SCENARIO("BinarySerializer can reserve slots for deferred writing")
             size_slot.write(count);
 
             size_t deserialized;
-            BinaryDeserializer deserializer(ss);
+            BinaryDeserializer deserializer(reader);
             deserializer.get_value(deserialized);
 
             REQUIRE(deserialized == count);
@@ -729,7 +733,7 @@ SCENARIO("BinarySerializer can reserve slots for deferred writing")
             count_slot.write(count);
 
             // Deserialize and verify
-            BinaryDeserializer deserializer(ss);
+            BinaryDeserializer deserializer(reader);
 
             size_t deserialized_count;
             deserializer.get_value(deserialized_count);
@@ -755,7 +759,7 @@ SCENARIO("BinarySerializer can reserve slots for deferred writing")
             slot1.write(42);
             slot2.write(2.718f);
 
-            BinaryDeserializer deserializer(ss);
+            BinaryDeserializer deserializer(reader);
 
             int val1;
             float val2;
@@ -785,7 +789,7 @@ SCENARIO("BinarySerializer can reserve slots for deferred writing")
             slot_i32.write(-987654);
             slot_u64.write(static_cast<uint64_t>(0xDEADBEEFCAFEBABE));
 
-            BinaryDeserializer deserializer(ss);
+            BinaryDeserializer deserializer(reader);
 
             int8_t val_i8;
             uint16_t val_u16;
@@ -811,7 +815,7 @@ SCENARIO("BinarySerializer can reserve slots for deferred writing")
             slot_f.write(1.23456f);
             slot_d.write(9.87654321);
 
-            BinaryDeserializer deserializer(ss);
+            BinaryDeserializer deserializer(reader);
 
             float val_f;
             double val_d;
@@ -844,7 +848,7 @@ SCENARIO("BinarySerializer can reserve slots for deferred writing")
             count_slot.write(count);
 
             // Deserialize
-            BinaryDeserializer deserializer(ss);
+            BinaryDeserializer deserializer(reader);
 
             size_t deserialized_count;
             deserializer.get_value(deserialized_count);

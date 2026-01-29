@@ -115,9 +115,12 @@ public:
      *
      * This method will fetch the resource's dirty state and will update the source (if supported) based on it.
      *
-     * @param resource The resource to save
+     * @param resource_data The resource to save
      */
     virtual void save(ResourceData& resource_data) = 0;
+
+    virtual void snapshot(const ResourceData&, Reference<ResourceSource>) {};
+    virtual void load_snapshot(const ResourceData&, Reference<ResourceSource>) {};
 
 protected:
     /** @brief Reference to the registry for loading dependent resources */

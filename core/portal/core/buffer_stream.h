@@ -30,6 +30,8 @@ private:
 class BufferStreamWriter final : std::streambuf, public std::ostream
 {
 public:
+    constexpr static size_t INITIAL_CAPACITY = 1024;
+
     explicit BufferStreamWriter(Buffer& buffer);
     [[nodiscard]] Buffer get_buffer() const { return Buffer::copy(buffer.data, get_position()); }
 
@@ -39,6 +41,8 @@ public:
 protected:
     std::streambuf::int_type overflow(std::streambuf::int_type ch) override;
     std::streamsize xsputn(const char* s, std::streamsize n) override;
+    std::streampos seekoff(std::streamoff off, seekdir dir, openmode which) override;
+    std::streampos seekpos(std::streampos pos, openmode which) override;
 
 private:
     void grow(size_t min_capacity);
