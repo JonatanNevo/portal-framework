@@ -65,14 +65,14 @@ std::streampos BufferStreamReader::seekoff(const std::streamoff off, const seekd
     return new_pos;
 }
 
-BufferStreamWriter::BufferStreamWriter(size_t initial_capacity)
+BufferStreamWriter::BufferStreamWriter(Buffer& buffer)
     : std::ostream(this),
-      managed_buffer(Buffer::allocate(initial_capacity))
+      buffer(buffer)
 {
-    if (managed_buffer.data)
+    if (buffer.data)
         setp(
-            managed_buffer.as<char*>(),
-            managed_buffer.as<char*>() + managed_buffer.size
+            buffer.as<char*>(),
+            buffer.as<char*>() + buffer.size
         );
 }
 
@@ -99,7 +99,7 @@ std::streamsize BufferStreamWriter::xsputn(const char* s, std::streamsize n)
     const size_t required_size = current_pos + n;
 
     // Grow if necessary
-    if (required_size > managed_buffer.size)
+    if (required_size > buffer.size)
         grow(required_size);
 
     std::memcpy(pptr(), s, n);
@@ -113,18 +113,12 @@ void BufferStreamWriter::grow(size_t min_capacity)
     const size_t current_pos = get_position();
 
     // Grow by 1.5x or to min_capacity, whichever is larger
-    const size_t new_capacity = (std::max)(min_capacity, managed_buffer.size + managed_buffer.size / 2);
-
-    Buffer new_buffer = Buffer::allocate(new_capacity);
-    if (current_pos > 0 && managed_buffer.data)
-        std::memcpy(new_buffer.data_ptr(), managed_buffer.data, current_pos);
-
-    managed_buffer = std::move(new_buffer);
+    buffer.resize(std::max(min_capacity, buffer.size + buffer.size / 2));
 
     // Reset stream buffer pointers
     setp(
-        managed_buffer.as<char*>(),
-        managed_buffer.as<char*>() + managed_buffer.size
+        buffer.as<char*>(),
+        buffer.as<char*>() + buffer.size
     );
 
     // Advance to current position

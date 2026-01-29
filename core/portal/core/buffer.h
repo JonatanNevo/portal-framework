@@ -139,6 +139,20 @@ struct Buffer
         allocated = false;
     }
 
+    PORTAL_FORCE_INLINE void resize(const size_t new_size)
+    {
+        if (new_size == size)
+            return;
+
+        Buffer&& new_buffer = allocate(new_size);
+        std::memcpy(new_buffer.data_ptr(), data, std::min(new_size, size));
+        release();
+
+        data = new_buffer.data;
+        size = new_buffer.size;
+        allocated = std::exchange(new_buffer.allocated, false);
+    }
+
     PORTAL_FORCE_INLINE void zero_initialize() const
     {
         if (data)
