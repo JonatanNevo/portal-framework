@@ -12,20 +12,11 @@ namespace portal
 {
 static auto logger = Log::get_logger("Input");
 
-InputManager::InputManager(ModuleStack& stack, const std::optional<std::function<void(Event&)>>& event_callback) : Module<>(stack, STRING_ID("Input"))
+InputManager::InputManager(ModuleStack& stack, entt::dispatcher& engine_dispatcher, entt::dispatcher& input_dispatcher)
+    : Module<>(stack, STRING_ID("Input")),
+      engine_dispatcher(engine_dispatcher),
+      input_dispatcher(input_dispatcher)
 {
-    if (event_callback)
-    {
-        this->event_callback = event_callback.value();
-    }
-    else
-    {
-        this->event_callback = [](const Event& e)
-        {
-            LOGGER_ERROR("Unprocessed event: {}", e.to_string());
-        };
-    }
-
     // We start from 1 to ignore `Key::Invalid`
     for (int i = 1; i < std::to_underlying(Key::Max); i++)
     {
@@ -48,64 +39,48 @@ bool InputManager::is_key_repeating(const Key key) const
     return key_states.at(key).state == KeyState::Repeat;
 }
 
-void InputManager::report_key_action(const Key key, const KeyState state, const std::optional<KeyModifierFlag> modifiers)
+void InputManager::report_key_action(ReportKeyActionEvent event)
 {
-    active_modifiers = modifiers.value_or(active_modifiers);
+    active_modifiers = event.modifiers.value_or(active_modifiers);
 
-    auto& key_data = key_states[key];
+    auto& key_data = key_states[event.key];
     key_data.previous_state = key_data.state;
-    key_data.state = state;
+    key_data.state = event.state;
 
     // TODO: accumulate actions between process calls and make all events in one location
-    switch (state)
+    switch (event.state)
     {
     case KeyState::Pressed:
-        {
-            KeyPressedEvent event(key, active_modifiers);
-            event_callback(event);
-            break;
-        }
+        input_dispatcher.enqueue<KeyPressedEvent>(event.key, active_modifiers);
+        break;
     case KeyState::Released:
-        {
-            KeyReleasedEvent event(key);
-            event_callback(event);
-            break;
-        }
+        input_dispatcher.enqueue<KeyReleasedEvent>(event.key);
+        break;
     case KeyState::Repeat:
-        {
-            KeyRepeatEvent event(key, active_modifiers);
-            event_callback(event);
-            break;
-        }
+        input_dispatcher.enqueue<KeyRepeatEvent>(event.key, active_modifiers);
+        break;
     }
 }
 
-void InputManager::report_axis_change(Axis axis, glm::vec2 value)
+void InputManager::report_axis_change(ReportAnalogAxisEvent event)
 {
     // TODO: accumulate changes between process calls and make all events in one location
-    switch (axis)
+    switch (event.axis)
     {
     case Axis::Mouse:
-        {
-            mouse_position = value;
-            MouseMovedEvent event(value);
-            event_callback(event);
-            break;
-        }
+        mouse_position = event.value;
+        input_dispatcher.enqueue<MouseMovedEvent>(event.value);
+        break;
     case Axis::MouseScroll:
-        {
-            mouse_scroll = value;
-            MouseScrolledEvent event(value);
-            event_callback(event);
-            break;
-        }
+        mouse_scroll = event.value;
+        input_dispatcher.enqueue<MouseScrolledEvent>(event.value);
+        break;
     }
 }
 
-void InputManager::set_cursor_mode(const CursorMode mode) const
+void InputManager::set_cursor_mode(CursorMode mode) const
 {
-    SetMouseCursorEvent event(mode);
-    event_callback(event);
+    engine_dispatcher.enqueue<SetMouseCursorEvent>(mode);
 }
 
 void InputManager::transition_key_states()
@@ -113,7 +88,7 @@ void InputManager::transition_key_states()
     for (const auto& [key, data] : key_states)
     {
         if (data.state == KeyState::Pressed)
-            report_key_action(key, KeyState::Repeat, std::nullopt);
+            report_key_action(ReportKeyActionEvent{key, KeyState::Repeat, std::nullopt});
     }
 }
 }
