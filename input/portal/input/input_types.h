@@ -11,42 +11,14 @@ namespace portal
 {
 
 /**
- * Unified enumeration representing physical keyboard keys and mouse buttons.
+ * Cross-platform enumeration for keyboard keys and mouse buttons.
  *
- * The Key enum provides a cross-platform abstraction for all digital input (buttons that can be
- * pressed or released). It unifies keyboard keys and mouse buttons into a single enumeration,
- * simplifying state tracking and allowing the same input handling code to work with both
- * keyboard and mouse input.
+ * Keys map to physical positions (US QWERTY layout), not character codes. Unifies
+ * keyboard and mouse buttons for consistent input handling.
  *
- * ## Physical Layout Mapping
+ * Special values: Invalid (0), Max (iteration bound), Any (wildcard match).
  *
- * Keys are mapped to physical key locations following the US QWERTY keyboard layout, not character
- * codes. This ensures consistent behavior across different keyboard layouts and languages. For example,
- * Key::W always refers to the physical key in the top-left letter position (typically labeled "W" on
- * US keyboards), regardless of the user's system language or keyboard layout settings.
- *
- * ## Key Categories
- *
- * - **Mouse**: MouseButton0-5 with LeftMouseButton, RightMouseButton, MiddleMouseButton aliases
- * - **Letters**: A-Z (physical positions, not character codes)
- * - **Numbers**: Zero-Nine (top row), NumpadZero-NumpadNine (numpad)
- * - **Modifiers**: LeftShift, RightShift, LeftControl, RightControl, LeftAlt, RightAlt,
- *                  LeftSystem/RightSystem (Windows key on Windows, Command on Mac)
- * - **Control**: BackSpace, Tab, Enter, Escape, SpaceBar, arrows, function keys F1-F12
- * - **Special**: Semicolon, Equals, Comma, brackets, slash, etc.
- *
- * ## Special Values
- *
- * - Key::Invalid (value 0) - Represents an unmapped or unknown key
- * - Key::Max - Marks the end of valid key values (used for iteration bounds)
- * - Key::Any - Wildcard value for matching any key (max value of underlying type)
- *
- * ## Future Expansion
- *
- * The enum currently supports keyboard and mouse buttons. Gamepad/controller support is planned.
-
- * @see KeyState - Enumeration of key states (Pressed, Released, Repeat)
- * @see InputManager - Tracks state for all keys using this enum
+ * @see KeyState, InputManager
  */
 enum class Key : uint16_t
 {
@@ -196,20 +168,9 @@ enum class Key : uint16_t
 };
 
 /**
- * Enumeration for analog (continuous) input axes.
+ * Analog (continuous) input axes.
  *
- * Axes represent continuous input values rather than digital button presses. They provide
- * 2D vector data for input devices that report position or delta values, such as mouse
- * cursor movement, scroll wheel rotation, or (in the future) gamepad analog sticks.
- *
- * ## Current Axes
- *
- * - **Mouse** - Mouse cursor movement, reported as absolute window-space position (x, y)
- * - **MouseScroll** - Scroll wheel rotation, reported as delta offset (x = horizontal, y = vertical)
- *
- * @see InputEventConsumer::report_axis_change() - Platform layer reports axis changes
- * @see InputManager::get_mouse_position() - Query cached mouse position
- * @see InputManager::get_mouse_scroll() - Query cached scroll offset
+ * Mouse: absolute position (x, y). MouseScroll: delta offset (x, y).
  */
 // TODO: integrate to keys
 enum class Axis
@@ -219,13 +180,10 @@ enum class Axis
 };
 
 /**
- * State of a key during its lifecycle.
+ * Key state lifecycle: Released → Pressed → Repeat → Released.
  *
- * Keys transition: Released → Pressed (one frame) → Repeat (held) → Released.
- * The Pressed→Repeat transition happens automatically via transition_key_states().
- *
- * Usage: is_key_pressed() returns true for both Pressed and Repeat (meaning "down").
- * To detect initial press only, check: is_key_pressed() && !is_key_repeating().
+ * is_key_pressed() returns true for Pressed and Repeat. For initial press only:
+ * is_key_pressed() && !is_key_repeating().
  */
 enum class KeyState
 {
@@ -235,10 +193,7 @@ enum class KeyState
 };
 
 /**
- * Mouse cursor visibility and movement behavior.
- *
- * Set via InputManager::set_cursor_mode() which dispatches SetMouseCursorEvent
- * to the Window for platform-specific handling.
+ * Mouse cursor modes: Normal (visible), Hidden (invisible), Locked (invisible + confined).
  */
 enum class CursorMode
 {
@@ -248,12 +203,7 @@ enum class CursorMode
 };
 
 /**
- * Bit flags for modifier keys active during input events.
- *
- * Used with Flags<KeyModifierBits> for type-safe bitflag operations.
- * Check modifiers in events: modifiers.has(KeyModifierBits::Ctrl)
- *
- * @see KeyModifierFlag - Type alias for Flags<KeyModifierBits>
+ * Modifier key flags. Use KeyModifierFlag for type-safe operations.
  */
 enum class KeyModifierBits : uint8_t
 {
