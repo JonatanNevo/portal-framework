@@ -64,12 +64,6 @@ public:
      */
     virtual void gui_update(FrameContext& frame);
 
-    /**
-     * Called when events are dispatched to modules.
-     * @param event The event to process
-     */
-    virtual void on_event(Event& event);
-
     /** @return The module's name for debugging and introspection */
     [[nodiscard]] const StringId& get_name() const { return name; }
 

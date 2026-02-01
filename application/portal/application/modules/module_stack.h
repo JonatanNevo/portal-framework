@@ -139,12 +139,6 @@ public:
     void gui_update(FrameContext& frame) const;
 
     /**
-     * Call on_event() on all Event-tagged modules.
-     * @param event The event to dispatch
-     */
-    void on_event(Event& event) const;
-
-    /**
      * Get the computed dependency graph for introspection.
      * @return Vector of dependency levels, where each level is a vector of modules
      */
@@ -177,6 +171,5 @@ private:
     std::vector<BaseModule*> update_modules;
     std::vector<BaseModule*> gui_update_modules;
     std::vector<BaseModule*> post_update_modules;
-    std::vector<BaseModule*> event_modules;
 };
 } // portal

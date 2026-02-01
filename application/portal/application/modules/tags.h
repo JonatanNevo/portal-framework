@@ -23,7 +23,6 @@ namespace portal
  * 3. GuiUpdate - gui_update() called in dependency order
  * 4. PostUpdate - post_update() called in dependency order (typically rendering)
  * 5. FrameLifecycle - end_frame() called in reverse dependency order
- * 6. Event - on_event() called when events occur (outside normal frame flow)
  */
 enum class ModuleTags: uint8_t
 {
@@ -31,8 +30,7 @@ enum class ModuleTags: uint8_t
     FrameLifecycle = 0b00000001,
     Update         = 0b00000010,
     GuiUpdate      = 0b00000100,
-    PostUpdate     = 0b00001000,
-    Event          = 0b00010000
+    PostUpdate     = 0b00001000
 };
 
 /**
@@ -51,7 +49,7 @@ struct FlagTraits<ModuleTags>
     using enum ModuleTags;
 
     static constexpr bool is_bitmask = true;
-    static constexpr auto all_flags = FrameLifecycle | Update | GuiUpdate | PostUpdate | Event;
+    static constexpr auto all_flags = FrameLifecycle | Update | GuiUpdate | PostUpdate;
 };
 
 /**

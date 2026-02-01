@@ -47,6 +47,8 @@ public:
      */
     void render(FrameContext& frame) const;
 
+    [[nodiscard]] bool focused() const { return is_focused; }
+
 private:
     void draw_gizmos_toolbar();
     void draw_central_toolbar();

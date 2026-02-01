@@ -19,6 +19,9 @@ class BaseCameraSystem : public ecs::System<
     >
 {
 public:
+    void connect(ecs::Registry& registry, entt::dispatcher& dispatcher) override;
+    void disconnect(ecs::Registry& registry, entt::dispatcher& dispatcher) override;
+
     static void execute(FrameContext& frame, ecs::Registry& registry);
 
     static void on_component_added(Entity entity, CameraComponent& camera_component);

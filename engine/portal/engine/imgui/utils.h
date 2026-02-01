@@ -6,6 +6,7 @@
 #pragma once
 #include <imgui.h>
 #include <imgui_internal.h>
+#include <vulkan/vulkan.hpp>
 
 #include "imgui_fonts.h"
 #include "theme/serializers.h"
@@ -82,6 +83,8 @@ void draw_item_activity_outline(
 ImRect get_item_rect();
 ImRect expand_rect(const ImRect& rect, float size);
 ImRect expand_rect(const ImRect& rect, float x, float y);
+ImRect rect_offset(const ImRect& rect, ImVec2 offset);
+ImRect rect_offset(const ImRect& rect, float x, float y);
 
 //=========================================================================================
 bool is_item_disabled();
@@ -91,4 +94,54 @@ bool is_item_hovered(float delay_in_seconds = 0.1f, ImGuiHoveredFlags flags = Im
 void set_tooltip(std::string_view tooltip, float delay_in_seconds = 0.1f, bool allow_when_disabled = true, ImVec2 padding = ImVec2{5.f, 5.f});
 void shift_cursor(float x, float y);
 void shift_cursor(ImVec2 vec);
+
+//=========================================================================================
+void draw_border(ImRect rect, float thickness = 1.f, float rounding = 0.f, ImVec2 offset = {0.f, 0.f});
+
+//=========================================================================================
+ImColor color_with_multiplied_value(const ImColor& color, float multiplier);
+
+//=========================================================================================
+void draw_button_image(
+    vk::DescriptorSet image,
+    ImColor tint_normal,
+    ImColor tint_hovered,
+    ImColor tint_pressed,
+    ImVec2 uv0 = {0.f, 0.f},
+    ImVec2 uv1 = {1.f, 1.f}
+);
+
+void draw_button_image(
+    vk::DescriptorSet image,
+    ImColor tint_normal,
+    ImColor tint_hovered,
+    ImColor tint_pressed,
+    ImRect rect,
+    ImVec2 uv0 = {0.f, 0.f},
+    ImVec2 uv1 = {1.f, 1.f}
+);
+
+void draw_button_image(
+    vk::DescriptorSet image,
+    ImColor tint_normal,
+    ImColor tint_hovered,
+    ImColor tint_pressed,
+    ImVec2 rect_min,
+    ImVec2 rect_max,
+    ImVec2 uv0 = {0.f, 0.f},
+    ImVec2 uv1 = {1.f, 1.f}
+);
+
+void draw_button_image(
+    vk::DescriptorSet image_normal,
+    vk::DescriptorSet image_hovered,
+    vk::DescriptorSet image_pressed,
+    ImColor tint_normal,
+    ImColor tint_hovered,
+    ImColor tint_pressed,
+    ImVec2 rect_min,
+    ImVec2 rect_max,
+    ImVec2 uv0 = {0.f, 0.f},
+    ImVec2 uv1 = {1.f, 1.f}
+);
 }

@@ -11,6 +11,9 @@
 
 namespace portal
 {
+void TransformHierarchySystem::connect(ecs::Registry&, entt::dispatcher&) {}
+void TransformHierarchySystem::disconnect(ecs::Registry&, entt::dispatcher&) {}
+
 void TransformHierarchySystem::execute(ecs::Registry& registry)
 {
     const auto transforms_to_update = group(registry);

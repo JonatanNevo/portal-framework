@@ -8,8 +8,10 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include "window_events.h"
 #include "portal/engine/reference.h"
 #include "portal/engine/window/window.h"
+#include "portal/input/input_events.h"
 
 namespace portal
 {
@@ -18,13 +20,11 @@ class ProjectSettings;
 class GlfwWindow final : public Window
 {
 public:
-    GlfwWindow(ProjectSettings& settings, const WindowProperties& properties, const CallbackConsumers& consumers);
-
+    GlfwWindow(ProjectSettings& settings, const WindowProperties& properties, entt::dispatcher& dispatcher);
     ~GlfwWindow() override;
 
     [[nodiscard]] Reference<renderer::Surface> create_surface(const renderer::vulkan::VulkanContext& context) override;
 
-    void on_event(Event& event) override;
     void process_events() override;
 
     [[nodiscard]] bool should_close() const override;
@@ -46,6 +46,13 @@ public:
     [[nodiscard]] GLFWwindow* get_handle() const;
     [[nodiscard]] bool is_maximised() const override;
     [[nodiscard]] bool is_minimized() const override;
+
+protected:
+    void change_mouse_mode(SetMouseCursorEvent event) const;
+    void window_drag(WindowDragEvent event);
+    void maximize_or_restore();
+    void request_minimize();
+    void request_close();
 
 private:
     ProjectSettings& settings;

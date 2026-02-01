@@ -9,8 +9,6 @@
 #include <ranges>
 #include <stdexcept>
 
-#include <portal/core/events/event.h>
-
 #include "portal/application/modules/base_module.h"
 #include "portal/core/debug/assert.h"
 
@@ -65,7 +63,6 @@ void ModuleStack::build_dependency_graph()
     // Going over sorted modules to retain order
     update_modules.clear();
     frame_lifecycle_modules.clear();
-    event_modules.clear();
     gui_update_modules.clear();
     post_update_modules.clear();
 
@@ -75,8 +72,6 @@ void ModuleStack::build_dependency_graph()
             update_modules.emplace_back(module.get());
         if (module->has_tag<ModuleTags::FrameLifecycle>())
             frame_lifecycle_modules.emplace_back(module.get());
-        if (module->has_tag<ModuleTags::Event>())
-            event_modules.emplace_back(module.get());
         if (module->has_tag<ModuleTags::GuiUpdate>())
             gui_update_modules.emplace_back(module.get());
         if (module->has_tag<ModuleTags::PostUpdate>())
@@ -122,17 +117,6 @@ void ModuleStack::post_update(FrameContext& frame) const
     for (const auto& module : post_update_modules)
     {
         module->post_update(frame);
-    }
-}
-
-
-void ModuleStack::on_event(Event& event) const
-{
-    for (const auto& module : event_modules)
-    {
-        module->on_event(event);
-        if (event.is_handled())
-            return;
     }
 }
 

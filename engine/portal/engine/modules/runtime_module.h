@@ -24,8 +24,7 @@ namespace portal
 class RuntimeModule final: public TaggedModule<
         Tag<
             ModuleTags::FrameLifecycle,
-            ModuleTags::PostUpdate,
-            ModuleTags::Event
+            ModuleTags::PostUpdate
         >,
         SystemOrchestrator,
         ResourcesModule
@@ -53,7 +52,6 @@ public:
     void begin_frame(FrameContext& frame) override;
     void post_update(FrameContext& frame) override;
     void end_frame(FrameContext& frame) override;
-    void on_event(Event& event) override;
 
     /**
      * @brief Renders the scene to a custom render target.

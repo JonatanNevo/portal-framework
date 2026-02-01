@@ -24,9 +24,4 @@ struct PlayerTag
 };
 
 struct SceneTag {};
-
-struct InputComponent
-{
-    InputManager* input_manager = nullptr;
-};
 }

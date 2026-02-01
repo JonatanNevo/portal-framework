@@ -29,6 +29,9 @@ public:
     explicit SystemOrchestrator(ModuleStack& stack);
     void clean();
 
+    void connect(entt::dispatcher& dispatcher);
+    void disconnect(entt::dispatcher& dispatcher);
+
     void set_active_scene(const ResourceReference<Scene>& scene);
     [[nodiscard]] ResourceReference<Scene> get_active_scene() const { return active_scene; }
 

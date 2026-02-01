@@ -5,7 +5,10 @@
 
 #pragma once
 #include "panel.h"
-#include "portal/engine/renderer/vulkan/descriptors/vulkan_descriptor_set_manager.h"
+
+#include <vulkan/vulkan.hpp>
+#include "portal/engine/imgui/theme/editor_theme.h"
+#include "portal/engine/renderer/vulkan/image/vulkan_texture.h"
 
 namespace portal
 {
@@ -13,19 +16,34 @@ namespace portal
 class WindowTitlebar final : public Panel
 {
 public:
-    WindowTitlebar(ResourceRegistry& registry);
+    WindowTitlebar(ResourceRegistry& registry, EditorContext& context);
     ~WindowTitlebar() override;
     void on_gui_render(EditorContext& editor_context, FrameContext& frame_context) override;
     [[nodiscard]] float get_height() const { return height; }
 
 private:
+    void draw_menubar(EditorContext& editor_context);
+
+private:
     float height = 0;
-    vk::DescriptorSet logo_descriptor_set;
+    bool titlebar_hovered = false;
+
+    struct IconData
+    {
+        ResourceReference<renderer::vulkan::VulkanTexture> texture;
+        vk::DescriptorSet descriptor;
+    };
 
     // Window button icons
-    vk::DescriptorSet minimize_icon;
-    vk::DescriptorSet maximize_icon;
-    vk::DescriptorSet restore_icon;
-    vk::DescriptorSet close_icon;
+    IconData logo_icon;
+    IconData minimize_icon;
+    IconData maximize_icon;
+    IconData restore_icon;
+    IconData close_icon;
+
+    ImVec4 active_color;
+    ImVec4 target_color;
+    ImVec4 previous_color;
+    bool animate_titlebar_color = true;
 };
 } // portal

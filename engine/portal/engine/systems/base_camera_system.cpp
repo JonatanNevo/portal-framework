@@ -9,6 +9,9 @@
 
 namespace portal
 {
+void BaseCameraSystem::connect(ecs::Registry&, entt::dispatcher&) {}
+void BaseCameraSystem::disconnect(ecs::Registry&, entt::dispatcher&) {}
+
 void BaseCameraSystem::execute(FrameContext& frame, ecs::Registry& registry)
 {
     for (auto&& [entity_id, controller, camera, transform] : group(registry).each())

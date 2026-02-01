@@ -15,6 +15,9 @@ namespace portal
 class TransformHierarchySystem final : public ecs::System<TransformHierarchySystem, ecs::Owns<TransformDirtyTag>, ecs::Owns<TransformComponent>, ecs::Views<RelationshipComponent>>
 {
 public:
+    void connect(ecs::Registry& registry, entt::dispatcher& dispatcher) override;
+    void disconnect(ecs::Registry& registry, entt::dispatcher& dispatcher) override;
+
     static void execute(ecs::Registry& registry);
 
     static void on_component_added(Entity entity, TransformComponent& transform);

@@ -124,6 +124,7 @@ public:
      * Requests cursor mode change via SetMouseCursorEvent.
      *
      * Modes: Normal (visible), Hidden (invisible but free), Locked (invisible and confined).
+     * When locked, mouse position is fixed at the window center.
      *
      * @param mode Desired cursor mode
      */

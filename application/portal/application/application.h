@@ -5,11 +5,10 @@
 
 #pragma once
 #include <filesystem>
+#include <entt/signal/dispatcher.hpp>
 
 #include <llvm/ADT/SmallVector.h>
-#include <portal/core/events/event.h>
 #include <portal/core/strings/string_id.h>
-#include <portal/core/events/event_handler.h>
 
 #include "settings.h"
 #include "modules/module_stack.h"
@@ -107,12 +106,6 @@ public:
     virtual void process_events() {};
 
     /**
-     * Dispatch an event to all registered event handlers and modules.
-     * @param event The event to dispatch
-     */
-    void on_event(Event& event);
-
-    /**
      * Check if the application should continue running.
      * @return true if the game loop should continue, false to exit
      */
@@ -131,7 +124,8 @@ protected:
     float time_step = 0;
 
     std::atomic_flag should_stop;
-    llvm::SmallVector<std::reference_wrapper<EventHandler>> event_handlers;
+    entt::dispatcher engine_event_dispatcher;
+    entt::dispatcher input_event_dispatcher;
 };
 
 /**

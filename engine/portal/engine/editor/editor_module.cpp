@@ -27,23 +27,33 @@ EditorModule::EditorModule(
     Project& project,
     renderer::vulkan::VulkanContext& context,
     renderer::vulkan::VulkanSwapchain& swapchain,
-    Window& window
+    Window& window,
+    entt::dispatcher& engine_dispatcher,
+    entt::dispatcher& input_dispatcher
 )
     : TaggedModule(stack, STRING_ID("Editor Module")),
       project(project),
       swapchain(swapchain),
+      engine_dispatcher(engine_dispatcher),
+      input_dispatcher(input_dispatcher),
       runtime_module(stack, project, context, swapchain, window),
       im_gui_renderer(get_dependency<ResourcesModule>().get_registry(), window, swapchain),
       editor_context(
           {},
           SnapshotManager{get_dependency<ResourcesModule>().get_registry()},
-          window
+          window,
+          engine_dispatcher,
+          project
       ),
-      titlebar(get_dependency<ResourcesModule>().get_registry()),
-      viewport(swapchain, runtime_module)
+      titlebar(get_dependency<ResourcesModule>().get_registry(), editor_context),
+      viewport(swapchain, runtime_module),
+      input_router(get_dependency<SystemOrchestrator>(), engine_dispatcher, input_dispatcher)
 {
-    setup_layout_config();
     editor_context.restore_default_settings.connect<&EditorModule::restore_default_layout>(this);
+    input_dispatcher.sink<KeyPressedEvent>().connect<&EditorModule::on_key_pressed>(this);
+    input_dispatcher.sink<KeyReleasedEvent>().connect<&EditorModule::on_key_released>(this);
+
+    setup_layout_config();
     panel_manager.add_panel<DetailsPanel>();
 }
 
@@ -61,18 +71,20 @@ void EditorModule::gui_update(FrameContext& frame)
 {
     ImGuiIO& io = ImGui::GetIO();
     ImGuiStyle& style = ImGui::GetStyle();
+
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) || (ImGui::IsMouseClicked(ImGuiMouseButton_Right)))
+    {
+        ImGui::FocusWindow(GImGui->HoveredWindow);
+    }
+
     io.ConfigWindowsResizeFromEdges = io.BackendFlags & ImGuiBackendFlags_HasMouseCursors;
 
-    titlebar.on_gui_render(editor_context, frame);
-
-    constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoResize
-        | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse
+        | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     const ImGuiViewport* imgui_viewport = ImGui::GetMainViewport();
 
-    const float titlebar_height = titlebar.get_height();
-    ImGui::SetNextWindowPos(ImVec2(imgui_viewport->Pos.x, imgui_viewport->Pos.y + titlebar_height));
-    ImGui::SetNextWindowSize(ImVec2(imgui_viewport->Size.x, imgui_viewport->Size.y - titlebar_height));
+    ImGui::SetNextWindowPos(ImVec2(imgui_viewport->Pos.x, imgui_viewport->Pos.y));
+    ImGui::SetNextWindowSize(ImVec2(imgui_viewport->Size.x, imgui_viewport->Size.y));
     ImGui::SetNextWindowViewport(imgui_viewport->ID);
 
 #ifdef PORTAL_PLATFORM_WINDOWS
@@ -90,6 +102,18 @@ void EditorModule::gui_update(FrameContext& frame)
     ImGui::Begin("Main Window", nullptr, window_flags);
     ImGui::PopStyleColor(); // MenuBarBg
     ImGui::PopStyleVar(2);
+
+    {
+        auto window_border = editor_context.theme.scoped_color(ImGuiCol_Border, imgui::ThemeColors::Background2);
+        if (!is_maximized)
+        {
+            // render borders
+            // handle resize
+        }
+    }
+
+    titlebar.on_gui_render(editor_context, frame);
+    ImGui::SetCursorPosY(titlebar.get_height() + ImGui::GetCurrentWindow()->WindowPadding.y);
 
     const auto min_win_size = style.WindowMinSize;
     style.WindowMinSize.x = 325.0f;
@@ -129,8 +153,21 @@ void EditorModule::end_frame(FrameContext& frame)
     im_gui_renderer.render_subwindows();
 }
 
-void EditorModule::on_event(Event&)
+void EditorModule::on_key_pressed(const KeyPressedEvent& event) const
 {
+    if (event.key == Key::RightMouseButton)
+    {
+        if (viewport.focused())
+            input_router.unblock_input();
+    }
+}
+
+void EditorModule::on_key_released(const KeyReleasedEvent& event) const
+{
+    if (event.key == Key::RightMouseButton)
+    {
+        input_router.block_input();
+    }
 }
 
 void EditorModule::setup_layout_config()

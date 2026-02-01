@@ -33,6 +33,26 @@ void SystemOrchestrator::clean()
     active_scene = {};
 }
 
+void SystemOrchestrator::connect(entt::dispatcher& dispatcher)
+{
+    auto& registry = get_dependency<ecs::Registry>();
+
+    player_input_system->connect(registry, dispatcher);
+    camera_system->connect(registry, dispatcher);
+    transform_system->connect(registry, dispatcher);
+    scene_rendering_system->connect(registry, dispatcher);
+}
+
+void SystemOrchestrator::disconnect(entt::dispatcher& dispatcher)
+{
+    auto& registry = get_dependency<ecs::Registry>();
+
+    player_input_system->disconnect(registry, dispatcher);
+    camera_system->disconnect(registry, dispatcher);
+    transform_system->disconnect(registry, dispatcher);
+    scene_rendering_system->disconnect(registry, dispatcher);
+}
+
 void SystemOrchestrator::set_active_scene(const ResourceReference<Scene>& scene)
 {
     active_scene = scene;

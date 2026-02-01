@@ -24,6 +24,7 @@ public:
     void mark_as_stopped_moving();
 
     [[nodiscard]] bool is_moving() const { return should_move && moved; }
+    [[nodiscard]] bool should_move_enabled() const { return should_move; }
 
     glm::vec3 position_delta = glm::vec3{0.f};
     glm::vec2 mouse_delta{0.f, 0.f};
@@ -41,8 +42,8 @@ public:
     static BaseCameraController deserialize(Deserializer& deserializer);
 
     void post_serialization(Entity entity, ResourceRegistry& reg) const;
-private:
     glm::vec2 last_mouse_position{0.f, 0.f};
+private:
 
     bool should_move = false;
     bool reset_mouse_on_next_move = false;

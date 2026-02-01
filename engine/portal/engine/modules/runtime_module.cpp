@@ -47,10 +47,6 @@ void RuntimeModule::end_frame(FrameContext& frame)
     inner_end_frame(frame, true);
 }
 
-void RuntimeModule::on_event(Event&)
-{
-}
-
 void RuntimeModule::inner_post_update(FrameContext& frame, const Reference<renderer::RenderTarget>& render_target)
 {
     if (window.is_minimized())

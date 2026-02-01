@@ -21,7 +21,8 @@ enum class ThemeColors
     Primary3,
     Secondary1,
     Secondary2,
-    Accent1,
+    AccentPrimaryLeft,
+    AccentPrimaryRight,
     Accent2,
     Text1,
     Text2,
@@ -51,7 +52,7 @@ public:
     void push_color(ImGuiCol widget, ThemeColors color, float alpha = 1.f) const;
     void pop_color(size_t count = 1) const;
 
-    ScopedColor scoped_color(ImGuiCol widget, ThemeColors color, float alpha = 1.f) const;
+    [[nodiscard]] ScopedColor scoped_color(ImGuiCol widget, ThemeColors color, float alpha = 1.f) const;
 
     ImVec4& operator[](ThemeColors color);
     const ImVec4& operator[](ThemeColors color) const;
