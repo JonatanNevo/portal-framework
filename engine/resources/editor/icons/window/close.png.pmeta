@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "engine/editor/icons/window/close",
+    "source": "editor/icons/window/close.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 14,
+        "width": 14
+    },
+    "type": "Texture"
+}

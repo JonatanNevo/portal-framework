@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "engine/editor/icons/window/minimize",
+    "source": "editor/icons/window/minimize.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 2,
+        "width": 14
+    },
+    "type": "Texture"
+}

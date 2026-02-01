@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "engine/editor/icons/generic/hammer",
+    "source": "editor/icons/generic/hammer.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 24,
+        "width": 24
+    },
+    "type": "Texture"
+}

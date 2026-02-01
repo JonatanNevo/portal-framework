@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "engine/editor/icons/window/maximize",
+    "source": "editor/icons/window/maximize.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 14,
+        "width": 14
+    },
+    "type": "Texture"
+}

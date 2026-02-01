@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "engine/editor/icons/generic/square-stack",
+    "source": "editor/icons/generic/square-stack.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 24,
+        "width": 24
+    },
+    "type": "Texture"
+}

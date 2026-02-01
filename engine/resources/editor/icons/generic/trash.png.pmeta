@@ -1,13 +1,13 @@
 {
     "dependencies": [],
     "format": "Image",
-    "resource_id": "engine/editor/icons/maximize",
-    "source": "editor/icons/maximize.png",
+    "resource_id": "engine/editor/icons/generic/trash",
+    "source": "editor/icons/generic/trash.png",
     "texture": {
         "format": "RGBA8_UNorm",
         "hdr": false,
-        "height": 14,
-        "width": 14
+        "height": 24,
+        "width": 24
     },
     "type": "Texture"
 }

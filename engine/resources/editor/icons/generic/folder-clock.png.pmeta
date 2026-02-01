@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "engine/editor/icons/generic/folder-clock",
+    "source": "editor/icons/generic/folder-clock.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 24,
+        "width": 24
+    },
+    "type": "Texture"
+}

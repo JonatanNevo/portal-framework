@@ -1,13 +1,13 @@
 {
     "dependencies": [],
     "format": "Image",
-    "resource_id": "engine/editor/icons/restore",
-    "source": "editor/icons/restore.png",
+    "resource_id": "engine/editor/icons/generic/boxes",
+    "source": "editor/icons/generic/boxes.png",
     "texture": {
         "format": "RGBA8_UNorm",
         "hdr": false,
-        "height": 14,
-        "width": 14
+        "height": 24,
+        "width": 24
     },
     "type": "Texture"
 }

@@ -144,4 +144,29 @@ void draw_button_image(
     ImVec2 uv0 = {0.f, 0.f},
     ImVec2 uv1 = {1.f, 1.f}
 );
+
+//=========================================================================================
+// Returns the number of space characters menu_item_with_image pads onto the label to
+// reserve the icon column.  Use this to pad plain labels (e.g. submenu headers) so they
+// align with icon'd items in the same menu.
+int menu_item_icon_padding(float icon_size = 16.f);
+
+// Calls ImGui::MenuItem with the given label, then overlays an image icon into the item's
+// icon column.  The icon is rendered at its natural colour; only disabled items are tinted
+// with ImGuiCol_TextDisabled.
+bool menu_item_with_image(
+    vk::DescriptorSet image,
+    const char* label,
+    const char* shortcut = nullptr,
+    bool selected = false,
+    bool enabled = true,
+    float icon_size = 16.f
+);
+
+bool begin_menu_with_image(
+    vk::DescriptorSet image,
+    const char* label,
+    bool enabled = true,
+    float icon_size = 16.f
+);
 }
