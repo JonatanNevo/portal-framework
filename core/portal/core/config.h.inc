@@ -29,3 +29,15 @@
 #ifndef PORTAL_DIST
 #cmakedefine PORTAL_DEBUG_ALLOCATIONS
 #endif
+
+
+/* Build Configuration */
+#if defined(PORTAL_DEBUG)
+    #define PORTAL_BUILD_CONFIG_NAME "Debug"
+#elif defined(PORTAL_DEVELOPMENT)
+    #define PORTAL_BUILD_CONFIG_NAME "Development"
+#elif defined(PORTAL_DIST)
+    #define PORTAL_BUILD_CONFIG_NAME "Dist"
+#else
+    #error Undefined configuration
+#endif

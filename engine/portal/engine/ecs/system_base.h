@@ -263,6 +263,9 @@ public:
 
     virtual ~SystemBase() = default;
 
+    virtual void connect(Registry& registry, entt::dispatcher& dispatcher) = 0;
+    virtual void disconnect(Registry& registry, entt::dispatcher& dispatcher) = 0;
+
     /**
      * @brief Changes the system's execution policy at runtime.
      *

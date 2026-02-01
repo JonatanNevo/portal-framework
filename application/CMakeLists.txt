@@ -23,6 +23,9 @@ portal_add_module(application
         SOURCES ${APP_SOURCES}
         HEADERS ${APP_HEADERS}
 
+        DEPENDENCIES
+            EnTT
+
         PORTAL_DEPENDENCIES
             core
             serialization

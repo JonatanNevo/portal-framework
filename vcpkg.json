@@ -38,6 +38,13 @@
     "application" : {
       "description" : [ "The application module for the Portal framework.", "depends: portal-core,portal-serialization" ],
       "dependencies" : [ {
+        "name" : "entt",
+        "version>=" : "3.16.0"
+      } ]
+    },
+    "input" : {
+      "description" : [ "The input interface for the Portal framework", "depends: portal-core,portal-application" ],
+      "dependencies" : [ {
         "name" : "glfw3",
         "version>=" : "3.4#1",
         "features" : [ "wayland" ],
@@ -47,10 +54,6 @@
         "version>=" : "3.4#1",
         "platform" : "!linux"
       } ]
-    },
-    "input" : {
-      "description" : [ "The input interface for the Portal framework", "depends: portal-core,portal-application" ],
-      "dependencies" : [ ]
     },
     "networking" : {
       "description" : [ "The networking interface for the Portal framework", "depends: portal-core" ],
@@ -80,9 +83,6 @@
       }, {
         "name" : "fastgltf",
         "version>=" : "0.9.0"
-      }, {
-        "name" : "entt",
-        "version>=" : "3.16.0"
       }, {
         "name" : "volk",
         "version>=" : "1.4.309.0"

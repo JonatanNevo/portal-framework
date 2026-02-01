@@ -7,7 +7,7 @@
 
 namespace portal
 {
-Window::Window(const WindowProperties& properties, const CallbackConsumers& consumers) : properties(properties), consumers(consumers) {}
+Window::Window(const WindowProperties& properties, entt::dispatcher& dispatcher) : properties(properties), dispatcher(dispatcher) {}
 
 WindowExtent Window::resize(const WindowExtent& requested_extent)
 {

@@ -16,6 +16,4 @@ void BaseModule::post_update(FrameContext&) {}
 void BaseModule::end_frame(FrameContext&) {}
 
 void BaseModule::gui_update(FrameContext&) {}
-
-void BaseModule::on_event(Event&) {}
 }

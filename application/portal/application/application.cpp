@@ -14,8 +14,6 @@
 namespace portal
 {
 class Project;
-class WindowResizeEvent;
-class WindowCloseEvent;
 
 static auto logger = Log::get_logger("Application");
 
@@ -47,6 +45,7 @@ void Application::run()
         while (!should_stop.test())
         {
             process_events();
+            engine_event_dispatcher.update();
 
             {
                 FrameContext context{
@@ -57,6 +56,7 @@ void Application::run()
 
                 modules.begin_frame(context);
                 {
+                    input_event_dispatcher.update();
                     // Update scene, physics, input, ...
                     modules.update(context);
 
@@ -100,12 +100,6 @@ void Application::run()
 void Application::stop()
 {
     should_stop.test_and_set();
-}
-
-void Application::on_event(Event& event)
-{
-    for (auto& handler : event_handlers)
-        handler.get().on_event(event);
 }
 
 bool Application::should_run() const

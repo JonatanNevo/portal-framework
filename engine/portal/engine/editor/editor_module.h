@@ -5,6 +5,7 @@
 
 #pragma once
 #include "editor_context.h"
+#include "input_router.h"
 #include "panel_manager.h"
 #include "viewport.h"
 #include "panels/window_titlebar.h"
@@ -31,8 +32,7 @@ class EditorModule final : public TaggedModule<
         Tag<
             ModuleTags::FrameLifecycle,
             ModuleTags::PostUpdate,
-            ModuleTags::GuiUpdate,
-            ModuleTags::Event
+            ModuleTags::GuiUpdate
         >,
         SystemOrchestrator,
         ResourcesModule
@@ -44,22 +44,29 @@ public:
         Project& project,
         renderer::vulkan::VulkanContext& context,
         renderer::vulkan::VulkanSwapchain& swapchain,
-        Window& window
+        Window& window,
+        entt::dispatcher& engine_dispatcher,
+        entt::dispatcher& input_dispatcher
     );
 
     void begin_frame(FrameContext& frame) override;
     void gui_update(FrameContext& frame) override;
     void post_update(FrameContext& frame) override;
     void end_frame(FrameContext& frame) override;
-    void on_event(Event& event) override;
 
 private:
+    void on_key_pressed(const KeyPressedEvent& event) const;
+    void on_key_released(const KeyReleasedEvent& event) const;
+
     void setup_layout_config();
     void restore_default_layout();
 
 private:
     Project& project;
     renderer::vulkan::VulkanSwapchain& swapchain;
+    entt::dispatcher& engine_dispatcher;
+    entt::dispatcher& input_dispatcher;
+
     std::string config_path_storage;  // Must be declared before im_gui_renderer for proper destruction order
     RuntimeModule runtime_module;
     ImGuiRenderer im_gui_renderer;
@@ -68,5 +75,7 @@ private:
     EditorContext editor_context;
     WindowTitlebar titlebar;
     Viewport viewport;
+
+    InputRouter input_router;
 };
 } // portal

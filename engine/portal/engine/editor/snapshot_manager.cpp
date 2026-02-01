@@ -33,17 +33,17 @@ void SnapshotManager::prepare_snapshot(const StringId& title)
 void SnapshotManager::commit_snapshot()
 {
     PORTAL_ASSERT(in_flight_snapshot.data != nullptr, "No snapshot to commit");
+    in_flight_snapshot.timestamp = std::chrono::system_clock::now();
     snapshots[current_snapshot] = std::move(in_flight_snapshot);
-    current_snapshot = (current_snapshot + 1) % MAX_SNAPSHOTS;
+    current_snapshot = get_next_snapshot_index();
 
     in_flight_snapshot.title = INVALID_STRING_ID;
     in_flight_snapshot.data = nullptr;
 }
 
-void SnapshotManager::revert_snapshot(const std::optional<size_t> snapshot_index)
+void SnapshotManager::revert_snapshot(const size_t snapshot_index)
 {
-    const auto index = snapshot_index.value_or((current_snapshot - 1) % MAX_SNAPSHOTS);
-    auto& [title, data] = snapshots[index];
+    auto& [_, title, data] = snapshots[snapshot_index];
 
     if (data == nullptr)
     {
@@ -53,6 +53,37 @@ void SnapshotManager::revert_snapshot(const std::optional<size_t> snapshot_index
 
     registry.load_snapshot(scene_id, data);
     ImGui::InsertNotification({ImGuiToastType::Info, 3000, "Reverted %s", title.string.data()});
-    current_snapshot = index;
+    current_snapshot = snapshot_index;
+}
+
+void SnapshotManager::undo()
+{
+    revert_snapshot(get_previous_snapshot_index());
+}
+
+void SnapshotManager::redo()
+{
+    // TODO: We need to capture the current state when we undo...
+    revert_snapshot(get_next_snapshot_index());
+}
+
+bool SnapshotManager::can_undo() const
+{
+    return snapshots[get_previous_snapshot_index()].data != nullptr;
+}
+
+bool SnapshotManager::can_redo() const
+{
+    return snapshots[get_next_snapshot_index()].data != nullptr;
+}
+
+size_t SnapshotManager::get_next_snapshot_index() const
+{
+    return (current_snapshot + 1) % MAX_SNAPSHOTS;
+}
+
+size_t SnapshotManager::get_previous_snapshot_index() const
+{
+    return (current_snapshot - 1) % MAX_SNAPSHOTS;
 }
 } // portal

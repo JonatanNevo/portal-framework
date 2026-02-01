@@ -7,16 +7,14 @@
 
 
 #include <stb_image.h>
+#include <entt/signal/dispatcher.hpp>
 
+#include "window_events.h"
 #include "portal/core/files/file_system.h"
 #include "portal/engine/config.h"
 #include "portal/engine/renderer/image/image.h"
-#include "portal/engine/renderer/image/texture.h"
 #include "portal/engine/renderer/vulkan/surface/vulkan_surface.h"
 #include "portal/engine/resources/resource_reference.h"
-#include "portal/engine/resources/source/resource_source.h"
-#include "portal/engine/window/window_event_consumer.h"
-#include "portal/input/input_event_consumer.h"
 #include "portal/input/input_events.h"
 #include "portal/input/input_types.h"
 
@@ -155,32 +153,32 @@ static void glfw_error_callback(int error, const char* description)
 
 static void glfw_window_resize_callback(GLFWwindow* handle, const int width, const int height)
 {
-    if (const auto* consumers = static_cast<CallbackConsumers*>(glfwGetWindowUserPointer(handle)))
+    if (auto* dispatcher = static_cast<entt::dispatcher*>(glfwGetWindowUserPointer(handle)))
     {
-        consumers->window.get().on_resize(WindowExtent(static_cast<size_t>(width), static_cast<size_t>(height)));
+        dispatcher->enqueue<WindowResizeEvent>(WindowExtent(static_cast<size_t>(width), static_cast<size_t>(height)));
     }
 }
 
 static void glfw_window_focus_callback(GLFWwindow* handle, const int focused)
 {
-    if (const auto* consumers = static_cast<CallbackConsumers*>(glfwGetWindowUserPointer(handle)))
+    if (auto* dispatcher = static_cast<entt::dispatcher*>(glfwGetWindowUserPointer(handle)))
     {
-        consumers->window.get().on_focus(focused != 0);
+        dispatcher->enqueue<WindowFocusEvent>(focused != 0);
     }
 }
 
 static void glfw_window_close_callback(GLFWwindow* handle)
 {
-    if (const auto* consumers = static_cast<CallbackConsumers*>(glfwGetWindowUserPointer(handle)))
+    if (auto* dispatcher = static_cast<entt::dispatcher*>(glfwGetWindowUserPointer(handle)))
     {
         glfwSetWindowShouldClose(handle, GLFW_TRUE);
-        consumers->window.get().on_close();
+        dispatcher->enqueue<WindowClosedEvent>();
     }
 }
 
 static void glfw_key_callback(GLFWwindow* handle, int key, int, int action, int mods)
 {
-    if (const auto* consumers = static_cast<CallbackConsumers*>(glfwGetWindowUserPointer(handle)))
+    if (auto* dispatcher = static_cast<entt::dispatcher*>(glfwGetWindowUserPointer(handle)))
     {
         auto portal_key = KEY_MAPPING.at(key);
 
@@ -216,13 +214,13 @@ static void glfw_key_callback(GLFWwindow* handle, int key, int, int action, int 
             state = KeyState::Released;
         }
 
-        consumers->input.get().report_key_action(portal_key, state, modifiers);
+        dispatcher->enqueue<ReportKeyActionEvent>(portal_key, state, modifiers);
     }
 }
 
 static void glfw_mouse_button_callback(GLFWwindow* handle, int button, int action, int)
 {
-    if (const auto* consumers = static_cast<CallbackConsumers*>(glfwGetWindowUserPointer(handle)))
+    if (auto* dispatcher = static_cast<entt::dispatcher*>(glfwGetWindowUserPointer(handle)))
     {
         const auto portal_key = KEY_MAPPING.at(button);
 
@@ -239,27 +237,29 @@ static void glfw_mouse_button_callback(GLFWwindow* handle, int button, int actio
             LOGGER_ERROR("Unknown mouse button action: {}", action);
             state = KeyState::Released;
         }
-        consumers->input.get().report_key_action(portal_key, state, std::nullopt);
+
+        dispatcher->enqueue<ReportKeyActionEvent>(portal_key, state, std::nullopt);
     }
 }
 
 static void glfw_scroll_callback(GLFWwindow* handle, double x_offset, double y_offset)
 {
-    if (const auto* consumers = static_cast<CallbackConsumers*>(glfwGetWindowUserPointer(handle)))
+    if (auto* dispatcher = static_cast<entt::dispatcher*>(glfwGetWindowUserPointer(handle)))
     {
-        consumers->input.get().report_axis_change(Axis::MouseScroll, glm::vec2(static_cast<float>(x_offset), static_cast<float>(y_offset)));
+        dispatcher->enqueue<ReportAnalogAxisEvent>(Axis::MouseScroll, glm::vec2(static_cast<float>(x_offset), static_cast<float>(y_offset)));
     }
 }
 
 static void glfw_cursor_pos_callback(GLFWwindow* handle, double x_pos, double y_pos)
 {
-    if (const auto* consumers = static_cast<CallbackConsumers*>(glfwGetWindowUserPointer(handle)))
+    if (auto* dispatcher = static_cast<entt::dispatcher*>(glfwGetWindowUserPointer(handle)))
     {
-        consumers->input.get().report_axis_change(Axis::Mouse, glm::vec2(static_cast<float>(x_pos), static_cast<float>(y_pos)));
+        dispatcher->enqueue<ReportAnalogAxisEvent>(Axis::Mouse, glm::vec2(static_cast<float>(x_pos), static_cast<float>(y_pos)));
     }
 }
 
-GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& properties, const CallbackConsumers& consumers) : Window(properties, consumers), settings(settings)
+GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& properties, entt::dispatcher& dispatcher) : Window(properties, dispatcher),
+    settings(settings)
 {
     LOGGER_INFO("Creating window \"{}\" ({}x{})", properties.title.string, properties.extent.width, properties.extent.height);
 
@@ -335,7 +335,7 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
         LOGGER_WARN("Icon file {} does not exist", icon_path.generic_string());
     }
 
-    glfwSetWindowUserPointer(handle, &this->consumers);
+    glfwSetWindowUserPointer(handle, &this->dispatcher);
 
     const bool raw_mouse_motion_supported = glfwRawMouseMotionSupported();
     if (raw_mouse_motion_supported)
@@ -352,10 +352,17 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
     glfwSetScrollCallback(handle, glfw_scroll_callback);
 
     glfwSetInputMode(handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
+
+    dispatcher.sink<SetMouseCursorEvent>().connect<&GlfwWindow::change_mouse_mode>(this);
+    dispatcher.sink<WindowRequestMaximizeOrRestoreEvent>().connect<&GlfwWindow::maximize_or_restore>(this);
+    dispatcher.sink<WindowDragEvent>().connect<&GlfwWindow::window_drag>(this);
+    dispatcher.sink<WindowRequestMinimizeEvent>().connect<&GlfwWindow::request_minimize>(this);
+    dispatcher.sink<WindowRequestCloseEvent>().connect<&GlfwWindow::request_close>(this);
 }
 
 GlfwWindow::~GlfwWindow()
 {
+    dispatcher.sink<SetMouseCursorEvent>().disconnect<&GlfwWindow::change_mouse_mode>(this);
     // TODO: support multiple windows?
     glfwTerminate();
 }
@@ -385,7 +392,6 @@ bool GlfwWindow::should_close() const
 void GlfwWindow::close()
 {
     glfwSetWindowShouldClose(handle, GLFW_TRUE);
-    consumers.window.get().on_close();
 }
 
 /**
@@ -474,32 +480,65 @@ bool GlfwWindow::is_minimized() const
     return glfwGetWindowAttrib(handle, GLFW_ICONIFIED) != 0;
 }
 
-void GlfwWindow::on_event(Event& event)
+void GlfwWindow::change_mouse_mode(SetMouseCursorEvent event) const
 {
-    EventRunner runner(event);
-    runner.run_on<SetMouseCursorEvent>(
-        [this](const SetMouseCursorEvent& e)
-        {
-            int mode;
-            switch (e.get_mode())
-            {
-            case CursorMode::Normal:
-                mode = GLFW_CURSOR_NORMAL;
-                break;
-            case CursorMode::Hidden:
-                mode = GLFW_CURSOR_HIDDEN;
-                break;
-            case CursorMode::Locked:
-                mode = GLFW_CURSOR_DISABLED;
-                break;
-            default:
-                LOGGER_ERROR("Unknown cursor mode: {}", static_cast<int>(e.get_mode()));
-                mode = GLFW_CURSOR_NORMAL;
-            }
+    int mode;
+    switch (event.mode)
+    {
+    case CursorMode::Normal:
+        mode = GLFW_CURSOR_NORMAL;
+        break;
+    case CursorMode::Hidden:
+        mode = GLFW_CURSOR_HIDDEN;
+        break;
+    case CursorMode::Locked:
+        mode = GLFW_CURSOR_DISABLED;
+        break;
+    default:
+        LOGGER_ERROR("Unknown cursor mode: {}", static_cast<int>(event.mode));
+        mode = GLFW_CURSOR_NORMAL;
+    }
 
-            glfwSetInputMode(handle, GLFW_CURSOR, mode);
-            return true;
+    glfwSetInputMode(handle, GLFW_CURSOR, mode);
+}
+
+void GlfwWindow::window_drag(WindowDragEvent event)
+{
+    if (is_maximised())
+    {
+        restore();
+
+        int new_width, new_height;
+        glfwGetWindowSize(handle, &new_width, &new_height);
+
+        // Offset position proportionally to mouse position on titlebar
+        // This ensures we dragging window relatively to cursor position on titlebar
+        // correctly when window size changes
+        if (event.original_window_width - static_cast<float>(new_width) > 0.f)
+        {
+            event.move_offset.x *= static_cast<float>(new_width) / event.original_window_width;
         }
-    );
+    }
+
+    glfwSetWindowPos(handle, static_cast<int>(event.point.x - event.move_offset.x), static_cast<int>(event.point.y - event.move_offset.y));
+}
+
+void GlfwWindow::maximize_or_restore()
+{
+    if (is_maximised())
+        restore();
+    else
+        maximize();
+}
+
+void GlfwWindow::request_minimize()
+{
+    minimize();
+}
+
+void GlfwWindow::request_close()
+{
+    close();
+    dispatcher.enqueue<WindowClosedEvent>();
 }
 } // portal

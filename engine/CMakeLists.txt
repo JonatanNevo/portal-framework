@@ -48,7 +48,6 @@ portal_add_module(engine
             fastgltf
             slang
             glaze
-            EnTT
             volk
             imguizmo
             argparse

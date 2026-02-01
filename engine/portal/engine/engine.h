@@ -4,14 +4,13 @@
 //
 
 #pragma once
+
 #include <portal/application/application.h>
 
-#include "ecs/registry.h"
 #include "portal/application/settings.h"
 #include "portal/engine/engine_context.h"
 #include "portal/engine/renderer/renderer.h"
-#include "portal/engine/window/window_event_consumer.h"
-#include "resources/database/resource_database_facade.h"
+#include "window/window_events.h"
 
 namespace portal
 {
@@ -22,7 +21,7 @@ namespace portal
  * Engine initializes and owns the core subsystems: Vulkan context, window,
  * swapchain, and ECS registry. Supports both runtime and editor modes.
  */
-class Engine : public Application, public WindowEventConsumer
+class Engine : public Application
 {
 public:
     /**
@@ -40,19 +39,19 @@ public:
     /** @brief Processes window and input events. */
     void process_events() override;
 
-    void on_resize(WindowExtent extent) override;
-    void on_focus(bool) override {};
-    void on_close() override;
-
     [[nodiscard]] EngineContext& get_engine_context() const { return *engine_context; }
 
 protected:
+    void on_resize(WindowResizeEvent event) const;
+    void on_close();
+
     ProjectSettings& get_settings() const override;
 
 private:
     Reference<Project> project;
-    std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;
     Reference<Window> window = nullptr;
+
+    std::unique_ptr<renderer::vulkan::VulkanContext> vulkan_context = nullptr;
     Reference<renderer::vulkan::VulkanSwapchain> swapchain = nullptr;
     std::unique_ptr<EngineContext> engine_context = nullptr;
 };

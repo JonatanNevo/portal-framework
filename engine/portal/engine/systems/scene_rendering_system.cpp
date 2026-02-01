@@ -12,6 +12,9 @@
 
 namespace portal
 {
+void SceneRenderingSystem::connect(ecs::Registry&, entt::dispatcher&) {}
+void SceneRenderingSystem::disconnect(ecs::Registry&, entt::dispatcher&) {}
+
 void SceneRenderingSystem::execute(FrameContext& frame, ecs::Registry& registry)
 {
     update_global_descriptors(frame, registry);

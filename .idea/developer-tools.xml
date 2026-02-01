@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="DeveloperToolsToolWindowSettingsV1" lastSelectedContentNodeId="base64-encoder-decoder" pluginVersion="7.1.0">
-    <developerToolsConfigurations />
+  <component name="DeveloperToolsToolWindowSettingsV1" lastSelectedContentNodeId="color-picker" pluginVersion="7.1.0">
+    <developerToolsConfigurations>
+      <developerToolConfiguration developerToolId="color-picker" id="d6355796-d745-4600-9992-0cae66dd8c10" name="Workbench">
+        <properties>
+          <property key="selectedColor" type="INPUT" value="com.intellij.ui.JBColor|-11711155" />
+        </properties>
+      </developerToolConfiguration>
+    </developerToolsConfigurations>
+    <expandedGroupNodeIds />
   </component>
 </project>

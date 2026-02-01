@@ -8,9 +8,7 @@
 #include <filesystem>
 
 #include "portal/engine/reference.h"
-#include "portal/core/events/event_handler.h"
 #include "portal/core/strings/string_id.h"
-#include "portal/engine/renderer/image/texture.h"
 #include "portal/engine/resources/resource_reference.h"
 
 namespace portal
@@ -58,20 +56,15 @@ struct WindowProperties
     size_t requested_frames_in_flight = 3;
 };
 
-struct CallbackConsumers
-{
-    std::reference_wrapper<WindowEventConsumer> window;
-    std::reference_wrapper<InputEventConsumer> input;
-};
-
-class Window : public EventHandler
+class Window
 {
 public:
     /**
     * Constructs a Window
     * @param properties The preferred configuration of the window
     */
-    Window(const WindowProperties& properties, const CallbackConsumers& consumers);
+    Window(const WindowProperties& properties, entt::dispatcher& dispatcher);
+    virtual ~Window() = default;
 
     /**
       * Handles the processing of all underlying window events
@@ -139,7 +132,7 @@ public:
     [[nodiscard]] const WindowProperties& get_properties() const { return properties; }
 
 protected:
+    entt::dispatcher& dispatcher;
     WindowProperties properties;
-    CallbackConsumers consumers;
 };
 } // portal

@@ -16,6 +16,8 @@ struct EditorContext
     imgui::EditorTheme theme;
     SnapshotManager snapshot_manager;
     Window& window;
+    entt::dispatcher& engine_dispatcher;
+    Project& project;
 
     entt::delegate<void()> restore_default_settings;
 };

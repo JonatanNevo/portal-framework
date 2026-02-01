@@ -14,6 +14,7 @@
 #include "portal/engine/window/glfw_window.h"
 #include "project/project.h"
 #include "resources/database/resource_database_facade.h"
+#include "window/window_events.h"
 
 namespace portal
 {
@@ -22,14 +23,12 @@ static auto logger = Log::get_logger("Engine");
 Engine::Engine(const Reference<Project>& project, const ApplicationProperties& properties) : Application(properties),
     project(project)
 {
+    engine_event_dispatcher.sink<WindowResizeEvent>().connect<&Engine::on_resize>(this);
+    engine_event_dispatcher.sink<WindowClosedEvent>().connect<&Engine::on_close>(this);
+
     // Creating Input
     auto& settings = project->get_settings();
-    auto& input = modules.add_module<InputManager>(
-        [this](auto& event)
-        {
-            on_event(event);
-        }
-    );
+    auto& input = modules.add_module<InputManager>(engine_event_dispatcher, input_event_dispatcher);
 
     modules.add_module<SchedulerModule>(settings.get_setting<int32_t>("application.scheduler-threads", 0));
     auto& registry = modules.add_module<ecs::Registry>();
@@ -42,9 +41,7 @@ Engine::Engine(const Reference<Project>& project, const ApplicationProperties& p
         .decorated = project->get_type() != ProjectType::Editor,
         .requested_frames_in_flight = settings.get_setting<size_t>("application.frames_in_flight", 3),
     };
-    window = make_reference<GlfwWindow>(project->get_settings(), window_properties, CallbackConsumers{*this, input});
-    // TODO: find a better way of subscribing to this
-    event_handlers.emplace_back(*window);
+    window = make_reference<GlfwWindow>(project->get_settings(), window_properties, engine_event_dispatcher);
 
     vulkan_context = renderer::vulkan::VulkanContext::create();
 
@@ -56,9 +53,15 @@ Engine::Engine(const Reference<Project>& project, const ApplicationProperties& p
     swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(project->get_settings(), *vulkan_context, surface);
 
     if (project->get_type() == ProjectType::Editor)
-        modules.add_module<EditorModule>(*project, *vulkan_context, *swapchain, *window);
+    {
+        modules.add_module<EditorModule>(*project, *vulkan_context, *swapchain, *window, engine_event_dispatcher, input_event_dispatcher);
+    }
     else
+    {
+        system_orchestrator.connect(input_event_dispatcher);
         modules.add_module<RuntimeModule>(*project, *vulkan_context, *swapchain, *window);
+    }
+
 
     // TODO: make a O(1) lookup inside the module stack, will make this class redundant
     engine_context = std::make_unique<EngineContext>(
@@ -103,39 +106,6 @@ void Engine::prepare()
         scene.front()->set_viewport_bounds({0, 0, swapchain->get_width(), swapchain->get_height()});
         engine_context->get_system_orchestrator().set_active_scene(scene.front());
     }
-
-    auto scene = engine_context->get_resource_registry().immediate_load<Scene>(STRING_ID("game/default-scene"));
-    auto camera = scene->get_main_camera_entity();
-    camera.add_component<InputComponent>();
-
-    // for (auto entity_id: scene->get_registry().view<entt::entity>())
-    // {
-    //     Entity entity = Entity{entity_id, scene->get_registry().get_raw_registry()};
-    //     LOG_INFO_TAG("ECS", "Entity: {}", static_cast<entt::id_type>(entity));
-    //
-    //     if (entity.has_component<NameComponent>())
-    //     {
-    //         auto& name_comp = entity.get_component<NameComponent>();
-    //         LOG_INFO_TAG("ECS", "name -> {} {}", name_comp.icon, name_comp.name);
-    //     }
-    //     else
-    //     {
-    //         LOG_INFO_TAG("ECS", "\tname -> Unnamed");
-    //     }
-    //
-    //     for (auto&& [type_id, storage] : scene->get_registry().get_raw_registry().storage())
-    //     {
-    //         auto type = entt::resolve(storage.info());
-    //         if (type)
-    //         {
-    //             auto result = type.invoke(
-    //                 static_cast<entt::id_type>(STRING_ID("print").id),
-    //                 {},
-    //                 entt::forward_as_meta(entity)
-    //             );
-    //         }
-    //     }
-    // }
 }
 
 void Engine::process_events()
@@ -143,13 +113,13 @@ void Engine::process_events()
     window->process_events();
 }
 
-void Engine::on_resize(const WindowExtent extent)
+void Engine::on_resize(const WindowResizeEvent event) const
 {
-    if (extent.width == 0 || extent.height == 0)
+    if (event.extent.width == 0 || event.extent.height == 0)
         return;
 
     const auto glfw_window = reference_cast<GlfwWindow>(window);
-    auto [width, height] = glfw_window->resize(extent);
+    auto [width, height] = glfw_window->resize(event.extent);
 
     swapchain->on_resize(width, height);
 }

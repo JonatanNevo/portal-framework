@@ -22,6 +22,9 @@ InputManager::InputManager(ModuleStack& stack, entt::dispatcher& engine_dispatch
     {
         key_states[static_cast<Key>(i)] = KeyData{.key = static_cast<Key>(i)};
     }
+
+    engine_dispatcher.sink<ReportKeyActionEvent>().connect<&InputManager::report_key_action>(this);
+    engine_dispatcher.sink<ReportAnalogAxisEvent>().connect<&InputManager::report_axis_change>(this);
 }
 
 bool InputManager::is_key_pressed(const Key key) const
@@ -82,6 +85,7 @@ void InputManager::set_cursor_mode(CursorMode mode) const
 {
     engine_dispatcher.enqueue<SetMouseCursorEvent>(mode);
 }
+
 
 void InputManager::transition_key_states()
 {

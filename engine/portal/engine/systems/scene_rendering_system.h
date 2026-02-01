@@ -14,6 +14,9 @@ namespace portal
 class SceneRenderingSystem : public ecs::System<SceneRenderingSystem, ecs::Owns<StaticMeshComponent>, ecs::Views<TransformComponent>>
 {
 public:
+    void connect(ecs::Registry& registry, entt::dispatcher& dispatcher) override;
+    void disconnect(ecs::Registry& registry, entt::dispatcher& dispatcher) override;
+
     static void execute(FrameContext& frame, ecs::Registry& registry);
 
     static void update_global_descriptors(FrameContext& frame, ecs::Registry& registry);
