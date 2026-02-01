@@ -200,4 +200,90 @@ void draw_button_image(
     else
         draw_list->AddImage(static_cast<VkDescriptorSet>(image_normal), rect_min, rect_max, uv0, uv1, tint_normal);
 }
+
+int menu_item_icon_padding(const float icon_size)
+{
+    const float space_width = ImGui::CalcTextSize(" ").x;
+    return static_cast<int>((icon_size + ImGui::GetStyle().ItemInnerSpacing.x * 2.f) / space_width) + 1;
+}
+
+bool menu_item_with_image(
+    const vk::DescriptorSet image,
+    const char* label,
+    const char* shortcut,
+    const bool selected,
+    const bool enabled,
+    const float icon_size
+)
+{
+    const int num_spaces = menu_item_icon_padding(icon_size);
+
+    // Build padded label: [spaces][label]
+    char padded[256];
+    IM_ASSERT(num_spaces + static_cast<int>(ImStrlen(label)) < static_cast<int>(sizeof(padded)));
+    for (int i = 0; i < num_spaces; ++i)
+        padded[i] = ' ';
+    ImStrncpy(padded + num_spaces, label, static_cast<int>(sizeof(padded)) - num_spaces);
+
+    const bool clicked = ImGui::MenuItem(padded, shortcut, selected, enabled);
+
+    // Render at natural colour; only tint disabled items
+    const ImU32 tint = enabled
+                           ? ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_Text))
+                           : ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+
+    // Draw the icon into the reserved icon column area
+    const ImRect item_rect = get_item_rect();
+    const float pad_y = (item_rect.GetHeight() - icon_size) * 0.5f;
+    const ImVec2 icon_min{item_rect.Min.x + ImGui::GetStyle().ItemInnerSpacing.x, item_rect.Min.y + pad_y};
+    const ImVec2 icon_max{icon_min.x + icon_size, icon_min.y + icon_size};
+
+    ImGui::GetWindowDrawList()->AddImage(
+        static_cast<VkDescriptorSet>(image),
+        icon_min,
+        icon_max,
+        ImVec2(0.f, 0.f),
+        ImVec2(1.f, 1.f),
+        tint
+    );
+
+    return clicked;
+}
+
+bool begin_menu_with_image(vk::DescriptorSet image, const char* label, bool enabled, float icon_size)
+{
+    const int num_spaces = menu_item_icon_padding(icon_size);
+
+    // Build padded label: [spaces][label]
+    char padded[256];
+    IM_ASSERT(num_spaces + static_cast<int>(ImStrlen(label)) < static_cast<int>(sizeof(padded)));
+    for (int i = 0; i < num_spaces; ++i)
+        padded[i] = ' ';
+    ImStrncpy(padded + num_spaces, label, static_cast<int>(sizeof(padded)) - num_spaces);
+
+    const bool clicked = ImGui::BeginMenu(padded, enabled);
+
+    // Render at natural colour; only tint disabled items
+    ImU32 tint = enabled
+                     ? ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_Text))
+                     : ImGui::ColorConvertFloat4ToU32(ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+
+
+    // Draw the icon into the reserved icon column area
+    const ImRect item_rect = get_item_rect();
+    const float pad_y = (item_rect.GetHeight() - icon_size) * 0.5f;
+    const ImVec2 icon_min{item_rect.Min.x + ImGui::GetStyle().ItemInnerSpacing.x, item_rect.Min.y + pad_y};
+    const ImVec2 icon_max{icon_min.x + icon_size, icon_min.y + icon_size};
+
+    ImGui::GetWindowDrawList()->AddImage(
+        static_cast<VkDescriptorSet>(image),
+        icon_min,
+        icon_max,
+        ImVec2(0.f, 0.f),
+        ImVec2(1.f, 1.f),
+        tint
+    );
+
+    return clicked;
+}
 }

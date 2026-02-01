@@ -12,12 +12,34 @@
 
 namespace portal
 {
+
+class ImGuiImages
+{
+public:
+    ImGuiImages(ResourceRegistry& registry);
+    ~ImGuiImages();
+
+    void load_image(const StringId& name, const StringId& texture_id);
+
+    vk::DescriptorSet get_descriptor(const StringId& name) const;
+    ResourceReference<renderer::vulkan::VulkanTexture> get_texture(const StringId& name);
+
+private:
+    struct image_data
+    {
+        ResourceReference<renderer::vulkan::VulkanTexture> texture;
+        vk::DescriptorSet descriptor;
+    };
+
+    ResourceRegistry& registry;
+    std::unordered_map<StringId, image_data> images;
+};
+
 // TODO: is this really a panel?
 class WindowTitlebar final : public Panel
 {
 public:
     WindowTitlebar(ResourceRegistry& registry, EditorContext& context);
-    ~WindowTitlebar() override;
     void on_gui_render(EditorContext& editor_context, FrameContext& frame_context) override;
     [[nodiscard]] float get_height() const { return height; }
 
@@ -28,18 +50,7 @@ private:
     float height = 0;
     bool titlebar_hovered = false;
 
-    struct IconData
-    {
-        ResourceReference<renderer::vulkan::VulkanTexture> texture;
-        vk::DescriptorSet descriptor;
-    };
-
-    // Window button icons
-    IconData logo_icon;
-    IconData minimize_icon;
-    IconData maximize_icon;
-    IconData restore_icon;
-    IconData close_icon;
+    ImGuiImages icons;
 
     ImVec4 active_color;
     ImVec4 target_color;

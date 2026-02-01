@@ -1,13 +1,13 @@
 {
     "dependencies": [],
     "format": "Image",
-    "resource_id": "engine/editor/icons/close",
-    "source": "editor/icons/close.png",
+    "resource_id": "engine/editor/icons/generic/redo",
+    "source": "editor/icons/generic/redo.png",
     "texture": {
         "format": "RGBA8_UNorm",
         "hdr": false,
-        "height": 14,
-        "width": 14
+        "height": 24,
+        "width": 24
     },
     "type": "Texture"
 }

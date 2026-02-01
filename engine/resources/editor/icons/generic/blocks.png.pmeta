@@ -1,13 +1,13 @@
 {
     "dependencies": [],
     "format": "Image",
-    "resource_id": "engine/editor/icons/minimize",
-    "source": "editor/icons/minimize.png",
+    "resource_id": "engine/editor/icons/generic/blocks",
+    "source": "editor/icons/generic/blocks.png",
     "texture": {
         "format": "RGBA8_UNorm",
         "hdr": false,
-        "height": 2,
-        "width": 14
+        "height": 24,
+        "width": 24
     },
     "type": "Texture"
 }

@@ -19,42 +19,77 @@
 
 namespace portal
 {
-WindowTitlebar::WindowTitlebar(ResourceRegistry& registry, EditorContext& context)
-{
-    // Helper to load a texture and create an ImGui descriptor
-    auto load_icon = [&](StringId id) -> IconData
-    {
-        auto texture = registry.immediate_load<renderer::vulkan::VulkanTexture>(id);
-        const auto vulkan_image = reference_cast<renderer::vulkan::VulkanImage>(texture->get_image());
-        const auto& img_info = vulkan_image->get_image_info();
-        return {
-            texture,
-            ImGui_ImplVulkan_AddTexture(
-                img_info.sampler->get_vk_sampler(),
-                img_info.view->get_vk_image_view(),
-                static_cast<VkImageLayout>(vulkan_image->get_descriptor_image_info().imageLayout)
-            )
-        };
-    };
+ImGuiImages::ImGuiImages(ResourceRegistry& registry) : registry(registry) {}
 
+ImGuiImages::~ImGuiImages()
+{
+    for (auto& [texture, descriptor] : images | std::views::values)
+        ImGui_ImplVulkan_RemoveTexture(descriptor);
+}
+
+void ImGuiImages::load_image(const StringId& name, const StringId& texture_id)
+{
+    auto texture = registry.immediate_load<renderer::vulkan::VulkanTexture>(texture_id);
+    const auto vulkan_image = reference_cast<renderer::vulkan::VulkanImage>(texture->get_image());
+    const auto& img_info = vulkan_image->get_image_info();
+    images[name] = {
+        texture,
+        ImGui_ImplVulkan_AddTexture(
+            img_info.sampler->get_vk_sampler(),
+            img_info.view->get_vk_image_view(),
+            static_cast<VkImageLayout>(vulkan_image->get_descriptor_image_info().imageLayout)
+        )
+    };
+}
+
+vk::DescriptorSet ImGuiImages::get_descriptor(const StringId& name) const
+{
+    return images.at(name).descriptor;
+}
+
+ResourceReference<renderer::vulkan::VulkanTexture> ImGuiImages::get_texture(const StringId& name)
+{
+    return images.at(name).texture;
+}
+
+WindowTitlebar::WindowTitlebar(ResourceRegistry& registry, EditorContext& context) : icons(registry)
+{
     // Load window button icons
-    logo_icon = load_icon(STRING_ID("engine/portal_icon_64x64"));
-    minimize_icon = load_icon(STRING_ID("engine/editor/icons/minimize"));
-    maximize_icon = load_icon(STRING_ID("engine/editor/icons/maximize"));
-    restore_icon = load_icon(STRING_ID("engine/editor/icons/restore"));
-    close_icon = load_icon(STRING_ID("engine/editor/icons/close"));
+    icons.load_image(STRING_ID("logo"), STRING_ID("engine/portal_icon_64x64"));
+
+    // Window Icons
+    icons.load_image(STRING_ID("minimize"), STRING_ID("engine/editor/icons/window/minimize"));
+    icons.load_image(STRING_ID("maximize"), STRING_ID("engine/editor/icons/window/maximize"));
+    icons.load_image(STRING_ID("restore"), STRING_ID("engine/editor/icons/window/restore"));
+    icons.load_image(STRING_ID("close"), STRING_ID("engine/editor/icons/window/close"));
+
+    // Files Menu Bar
+    icons.load_image(STRING_ID("blocks"), STRING_ID("engine/editor/icons/generic/blocks"));
+    icons.load_image(STRING_ID("boxes"), STRING_ID("engine/editor/icons/generic/boxes"));
+    icons.load_image(STRING_ID("file-plus-corner"), STRING_ID("engine/editor/icons/generic/file-plus-corner"));
+    icons.load_image(STRING_ID("folder-cog"), STRING_ID("engine/editor/icons/generic/folder-cog"));
+    icons.load_image(STRING_ID("folder-open"), STRING_ID("engine/editor/icons/generic/folder-open"));
+    icons.load_image(STRING_ID("folder-plus"), STRING_ID("engine/editor/icons/generic/folder-plus"));
+    icons.load_image(STRING_ID("folder-clock"), STRING_ID("engine/editor/icons/generic/folder-clock"));
+    icons.load_image(STRING_ID("folders"), STRING_ID("engine/editor/icons/generic/folders"));
+    icons.load_image(STRING_ID("hammer"), STRING_ID("engine/editor/icons/generic/hammer"));
+    icons.load_image(STRING_ID("import"), STRING_ID("engine/editor/icons/generic/import"));
+    icons.load_image(STRING_ID("log-out"), STRING_ID("engine/editor/icons/generic/log-out"));
+    icons.load_image(STRING_ID("save"), STRING_ID("engine/editor/icons/generic/save"));
+    icons.load_image(STRING_ID("save-all"), STRING_ID("engine/editor/icons/generic/save-all"));
+
+    // Edit Menu Bar
+    icons.load_image(STRING_ID("cut"), STRING_ID("engine/editor/icons/generic/scissors"));
+    icons.load_image(STRING_ID("duplicate"), STRING_ID("engine/editor/icons/generic/duplicate"));
+    icons.load_image(STRING_ID("history"), STRING_ID("engine/editor/icons/generic/square-stack"));
+    icons.load_image(STRING_ID("copy"), STRING_ID("engine/editor/icons/generic/copy"));
+    icons.load_image(STRING_ID("undo"), STRING_ID("engine/editor/icons/generic/undo"));
+    icons.load_image(STRING_ID("redo"), STRING_ID("engine/editor/icons/generic/redo"));
+    icons.load_image(STRING_ID("paste"), STRING_ID("engine/editor/icons/generic/clipboard"));
+    icons.load_image(STRING_ID("trash"), STRING_ID("engine/editor/icons/generic/trash"));
 
     active_color = target_color = context.theme[imgui::ThemeColors::AccentPrimaryLeft];
     previous_color = context.theme[imgui::ThemeColors::Background1];
-}
-
-WindowTitlebar::~WindowTitlebar()
-{
-    ImGui_ImplVulkan_RemoveTexture(logo_icon.descriptor);
-    ImGui_ImplVulkan_RemoveTexture(minimize_icon.descriptor);
-    ImGui_ImplVulkan_RemoveTexture(maximize_icon.descriptor);
-    ImGui_ImplVulkan_RemoveTexture(restore_icon.descriptor);
-    ImGui_ImplVulkan_RemoveTexture(close_icon.descriptor);
 }
 
 void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& frame_context)
@@ -126,7 +161,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         const ImVec2 logo_rect_start{titlebar_min.x + logo_offset.x, titlebar_min.y + logo_offset.y};
         const ImVec2 logo_rect_max{logo_rect_start.x + logo_width, logo_rect_start.y + logo_height};
 
-        draw_list->AddImage(static_cast<VkDescriptorSet>(logo_icon.descriptor), logo_rect_start, logo_rect_max);
+        draw_list->AddImage(static_cast<VkDescriptorSet>(icons.get_descriptor(STRING_ID("logo"))), logo_rect_start, logo_rect_max);
     }
 
     ImGui::BeginHorizontal("Titlebar", {ImGui::GetWindowWidth() - window_padding.y * 2.0f, titlebar_height});
@@ -261,7 +296,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     ImGui::Spring();
     imgui::shift_cursor(0.f, buttons_offset);
     {
-        const auto icon_height = minimize_icon.texture->get_height();
+        const auto icon_height = icons.get_texture(STRING_ID("minimize"))->get_height();
         const float pad_y = (button_height - static_cast<float>(icon_height)) / 2.f;
         if (ImGui::InvisibleButton("Minimize", ImVec2(button_width, button_height)))
         {
@@ -269,7 +304,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         }
 
         imgui::draw_button_image(
-            minimize_icon.descriptor,
+            icons.get_descriptor(STRING_ID("minimize")),
             button_col_n,
             button_col_h,
             button_col_p,
@@ -287,7 +322,12 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
             editor_context.engine_dispatcher.enqueue<WindowRequestMaximizeOrRestoreEvent>();
         }
 
-        imgui::draw_button_image(is_maximised ? restore_icon.descriptor : maximize_icon.descriptor, button_col_n, button_col_h, button_col_p);
+        imgui::draw_button_image(
+            is_maximised ? icons.get_descriptor(STRING_ID("restore")) : icons.get_descriptor(STRING_ID("maximize")),
+            button_col_n,
+            button_col_h,
+            button_col_p
+        );
     }
 
     // Close Button
@@ -301,7 +341,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         }
 
         imgui::draw_button_image(
-            close_icon.descriptor,
+            icons.get_descriptor(STRING_ID("close")),
             editor_context.theme[imgui::ThemeColors::Text1],
             imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text1], 1.4f),
             button_col_p
@@ -313,90 +353,13 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
 
     height = titlebar_height;
 
-    // float y_offset = 0.0f;
-    // if (window.is_maximised())
-    // {
-    //     y_offset = 6.0f;
-    // }
-    //
-    // {
-    //     imgui::ScopedStyle window_padding(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 6.f));
-    //     imgui::ScopedStyle frame_padding(ImGuiStyleVar_FramePadding, ImVec2(6.f, 10.f));
-    //
-    //     height = ImGui::GetFrameHeight();
-    //
-    //     auto viewport = ImGui::GetMainViewport();
-    //     auto titlebar_position = ImVec2(viewport->Pos.x, viewport->Pos.y + y_offset);
-    //
-    //     ImGui::SetNextWindowPos(titlebar_position);
-    //     ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, height));
-    //     ImGui::SetNextWindowViewport(viewport->ID);
-    //
-    //     constexpr auto flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-    //         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
-    //         ImGuiWindowFlags_MenuBar;
-    //
-    //     imgui::ScopedWindow title_bar("##Titlebar", nullptr, flags);
-    //
-    //     // screen space titlebar hitbox
-    //     // ImVec2 p0 = ImGui::GetWindowPos();
-    //     // ImVec2 p1 = ImVec2(p0.x + ImGui::GetWindowSize().x, p0.y + ImGui::GetWindowSize().y);
-    //     // ImVec2 p0_screen = ImVec2(p0.x - viewport->Pos.x, p0.y - viewport->Pos.y);
-    //     // ImVec2 p1_screen = ImVec2(p1.x - viewport->Pos.x, p1.y - viewport->Pos.y);
-    //
-    //     const imgui::ScopedMenuBar menu_bar;
-    //     if (menu_bar.is_open)
-    //     {
-    //         // Calculate icon size based on menu bar height
-    //         const float menu_bar_height = ImGui::GetFrameHeight();
-    //         const float icon_size = menu_bar_height * 0.8f; // 80% of menu bar height
-    //
-    //         // Calculate vertical offset to center the icon
-    //         const float icon_offset_y = (menu_bar_height - icon_size) * 0.5f;
-    //
-    //         // Save the original Y position for menu items
-    //         const float original_y = ImGui::GetCursorPosY();
-    //
-    //         // Offset icon vertically to center it
-    //         ImGui::SetCursorPosY(original_y + icon_offset_y);
-    //         ImGui::Image(
-    //             reinterpret_cast<ImTextureID>(static_cast<VkDescriptorSet>(logo_icon)),
-    //             ImVec2(icon_size, icon_size),
-    //             ImVec2(0, 0),
-    //             ImVec2(1, 1),
-    //             ImVec4(1, 1, 1, 1),
-    //             ImVec4(0, 0, 0, 0)
-    //         );
-    //
-    //         // Continue on same line and restore original Y position for menus
-    //         ImGui::SameLine(icon_size + 5.f);
-    //         ImGui::SetCursorPosY(original_y);
-    //
-    //         auto item_label = [](std::string_view icon, std::string_view label)
-    //         {
-    //             if (icon.empty())
-    //             {
-    //                 return fmt::format("         {}", label);
-    //             }
-    //             return fmt::format("   {}  {}", icon, label);
-    //         };
-    //
     //         // Menus (File, Edit, ...)
-    //         {
-    //             auto padding = imgui::ScopedStyle(ImGuiStyleVar_WindowPadding, ImVec2{3.f, 3.f});
-    //             auto popup_background = editor_context.theme.scoped_color(ImGuiCol_PopupBg, imgui::ThemeColors::Background3);
-    //             auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
-    //
-    //             const float original_border = ImGui::GetStyle().PopupBorderSize;
-    //             ImGui::GetStyle().PopupBorderSize = 0.0f;
     //
     //             {
     //                 ImGui::SetNextWindowSizeConstraints(ImVec2(150, 0), ImVec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::max()));
     //                 const imgui::ScopedMenu menu("File");
     //                 if (menu.is_open)
     //                 {
-    //                     auto hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Accent2);
-    //                     auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
     //                     ImGui::MenuItem(item_label(ICON_FA_FILE_CIRCLE_PLUS, "New").c_str(), "Ctrl+N");
     //                     ImGui::MenuItem(item_label(ICON_FA_FOLDER_CLOSED, "Open...").c_str(), "Ctrl+O");
     //                     ImGui::Separator();
@@ -427,83 +390,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     //                 }
     //             }
     //
-    //             ImGui::GetStyle().PopupBorderSize = original_border;
     //         }
-    //
-    //     }
-    //
-    //     // Window Buttons
-    //     {
-    //         // Position buttons at top-right of the window, flush with edges
-    //         const ImVec2 window_pos = ImGui::GetWindowPos();
-    //         const ImVec2 window_sz = ImGui::GetWindowSize();
-    //
-    //         // Use actual window height for button sizing
-    //         const auto button_size = ImVec2(46.0f, window_sz.y);
-    //         const float total_width = button_size.x * 3.0f;
-    //         const float buttons_y = window_pos.y;
-    //         const float buttons_start_x = window_pos.x + window_sz.x - total_width;
-    //
-    //         ImDrawList* draw_list = ImGui::GetWindowDrawList();
-    //
-    //         auto draw_window_button = [&](const int index, const vk::DescriptorSet icon_texture, const ImVec2 icon_sz, const bool is_close = false) -> bool
-    //         {
-    //             const auto pos = ImVec2(buttons_start_x + static_cast<float>(index) * button_size.x, buttons_y);
-    //             const auto pos_max = ImVec2(pos.x + button_size.x, pos.y + button_size.y);
-    //
-    //             // Set cursor for invisible button hit testing
-    //             ImGui::SetCursorScreenPos(pos);
-    //             ImGui::PushID(index);
-    //             const bool clicked = ImGui::InvisibleButton("##btn", button_size);
-    //             const bool hovered = ImGui::IsItemHovered();
-    //             ImGui::PopID();
-    //
-    //             // Draw background on hover
-    //             if (hovered)
-    //             {
-    //                 ImU32 bg_color = is_close
-    //                     ? ImGui::ColorConvertFloat4ToU32(editor_context.theme[imgui::ThemeColors::Error])
-    //                     : ImGui::ColorConvertFloat4ToU32(editor_context.theme[imgui::ThemeColors::Primary1]);
-    //                 draw_list->AddRectFilled(pos, pos_max, bg_color);
-    //             }
-    //
-    //             // Draw icon centered in button
-    //             ImVec2 icon_pos = ImVec2(
-    //                 std::floor(pos.x + (button_size.x - icon_sz.x) * 0.5f),
-    //                 std::floor(pos.y + (button_size.y - icon_sz.y) * 0.5f)
-    //             );
-    //             ImVec2 icon_pos_max = ImVec2(icon_pos.x + icon_sz.x, icon_pos.y + icon_sz.y);
-    //
-    //             draw_list->AddImage(
-    //                 reinterpret_cast<ImTextureID>(static_cast<VkDescriptorSet>(icon_texture)),
-    //                 icon_pos,
-    //                 icon_pos_max
-    //             );
-    //
-    //             return clicked;
-    //         };
-    //
-    //         // Icon sizes matching the PNG dimensions
-    //         constexpr auto minimize_size = ImVec2(10.0f, 1.0f); // Horizontal line
-    //         constexpr auto square_size = ImVec2(10.0f, 10.0f);  // Square icons
-    //
-    //         // Minimize
-    //         if (draw_window_button(0, minimize_icon, minimize_size))
-    //             window.minimize();
-    //
-    //         // Maximize / Restore
-    //         const vk::DescriptorSet max_icon_texture = window.is_maximised() ? restore_icon : maximize_icon;
-    //         if (draw_window_button(1, max_icon_texture, square_size))
-    //         {
-    //             if (window.is_maximised())
-    //                 window.restore();
-    //             else
-    //                 window.maximize();
-    //         }
-    //
-    //         // Close
-    //         if (draw_window_button(2, close_icon, square_size, true))
-    //             window.close();
 }
 
 void WindowTitlebar::draw_menubar(EditorContext& editor_context)
@@ -513,141 +400,219 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
         {ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x, ImGui::GetFrameHeightWithSpacing()}
     };
 
+    imgui::ScopedGroup menubar_group;
     imgui::ScopedRectangleMenuBar menubar(menubar_rect);
     if (menubar)
     {
-        auto push_dark_text_if_active = [&editor_context](const char* name) -> std::optional<imgui::ScopedColor>
+        auto padding = imgui::ScopedStyle(ImGuiStyleVar_FramePadding, ImVec2{3.f, 3.f});
+        auto rounding = imgui::ScopedStyle(ImGuiStyleVar_PopupRounding, 2.f);
+        auto border_size = imgui::ScopedStyle(ImGuiStyleVar_PopupBorderSize, 1.f);
+
+        auto popup_background = editor_context.theme.scoped_color(ImGuiCol_PopupBg, imgui::ThemeColors::Background3);
+
+        bool menu_open = ImGui::IsPopupOpen("##menubar", ImGuiPopupFlags_AnyPopupId);
+
+        if (menu_open)
+        {
+            ImGui::PushStyleColor(ImGuiCol_Header, editor_context.theme[imgui::ThemeColors::AccentPrimaryLeft]);
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::AccentPrimaryLeft]);
+        }
+
+        auto pop_item_highlight = [&menu_open]
+        {
+            if (menu_open)
+            {
+                ImGui::PopStyleColor(3);
+                menu_open = false;
+            }
+        };
+
+        auto push_dark_text_if_active = [&editor_context](const char* name)
         {
             if (ImGui::IsPopupOpen(name))
             {
-                return std::make_optional<imgui::ScopedColor>(ImGuiCol_Text, editor_context.theme[imgui::ThemeColors::Text2]);
+                ImGui::PushStyleColor(ImGuiCol_Text, editor_context.theme[imgui::ThemeColors::Text2]);
+                return true;
             }
-            return std::nullopt;
+            return false;
         };
 
         {
-            [[maybe_unused]] auto pushed_color = push_dark_text_if_active("File");
-
-            if (ImGui::BeginMenu("File"))
+            bool color_pushed = push_dark_text_if_active("File");
+            imgui::ScopedMenu menu("File");
+            if (menu)
             {
+                pop_item_highlight();
+                color_pushed = false;
+
+                auto hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Accent2);
+                auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
+
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-plus")), "Create Project...");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-open")), "Open Project...");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-clock")), "Open Recent");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("save-all")), "Save Project");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("file-plus-corner")), "New Scene");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("save")), "Save Scene", "Ctrl+S");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("import")), "Save Scene As...", "Ctrl+Shift+S");
+
+                ImGui::Separator();
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("hammer")), "Build All");
+
+                if (imgui::begin_menu_with_image(icons.get_descriptor(STRING_ID("blocks")), "Build"))
                 {
-                    auto header_hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Background4);
-
-                    ImGui::MenuItem("Create Project...");
-                    ImGui::MenuItem("Open Project...");
-                    ImGui::MenuItem("Open Recent");
-                    ImGui::MenuItem("Save Project");
-                    ImGui::MenuItem("New Scene");
-                    ImGui::MenuItem("Save Scene", "Ctrl+S");
-                    ImGui::MenuItem("Save Scene As...", "Ctrl+Shift+S");
-
-                    ImGui::Separator();
-                    ImGui::MenuItem("Build All");
-                    if (ImGui::BeginMenu("Build"))
-                    {
-                        ImGui::MenuItem("Build Project Data");
-                        ImGui::MenuItem("Build Shaders");
-                        ImGui::MenuItem("Build Resource DB");
-                        ImGui::EndMenu();
-                    }
-
-                    ImGui::Separator();
-                    if (ImGui::MenuItem("Exit", "Alt + F4"))
-                    {
-                        editor_context.engine_dispatcher.enqueue<WindowRequestCloseEvent>();
-                    }
+                    imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-cog")), "Build Project Data");
+                    imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("boxes")), "Build Shaders");
+                    imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folders")), "Build Resource DB");
+                    ImGui::EndMenu();
                 }
 
-                ImGui::EndMenu();
+                ImGui::Separator();
+                if (imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("log-out")), "Exit", "Alt + F4"))
+                {
+                    editor_context.engine_dispatcher.enqueue<WindowRequestCloseEvent>();
+                }
+            }
+
+            if (color_pushed)
+            {
+                ImGui::PopStyleColor();
             }
         }
         {
-            [[maybe_unused]] auto pushed_color = push_dark_text_if_active("Edit");
-
-            if (ImGui::BeginMenu("Edit"))
+            bool color_pushed = push_dark_text_if_active("Edit");
+            imgui::ScopedMenu menu("Edit");
+            if (menu)
             {
+                pop_item_highlight();
+                color_pushed = false;
+
+                auto hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Accent2);
+                auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
+
+                if (imgui::menu_item_with_image(
+                    icons.get_descriptor(STRING_ID("undo")),
+                    "Undo",
+                    "Ctrl+Z",
+                    false,
+                    editor_context.snapshot_manager.can_undo()
+                ))
+                    editor_context.snapshot_manager.undo();
+
+                if (imgui::menu_item_with_image(
+                    icons.get_descriptor(STRING_ID("redo")),
+                    "Redo",
+                    "Ctrl+Y",
+                    false,
+                    editor_context.snapshot_manager.can_redo()
+                ))
+                    editor_context.snapshot_manager.redo();
+
+                if (imgui::begin_menu_with_image(icons.get_descriptor(STRING_ID("history")), "Snapshot History"))
                 {
-                    auto header_hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Background4);
-
-
-                    if (ImGui::MenuItem("Undo", "Ctrl+Z", false, editor_context.snapshot_manager.can_undo()))
-                        editor_context.snapshot_manager.undo();
-
-                    if (ImGui::MenuItem("Redo", "Ctrl+Y", false, editor_context.snapshot_manager.can_redo()))
-                        editor_context.snapshot_manager.redo();
-
-                    if (ImGui::BeginMenu("Snapshot History"))
+                    auto current_snapshot = editor_context.snapshot_manager.get_current_snapshot_index();
+                    for (auto [index, title, timestamp] : editor_context.snapshot_manager.list_snapshots())
                     {
-                        auto current_snapshot = editor_context.snapshot_manager.get_current_snapshot_index();
-                        for (auto [index, title, timestamp]: editor_context.snapshot_manager.list_snapshots())
+                        if (index == current_snapshot)
+                            ImGuiFonts::push_font(STRING_ID("Bold"));
+
+                        auto menu_item_title = fmt::format("{}###{}", title.string.data(), index);
+                        auto date = fmt::format("{:%Y-%m-%d %H:%M:%S}", timestamp);
+                        if (ImGui::MenuItem(menu_item_title.c_str(), date.c_str()))
                         {
-                            if (index == current_snapshot)
-                                ImGuiFonts::push_font(STRING_ID("Bold"));
-
-                            auto menu_item_title = fmt::format("{}###{}", title.string.data(), index);
-                            auto date = fmt::format("{:%Y-%m-%d %H:%M:%S}", timestamp);
-                            if (ImGui::MenuItem(menu_item_title.c_str(), date.c_str()))
-                            {
-                                editor_context.snapshot_manager.revert_snapshot(index);
-                            }
-
-                            if (index == current_snapshot)
-                                ImGuiFonts::pop_font();
+                            editor_context.snapshot_manager.revert_snapshot(index);
                         }
-                        ImGui::EndMenu();
+
+                        if (index == current_snapshot)
+                            ImGuiFonts::pop_font();
                     }
-
-                    ImGui::Separator();
-
-                    ImGui::MenuItem("Cut", "Ctrl+X");
-                    ImGui::MenuItem("Copy", "Ctrl+C");
-                    ImGui::MenuItem("Paste", "Ctrl+V");
-                    ImGui::MenuItem("Duplicate", "Ctrl+D");
-                    ImGui::MenuItem("Delete", "DELETE");
+                    ImGui::EndMenu();
                 }
 
-                ImGui::EndMenu();
+                ImGui::Separator();
+
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("cut")), "Cut", "Ctrl+X");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("copy")), "Copy", "Ctrl+C");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("paste")), "Paste", "Ctrl+V");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("duplicate")), "Duplicate", "Ctrl+D");
+                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("trash")), "Delete", "DELETE");
+            }
+
+            if (color_pushed)
+            {
+                ImGui::PopStyleColor();
             }
         }
+
         {
-            [[maybe_unused]] auto pushed_color = push_dark_text_if_active("View");
+            bool color_pushed = push_dark_text_if_active("View");
 
             if (ImGui::BeginMenu("View"))
             {
-                {
-                    auto header_hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Background4);
+                pop_item_highlight();
+                color_pushed = false;
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
 
-                    ImGui::MenuItem("Viewports");
-                    ImGui::MenuItem("Statistics");
-                    ImGui::Separator();
-                    ImGui::MenuItem("Reset To Default");
-                }
+                ImGui::MenuItem("Viewports");
+                ImGui::MenuItem("Statistics");
+                ImGui::Separator();
+                ImGui::MenuItem("Reset To Default");
 
+                ImGui::PopStyleColor();
                 ImGui::EndMenu();
             }
+
+            if (color_pushed)
+            {
+                ImGui::PopStyleColor();
+            }
         }
+
         {
-            [[maybe_unused]] auto pushed_color = push_dark_text_if_active("Tools");
+            bool color_pushed = push_dark_text_if_active("Tools");
 
             if (ImGui::BeginMenu("Tools"))
             {
+                pop_item_highlight();
+                color_pushed = false;
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
+
+                ImGui::MenuItem("Something");
+
+                ImGui::PopStyleColor();
                 ImGui::EndMenu();
             }
+
+            if (color_pushed)
+            {
+                ImGui::PopStyleColor();
+            }
         }
+
         {
-            [[maybe_unused]] auto pushed_color = push_dark_text_if_active("Help");
+            bool color_pushed = push_dark_text_if_active("Help");
 
             if (ImGui::BeginMenu("Help"))
             {
-                {
-                    auto header_hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Background4);
-                    ImGui::MenuItem("About");
-                    ImGui::MenuItem("Documentation");
-                }
+                pop_item_highlight();
+                color_pushed = false;
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
 
+                ImGui::MenuItem("About");
+                ImGui::MenuItem("Documentation");
+
+                ImGui::PopStyleColor();
                 ImGui::EndMenu();
             }
+
+            if (color_pushed)
+            {
+                ImGui::PopStyleColor();
+            }
         }
+
+        if (menu_open)
+            ImGui::PopStyleColor(2);
     }
 }
 } // portal
