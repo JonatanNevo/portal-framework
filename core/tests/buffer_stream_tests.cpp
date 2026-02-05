@@ -335,7 +335,7 @@ TEST_CASE("Empty buffer operations", "[buffer_stream]")
         uint8_t value = 123;
         writer.write(reinterpret_cast<char*>(&value), sizeof(value));
         REQUIRE(buffer.data != nullptr);
-        REQUIRE(buffer.size == 1);
+        REQUIRE(buffer.size == writer.INITIAL_CAPACITY);
     }
 }
 

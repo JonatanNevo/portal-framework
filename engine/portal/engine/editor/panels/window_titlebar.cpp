@@ -381,21 +381,32 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                 auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
 
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-plus")), "Create Project...");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-open")), "Open Project...");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-clock")), "Open Recent");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("save-all")), "Save Project");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("file-plus-corner")), "New Scene");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("save")), "Save Scene", "Ctrl+S");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("import")), "Save Scene As...", "Ctrl+Shift+S");
+                imgui::set_tooltip("Not Implemented!");
 
                 ImGui::Separator();
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("hammer")), "Build All");
+                imgui::set_tooltip("Not Implemented!");
 
                 if (imgui::begin_menu_with_image(icons.get_descriptor(STRING_ID("blocks")), "Build"))
                 {
                     imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-cog")), "Build Project Data");
+                    imgui::set_tooltip("Not Implemented!");
                     imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("boxes")), "Build Shaders");
+                    imgui::set_tooltip("Not Implemented!");
                     imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folders")), "Build Resource DB");
+                    imgui::set_tooltip("Not Implemented!");
                     ImGui::EndMenu();
                 }
 
@@ -464,10 +475,15 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                 ImGui::Separator();
 
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("cut")), "Cut", "Ctrl+X");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("copy")), "Copy", "Ctrl+C");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("paste")), "Paste", "Ctrl+V");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("duplicate")), "Duplicate", "Ctrl+D");
+                imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("trash")), "Delete", "DELETE");
+                imgui::set_tooltip("Not Implemented!");
             }
 
             if (color_pushed)
@@ -486,9 +502,12 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                 ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
 
                 ImGui::MenuItem("Viewports");
+                imgui::set_tooltip("Not Implemented!");
                 ImGui::MenuItem("Statistics");
+                imgui::set_tooltip("Not Implemented!");
                 ImGui::Separator();
                 ImGui::MenuItem("Reset To Default");
+                imgui::set_tooltip("Not Implemented!");
 
                 ImGui::PopStyleColor();
                 ImGui::EndMenu();
@@ -510,6 +529,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                 ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
 
                 ImGui::MenuItem("Something");
+                imgui::set_tooltip("Not Implemented!");
 
                 ImGui::PopStyleColor();
                 ImGui::EndMenu();
@@ -531,7 +551,9 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                 ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
 
                 ImGui::MenuItem("About");
+                imgui::set_tooltip("Not Implemented!");
                 ImGui::MenuItem("Documentation");
+                imgui::set_tooltip("Not Implemented!");
 
                 ImGui::PopStyleColor();
                 ImGui::EndMenu();
