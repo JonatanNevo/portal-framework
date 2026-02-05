@@ -690,7 +690,7 @@ public:
     template <reflection::IsVec T>
     bool get_property(const PropertyName& name, T& out)
     {
-        constexpr auto element_number = T::length();
+        [[maybe_unused]] constexpr auto element_number = T::length();
 
         const auto& property = get_property_from_map(name);
         if (property.type == reflection::PropertyType::invalid)

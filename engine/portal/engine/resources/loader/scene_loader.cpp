@@ -175,7 +175,7 @@ void SceneLoader::dearchive_scene(const Reference<Scene>& scene, ArchiveObject& 
         auto entity = ecs_registry.create_entity();
         entity.add_component<NameComponent>(name, icon);
 
-        for (const auto& comp_name : object | std::views::keys)
+        for (const auto& [comp_name, _] : object)
         {
             auto type = entt::resolve(static_cast<entt::id_type>(STRING_ID(comp_name).id));
             if (type)
@@ -204,7 +204,7 @@ void SceneLoader::dearchive_scene(const Reference<Scene>& scene, ArchiveObject& 
         auto entity = ecs_registry.find_by_name(name);
         PORTAL_ASSERT(entity.has_value(), "Failed to find entity with name: {}", name);
 
-        for (const auto& comp_name : object | std::views::keys)
+        for (const auto& [comp_name, _] : object)
         {
             auto type = entt::resolve(static_cast<entt::id_type>(STRING_ID(comp_name).id));
             type.invoke(

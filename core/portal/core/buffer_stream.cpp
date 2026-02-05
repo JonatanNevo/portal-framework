@@ -78,8 +78,8 @@ BufferStreamWriter::BufferStreamWriter(Buffer& buffer)
 
 std::streambuf::int_type BufferStreamWriter::overflow(std::streambuf::int_type ch)
 {
-    if (ch == traits_type::eof())
-        return traits_type::eof();
+    if (ch == std::streambuf::traits_type::eof())
+        return std::streambuf::traits_type::eof();
 
     const size_t current_pos = get_position();
 
