@@ -64,8 +64,8 @@ private:
 private:
     Project& project;
     renderer::vulkan::VulkanSwapchain& swapchain;
-    entt::dispatcher& engine_dispatcher;
-    entt::dispatcher& input_dispatcher;
+    [[maybe_unused]] entt::dispatcher& engine_dispatcher;
+    [[maybe_unused]] entt::dispatcher& input_dispatcher;
 
     std::string config_path_storage;  // Must be declared before im_gui_renderer for proper destruction order
     RuntimeModule runtime_module;

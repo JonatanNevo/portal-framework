@@ -278,7 +278,7 @@ void SceneLoader::deserialize_scene(const Reference<Scene>& scene, Deserializer&
     deserializer.get_value(name);
     deserializer.get_value(node_count);
 
-    for (int i = 0; i < node_count; ++i)
+    for (size_t i = 0; i < node_count; ++i)
     {
         StringId entity_name;
         std::string icon;
@@ -291,7 +291,7 @@ void SceneLoader::deserialize_scene(const Reference<Scene>& scene, Deserializer&
         size_t component_count;
         deserializer.get_value(component_count);
 
-        for (int j = 0; j < component_count; ++j)
+        for (size_t j = 0; j < component_count; ++j)
         {
             StringId component_type;
             deserializer.get_value(component_type);
