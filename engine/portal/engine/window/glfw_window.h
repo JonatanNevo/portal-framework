@@ -36,6 +36,7 @@ public:
     void restore() override;
     void minimize() override;
     void center_window() override;
+    WindowExtent resize(const WindowExtent& requested_extent) override;
 
     void set_vsync(bool enable) override;
     void set_resizeable(bool enable) override;

@@ -121,7 +121,7 @@ struct WindowTitleConsts
 
 void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& frame_context)
 {
-    constexpr  WindowTitleConsts consts;
+    constexpr WindowTitleConsts consts;
 
     const ImVec2 window_padding = ImGui::GetCurrentWindow()->WindowPadding;
 
@@ -250,6 +250,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
 
             ImGui::Text("%s [%s]", title, PORTAL_BUILD_CONFIG_NAME);
         }
+
         imgui::set_tooltip(fmt::format("Current Project ({})", editor_context.project.get_project_directory().generic_string()));
         ImGui::SetCursorPos(current_position);
     }
