@@ -632,7 +632,7 @@ inline void RenderNotifications()
                 // If the button is pressed, we want to remove the notification
                 if (Button(ICON_FA_XMARK))
                 {
-                    RemoveNotification(i);
+                    RemoveNotification(static_cast<int>(i));
                 }
             }
 
