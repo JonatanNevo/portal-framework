@@ -80,36 +80,54 @@ void EditorModule::gui_update(FrameContext& frame)
     io.ConfigWindowsResizeFromEdges = io.BackendFlags & ImGuiBackendFlags_HasMouseCursors;
 
     constexpr ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse
-        | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+        | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoMove;
     const ImGuiViewport* imgui_viewport = ImGui::GetMainViewport();
 
+    // Check if viewport size changed (external GLFW resize)
+    const bool viewport_changed = (last_viewport_size.x != imgui_viewport->Size.x || last_viewport_size.y != imgui_viewport->Size.y);
+    if (viewport_changed)
+    {
+        last_viewport_size = imgui_viewport->Size;
+    }
+
     ImGui::SetNextWindowPos(ImVec2(imgui_viewport->Pos.x, imgui_viewport->Pos.y));
-    ImGui::SetNextWindowSize(ImVec2(imgui_viewport->Size.x, imgui_viewport->Size.y));
+    // Only force window size if viewport changed externally
+    if (viewport_changed)
+    {
+        ImGui::SetNextWindowSize(ImVec2(imgui_viewport->Size.x, imgui_viewport->Size.y));
+    }
     ImGui::SetNextWindowViewport(imgui_viewport->ID);
 
-#ifdef PORTAL_PLATFORM_WINDOWS
-    // TODO: this can be a generic function on the window class
-    const auto& vulkan_window = dynamic_cast<const GlfwWindow&>(editor_context.window);
-    bool is_maximized = glfwGetWindowAttrib(vulkan_window.get_handle(), GLFW_MAXIMIZED) == GLFW_TRUE;
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, is_maximized ? ImVec2(6.0f, 6.0f) : ImVec2(1.0f, 1.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
-#else
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-#endif
+    const auto& window_props = editor_context.window.get_properties();
+    ImGui::SetNextWindowSizeConstraints(
+        ImVec2(static_cast<float>(window_props.minimum_extent.width), static_cast<float>(window_props.minimum_extent.height)),
+        ImVec2(FLT_MAX, FLT_MAX)
+    );
 
+    const bool is_maximized = editor_context.window.is_maximised();
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, is_maximized ? ImVec2(0.0f, 0.0f) : ImVec2(1.0f, 1.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, is_maximized ? 0.f : 3.0f);
     ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4{0.0f, 0.0f, 0.0f, 0.0f});
-    ImGui::Begin("Main Window", nullptr, window_flags);
-    ImGui::PopStyleColor(); // MenuBarBg
+    ImGui::PushStyleColor(ImGuiCol_Border, editor_context.theme[imgui::ThemeColors::Background2]);
+
+    ImGui::Begin("Main Window", nullptr, is_maximized ? window_flags | ImGuiWindowFlags_NoResize : window_flags);
+
+    ImGui::PopStyleColor(2);
     ImGui::PopStyleVar(2);
 
+    // Check if the ImGui window was manually resized and update GLFW window accordingly
+    const ImGuiWindow* window = ImGui::GetCurrentWindow();
+    const ImVec2 window_size = window->Size;
+
+    if (!viewport_changed && (window_size.x != imgui_viewport->Size.x || window_size.y != imgui_viewport->Size.y))
     {
-        auto window_border = editor_context.theme.scoped_color(ImGuiCol_Border, imgui::ThemeColors::Background2);
-        if (!is_maximized)
-        {
-            // render borders
-            // handle resize
-        }
+        editor_context.window.resize(
+            WindowExtent{
+                static_cast<size_t>(window_size.x),
+                static_cast<size_t>(window_size.y)
+            }
+        );
     }
 
     titlebar.on_gui_render(editor_context, frame);

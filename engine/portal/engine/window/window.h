@@ -54,6 +54,8 @@ struct WindowProperties
     bool decorated = true;
 
     size_t requested_frames_in_flight = 3;
+
+    WindowExtent minimum_extent{1280, 720};
 };
 
 class Window
@@ -88,7 +90,7 @@ public:
      * @param requested_extent The preferred window extent.
      * @return The new window extent, based on window limitation and mode
      */
-    WindowExtent resize(const WindowExtent& requested_extent);
+    virtual WindowExtent resize(const WindowExtent& requested_extent);
 
     /**
      * Creates a surface inside a gpu context and returns it

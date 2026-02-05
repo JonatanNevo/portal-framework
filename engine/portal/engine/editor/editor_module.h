@@ -77,5 +77,7 @@ private:
     Viewport viewport;
 
     InputRouter input_router;
+
+    ImVec2 last_viewport_size{0.0f, 0.0f};
 };
 } // portal

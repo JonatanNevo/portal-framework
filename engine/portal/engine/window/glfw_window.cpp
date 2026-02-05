@@ -353,6 +353,14 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
 
     glfwSetInputMode(handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
 
+    glfwSetWindowSizeLimits(
+        handle,
+        static_cast<int>(properties.minimum_extent.width),
+        static_cast<int>(properties.minimum_extent.height),
+        GLFW_DONT_CARE,
+        GLFW_DONT_CARE
+    );
+
     dispatcher.sink<SetMouseCursorEvent>().connect<&GlfwWindow::change_mouse_mode>(this);
     dispatcher.sink<WindowRequestMaximizeOrRestoreEvent>().connect<&GlfwWindow::maximize_or_restore>(this);
     dispatcher.sink<WindowDragEvent>().connect<&GlfwWindow::window_drag>(this);
@@ -436,6 +444,13 @@ void GlfwWindow::center_window()
     const int x = (mode->width / 2) - (mode->width / 2);
     const int y = (mode->height / 2) - (mode->height / 2);
     glfwSetWindowPos(handle, x, y);
+}
+
+WindowExtent GlfwWindow::resize(const WindowExtent& requested_extent)
+{
+    const auto fitted_extent = Window::resize(requested_extent);
+    glfwSetWindowSize(handle, static_cast<int>(fitted_extent.width), static_cast<int>(fitted_extent.height));
+    return fitted_extent;
 }
 
 void GlfwWindow::set_vsync(const bool enable)

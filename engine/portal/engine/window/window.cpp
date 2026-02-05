@@ -7,14 +7,14 @@
 
 namespace portal
 {
-Window::Window(const WindowProperties& properties, entt::dispatcher& dispatcher) : properties(properties), dispatcher(dispatcher) {}
+Window::Window(const WindowProperties& properties, entt::dispatcher& dispatcher) : dispatcher(dispatcher), properties(properties) {}
 
 WindowExtent Window::resize(const WindowExtent& requested_extent)
 {
     if (properties.resizeable)
     {
-        properties.extent.width = requested_extent.width;
-        properties.extent.height = requested_extent.height;
+        properties.extent.width = std::max(requested_extent.width, properties.minimum_extent.width);
+        properties.extent.height = std::max(requested_extent.height, properties.minimum_extent.height);
     }
 
     return properties.extent;
