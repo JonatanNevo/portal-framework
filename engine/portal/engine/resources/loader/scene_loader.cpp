@@ -36,7 +36,9 @@ ResourceData SceneLoader::load(const SourceMetadata& meta, const Reference<Resou
         load_binary_portal_scene(scene, *source);
     }
     else
+    {
         PORTAL_ASSERT(false, "Unsupported scene format: {}", meta.format);
+    }
 
     return {scene, source, meta};
 }
@@ -47,14 +49,15 @@ void SceneLoader::save(ResourceData& resource_data)
     auto& raw_registry = scene->get_registry().get_raw_registry();
     const auto dirty = resource_data.dirty;
 
-    if (dirty & ResourceDirtyBits::DataChange | ResourceDirtyBits::StateChange)
+    if (dirty & (ResourceDirtyBits::DataChange | ResourceDirtyBits::StateChange))
     {
         JsonArchive archive;
         archive_scene(scene, archive);
         auto out_stream = resource_data.source->ostream();
         archive.dump(*out_stream);
 
-        for (auto descendant : scene->get_scene_entity().descendants())
+        auto descendants = scene->get_scene_entity().descendants();
+        for (auto descendant : descendants)
         {
             std::vector<StringId> dependencies;
             for (auto&& [type_id, storage] : raw_registry.storage())
@@ -117,7 +120,8 @@ void SceneLoader::archive_scene(const Reference<Scene>& scene, ArchiveObject& ar
     archive.add_property("name", scene->get_id());
 
     std::vector<ArchiveObject> nodes;
-    for (auto descendant : scene->get_scene_entity().descendants())
+    auto descendants = scene->get_scene_entity().descendants();
+    for (auto descendant : descendants)
     {
         auto& object = nodes.emplace_back(ArchiveObject{});
         if (descendant.has_component<NameComponent>())
@@ -224,7 +228,8 @@ void SceneLoader::serialize_scene(const Reference<Scene>& scene, Serializer& ser
 
     serializer.add_value(scene->get_id());
     serializer.add_value(scene->get_scene_entity().descendants_count());
-    for (auto descendant : scene->get_scene_entity().descendants())
+    auto descendants = scene->get_scene_entity().descendants();
+    for (auto descendant : descendants)
     {
         if (descendant.has_component<NameComponent>())
         {
@@ -316,7 +321,8 @@ void SceneLoader::deserialize_scene(const Reference<Scene>& scene, Deserializer&
     }
 
     // Post-Serialization pass
-    for (auto entity : scene->get_scene_entity().descendants())
+    auto descendants = scene->get_scene_entity().descendants();
+    for (auto entity : descendants)
     {
         for (auto&& [type_id, storage] : ecs_registry.get_raw_registry().storage())
         {
