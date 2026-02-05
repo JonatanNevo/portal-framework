@@ -92,12 +92,40 @@ WindowTitlebar::WindowTitlebar(ResourceRegistry& registry, EditorContext& contex
     previous_color = context.theme[imgui::ThemeColors::Background1];
 }
 
+struct WindowTitleConsts
+{
+    float buttons_offset = 0.f;
+    float titlebar_height_scale = 1.2f;
+    float color_background_width = 380.f;
+
+    float logo_scale = 0.8f;
+    float logo_offset = 3.f;
+
+    float menubar_x_offset_component = 9.f;
+    float menubar_y_offset = 4.f;
+
+    float window_title_y_offset = 6.f;
+
+    float button_spacing_1 = 17.f;
+    float button_spacing_2 = 15.f;
+    float button_spacing_3 = 18.f;
+
+    float button_normal_multiplier = 0.9f;
+    float button_hovered_multiplier = 1.2f;
+
+    float button_width = 14.f;
+    float button_height = 14.f;
+
+    float animation_time = 0.15f;
+};
+
 void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& frame_context)
 {
+    constexpr  WindowTitleConsts consts;
+
     const ImVec2 window_padding = ImGui::GetCurrentWindow()->WindowPadding;
 
-    constexpr auto buttons_offset = 0.f;
-    const float titlebar_height = ImGui::GetFrameHeightWithSpacing() * 2;
+    const float titlebar_height = ImGui::GetFrameHeightWithSpacing() * consts.titlebar_height_scale;
 
     ImGui::SetCursorPos({window_padding.x, window_padding.y});
     const auto titlebar_min = ImGui::GetCursorScreenPos();
@@ -110,12 +138,11 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     auto titlebar_color = ImGui::GetColorU32(editor_context.theme[imgui::ThemeColors::Background1]);
     draw_list->AddRectFilled(titlebar_min, titlebar_max, titlebar_color);
 
-    constexpr float animation_time = 0.15f;
-    static float s_current_animation_timer = animation_time;
+    static float s_current_animation_timer = consts.animation_time;
 
     if (animate_titlebar_color)
     {
-        const float animation_percentage = 1.f - (s_current_animation_timer / animation_time);
+        const float animation_percentage = 1.f - (s_current_animation_timer / consts.animation_time);
         s_current_animation_timer -= frame_context.delta_time;
 
         const float r = std::lerp(previous_color.x, target_color.x, animation_percentage);
@@ -125,7 +152,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         active_color = ImVec4(r, g, b, 1.f);
         if (s_current_animation_timer <= 0.f)
         {
-            s_current_animation_timer = animation_time;
+            s_current_animation_timer = consts.animation_time;
             active_color = target_color;
             animate_titlebar_color = false;
         }
@@ -136,7 +163,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
 
     draw_list->AddRectFilledMultiColor(
         titlebar_min,
-        ImVec2(titlebar_min.x + 380.0f, titlebar_max.y),
+        ImVec2(titlebar_min.x + consts.color_background_width, titlebar_max.y),
         left_color,
         titlebar_color,
         titlebar_color,
@@ -144,7 +171,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     );
 
     draw_list->AddRectFilledMultiColor(
-        ImVec2(titlebar_max.x - 380.0f, titlebar_min.y),
+        ImVec2(titlebar_max.x - consts.color_background_width, titlebar_min.y),
         titlebar_max,
         titlebar_color,
         right_color,
@@ -152,12 +179,12 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         titlebar_color
     );
 
+    const auto logo_width = titlebar_height * consts.logo_scale;
+    const auto logo_height = titlebar_height * consts.logo_scale;
+
     // Logo
     {
-        const auto logo_width = titlebar_height * 0.8f;
-        const auto logo_height = titlebar_height * 0.8f;
-
-        const ImVec2 logo_offset{2.f + window_padding.x, 2.f + window_padding.y};
+        constexpr ImVec2 logo_offset{consts.logo_offset, consts.logo_offset};
         const ImVec2 logo_rect_start{titlebar_min.x + logo_offset.x, titlebar_min.y + logo_offset.y};
         const ImVec2 logo_rect_max{logo_rect_start.x + logo_width, logo_rect_start.y + logo_height};
 
@@ -169,13 +196,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     static float move_offset_y;
     const float w = ImGui::GetContentRegionAvail().x;
 
-    constexpr auto button_spacing_1 = 17.f;
-    constexpr auto button_spacing_2 = 15.f;
-    constexpr auto button_spacing_3 = 18.f;
-
-    constexpr float button_width = 14.f;
-    constexpr float button_height = 14.f;
-    constexpr float buttons_area_width = button_spacing_1 + button_spacing_2 + button_spacing_3 + button_width * 3.f;
+    constexpr float buttons_area_width = consts.button_spacing_1 + consts.button_spacing_2 + consts.button_spacing_3 + consts.button_width * 3.f;
 
     // Title bar drag area
     const auto* root_window = ImGui::GetCurrentWindow();
@@ -209,96 +230,45 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     // Draw Menubar
     ImGui::SuspendLayout();
     {
-        const float logo_offset = 16.0f * 2.0f + 41.0f + window_padding.x;
-        ImGui::SetCursorPos(ImVec2(logo_offset, 4.0f));
+        const float logo_offset = consts.menubar_x_offset_component + logo_width + window_padding.x;
+        ImGui::SetCursorPos(ImVec2(logo_offset, consts.menubar_y_offset));
         draw_menubar(editor_context);
 
         if (ImGui::IsItemHovered())
             titlebar_hovered = false;
     }
 
-    const float menubar_right = ImGui::GetItemRectMax().x - ImGui::GetCurrentWindow()->Pos.x;
-
-
     // Centered Window title
     {
         auto current_position = ImGui::GetCursorPos();
         const char* title = "Portal Engine";
-        auto scoped_font = imgui::ScopedFont(STRING_ID("BoldTitle"));
-
-        ImVec2 text_size = ImGui::CalcTextSize(title);
-        ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth() * 0.5f - text_size.x * 0.5f, 2.0f + window_padding.y + 6.0f));
-
-        ImGui::Text("%s [%s]", title, PORTAL_BUILD_CONFIG_NAME);
-        ImGui::SetCursorPos(current_position);
-    }
-
-    // Current Scene Name
-    {
-        auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
-        auto* scene_context = std::any_cast<SceneContext>(&frame_context.scene_context);
-
-        auto scene_name = scene_context->active_scene->get_id().string;
-        ImGui::SetCursorPosX(menubar_right);
-        imgui::shift_cursor(50.f, titlebar_height / 2.f);
 
         {
-            auto scoped_font = imgui::ScopedFont(STRING_ID("Bold"));
-            ImGui::Text("%s", scene_name.data());
-        }
-        imgui::set_tooltip(fmt::format("Current Scene ({})", scene_context->active_scene.get_resource_id()));
+            auto scoped_font = imgui::ScopedFont(STRING_ID("BoldTitle"));
+            ImVec2 text_size = ImGui::CalcTextSize(title);
+            ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth() * 0.5f - text_size.x * 0.5f, window_padding.y + consts.window_title_y_offset));
 
-        constexpr float underline_thickness = 2.f;
-        constexpr float underling_expand_width = 4.f;
-        ImRect item_rect = imgui::expand_rect(imgui::get_item_rect(), underling_expand_width, 0.f);
-
-        // Vertical Line
-        item_rect.Max.x = item_rect.Min.x + underline_thickness;
-        item_rect = imgui::rect_offset(item_rect, -underline_thickness * 2, 0.f);
-        draw_list->AddRectFilled(
-            item_rect.Min,
-            item_rect.Max,
-            ImGui::ColorConvertFloat4ToU32(editor_context.theme[imgui::ThemeColors::Primary1]),
-            2.f
-        );
-    }
-
-    // Project Name
-    {
-        auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
-        auto border = editor_context.theme.scoped_color(ImGuiCol_Border, imgui::ThemeColors::Primary2);
-
-        const auto title = std::string(editor_context.project.get_name().string);
-        const auto text_size = ImGui::CalcTextSize(title.c_str());
-        const float right_offset = ImGui::GetWindowWidth() / 5.f;
-
-        ImGui::SameLine();
-        ImGui::SetCursorPosX(ImGui::GetWindowWidth() - right_offset - text_size.x);
-        imgui::shift_cursor(0.f, 1.f + window_padding.y - titlebar_height / 2.f);
-
-        {
-            imgui::ScopedFont bold_font(STRING_ID("Bold"));
-            ImGui::Text("%s", title.c_str());
+            ImGui::Text("%s [%s]", title, PORTAL_BUILD_CONFIG_NAME);
         }
         imgui::set_tooltip(fmt::format("Current Project ({})", editor_context.project.get_project_directory().generic_string()));
-        imgui::draw_border(imgui::expand_rect(imgui::get_item_rect(), 24.f, 68.f), 1.f, 3.f, {0.f, -60.f});
+        ImGui::SetCursorPos(current_position);
     }
 
     ImGui::ResumeLayout();
 
     // Window buttons
-    const auto button_col_n = imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text1], 0.9f);
-    const auto button_col_h = imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text1], 1.2f);
+    const auto button_col_n = imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text1], consts.button_normal_multiplier);
+    const auto button_col_h = imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text1], consts.button_hovered_multiplier);
     const auto button_col_p = editor_context.theme[imgui::ThemeColors::Text2];
 
     ImGui::SetCursorPosY(titlebar_min.y + window_padding.y);
     // Minimize Button
     ImGui::Spring();
-    imgui::shift_cursor(0.f, buttons_offset);
+    imgui::shift_cursor(0.f, consts.buttons_offset);
     {
         const auto icon_height = icons.get_texture(STRING_ID("minimize"))->get_height();
-        const float pad_y = (button_height - static_cast<float>(icon_height)) / 2.f;
-        if (ImGui::InvisibleButton("Minimize", ImVec2(button_width, button_height)))
+        const float pad_y = (consts.button_height - static_cast<float>(icon_height)) / 2.f;
+        if (ImGui::InvisibleButton("Minimize", ImVec2(consts.button_width, consts.button_height)))
         {
             editor_context.engine_dispatcher.enqueue<WindowRequestMinimizeEvent>();
         }
@@ -313,11 +283,11 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     }
 
     // Maximize Button
-    ImGui::Spring(-1.0f, button_spacing_1);
-    imgui::shift_cursor(0.f, buttons_offset);
+    ImGui::Spring(-1.0f, consts.button_spacing_1);
+    imgui::shift_cursor(0.f, consts.buttons_offset);
     {
         auto is_maximised = editor_context.window.is_maximised();
-        if (ImGui::InvisibleButton("Maximize", ImVec2(button_width, button_height)))
+        if (ImGui::InvisibleButton("Maximize", ImVec2(consts.button_width, consts.button_height)))
         {
             editor_context.engine_dispatcher.enqueue<WindowRequestMaximizeOrRestoreEvent>();
         }
@@ -332,10 +302,10 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
 
     // Close Button
     {
-        ImGui::Spring(-1.0f, button_spacing_2);
-        imgui::shift_cursor(0.f, buttons_offset);
+        ImGui::Spring(-1.0f, consts.button_spacing_2);
+        imgui::shift_cursor(0.f, consts.buttons_offset);
 
-        if (ImGui::InvisibleButton("Close", ImVec2(button_width, button_height)))
+        if (ImGui::InvisibleButton("Close", ImVec2(consts.button_width, consts.button_height)))
         {
             editor_context.engine_dispatcher.enqueue<WindowRequestCloseEvent>();
         }
@@ -348,49 +318,10 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         );
     }
 
-    ImGui::Spring(-1.0f, button_spacing_3);
+    ImGui::Spring(-1.0f, consts.button_spacing_3);
     ImGui::EndHorizontal();
 
     height = titlebar_height;
-
-    //         // Menus (File, Edit, ...)
-    //
-    //             {
-    //                 ImGui::SetNextWindowSizeConstraints(ImVec2(150, 0), ImVec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::max()));
-    //                 const imgui::ScopedMenu menu("File");
-    //                 if (menu.is_open)
-    //                 {
-    //                     ImGui::MenuItem(item_label(ICON_FA_FILE_CIRCLE_PLUS, "New").c_str(), "Ctrl+N");
-    //                     ImGui::MenuItem(item_label(ICON_FA_FOLDER_CLOSED, "Open...").c_str(), "Ctrl+O");
-    //                     ImGui::Separator();
-    //                     ImGui::MenuItem(item_label(ICON_FA_FLOPPY_DISK, "Save").c_str(), "Ctrl+S");
-    //                     ImGui::Separator();
-    //                     ImGui::MenuItem(item_label(ICON_FA_ARROW_UP_FROM_BRACKET, "Export...").c_str());
-    //                     ImGui::MenuItem(item_label(ICON_FA_ARROW_UP_FROM_BRACKET, "Export...").c_str());
-    //                     ImGui::MenuItem(item_label(ICON_FA_ARROW_UP_FROM_BRACKET, "Export...").c_str());
-    //                     ImGui::Separator();
-    //                     if (ImGui::MenuItem(item_label(ICON_FA_ROTATE_LEFT, "Undo").c_str(), "Ctrl+Z"))
-    //                     {
-    //                         editor_context.snapshot_manager.revert_snapshot();
-    //                     }
-    //                 }
-    //             }
-    //
-    //             {
-    //                 ImGui::SetNextWindowSizeConstraints(ImVec2(150, 0), ImVec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::max()));
-    //                 const imgui::ScopedMenu menu("View");
-    //                 if (menu.is_open)
-    //                 {
-    //                     auto hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Accent2);
-    //                     auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
-    //                     if (ImGui::MenuItem(item_label(ICON_FA_ARROW_ROTATE_LEFT, "Restore To Default").c_str()))
-    //                     {
-    //                         editor_context.restore_default_settings();
-    //                     }
-    //                 }
-    //             }
-    //
-    //         }
 }
 
 void WindowTitlebar::draw_menubar(EditorContext& editor_context)
