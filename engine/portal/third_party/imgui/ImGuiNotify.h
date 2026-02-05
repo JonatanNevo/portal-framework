@@ -45,6 +45,7 @@
 #define NOTIFY_RENDER_OUTSIDE_MAIN_WINDOW    false // If true, the notifications will be rendered in the corner of the monitor, otherwise in the corner of the main window
 
 
+
 #endif
 
 /**
@@ -562,9 +563,12 @@ inline void RenderNotifications()
 #endif
 
         // Set notification window flags
-        if (!NOTIFY_USE_DISMISS_BUTTON && currentToast->getOnButtonPress() == nullptr)
+        if constexpr (!NOTIFY_USE_DISMISS_BUTTON)
         {
-            currentToast->setWindowFlags(NOTIFY_DEFAULT_TOAST_FLAGS | ImGuiWindowFlags_NoInputs);
+            if (currentToast->getOnButtonPress() == nullptr)
+            {
+                currentToast->setWindowFlags(NOTIFY_DEFAULT_TOAST_FLAGS | ImGuiWindowFlags_NoInputs);
+            }
         }
 
         Begin(windowName, nullptr, currentToast->getWindowFlags());

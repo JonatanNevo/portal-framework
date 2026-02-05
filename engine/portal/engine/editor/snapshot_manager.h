@@ -5,7 +5,7 @@
 
 #pragma once
 #include <array>
-#include <ranges>
+#include <vector>
 
 #include "portal/core/buffer.h"
 #include "portal/core/strings/string_id.h"
@@ -48,23 +48,17 @@ public:
 
     [[nodiscard]] size_t get_current_snapshot_index() const { return current_snapshot; }
 
-    [[nodiscard]] auto list_snapshots() const
+    [[nodiscard]] std::vector<SnapshotView> list_snapshots() const
     {
-        return snapshots
-            | std::views::filter(
-                [](const auto& snapshot)
-                {
-                    return snapshot.data != nullptr;
-                }
-            )
-            | std::views::enumerate
-            | std::views::transform(
-                [](const auto& pair)
-                {
-                    auto& [index, snapshot] = pair;
-                    return SnapshotView{static_cast<size_t>(index), snapshot.title, snapshot.timestamp};
-                }
-            );
+        std::vector<SnapshotView> result;
+        for (size_t i = 0; i < snapshots.size(); ++i)
+        {
+            if (snapshots[i].data != nullptr)
+            {
+                result.push_back(SnapshotView{i, snapshots[i].title, snapshots[i].timestamp});
+            }
+        }
+        return result;
     }
 
 private:
