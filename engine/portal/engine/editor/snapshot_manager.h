@@ -52,14 +52,14 @@ public:
     {
         return snapshots
             | std::views::filter(
-                [this](const auto& snapshot)
+                [](const auto& snapshot)
                 {
                     return snapshot.data != nullptr;
                 }
             )
             | std::views::enumerate
             | std::views::transform(
-                [this](const auto pair)
+                [](const auto& pair)
                 {
                     auto& [index, snapshot] = pair;
                     return SnapshotView{static_cast<size_t>(index), snapshot.title, snapshot.timestamp};
@@ -68,8 +68,8 @@ public:
     }
 
 private:
-    size_t get_next_snapshot_index() const;
-    size_t get_previous_snapshot_index() const;
+    [[nodiscard]] size_t get_next_snapshot_index() const;
+    [[nodiscard]] size_t get_previous_snapshot_index() const;
 
 private:
     StringId scene_id;

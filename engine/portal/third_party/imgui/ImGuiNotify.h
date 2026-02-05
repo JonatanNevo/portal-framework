@@ -495,14 +495,14 @@ inline void RenderNotifications()
 
     float height = 0.f;
 
-    for (int i = 0; i < notifications.size(); ++i)
+    for (size_t i = 0; i < notifications.size(); ++i)
     {
         ImGuiToast* currentToast = &notifications[i];
 
         // Remove toast if expired
         if (currentToast->getPhase() == ImGuiToastPhase::Expired)
         {
-            RemoveNotification(i);
+            RemoveNotification(static_cast<int>(i));
             continue;
         }
 
