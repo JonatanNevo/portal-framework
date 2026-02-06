@@ -38,14 +38,16 @@ EditorModule::EditorModule(
       input_dispatcher(input_dispatcher),
       runtime_module(stack, project, context, swapchain, window),
       im_gui_renderer(get_dependency<ResourcesModule>().get_registry(), window, swapchain),
+      icons(get_dependency<ResourcesModule>().get_registry()),
       editor_context(
           {},
           SnapshotManager{get_dependency<ResourcesModule>().get_registry()},
           window,
           engine_dispatcher,
-          project
+          project,
+          icons
       ),
-      titlebar(get_dependency<ResourcesModule>().get_registry(), editor_context),
+      titlebar(editor_context),
       viewport(swapchain, runtime_module),
       input_router(get_dependency<SystemOrchestrator>(), engine_dispatcher, input_dispatcher)
 {
