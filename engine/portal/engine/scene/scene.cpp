@@ -8,6 +8,7 @@
 #include "portal/engine/components/base.h"
 #include "portal/engine/components/camera.h"
 #include "portal/engine/components/relationship.h"
+#include "portal/engine/components/transform.h"
 #include "portal/engine/renderer/rendering_context.h"
 
 namespace portal
@@ -16,6 +17,7 @@ Scene::Scene(const StringId& name, ecs::Registry& registry) : Resource(name), ec
 {
     scene_entity = registry.create_entity(name);
     scene_entity.add_component<RelationshipComponent>();
+    scene_entity.add_component<TransformComponent>(glm::mat4(1.0f));
     scene_entity.add_component<SceneTag>();
 }
 

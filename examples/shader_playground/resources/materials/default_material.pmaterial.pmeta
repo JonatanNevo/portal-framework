@@ -1,7 +1,8 @@
 {
     "dependencies": [
         "white_texture",
-        "game/shaders/default_shader"
+        "game/shaders/default_shader",
+        "game/models/sphere"
     ],
     "format": "Material",
     "material": {

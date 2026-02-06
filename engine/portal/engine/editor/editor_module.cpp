@@ -45,7 +45,8 @@ EditorModule::EditorModule(
           window,
           engine_dispatcher,
           project,
-          icons
+          icons,
+          get_dependency<ResourcesModule>().get_registry()
       ),
       titlebar(editor_context),
       viewport(swapchain, runtime_module),

@@ -1,6 +1,7 @@
 {
     "dependencies": [
-        "game/models/sphere"
+        "game/models/sphere",
+        "game/materials/default_material"
     ],
     "format": "Scene",
     "resource_id": "game/scenes/default",

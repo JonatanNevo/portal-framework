@@ -166,7 +166,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     {
         const float logo_offset = consts.menubar_x_offset_component + logo_width + window_padding.x;
         ImGui::SetCursorPos(ImVec2(logo_offset, consts.menubar_y_offset));
-        draw_menubar(editor_context);
+        draw_menubar(editor_context, frame_context);
 
         if (ImGui::IsItemHovered())
             titlebar_hovered = false;
@@ -259,8 +259,9 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     height = titlebar_height;
 }
 
-void WindowTitlebar::draw_menubar(EditorContext& editor_context)
+void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& frame)
 {
+    auto* scene_context = std::any_cast<SceneContext>(&frame.scene_context);
     auto& icons = editor_context.icons;
     const ImRect menubar_rect = {
         ImGui::GetCursorPos(),
@@ -325,8 +326,9 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                 imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::NewScene), "New Scene");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Save), "Save Scene", "Ctrl+S");
-                imgui::set_tooltip("Not Implemented!");
+                if (imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Save), "Save Scene", "Ctrl+S"))
+                    editor_context.resource_registry.save(scene_context->active_scene->get_id());
+
                 imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::SaveAs), "Save Scene As...", "Ctrl+Shift+S");
                 imgui::set_tooltip("Not Implemented!");
 

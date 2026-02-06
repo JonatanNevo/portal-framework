@@ -172,10 +172,11 @@ public:
     virtual ~ArchiveObject() = default;
 
     ArchiveObject() = default;
-    ArchiveObject(const ArchiveObject& other) = default;
-    ArchiveObject(ArchiveObject&& other) noexcept = default;
-    ArchiveObject& operator=(const ArchiveObject& other) = default;
-    ArchiveObject& operator=(ArchiveObject&& other) = default;
+    ArchiveObject(ArchiveObject&& other) noexcept;
+    ArchiveObject& operator=(ArchiveObject&& other) noexcept;
+
+    ArchiveObject(const ArchiveObject& other);
+    ArchiveObject& operator=(const ArchiveObject& other);
 
     /**
      * @brief Merges properties from another ArchiveObject into this one.
@@ -291,7 +292,7 @@ public:
         {
             for (size_t i = 0; i < t.size(); ++i)
             {
-                new(buffer.as<ArchiveObject*>() + i) ArchiveObject(std::move(t[i]));
+                new(buffer.as<ArchiveObject*>() + i) ArchiveObject(std::move(const_cast<ValueT&>(t[i])));
             }
         }
         else

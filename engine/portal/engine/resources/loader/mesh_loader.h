@@ -27,7 +27,8 @@ public:
     void save(ResourceData& resource_data) override;
 
 protected:
-    MeshData load_mesh_data(const SourceMetadata& meta, const ResourceSource& source);
+    static MeshData load_mesh_data(const SourceMetadata& meta, const ResourceSource& source);
+    static MeshData load_from_obj(const ResourceSource& source);
 
 private:
     const renderer::vulkan::VulkanContext& context;

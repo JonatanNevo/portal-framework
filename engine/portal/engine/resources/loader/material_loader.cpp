@@ -5,6 +5,7 @@
 
 #include "material_loader.h"
 
+#include "portal/core/buffer_stream.h"
 #include "portal/engine/project/project.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/material/material.h"
@@ -15,6 +16,7 @@
 #include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/resources/database/resource_database.h"
 #include "portal/engine/resources/source/resource_source.h"
+#include "portal/serialization/archive/json_archive.h"
 
 namespace portal::renderer::vulkan
 {
@@ -23,6 +25,18 @@ class VulkanMaterial;
 
 namespace portal::resources
 {
+
+MaterialDetails MaterialDetails::dearchive(ArchiveObject& archive)
+{
+    MaterialDetails details;
+    archive.get_property("color_texture", details.color_texture);
+    archive.get_property("metallic_texture", details.metallic_texture);
+    archive.get_property("color_factors", details.color_factors);
+    archive.get_property("metallic_factors", details.metallic_factors);
+    archive.get_property("pass_type", details.pass_type);
+    return details;
+}
+
 MaterialLoader::MaterialLoader(const Project& project, ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) :
     ResourceLoader(registry),
     context(context),
@@ -52,6 +66,8 @@ ResourceData MaterialLoader::load(const SourceMetadata& meta, Reference<Resource
     MaterialDetails details;
     if (meta.format == SourceFormat::Memory)
         details = load_details_from_memory(*source);
+    if (meta.format == SourceFormat::Material)
+        details = load_details_from_file(*source);
     else
         throw std::runtime_error("Unknown material format");
 
@@ -106,6 +122,17 @@ MaterialDetails MaterialLoader::load_details_from_memory(const ResourceSource& s
     auto data = source.load();
 
     return data.read<MaterialDetails>();
+}
+
+MaterialDetails MaterialLoader::load_details_from_file(const ResourceSource& source)
+{
+    const auto data = source.load();
+    BufferStreamReader reader(data);
+
+    JsonArchive archive;
+    archive.read(reader);
+
+    return MaterialDetails::dearchive(archive);
 }
 
 Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, bool depth)

@@ -8,6 +8,32 @@
 
 namespace portal
 {
+ArchiveObject::ArchiveObject(ArchiveObject&& other) noexcept : property_map(std::exchange(other.property_map, {})) {}
+
+ArchiveObject& ArchiveObject::operator=(ArchiveObject&& other) noexcept
+{
+    property_map = std::exchange(other.property_map, {});
+    return *this;
+}
+
+ArchiveObject::ArchiveObject(const ArchiveObject& other)
+{
+    for (auto& [key, prop] : other.property_map)
+    {
+        property_map[key] = reflection::Property{Buffer::copy(prop.value), prop.type, prop.container_type, prop.elements_number};
+    }
+}
+
+ArchiveObject& ArchiveObject::operator=(const ArchiveObject& other)
+{
+    property_map.clear();
+    for (auto& [key, prop] : other.property_map)
+    {
+        property_map[key] = reflection::Property{Buffer::copy(prop.value), prop.type, prop.container_type, prop.elements_number};
+    }
+    return *this;
+}
+
 void ArchiveObject::update(const ArchiveObject& other)
 {
     for (auto& [name, prop] : other.property_map)

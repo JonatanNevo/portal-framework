@@ -1,47 +1,78 @@
 {
-  "name": "Default Scene",
-  "nodes": [
-    {
-      "icon": "",
-      "name": "Camera",
-      "portal::BaseCameraController": {
-        "forward_direction": [
-          0.5400000214576721,
-          -0.41999998688697815,
-          -0.7200000286102295
-        ],
-        "rotation_speed": 0.30000001192092896,
-        "speed": 2.0
-      },
-      "portal::CameraComponent": {
-        "far_clip": 0.017500000074505806,
-        "near_clip": 10000.0,
-        "vertical_fov": 35.0
-      },
-      "portal::MainCameraTag": true,
-      "portal::PlayerTag": {
-        "id": 0
-      },
-      "portal::RelationshipComponent": {
-        "parent": "game/scenes/default"
-      },
-      "portal::TransformComponent": {
-        "rotation": [
-          0.0,
-          0.0,
-          0.0
-        ],
-        "scale": [
-          1.0,
-          1.0,
-          1.0
-        ],
-        "translation": [
-          -0.5099999904632568,
-          0.4000000059604645,
-          0.7400000095367432
-        ]
-      }
-    }
-  ]
+    "name": "game/scenes/default",
+    "nodes": [
+        {
+            "icon": "",
+            "name": "Sphere",
+            "portal::RelationshipComponent": {
+                "parent": "game/scenes/default"
+            },
+            "portal::StaticMeshComponent": {
+                "materials": [
+                    "game/materials/default_material"
+                ],
+                "mesh": "game/models/sphere",
+                "visible": true
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            }
+        },
+        {
+            "icon": "",
+            "name": "Camera",
+            "portal::BaseCameraController": {
+                "forward_direction": [
+                    0.527724027633667,
+                    -0.42822811007499695,
+                    -0.7242432236671448
+                ],
+                "rotation_speed": 0.30000001192092896,
+                "speed": 2.0
+            },
+            "portal::CameraComponent": {
+                "far_clip": 0.017500000074505806,
+                "near_clip": 10000.0,
+                "vertical_fov": 35.0
+            },
+            "portal::MainCameraTag": true,
+            "portal::PlayerTag": {
+                "id": 0
+            },
+            "portal::RelationshipComponent": {
+                "parent": "game/scenes/default"
+            },
+            "portal::TransformComponent": {
+                "rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ],
+                "translation": [
+                    -2.6055867671966553,
+                    2.064055919647217,
+                    3.5859930515289307
+                ]
+            }
+        }
+    ]
 }
