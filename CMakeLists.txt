@@ -28,6 +28,7 @@ add_subdirectory(networking)
 add_subdirectory(engine)
 
 add_subdirectory(examples/engine_test)
+add_subdirectory(examples/shader_playground)
 
 if(PORTAL_BUILD_DOCS)
     add_subdirectory(docs)

@@ -1,0 +1,9 @@
+{
+    "dependencies": [
+        "game/models/sphere"
+    ],
+    "format": "Scene",
+    "resource_id": "game/scenes/default",
+    "source": "scenes/default.pscene",
+    "type": "Scene"
+}
