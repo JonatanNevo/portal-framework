@@ -1,0 +1,23 @@
+{
+    "application": {
+        "frames_in_flight": 3,
+        "fullscreen": true,
+        "scheduler-threads": 0,
+        "window": {
+            "height": 900,
+            "width": 1600
+        }
+    },
+    "log-level": "Debug",
+    "project": {
+        "include_engine_resources": true,
+        "name": "Shader Playground",
+        "resources": [
+            {
+                "path": "resources",
+                "type": "Folder"
+            }
+        ],
+        "starting_scene": "game/scenes/default"
+    }
+}

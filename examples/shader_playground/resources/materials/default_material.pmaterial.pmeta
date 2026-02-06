@@ -1,0 +1,13 @@
+{
+    "dependencies": [
+        "white_texture",
+        "game/shaders/default_shader"
+    ],
+    "format": "Material",
+    "material": {
+        "shader": "game/shaders/default_shader"
+    },
+    "resource_id": "game/materials/default_material",
+    "source": "materials/default_material.pmaterial",
+    "type": "Material"
+}
