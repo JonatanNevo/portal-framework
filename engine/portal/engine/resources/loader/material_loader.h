@@ -45,6 +45,8 @@ struct MaterialDetails
 
     StringId color_texture = INVALID_STRING_ID;
     StringId metallic_texture = INVALID_STRING_ID;
+
+    static MaterialDetails dearchive(ArchiveObject& archive);
 };
 
 class MaterialLoader final : public ResourceLoader
@@ -58,6 +60,7 @@ public:
 
 protected:
     [[nodiscard]] static MaterialDetails load_details_from_memory(const ResourceSource& source);
+    [[nodiscard]] static MaterialDetails load_details_from_file(const ResourceSource& source);
 
     Reference<renderer::Pipeline> create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, bool depth);
 

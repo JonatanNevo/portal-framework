@@ -24,7 +24,7 @@ public:
     [[nodiscard]] float get_height() const { return height; }
 
 private:
-    void draw_menubar(EditorContext& editor_context);
+    void draw_menubar(EditorContext& editor_context, FrameContext& frame);
 
 private:
     float height = 0;

@@ -55,6 +55,7 @@ ResourceRegistry::~ResourceRegistry() noexcept
 
 void ResourceRegistry::save(const StringId& resource_id)
 {
+    LOG_INFO("Saving resource: {}", resource_id);
     {
         std::lock_guard guard(lock);
         if (!resources.contains(resource_id))

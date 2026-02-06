@@ -58,5 +58,6 @@ float4 frag_main(VertexOutput in) : SV_Target
     float3 color = in.color * material_data.color_texture.Sample(in.uv).rgb;
     float3 ambient = color *scene_data.ambient_color.rgb;
 
+    return float4(1.f, 1.f, 1.f, 1.f);
     return float4(color * light_value * scene_data.sunlight_color.w + ambient, 1.f );
 }
