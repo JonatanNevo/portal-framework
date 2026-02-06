@@ -1,6 +1,6 @@
 {
-  "color_factors": [1, 1, 1, 1],
-  "metalic_factors": [1, 1, 0, 0],
+  "color_factors": [1.0, 1.0, 1.0, 1.0],
+  "metalic_factors": [1.0, 1.0, 0.0, 0.0],
   "pass_type": "MainColor",
   "color_texture": "white_texture",
   "metallic_texture": "white_texture"
