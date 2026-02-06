@@ -19,75 +19,9 @@
 
 namespace portal
 {
-ImGuiImages::ImGuiImages(ResourceRegistry& registry) : registry(registry) {}
 
-ImGuiImages::~ImGuiImages()
+WindowTitlebar::WindowTitlebar(EditorContext& context)
 {
-    for (auto& [texture, descriptor] : images | std::views::values)
-        ImGui_ImplVulkan_RemoveTexture(descriptor);
-}
-
-void ImGuiImages::load_image(const StringId& name, const StringId& texture_id)
-{
-    auto texture = registry.immediate_load<renderer::vulkan::VulkanTexture>(texture_id);
-    const auto vulkan_image = reference_cast<renderer::vulkan::VulkanImage>(texture->get_image());
-    const auto& img_info = vulkan_image->get_image_info();
-    images[name] = {
-        texture,
-        ImGui_ImplVulkan_AddTexture(
-            img_info.sampler->get_vk_sampler(),
-            img_info.view->get_vk_image_view(),
-            static_cast<VkImageLayout>(vulkan_image->get_descriptor_image_info().imageLayout)
-        )
-    };
-}
-
-vk::DescriptorSet ImGuiImages::get_descriptor(const StringId& name) const
-{
-    return images.at(name).descriptor;
-}
-
-ResourceReference<renderer::vulkan::VulkanTexture> ImGuiImages::get_texture(const StringId& name)
-{
-    return images.at(name).texture;
-}
-
-WindowTitlebar::WindowTitlebar(ResourceRegistry& registry, EditorContext& context) : icons(registry)
-{
-    // Load window button icons
-    icons.load_image(STRING_ID("logo"), STRING_ID("engine/portal_icon_64x64"));
-
-    // Window Icons
-    icons.load_image(STRING_ID("minimize"), STRING_ID("engine/editor/icons/window/minimize"));
-    icons.load_image(STRING_ID("maximize"), STRING_ID("engine/editor/icons/window/maximize"));
-    icons.load_image(STRING_ID("restore"), STRING_ID("engine/editor/icons/window/restore"));
-    icons.load_image(STRING_ID("close"), STRING_ID("engine/editor/icons/window/close"));
-
-    // Files Menu Bar
-    icons.load_image(STRING_ID("blocks"), STRING_ID("engine/editor/icons/generic/blocks"));
-    icons.load_image(STRING_ID("boxes"), STRING_ID("engine/editor/icons/generic/boxes"));
-    icons.load_image(STRING_ID("file-plus-corner"), STRING_ID("engine/editor/icons/generic/file-plus-corner"));
-    icons.load_image(STRING_ID("folder-cog"), STRING_ID("engine/editor/icons/generic/folder-cog"));
-    icons.load_image(STRING_ID("folder-open"), STRING_ID("engine/editor/icons/generic/folder-open"));
-    icons.load_image(STRING_ID("folder-plus"), STRING_ID("engine/editor/icons/generic/folder-plus"));
-    icons.load_image(STRING_ID("folder-clock"), STRING_ID("engine/editor/icons/generic/folder-clock"));
-    icons.load_image(STRING_ID("folders"), STRING_ID("engine/editor/icons/generic/folders"));
-    icons.load_image(STRING_ID("hammer"), STRING_ID("engine/editor/icons/generic/hammer"));
-    icons.load_image(STRING_ID("import"), STRING_ID("engine/editor/icons/generic/import"));
-    icons.load_image(STRING_ID("log-out"), STRING_ID("engine/editor/icons/generic/log-out"));
-    icons.load_image(STRING_ID("save"), STRING_ID("engine/editor/icons/generic/save"));
-    icons.load_image(STRING_ID("save-all"), STRING_ID("engine/editor/icons/generic/save-all"));
-
-    // Edit Menu Bar
-    icons.load_image(STRING_ID("cut"), STRING_ID("engine/editor/icons/generic/scissors"));
-    icons.load_image(STRING_ID("duplicate"), STRING_ID("engine/editor/icons/generic/duplicate"));
-    icons.load_image(STRING_ID("history"), STRING_ID("engine/editor/icons/generic/square-stack"));
-    icons.load_image(STRING_ID("copy"), STRING_ID("engine/editor/icons/generic/copy"));
-    icons.load_image(STRING_ID("undo"), STRING_ID("engine/editor/icons/generic/undo"));
-    icons.load_image(STRING_ID("redo"), STRING_ID("engine/editor/icons/generic/redo"));
-    icons.load_image(STRING_ID("paste"), STRING_ID("engine/editor/icons/generic/clipboard"));
-    icons.load_image(STRING_ID("trash"), STRING_ID("engine/editor/icons/generic/trash"));
-
     active_color = target_color = context.theme[imgui::ThemeColors::AccentPrimaryLeft];
     previous_color = context.theme[imgui::ThemeColors::Background1];
 }
@@ -188,7 +122,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         const ImVec2 logo_rect_start{titlebar_min.x + logo_offset.x, titlebar_min.y + logo_offset.y};
         const ImVec2 logo_rect_max{logo_rect_start.x + logo_width, logo_rect_start.y + logo_height};
 
-        draw_list->AddImage(static_cast<VkDescriptorSet>(icons.get_descriptor(STRING_ID("logo"))), logo_rect_start, logo_rect_max);
+        draw_list->AddImage(static_cast<VkDescriptorSet>(editor_context.icons.get_descriptor(EditorIcon::Logo)), logo_rect_start, logo_rect_max);
     }
 
     ImGui::BeginHorizontal("Titlebar", {ImGui::GetWindowWidth() - window_padding.y * 2.0f, titlebar_height});
@@ -267,7 +201,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     ImGui::Spring();
     imgui::shift_cursor(0.f, consts.buttons_offset);
     {
-        const auto icon_height = icons.get_texture(STRING_ID("minimize"))->get_height();
+        const auto icon_height = editor_context.icons.get_texture(EditorIcon::Minimize)->get_height();
         const float pad_y = (consts.button_height - static_cast<float>(icon_height)) / 2.f;
         if (ImGui::InvisibleButton("Minimize", ImVec2(consts.button_width, consts.button_height)))
         {
@@ -275,7 +209,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         }
 
         imgui::draw_button_image(
-            icons.get_descriptor(STRING_ID("minimize")),
+            editor_context.icons.get_descriptor(EditorIcon::Minimize),
             button_col_n,
             button_col_h,
             button_col_p,
@@ -294,7 +228,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         }
 
         imgui::draw_button_image(
-            is_maximised ? icons.get_descriptor(STRING_ID("restore")) : icons.get_descriptor(STRING_ID("maximize")),
+            is_maximised ? editor_context.icons.get_descriptor(EditorIcon::Restore) : editor_context.icons.get_descriptor(EditorIcon::Maximize),
             button_col_n,
             button_col_h,
             button_col_p
@@ -312,7 +246,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
         }
 
         imgui::draw_button_image(
-            icons.get_descriptor(STRING_ID("close")),
+            editor_context.icons.get_descriptor(EditorIcon::Close),
             editor_context.theme[imgui::ThemeColors::Text1],
             imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text1], 1.4f),
             button_col_p
@@ -327,6 +261,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
 
 void WindowTitlebar::draw_menubar(EditorContext& editor_context)
 {
+    auto& icons = editor_context.icons;
     const ImRect menubar_rect = {
         ImGui::GetCursorPos(),
         {ImGui::GetContentRegionAvail().x + ImGui::GetCursorScreenPos().x, ImGui::GetFrameHeightWithSpacing()}
@@ -380,38 +315,38 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                 auto hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Accent2);
                 auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
 
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-plus")), "Create Project...");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::NewProject), "Create Project...");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-open")), "Open Project...");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::NewProject), "Open Project...");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-clock")), "Open Recent");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::OpenRecent), "Open Recent");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("save-all")), "Save Project");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::SaveAll), "Save Project");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("file-plus-corner")), "New Scene");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::NewScene), "New Scene");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("save")), "Save Scene", "Ctrl+S");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Save), "Save Scene", "Ctrl+S");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("import")), "Save Scene As...", "Ctrl+Shift+S");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::SaveAs), "Save Scene As...", "Ctrl+Shift+S");
                 imgui::set_tooltip("Not Implemented!");
 
                 ImGui::Separator();
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("hammer")), "Build All");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Build), "Build All");
                 imgui::set_tooltip("Not Implemented!");
 
-                if (imgui::begin_menu_with_image(icons.get_descriptor(STRING_ID("blocks")), "Build"))
+                if (imgui::begin_menu_with_image(icons.get_descriptor(EditorIcon::BuildMenu), "Build"))
                 {
-                    imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folder-cog")), "Build Project Data");
+                    imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::BuildProject), "Build Project Data");
                     imgui::set_tooltip("Not Implemented!");
-                    imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("boxes")), "Build Shaders");
+                    imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::BuildShaders), "Build Shaders");
                     imgui::set_tooltip("Not Implemented!");
-                    imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("folders")), "Build Resource DB");
+                    imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::BuildResourceDB), "Build Resource DB");
                     imgui::set_tooltip("Not Implemented!");
                     ImGui::EndMenu();
                 }
 
                 ImGui::Separator();
-                if (imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("log-out")), "Exit", "Alt + F4"))
+                if (imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Exit), "Exit", "Alt + F4"))
                 {
                     editor_context.engine_dispatcher.enqueue<WindowRequestCloseEvent>();
                 }
@@ -434,7 +369,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                 auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
 
                 if (imgui::menu_item_with_image(
-                    icons.get_descriptor(STRING_ID("undo")),
+                    icons.get_descriptor(EditorIcon::Undo),
                     "Undo",
                     "Ctrl+Z",
                     false,
@@ -443,7 +378,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                     editor_context.snapshot_manager.undo();
 
                 if (imgui::menu_item_with_image(
-                    icons.get_descriptor(STRING_ID("redo")),
+                    icons.get_descriptor(EditorIcon::Redo),
                     "Redo",
                     "Ctrl+Y",
                     false,
@@ -451,7 +386,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
                 ))
                     editor_context.snapshot_manager.redo();
 
-                if (imgui::begin_menu_with_image(icons.get_descriptor(STRING_ID("history")), "Snapshot History"))
+                if (imgui::begin_menu_with_image(icons.get_descriptor(EditorIcon::History), "Snapshot History"))
                 {
                     auto current_snapshot = editor_context.snapshot_manager.get_current_snapshot_index();
                     for (auto [index, title, timestamp] : editor_context.snapshot_manager.list_snapshots())
@@ -474,15 +409,15 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context)
 
                 ImGui::Separator();
 
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("cut")), "Cut", "Ctrl+X");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Cut), "Cut", "Ctrl+X");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("copy")), "Copy", "Ctrl+C");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Copy), "Copy", "Ctrl+C");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("paste")), "Paste", "Ctrl+V");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Paste), "Paste", "Ctrl+V");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("duplicate")), "Duplicate", "Ctrl+D");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Duplicate), "Duplicate", "Ctrl+D");
                 imgui::set_tooltip("Not Implemented!");
-                imgui::menu_item_with_image(icons.get_descriptor(STRING_ID("trash")), "Delete", "DELETE");
+                imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Delete), "Delete", "DELETE");
                 imgui::set_tooltip("Not Implemented!");
             }
 

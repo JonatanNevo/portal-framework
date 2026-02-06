@@ -71,6 +71,7 @@ private:
     RuntimeModule runtime_module;
     ImGuiRenderer im_gui_renderer;
     PanelManager panel_manager;
+    EditorIcons icons;
 
     EditorContext editor_context;
     WindowTitlebar titlebar;

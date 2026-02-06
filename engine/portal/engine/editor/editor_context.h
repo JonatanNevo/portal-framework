@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#include "editor_icons.h"
 #include "snapshot_manager.h"
 #include "portal/engine/imgui/theme/editor_theme.h"
 #include "portal/engine/window/window.h"
@@ -18,6 +19,7 @@ struct EditorContext
     Window& window;
     entt::dispatcher& engine_dispatcher;
     Project& project;
+    EditorIcons& icons;
 
     entt::delegate<void()> restore_default_settings;
 };
