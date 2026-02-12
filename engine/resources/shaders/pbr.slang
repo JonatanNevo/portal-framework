@@ -25,6 +25,7 @@ struct Vertex
 	float uv_x;
 	float3 normal;
 	float uv_y;
+    float4 tangent; // xyz = tangent, w = handedness
 	float4 color;
 };
 

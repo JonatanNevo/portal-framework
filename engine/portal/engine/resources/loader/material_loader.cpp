@@ -9,6 +9,7 @@
 #include "portal/engine/project/project.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/renderer/material/material.h"
+#include "portal/engine/renderer/shaders/shader_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_material.h"
 #include "portal/engine/renderer/vulkan/vulkan_shader.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
@@ -25,15 +26,24 @@ class VulkanMaterial;
 
 namespace portal::resources
 {
-
 MaterialDetails MaterialDetails::dearchive(ArchiveObject& archive)
 {
     MaterialDetails details;
-    archive.get_property("color_texture", details.color_texture);
-    archive.get_property("metallic_texture", details.metallic_texture);
-    archive.get_property("color_factors", details.color_factors);
-    archive.get_property("metallic_factors", details.metallic_factors);
+    archive.get_property("surface_color", details.surface_color);
+    archive.get_property("roughness", details.roughness);
+    archive.get_property("subsurface", details.subsurface);
+    archive.get_property("sheen", details.sheen);
+    archive.get_property("sheen_tint", details.sheen_tint);
+    archive.get_property("anistropy", details.anistropy);
+    archive.get_property("specular_strength", details.specular_strength);
+    archive.get_property("metallic", details.metallic);
+    archive.get_property("specular_tint", details.specular_tint);
+    archive.get_property("clearcoat", details.clearcoat);
+    archive.get_property("clearcoat_gloss", details.clearcoat_gloss);
     archive.get_property("pass_type", details.pass_type);
+    archive.get_property("color_texture", details.color_texture);
+    archive.get_property("normal_texture", details.normal_texture);
+    archive.get_property("metallic_roughness_texture", details.metallic_roughness_texture);
     return details;
 }
 
@@ -48,8 +58,28 @@ ResourceData MaterialLoader::load(const SourceMetadata& meta, Reference<Resource
 {
     auto material_meta = std::get<MaterialMetadata>(meta.meta);
 
+    // Load material details first so we can derive specialization constants
+    MaterialDetails details;
+    if (meta.format == SourceFormat::Memory)
+        details = load_details_from_memory(*source);
+    else if (meta.format == SourceFormat::Material)
+        details = load_details_from_file(*source);
+    else
+        throw std::runtime_error("Unknown material format");
+
+    const bool has_normal = details.normal_texture != INVALID_STRING_ID;
+    const bool has_roughness = details.metallic_roughness_texture != INVALID_STRING_ID;
+
+    // Build specialization constants matching the order of extern const static declarations in the shader
+    std::vector<renderer::ShaderStaticConstants> spec_constants = {
+        {"has_normal_texture", "bool", has_normal ? "true" : "false"},
+        // Not yet in MaterialDetails
+        {"has_tangent_texture", "bool", "false"},
+        {"has_metallic_roughness_texture", "bool", has_roughness ? "true" : "false"},
+    };
+
     auto shader = registry.immediate_load<renderer::vulkan::VulkanShader>(material_meta.shader);
-    const auto hash = shader->compile_with_permutations({});
+    const auto hash = shader->compile_with_permutations({}, spec_constants);
     const auto variant = shader->get_shader(hash).lock();
 
     renderer::MaterialProperties properties{
@@ -63,20 +93,21 @@ ResourceData MaterialLoader::load(const SourceMetadata& meta, Reference<Resource
         .default_texture = registry.get<renderer::Texture>(renderer::Texture::MISSING_TEXTURE_ID).underlying(),
     };
 
-    MaterialDetails details;
-    if (meta.format == SourceFormat::Memory)
-        details = load_details_from_memory(*source);
-    if (meta.format == SourceFormat::Material)
-        details = load_details_from_file(*source);
-    else
-        throw std::runtime_error("Unknown material format");
-
-
     const auto material = make_reference<renderer::vulkan::VulkanMaterial>(properties, context);
 
     // TODO: make this generic
-    material->set(STRING_ID("material_data.color_factors"), details.color_factors);
-    material->set(STRING_ID("material_data.metal_rough_factors"), details.metallic_factors);
+    material->set(STRING_ID("material_data.surface_color"), details.surface_color);
+    material->set(STRING_ID("material_data.roughness"), details.roughness);
+    material->set(STRING_ID("material_data.subsurface"), details.subsurface);
+    material->set(STRING_ID("material_data.sheen"), details.sheen);
+    material->set(STRING_ID("material_data.sheen_tint"), details.sheen_tint);
+    material->set(STRING_ID("material_data.anistropy"), details.anistropy);
+    material->set(STRING_ID("material_data.specular_strength"), details.specular_strength);
+    material->set(STRING_ID("material_data.metallic"), details.metallic);
+    material->set(STRING_ID("material_data.specular_tint"), details.specular_tint);
+    material->set(STRING_ID("material_data.clearcoat"), details.clearcoat);
+    material->set(STRING_ID("material_data.clearcoat_gloss"), details.clearcoat_gloss);
+
 
     if (details.color_texture != INVALID_STRING_ID)
     {
@@ -88,20 +119,25 @@ ResourceData MaterialLoader::load(const SourceMetadata& meta, Reference<Resource
         material->set(STRING_ID("material_data.color_texture"), registry.get<renderer::Texture>(renderer::Texture::WHITE_TEXTURE_ID));
     }
 
-    if (details.metallic_texture != INVALID_STRING_ID)
+    // Only bind optional textures when their specialization constant is true
+    if (has_normal)
     {
-        auto texture_ref = registry.immediate_load<renderer::Texture>(details.metallic_texture);
-        material->set(STRING_ID("material_data.metal_rough_texture"), texture_ref);
+        auto texture_ref = registry.immediate_load<renderer::Texture>(details.normal_texture);
+        material->set(STRING_ID("material_data.normal_texture"), texture_ref);
     }
-    else
+
+    if (has_roughness)
     {
-        material->set(STRING_ID("material_data.metal_rough_texture"), registry.get<renderer::Texture>(renderer::Texture::WHITE_TEXTURE_ID));
+        auto texture_ref = registry.immediate_load<renderer::Texture>(details.metallic_roughness_texture);
+        material->set(STRING_ID("material_data.metallic_roughness_texture"), texture_ref);
     }
 
     if (details.pass_type == MaterialPass::Transparent)
-        material->set_pipeline(reference_cast<renderer::vulkan::VulkanPipeline>(create_pipeline(STRING_ID("transparent_pipeline"), variant, false)));
+        material->set_pipeline(
+            reference_cast<renderer::vulkan::VulkanPipeline>(create_pipeline(STRING_ID("transparent_pipeline"), hash, variant, false))
+        );
     else
-        material->set_pipeline(reference_cast<renderer::vulkan::VulkanPipeline>(create_pipeline(STRING_ID("color_pipeline"), variant, true)));
+        material->set_pipeline(reference_cast<renderer::vulkan::VulkanPipeline>(create_pipeline(STRING_ID("color_pipeline"), hash, variant, true)));
 
     return {material, source, meta};
 }
@@ -135,13 +171,16 @@ MaterialDetails MaterialLoader::load_details_from_file(const ResourceSource& sou
     return MaterialDetails::dearchive(archive);
 }
 
-Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, bool depth)
+Reference<renderer::Pipeline> MaterialLoader::create_pipeline(
+    const StringId& name,
+    const uint64_t shader_hash,
+    const Reference<renderer::ShaderVariant>& shader,
+    const bool depth
+)
 {
-    if (name == STRING_ID("transparent_pipeline") && transparent_pipeline != nullptr)
-        return transparent_pipeline;
-
-    if (name == STRING_ID("color_pipeline") && color_pipeline != nullptr)
-        return color_pipeline;
+    const auto cache_key = name.id ^ shader_hash;
+    if (const auto it = pipeline_cache.find(cache_key); it != pipeline_cache.end())
+        return it->second;
 
     // TODO: add pipeline cache
     renderer::PipelineProperties pipeline_properties{
@@ -173,12 +212,7 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(const StringId& na
     };
     auto pipeline = make_reference<renderer::vulkan::VulkanPipeline>(pipeline_properties, context);
 
-    if (name == STRING_ID("color_pipeline"))
-        color_pipeline = pipeline;
-
-    if (name == STRING_ID("transparent_pipeline"))
-        transparent_pipeline = pipeline;
-
+    pipeline_cache[cache_key] = pipeline;
     return pipeline;
 }
 } // portal

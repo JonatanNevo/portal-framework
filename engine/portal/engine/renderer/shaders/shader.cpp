@@ -25,28 +25,47 @@ void Shader::load_source(Buffer&& new_source, const std::filesystem::path& shade
     source = std::move(new_source);
 }
 
-uint64_t Shader::compile_with_permutations(const std::vector<ShaderDefine>& permutations)
+uint64_t Shader::compile_with_permutations(
+    const std::vector<ShaderDefine>& permutations,
+    const std::vector<ShaderStaticConstants>& static_constants
+)
 {
-    const auto permutations_hash = calculate_permutations_hash(permutations);
+    const auto permutations_hash = calculate_permutations_hash(permutations, static_constants);
 
     std::lock_guard lock(shader_cache_lock);
     if (!shaders.contains(permutations_hash))
     {
         LOGGER_DEBUG("Compiling shader variant: {} [{}]", id, permutations_hash);
         ShaderCompiler compiler;
-        shaders[permutations_hash] = compiler.compile({.name = id, .shader_path = source_path, .shader_data = source, .defines = permutations});
+        shaders[permutations_hash] = compiler.compile({
+            .name = id,
+            .shader_path = source_path,
+            .shader_data = source,
+            .defines = permutations,
+            .static_constants = static_constants
+        });
     }
 
     return permutations_hash;
 }
 
 
-uint64_t Shader::calculate_permutations_hash(const std::vector<ShaderDefine>& permutations) const
+uint64_t Shader::calculate_permutations_hash(
+    const std::vector<ShaderDefine>& permutations,
+    const std::vector<ShaderStaticConstants>& static_constants
+) const
 {
     uint64_t hash = id.id;
     for (const auto& [name, value] : permutations)
     {
         hash ^= hash::rapidhash(name);
+        hash ^= hash::rapidhash(value);
+    }
+    for (const auto& [name, type, value] : static_constants)
+    {
+        hash ^= hash::rapidhash(name);
+        hash ^= hash::rapidhash(type);
+        hash ^= hash::rapidhash(value);
     }
     return hash;
 }

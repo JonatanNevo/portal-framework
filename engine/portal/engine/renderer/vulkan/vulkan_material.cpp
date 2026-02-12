@@ -127,6 +127,18 @@ bool VulkanMaterial::operator==(const VulkanMaterial& other) const
     return id == other.id;
 }
 
+std::vector<std::pair<StringId, reflection::Property>> VulkanMaterial::get_bind_points()
+{
+    std::vector<std::pair<StringId, reflection::Property>> output;
+
+    for (auto& [name, uniform] : uniforms)
+    {
+        output.emplace_back(name, uniform.uniform.property);
+    }
+
+    return output;
+}
+
 
 void VulkanMaterial::set_property(StringId bind_point, const reflection::Property& property)
 {

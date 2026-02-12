@@ -487,18 +487,13 @@ Job<> GltfLoader::load_material(
         co_return;
 
     MaterialDetails details{
-        .color_factors = {
+        .surface_color = {
             material.pbrData.baseColorFactor[0],
             material.pbrData.baseColorFactor[1],
             material.pbrData.baseColorFactor[2],
             material.pbrData.baseColorFactor[3]
         },
-        .metallic_factors = {
-            material.pbrData.metallicFactor,
-            material.pbrData.roughnessFactor,
-            0.f,
-            0.f
-        }
+        .roughness = material.pbrData.metallicFactor,
     };
 
     if (material.alphaMode == fastgltf::AlphaMode::Blend)
@@ -517,7 +512,14 @@ Job<> GltfLoader::load_material(
     {
         auto texture = asset.textures[material.pbrData.metallicRoughnessTexture.value().textureIndex];
         auto [texture_meta, _] = find_image_source(composite_id, base_name, parent_path, asset, texture);
-        details.metallic_texture = texture_meta.resource_id;
+        details.metallic_roughness_texture = texture_meta.resource_id;
+    }
+
+    if (material.normalTexture.has_value())
+    {
+        auto texture = asset.textures[material.normalTexture.value().textureIndex];
+        auto [texture_meta, _] = find_image_source(composite_id, base_name, parent_path, asset, texture);
+        details.normal_texture = texture_meta.resource_id;
     }
 
     auto source = make_reference<MemorySource>(Buffer(&details, sizeof(details)));
@@ -624,6 +626,35 @@ Job<> GltfLoader::load_mesh(
                     mesh_data.vertices[initial_vertex + i].color = v;
                 }
             );
+        }
+
+        // load tangents
+        auto tangents = p.findAttribute("TANGENT");
+        if (tangents != p.attributes.end())
+        {
+            fastgltf::iterateAccessorWithIndex<glm::vec4>(
+                asset,
+                asset.accessors[tangents->accessorIndex],
+                [&mesh_data, initial_vertex](glm::vec4 v, size_t i)
+                {
+                    mesh_data.vertices[initial_vertex + i].tangent = v;
+                }
+            );
+        }
+        else
+        {
+            // Calculate tangents from triangle geometry for this primitive
+            const auto vertex_count = static_cast<uint32_t>(mesh_data.vertices.size()) - initial_vertex;
+            std::vector<Vertex> prim_vertices(mesh_data.vertices.begin() + initial_vertex, mesh_data.vertices.end());
+            std::vector<uint32_t> prim_indices;
+            prim_indices.reserve(submesh.count);
+            for (uint32_t j = submesh.start_index; j < submesh.start_index + submesh.count; ++j)
+                prim_indices.push_back(mesh_data.indices[j] - initial_vertex);
+
+            calculate_tangents(prim_vertices, prim_indices);
+
+            for (uint32_t j = 0; j < vertex_count; ++j)
+                mesh_data.vertices[initial_vertex + j].tangent = prim_vertices[j].tangent;
         }
 
         //loop the vertices of this surface, find min/max bounds

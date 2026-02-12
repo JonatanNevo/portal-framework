@@ -132,6 +132,7 @@ public:
     T& get(const StringId bind_point)
     {
         auto prop = reflection::Property{
+            Buffer{},
             reflection::get_property_type<std::remove_const_t<T>>(),
             reflection::PropertyContainerType::scalar,
             1
@@ -150,6 +151,7 @@ public:
     T& get(const StringId bind_point)
     {
         auto prop = reflection::Property{
+            Buffer{},
             reflection::get_property_type<typename T::value_type>(),
             reflection::PropertyContainerType::vector,
             T::length()
@@ -168,6 +170,7 @@ public:
     T& get(const StringId bind_point)
     {
         auto prop = reflection::Property{
+            Buffer{},
             reflection::get_property_type<typename T::value_type>(),
             reflection::PropertyContainerType::matrix,
             T::length() * T::length()
@@ -199,6 +202,8 @@ public:
 
     /** @brief Gets material shader */
     virtual Reference<ShaderVariant> get_shader() = 0;
+
+    virtual std::vector<std::pair<StringId, reflection::Property>> get_bind_points() = 0;
 
 protected:
     /**

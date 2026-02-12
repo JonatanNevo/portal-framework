@@ -23,6 +23,21 @@ struct ShaderDefine
 };
 
 /**
+ * @struct ShaderStaticConstants
+ * @brief Specialization constant for Slang shader compilation
+ *
+ * Maps to `extern const static` declarations in Slang shaders.
+ * Constants are positional - they must be provided in the same order
+ * as they appear in the shader source.
+ */
+struct ShaderStaticConstants
+{
+    std::string name;   // For debugging/hashing (Slang specialize API is positional)
+    std::string type;
+    std::string value;  // Slang expression: "true", "false", etc.
+};
+
+/**
  * @enum ShaderStage
  * @brief Shader pipeline stages
  *

@@ -75,11 +75,15 @@ public:
     void load_source(Buffer&& new_source, const std::filesystem::path& shader_path);
 
     /**
-     * @brief Compiles shader with given defines
+     * @brief Compiles shader with given defines and specialization constants
      * @param permutations List of shader defines
+     * @param static_constants Specialization constants for extern const static vars
      * @return Hash to retrieve compiled variant
      */
-    uint64_t compile_with_permutations(const std::vector<ShaderDefine>& permutations);
+    uint64_t compile_with_permutations(
+        const std::vector<ShaderDefine>& permutations,
+        const std::vector<ShaderStaticConstants>& static_constants = {}
+    );
 
     /**
      * @brief Gets compiled shader variant
@@ -90,11 +94,15 @@ public:
 
 protected:
     /**
-     * @brief Calculates hash from permutations
+     * @brief Calculates hash from permutations and specialization constants
      * @param permutations Shader defines
+     * @param static_constants Specialization constants
      * @return Unique hash for permutation set
      */
-    uint64_t calculate_permutations_hash(const std::vector<ShaderDefine>& permutations) const;
+    uint64_t calculate_permutations_hash(
+        const std::vector<ShaderDefine>& permutations,
+        const std::vector<ShaderStaticConstants>& static_constants
+    ) const;
 
 protected:
     std::filesystem::path source_path;

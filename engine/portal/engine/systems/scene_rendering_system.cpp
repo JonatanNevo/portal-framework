@@ -53,7 +53,11 @@ void SceneRenderingSystem::update_global_descriptors(FrameContext& frame, ecs::R
 
         rendering_context->scene_data.view = view;
         rendering_context->scene_data.proj = projection;
-        rendering_context->scene_data.view_proj = view_projection;
+        rendering_context->scene_data.view_proj = view_projection;;
+        rendering_context->scene_data.inverse_view = camera.inverse_view;
+        rendering_context->scene_data.inverse_proj = camera.inverse_projection;
+        rendering_context->scene_data.inverse_view_proj = camera.inverse_view * camera.inverse_projection;
+
         rendering_context->scene_data.ambient_color = glm::vec4(.1f);
         rendering_context->scene_data.sunlight_color = glm::vec4(1.f);
         rendering_context->scene_data.sunlight_direction = glm::vec4(0, 1, 0.5, 1.f);

@@ -39,12 +39,25 @@ enum class MaterialPass: uint8_t
 // TODO: Define some generic standard material format to communicate between this and gltf loader + save to filesystem
 struct MaterialDetails
 {
-    glm::vec4 color_factors;
-    glm::vec4 metallic_factors;
+    glm::vec4 surface_color;
+    float roughness = 0.5f;
+    float subsurface = 0.f;
+    float sheen = 0.f;
+    float sheen_tint = 0.5;
+
+    float anistropy = 0.f;
+    float specular_strength = 0.5f;
+    float metallic = 0.f;
+    float specular_tint = 0.5f;
+
+    float clearcoat = 0.0;
+    float clearcoat_gloss = 1.f;
+
     MaterialPass pass_type;
 
     StringId color_texture = INVALID_STRING_ID;
-    StringId metallic_texture = INVALID_STRING_ID;
+    StringId normal_texture = INVALID_STRING_ID;
+    StringId metallic_roughness_texture = INVALID_STRING_ID;
 
     static MaterialDetails dearchive(ArchiveObject& archive);
 };
@@ -62,13 +75,12 @@ protected:
     [[nodiscard]] static MaterialDetails load_details_from_memory(const ResourceSource& source);
     [[nodiscard]] static MaterialDetails load_details_from_file(const ResourceSource& source);
 
-    Reference<renderer::Pipeline> create_pipeline(const StringId& name, const Reference<renderer::ShaderVariant>& shader, bool depth);
+    Reference<renderer::Pipeline> create_pipeline(const StringId& name, uint64_t shader_hash, const Reference<renderer::ShaderVariant>& shader, bool depth);
 
 private:
     const renderer::vulkan::VulkanContext& context;
 
     const Project& project;
-    Reference<renderer::vulkan::VulkanPipeline> transparent_pipeline;
-    Reference<renderer::vulkan::VulkanPipeline> color_pipeline;
+    std::unordered_map<uint64_t, Reference<renderer::Pipeline>> pipeline_cache;
 };
 } // portal

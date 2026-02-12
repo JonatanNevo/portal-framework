@@ -5,12 +5,16 @@
 
 #include "details_panel.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "portal/engine/components/base.h"
 #include "portal/engine/components/base_camera_controller.h"
 #include "portal/engine/components/camera.h"
+#include "portal/engine/components/mesh.h"
 #include "portal/engine/components/transform.h"
 #include "portal/engine/editor/editor_context.h"
 #include "portal/engine/editor/selection_manager.h"
+#include "portal/engine/renderer/vulkan/vulkan_material.h"
 #include "portal/engine/scene/scene.h"
 #include "portal/engine/scene/scene_context.h"
 #include "portal/engine/systems/base_player_input_system.h"
@@ -164,6 +168,54 @@ void transform_vec3_slider(
         }
     }
     ImGui::Columns(1);
+}
+
+void draw_material_controls( EditorContext& context, Entity entity)
+{
+    auto& static_mesh = entity.get_component<StaticMeshComponent>();
+
+    auto& material = static_mesh.materials[0];
+
+    auto show_float_slider = [&material, &context](const char* name, const char* label, const float speed, const float min, const float max)
+    {
+        {
+            auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text(label);
+        }
+        ImGui::SameLine();
+        {
+            auto roughness = material->get<float>(STRING_ID(name));
+            ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+            const auto id = fmt::format("##{}", name);
+            if (ImGui::DragFloat(id.c_str(), &roughness, speed, min, max))
+                material->set(STRING_ID(name), roughness);
+        }
+    };
+
+    {
+        auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+        ImGui::AlignTextToFramePadding();
+        ImGui::Text("Color:");
+    }
+    ImGui::SameLine();
+    {
+        auto surface_color = material->get<glm::vec4>(STRING_ID("material_data.surface_color"));
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+        if (ImGui::ColorPicker4("##surface_color", glm::value_ptr(surface_color)))
+            material->set(STRING_ID("material_data.surface_color"), surface_color);
+    }
+
+    show_float_slider("material_data.roughness", "Roughness:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.subsurface", "Subsurface:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.sheen", "Sheen:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.sheen_tint", "Sheen Tint:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.anistropy", "Anistropy:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.specular_strength", "Specular Strength:", 0.01f, 0.f, 2.f);;
+    show_float_slider("material_data.metallic", "Metallic:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.specular_tint", "Specular Tint:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.clearcoat", "Clearcoat:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.clearcoat_gloss", "Clearcoat Gloss:", 0.01f, 0.f, 1.f);;
 }
 
 void show_transform_controls(const ResourceReference<Scene>& active_scene, EditorContext& context, Entity entity)
@@ -353,5 +405,15 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
             }
         }
     );
+
+    draw_component<StaticMeshComponent>(
+        context,
+        ICON_FA_CUBE " Static Mesh",
+        selected_entity,
+        [](EditorContext& editor_context, const Entity& entity)
+        {
+            draw_material_controls(editor_context, entity);
+        }
+        );
 }
 } // portal

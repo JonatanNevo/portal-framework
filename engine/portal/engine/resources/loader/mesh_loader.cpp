@@ -14,6 +14,84 @@ namespace portal::resources
 {
 static auto logger = Log::get_logger("MeshLoader");
 
+void calculate_tangents(std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices)
+{
+    std::vector<glm::vec3> bitangent_accum(vertices.size(), glm::vec3(0.f));
+
+    // Zero out tangent accumulators
+    for (auto& v : vertices)
+        v.tangent = glm::vec4(0.f);
+
+    // Accumulate per-triangle tangent and bitangent
+    for (size_t i = 0; i + 2 < indices.size(); i += 3)
+    {
+        auto& v0 = vertices[indices[i]];
+        auto& v1 = vertices[indices[i + 1]];
+        auto& v2 = vertices[indices[i + 2]];
+
+        const glm::vec3 edge1 = v1.position - v0.position;
+        const glm::vec3 edge2 = v2.position - v0.position;
+
+        const float du1 = v1.uv_x - v0.uv_x;
+        const float dv1 = v1.uv_y - v0.uv_y;
+        const float du2 = v2.uv_x - v0.uv_x;
+        const float dv2 = v2.uv_y - v0.uv_y;
+
+        const float det = du1 * dv2 - du2 * dv1;
+
+        glm::vec3 tangent;
+        glm::vec3 bitangent;
+
+        if (std::abs(det) < 1e-8f)
+        {
+            // Degenerate UV triangle — pick a fallback tangent perpendicular to the normal
+            const glm::vec3 n = glm::normalize(v0.normal + v1.normal + v2.normal);
+            const glm::vec3 ref = std::abs(n.y) < 0.999f ? glm::vec3(0.f, 1.f, 0.f) : glm::vec3(1.f, 0.f, 0.f);
+            tangent = glm::normalize(glm::cross(n, ref));
+            bitangent = glm::cross(n, tangent);
+        }
+        else
+        {
+            const float inv_det = 1.f / det;
+            tangent = (edge1 * dv2 - edge2 * dv1) * inv_det;
+            bitangent = (edge2 * du1 - edge1 * du2) * inv_det;
+        }
+
+        for (size_t j = 0; j < 3; ++j)
+        {
+            const uint32_t idx = indices[i + j];
+            vertices[idx].tangent += glm::vec4(tangent, 0.f);
+            bitangent_accum[idx] += bitangent;
+        }
+    }
+
+    // Per-vertex finalization: Gram-Schmidt orthogonalization + handedness
+    for (size_t i = 0; i < vertices.size(); ++i)
+    {
+        const glm::vec3 n = glm::normalize(vertices[i].normal);
+        glm::vec3 t = glm::vec3(vertices[i].tangent);
+
+        // Gram-Schmidt: remove the component of t along n
+        t = t - n * glm::dot(n, t);
+        const float len = glm::length(t);
+
+        if (len < 1e-8f)
+        {
+            // Degenerate — pick a fallback tangent
+            const glm::vec3 ref = std::abs(n.y) < 0.999f ? glm::vec3(0.f, 1.f, 0.f) : glm::vec3(1.f, 0.f, 0.f);
+            t = glm::normalize(glm::cross(n, ref));
+        }
+        else
+        {
+            t /= len;
+        }
+
+        // Compute handedness
+        const float w = glm::dot(glm::cross(n, t), bitangent_accum[i]) < 0.f ? -1.f : 1.f;
+        vertices[i].tangent = glm::vec4(t, w);
+    }
+}
+
 MeshLoader::MeshLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : ResourceLoader(registry), context(context)
 {}
 
@@ -208,6 +286,8 @@ MeshData MeshLoader::load_from_obj(const ResourceSource& source)
 
         mesh_data.submeshes.push_back(submesh);
     }
+
+    calculate_tangents(mesh_data.vertices, mesh_data.indices);
 
     return mesh_data;
 }
