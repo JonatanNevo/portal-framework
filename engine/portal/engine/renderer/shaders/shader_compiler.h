@@ -42,6 +42,7 @@ public:
         std::filesystem::path shader_path;
         Buffer shader_data;
         std::vector<ShaderDefine> defines;
+        std::vector<ShaderStaticConstants> static_constants;
     };
 
 public:
@@ -68,16 +69,36 @@ private:
     void process_entry_point_parameters(ShaderReflection& reflection, slang::EntryPointLayout* entry_point_layout);
 
     /** @brief Processes constant buffer parameter */
-    void process_constant_buffer_parameter(
+    static void process_constant_buffer_parameter(
         ShaderReflection& reflection,
         const char* name,
         slang::TypeLayoutReflection* type_layout,
         int space,
         size_t binding_index
     );
+    static void add_combined_texture_sampler_dec(
+        ShaderReflection& reflection,
+        const char* name,
+        size_t descriptor_set,
+        shader_reflection::ShaderDescriptorSet& desc_set,
+        size_t resource_binding_counter,
+        char const* field_name,
+        slang::TypeLayoutReflection* field_layout,
+        unsigned base_shape
+    );
+    static void add_separate_texture_dec(
+        ShaderReflection& reflection,
+        const char* name,
+        size_t descriptor_set,
+        shader_reflection::ShaderDescriptorSet& desc_set,
+        size_t resource_binding_counter,
+        char const* field_name,
+        slang::TypeLayoutReflection* field_layout,
+        unsigned base_shape
+    );
 
     /** @brief Processes parameter block parameter */
-    void process_parameter_block_parameter(
+    static void process_parameter_block_parameter(
         ShaderReflection& reflection,
         const char* name,
         slang::TypeLayoutReflection* type_layout,
@@ -103,13 +124,13 @@ private:
         int space,
         size_t binding_index,
         unsigned int resource_shape
-    );
+    ) const;
 
     /** @brief Processes push constant parameter */
-    void process_push_constant_parameter(ShaderReflection& reflection, const char* name, slang::TypeLayoutReflection* type_layout, size_t offset);
+    void process_push_constant_parameter(ShaderReflection& reflection, const char* name, slang::TypeLayoutReflection* type_layout, size_t offset) const;
 
     /** @brief Processes buffer uniforms */
-    void process_buffer_uniforms(
+    static void process_buffer_uniforms(
         shader_reflection::BufferDescriptor& buffer,
         slang::TypeLayoutReflection* type_layout,
         StringId buffer_name,

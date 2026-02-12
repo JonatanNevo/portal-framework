@@ -39,7 +39,7 @@ Reference<Resource> ShaderLoader::load_shader(const SourceMetadata& meta, const 
 {
     auto shader = make_reference<renderer::vulkan::VulkanShader>(meta.resource_id, context);
     // TODO: use global shader path somehow
-    shader->load_source(source.load(), meta.source.string);
+    shader->load_source(source.load(), meta.full_source_path.string);
     return shader;
 }
 

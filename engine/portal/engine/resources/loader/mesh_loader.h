@@ -18,6 +18,8 @@ struct MeshData
     std::vector<MeshGeometryData::Submesh> submeshes;
 };
 
+void calculate_tangents(std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices);
+
 class MeshLoader final : public ResourceLoader
 {
 public:

@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "game/textures/wood_normal",
+    "source": "textures/wood_normal.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 1024,
+        "width": 1024
+    },
+    "type": "Texture"
+}

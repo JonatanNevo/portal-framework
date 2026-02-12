@@ -83,6 +83,8 @@ public:
     /** @brief Equality comparison */
     bool operator==(const VulkanMaterial& other) const;
 
+    std::vector<std::pair<StringId, reflection::Property>> get_bind_points() override;
+
 protected:
     /** @brief Sets property by reflection */
     void set_property(StringId bind_point, const reflection::Property& property) override;

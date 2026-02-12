@@ -82,8 +82,8 @@ target_compile_definitions(portal-engine PUBLIC
         IMGUI_IMPL_VULKAN_USE_VOLK
 )
 
-portal_install_module(engine
-        FILES
-        cmake/portal-engine-helpers.cmake
-        cmake/portal-engine-package-helpers.cmake
-)
+#portal_install_module(engine
+#        FILES
+#        cmake/portal-engine-helpers.cmake
+#        cmake/portal-engine-package-helpers.cmake
+#)

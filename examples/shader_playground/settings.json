@@ -8,7 +8,7 @@
             "width": 1600
         }
     },
-    "log-level": "Debug",
+    "log-level": "Trace",
     "project": {
         "include_engine_resources": true,
         "name": "Shader Playground",

@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "game/textures/wood_roughness",
+    "source": "textures/wood_roughness.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 1024,
+        "width": 1024
+    },
+    "type": "Texture"
+}
