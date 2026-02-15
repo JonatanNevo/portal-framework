@@ -45,11 +45,11 @@ An overview of Portal Framework, its design, architecture and goals.
 Install Portal Engine and create you first project.
 ```
 
-```{grid-item-card} Tutorials 📖
-:link: tutorials/index
+```{grid-item-card} Concepts 🛠️
+:link: concepts/index
 :link-type: doc
 
-  Step-by-step guides to learn engine fundamentals.
+Deep-dive explanations of Portal Engine's design and architecture.
 ```
 
 ```{grid-item-card} How-To Guides 🎯
