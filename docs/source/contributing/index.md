@@ -1,4 +1,4 @@
-# Contributing
+# Contributing ⚠️
 
 Help improve Portal Engine. Whether you're fixing bugs, adding features, or improving docs — welcome!
 

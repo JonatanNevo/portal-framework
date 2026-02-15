@@ -1,4 +1,4 @@
-# Tutorial 1: Window and Inputs
+# Tutorial 1: Window and Inputs ⚠️
 
 ```{Warning}
 This section is still under construction, everything is subject to change and might be out of date!

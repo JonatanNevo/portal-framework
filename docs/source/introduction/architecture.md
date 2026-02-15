@@ -21,7 +21,7 @@ caption: Abstraction Levels with some examples
 flowchart TD
 
 Game --> Engine
-Engine --> Applicatio
+Engine --> Application
 Engine --> Renderer
 
 subgraph Game
