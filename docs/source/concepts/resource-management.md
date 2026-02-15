@@ -27,7 +27,7 @@ The [portal::Resource Registry](exhale_class_classportal_1_1ResourceRegistry) is
 for all resource-related functionality.
 It exposes functions to load, save, and retrieve resources. Additionally, it provides an `allocate` method for programmatically creating resources that are not backed by a source file (e.g., procedural textures).
 
-The resource registry is built on top of the [portal::jobs::Scheduler](exhale-class-classportal-1-1jobs-1-1Scheduler) to
+The resource registry is built on top of the [portal::jobs::Scheduler](exhale_class_classportal_1_1jobs_1_1Scheduler) to
 utilize the job system and parallel resource loading.
 
 The resource registry holds ownership over all resources in the system.

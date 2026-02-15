@@ -13,7 +13,8 @@ Welcome to the **Portal Framework** - a modular C++23 game engine framework desi
 ```{important}
 Note that Portal Framework is still in **early development!**  
 Most of the features are subject to change. 
-To see the roadmap and the status of the project, see [Development Status](development-status.md).
+To see the roadmap and the status of the project, see [Development Status](development-status.md).  
+Additionally, the documentation is still incomplete and subject to change, all incomplete secions are marked with ⚠️
 ```
 
 ```{image} _static/engine_test_preview.png
