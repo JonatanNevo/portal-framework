@@ -12,6 +12,7 @@
 
 namespace portal
 {
+struct EditorContext;
 
 /**
  * @brief Editor viewport that renders the scene to a separate render target displayed in ImGui.
@@ -37,9 +38,10 @@ public:
      *
      * Handles viewport resizing when the ImGui window size changes, recreating
      * the render target and updating the descriptor set as needed.
+     * @param editor_context The editor context containing viewport settings.
      * @param frame The current frame context.
      */
-    void on_gui_update(const FrameContext& frame);
+    void on_gui_update(const EditorContext& editor_context, const FrameContext& frame);
 
     /**
      * @brief Renders the scene to the viewport's render target.
@@ -50,7 +52,7 @@ public:
     [[nodiscard]] bool focused() const { return is_focused; }
 
 private:
-    void draw_gizmos_toolbar();
+    void draw_gizmos_toolbar(const EditorContext& editor_context);
     void draw_central_toolbar();
     void draw_gizmos(const FrameContext& frame);
 

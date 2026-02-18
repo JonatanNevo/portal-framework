@@ -144,7 +144,7 @@ void EditorModule::gui_update(FrameContext& frame)
 
 
     panel_manager.on_gui_render(editor_context, frame);
-    viewport.on_gui_update(frame);
+    viewport.on_gui_update(editor_context, frame);
 
     ImGui::End();
 
