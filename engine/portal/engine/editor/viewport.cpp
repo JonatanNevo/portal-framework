@@ -10,6 +10,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
+#include "editor_context.h"
 #include "selection_manager.h"
 #include "portal/engine/components/camera.h"
 #include "portal/engine/components/transform.h"
@@ -69,7 +70,7 @@ Viewport::~Viewport()
     ImGui_ImplVulkan_RemoveTexture(viewport_descriptor_set);
 }
 
-void Viewport::on_gui_update(const FrameContext& frame)
+void Viewport::on_gui_update(const EditorContext& editor_context, const FrameContext& frame)
 {
     auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
 
@@ -112,7 +113,7 @@ void Viewport::on_gui_update(const FrameContext& frame)
                 ImVec4(0, 0, 0, 0)
             );
 
-            draw_gizmos_toolbar();
+            draw_gizmos_toolbar(editor_context);
             draw_central_toolbar();
 
             if (is_focused && show_gizmos)
@@ -130,7 +131,7 @@ void Viewport::render(FrameContext& frame) const
     runtime_module.inner_end_frame(frame, false);
 }
 
-void Viewport::draw_gizmos_toolbar()
+void Viewport::draw_gizmos_toolbar(const EditorContext& editor_context)
 {
     imgui::ScopedStyle disable_spacing(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     imgui::ScopedStyle disable_window_border(ImGuiStyleVar_WindowBorderSize, 0.f);
@@ -171,25 +172,31 @@ void Viewport::draw_gizmos_toolbar()
             imgui::ScopedColor button_hover(ImGuiCol_ButtonHovered, ImVec4{1, 1, 1, 0.1f});
             imgui::ScopedColor button_active(ImGuiCol_ButtonActive, ImVec4{1, 1, 1, 0.2f});
 
-            auto gizmo_button = [](auto icon)
+            auto gizmo_button = [&](auto icon, const int type)
             {
-                return ImGui::Button(icon);
+                const auto container = gizmo_type;
+                if (type == container)
+                    editor_context.theme.push_color(ImGuiCol_Button, imgui::ThemeColors::Primary1);
+
+                auto opened =  ImGui::Button(icon);
+                if (opened)
+                    gizmo_type = type;
+
+                if (type == container)
+                    editor_context.theme.pop_color();
+                return opened;
             };
 
-            if (gizmo_button(ICON_FA_ARROW_POINTER))
-                gizmo_type = -1;
+            gizmo_button(ICON_FA_ARROW_POINTER, -1);
             imgui::set_tooltip("Select");
 
-            if (gizmo_button(ICON_FA_UP_DOWN_LEFT_RIGHT))
-                gizmo_type = ImGuizmo::OPERATION::TRANSLATE;
+            gizmo_button(ICON_FA_UP_DOWN_LEFT_RIGHT, ImGuizmo::OPERATION::TRANSLATE);
             imgui::set_tooltip("Translate");
 
-            if (gizmo_button(ICON_FA_ROTATE))
-                gizmo_type = ImGuizmo::OPERATION::ROTATE;
+            gizmo_button(ICON_FA_ROTATE, ImGuizmo::OPERATION::ROTATE);
             imgui::set_tooltip("Rotate");
 
-            if (gizmo_button(ICON_FA_MAXIMIZE))
-                gizmo_type = ImGuizmo::OPERATION::SCALE;
+            gizmo_button(ICON_FA_MAXIMIZE, ImGuizmo::OPERATION::SCALE);
             imgui::set_tooltip("Scale");
         }
         ImGui::Spring();
@@ -340,7 +347,7 @@ void Viewport::draw_gizmos(const FrameContext& frame)
     ))
     {
         auto parent = selected_entity.get_parent();
-        if (parent)
+        if (parent && parent != scene->get_scene_entity())
         {
             auto parent_transform = parent.get_component<TransformComponent>().get_world_matrix();
             transform = glm::inverse(parent_transform) * transform;
