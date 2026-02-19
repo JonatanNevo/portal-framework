@@ -200,22 +200,15 @@ void draw_material_controls( EditorContext& context, Entity entity)
     }
     ImGui::SameLine();
     {
-        auto surface_color = material->get<glm::vec4>(STRING_ID("material_data.surface_color"));
+        auto albedo = material->get<glm::vec3>(STRING_ID("material_data.albedo"));
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-        if (ImGui::ColorPicker4("##surface_color", glm::value_ptr(surface_color)))
-            material->set(STRING_ID("material_data.surface_color"), surface_color);
+        if (ImGui::ColorPicker3("##albedo", glm::value_ptr(albedo)))
+            material->set(STRING_ID("material_data.albedo"), albedo);
     }
 
-    show_float_slider("material_data.roughness", "Roughness:", 0.01f, 0.f, 1.f);;
-    show_float_slider("material_data.subsurface", "Subsurface:", 0.01f, 0.f, 1.f);;
-    show_float_slider("material_data.sheen", "Sheen:", 0.01f, 0.f, 1.f);;
-    show_float_slider("material_data.sheen_tint", "Sheen Tint:", 0.01f, 0.f, 1.f);;
-    show_float_slider("material_data.anistropy", "Anistropy:", 0.01f, 0.f, 1.f);;
-    show_float_slider("material_data.specular_strength", "Specular Strength:", 0.01f, 0.f, 2.f);;
     show_float_slider("material_data.metallic", "Metallic:", 0.01f, 0.f, 1.f);;
-    show_float_slider("material_data.specular_tint", "Specular Tint:", 0.01f, 0.f, 1.f);;
-    show_float_slider("material_data.clearcoat", "Clearcoat:", 0.01f, 0.f, 1.f);;
-    show_float_slider("material_data.clearcoat_gloss", "Clearcoat Gloss:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.roughness", "Roughness:", 0.01f, 0.f, 1.f);;
+    show_float_slider("material_data.emission", "Emission:", 0.01f, 0.f, 1.f);;
 }
 
 void show_transform_controls(const ResourceReference<Scene>& active_scene, EditorContext& context, Entity entity)

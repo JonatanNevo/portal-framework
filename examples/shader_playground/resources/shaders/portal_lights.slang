@@ -49,8 +49,7 @@ public struct SpotLight
 public struct SceneDirectionalLight
 {
     public DirectionalLight directional_light;
-    public float3 camera_position;
-    public float enviornment_map_itensity;
+    public float environment_map_intensity;
 };
 
 public struct ScenePointLights
@@ -75,7 +74,7 @@ public struct SceneLights
 public struct PBRParameters
 {
     public float3 albedo;
-    public float metalic;
+    public float metallic;
     public float roughness;
 
     public float3 normal;
@@ -93,7 +92,7 @@ public struct PBRParameters
 
 public float3 calculate_directional_lights(float3 f0, PBRParameters params, SceneDirectionalLight light)
 {
-    float3 result;
+    float3 result = float3(0);
 
     for (int i = 0; i < 1; i++) // Currently only support 1 directional light
     {
@@ -112,7 +111,7 @@ public float3 calculate_directional_lights(float3 f0, PBRParameters params, Scen
         float d = ndfggx(cos_lh, params.roughness);
         float g = ga_schlick_ggx(cos_li, params.ndotv, params.roughness);
 
-        float3 kd = (1.f - f) * (1.f - params.metalic);
+        float3 kd = (1.f - f) * (1.f - params.metallic);
         float3 diffuse_brdf = kd * params.albedo; // TODO: should I divide by pi here?
 
         // Cook - Torrance

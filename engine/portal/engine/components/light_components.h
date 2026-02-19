@@ -22,6 +22,7 @@ enum class LightType
 
 struct DirectionalLightComponent
 {
+    glm::vec3 direction = { 0.0f, 0.0f, 0.0f };
     glm::vec3 radiance { 1.f, 1.f, 1.f};
     float intensity = 1.f;
     float light_size = 0.5f;

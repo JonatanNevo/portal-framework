@@ -33,7 +33,7 @@ public:
     void print_controls(ecs::Registry& registry);
 
     /** @brief Renders performance statistics panel. */
-    void print_stats_block(ecs::Registry& registry, FrameContext& frame);
+    static void print_stats_block(ecs::Registry& registry, const FrameContext& frame);
 
     template<typename T, typename... Args>
     void add_panel(Args&&... args)

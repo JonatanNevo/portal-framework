@@ -1,20 +1,15 @@
 {
-  "surface_color": [1.0, 1.0, 1.0, 1.0],
+  "albedo": [1.0, 1.0, 1.0],
   "roughness": 0.343,
-  "subsurface": 0,
-  "sheen": 0.195,
-  "sheen_tint": 0.361,
-
-  "anistropy":  0.462,
-  "specular_strength": 0.41,
   "metallic": 0.0,
-  "specular_tint": 0,
+  "emission": 0.0,
 
-  "clearcoat": 1.0,
-  "clearcoat_gloss": 1.0,
+  "env_map_rotation": 0.0,
 
   "pass_type": "MainColor",
+
   "color_texture": "game/textures/Mud_Albedo",
   "normal_texture": "game/textures/Mud_Normal",
-  "metallic_roughness_texture": "game/textures/Mud_Roughness"
+  "metallic_texture": "game/textures/Mud_Roughness",
+  "roughness_texture": "game/textures/Mud_Roughness"
 }

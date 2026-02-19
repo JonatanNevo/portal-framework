@@ -27,7 +27,6 @@ namespace resources
         glm::vec3 normal;
         float uv_y;
         glm::vec4 tangent; // xyz = tangent direction, w = handedness (±1)
-        glm::vec4 color;
     };
 
     struct Bounds

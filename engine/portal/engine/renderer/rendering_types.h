@@ -12,22 +12,6 @@
 namespace portal::renderer::vulkan
 {
 /**
- * @struct Vertex
- * @brief GPU vertex buffer layout
- *
- * Interleaved vertex attributes matching shader input layout. Memory layout is optimized
- * for GPU access with vec4 alignment (position+uv_x, normal+uv_y, color).
- */
-struct Vertex
-{
-    glm::vec3 position;
-    float uv_x;
-    glm::vec3 normal;
-    float uv_y;
-    glm::vec4 color;
-};
-
-/**
  * @struct GPUMeshBuffers
  * @brief GPU mesh buffer references
  *
@@ -42,13 +26,13 @@ struct GPUMeshBuffers
 };
 
 /**
- * @struct GPUCameraData
+ * @struct GPUSceneCamera
  * @brief GPU camera uniform buffer layout
  *
  * Camera matrices uploaded to GPU uniform buffer. Includes forward and inverse transforms
  * for view-space, clip-space, and world-space conversions.
  */
-struct GPUCameraData
+struct GPUSceneCamera
 {
     glm::mat4 view;
     glm::mat4 proj;
@@ -58,26 +42,82 @@ struct GPUCameraData
     glm::mat4 inverse_view_proj;
 };
 
-/**
- * @struct GPUSceneData
- * @brief GPU scene uniform buffer layout
- *
- * Scene-global data uploaded to GPU. Contains camera transforms and lighting parameters
- * matching shader uniform block layout.
- */
+struct GPUScreenData
+{
+    glm::vec2 full_resolution;
+    glm::vec2 half_resolution;
+    glm::vec2 inv_full_resolution;
+    glm::vec2 inv_half_resolution;
+};
+
 struct GPUSceneData
 {
-    glm::mat4 view;
-    glm::mat4 proj;
-    glm::mat4 view_proj;
-    glm::mat4 inverse_view;
-    glm::mat4 inverse_proj;
-    glm::mat4 inverse_view_proj;
-
-    glm::vec4 ambient_color;
-    glm::vec4 sunlight_direction; ///< w component is sun power
-    glm::vec4 sunlight_color;
+    GPUSceneCamera camera;
+    GPUScreenData screen_data;
 };
+
+struct GPUDirectionalLight
+{
+    glm::vec3 direction;
+    float multiplier;
+    glm::vec3 radiance;
+    float shadow_amount;
+};
+
+struct GPUPointLight
+{
+    glm::vec3 position;
+    float multiplier;
+    glm::vec3 radiance;
+    float min_radius;
+    float radius;
+    float falloff;
+    float light_size;
+    bool casts_shadows;
+};
+
+struct GPUSpotLight
+{
+    glm::vec3 position;
+    float multiplier;
+    glm::vec3 radiance;
+    float angle_attenuation;
+    glm::vec3 direction;
+    float range;
+    float angle;
+    float falloff;
+    bool soft_shadows;
+    bool casts_shadows;
+};
+
+struct GPUSceneDirectionLight
+{
+    GPUDirectionalLight directional_light;
+    float environment_map_intensity{};
+};
+
+constexpr static unsigned int MAX_POINT_LIGHTS = 128;
+constexpr static unsigned int MAX_SPOT_LIGHTS = 128;
+
+struct GPUScenePointLights
+{
+    unsigned int light_count = 0;
+    GPUPointLight point_lights[MAX_POINT_LIGHTS];
+};
+
+struct GPUSceneSpotLights
+{
+    unsigned int light_count = 0;
+    GPUSpotLight spot_lights[MAX_SPOT_LIGHTS];
+};
+
+struct GPUSceneLights
+{
+    GPUSceneDirectionLight directional_light;
+    GPUScenePointLights point_lights;
+    GPUSceneSpotLights spot_lights;
+};
+
 
 /**
  * @struct GPUDrawPushConstants

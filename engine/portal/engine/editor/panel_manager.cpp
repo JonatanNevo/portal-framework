@@ -29,8 +29,7 @@ void draw_node(
     Entity scope,
     int& node_id,
     const RelationshipComponent& relationship,
-    const NameComponent& name,
-    const TransformComponent& transform
+    const NameComponent& name
 )
 {
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
@@ -62,8 +61,12 @@ void draw_node(
     if (ImGui::IsItemHovered())
     {
         ImGui::BeginTooltip();
-        const auto& translate = glm::vec3(transform.get_world_matrix()[3]);
-        ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
+        if (entity.has_component<TransformComponent>())
+        {
+            auto& transform = entity.get_component<TransformComponent>();
+            const auto& translate = glm::vec3(transform.get_world_matrix()[3]);
+            ImGui::Text("Position: %.2f, %.2f, %.2f", translate.x, translate.y, translate.z);
+        }
 
         if (is_mesh)
         {
@@ -89,8 +92,7 @@ void draw_node(
         {
             auto& child_rel = child.get_component<RelationshipComponent>();
             auto& child_name = child.get_component<NameComponent>();
-            auto& child_transform = child.get_component<TransformComponent>();
-            draw_node(child, scope, node_id, child_rel, child_name, child_transform);
+            draw_node(child, scope, node_id, child_rel, child_name);
         }
         ImGui::TreePop();
     }
@@ -144,8 +146,7 @@ void PanelManager::print_scene_graph(ecs::Registry& registry, const FrameContext
     {
         auto& relationship = child.get_component<RelationshipComponent>();
         auto& name_comp = child.get_component<NameComponent>();
-        auto& transform = child.get_component<TransformComponent>();
-        draw_node(child, scene->get_scene_entity(), node_id, relationship, name_comp, transform);
+        draw_node(child, scene->get_scene_entity(), node_id, relationship, name_comp);
     }
     ImGui::End();
 }
@@ -165,19 +166,33 @@ void PanelManager::print_controls(ecs::Registry&)
     ImGui::End();
 }
 
-void PanelManager::print_stats_block(ecs::Registry&, FrameContext& frame)
+void PanelManager::print_stats_block(ecs::Registry&, const FrameContext& frame)
 {
-    static std::array<float, 100> fps_history = {};
-    static int fps_history_index = 0;
+    static constexpr int history_size = 256;
 
-    fps_history[fps_history_index] = 1000.f / frame.stats.frame_time;
-    fps_history_index = (fps_history_index + 1) % fps_history.size();
+    static std::array<float, history_size> fps_history = {};
+    static std::array<float, history_size> frame_time_history_ms = {};
+    static std::array<float, history_size> draw_time_history_ms = {};
+    static std::array<float, history_size> update_time_history_ms = {};
+    static int history_index = 0;
+
+    fps_history[history_index] =  1000.f / frame.stats.frame_time;
+    frame_time_history_ms[history_index] = frame.stats.frame_time;
+    draw_time_history_ms[history_index] = frame.stats.mesh_draw_time;
+    update_time_history_ms[history_index] = frame.stats.scene_update_time;
+
+    history_index = (history_index + 1) % history_size;
+
+    const auto avg = [](const auto& arr) -> float
+    {
+        return std::ranges::fold_left(arr, 0.f, std::plus<float>()) / static_cast<float>(arr.size());
+    };
 
     ImGui::Begin("Stats");
-    ImGui::Text("FPS %f", std::ranges::fold_left(fps_history, 0.f, std::plus<float>()) / 100.f);
-    ImGui::Text("frametime %f ms", frame.stats.frame_time);
-    ImGui::Text("draw time %f ms", frame.stats.mesh_draw_time);
-    ImGui::Text("update time %f ms", frame.stats.scene_update_time);
+    ImGui::Text("FPS %.2f", avg(fps_history));
+    ImGui::Text("frame time %.3f ms", avg(frame_time_history_ms));
+    ImGui::Text("draw time %.3f ms", avg(draw_time_history_ms));
+    ImGui::Text("update time %.3f ms", avg(update_time_history_ms));
     ImGui::Text("triangles %i", frame.stats.triangle_count);
     ImGui::Text("draws %i", frame.stats.drawcall_count);
     ImGui::End();

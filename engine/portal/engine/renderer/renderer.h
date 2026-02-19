@@ -112,8 +112,11 @@ private:
     Reference<renderer::Image> current_draw_image;
     Reference<renderer::Image> current_depth_image;
 
-    // TODO: Where should these two be?
+
+    // TODO: Where should these be?
     Reference<renderer::UniformBufferSet> scene_data_uniform_buffer;
+    Reference<renderer::UniformBufferSet> scene_lights_uniform_buffer;
+
     std::unique_ptr<renderer::vulkan::VulkanDescriptorSetManager> descriptor_set_manager;
 
     DeletionQueue deletion_queue = {};

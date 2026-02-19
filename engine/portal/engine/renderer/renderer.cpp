@@ -163,7 +163,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::CommandBuffer& comma
     for (uint32_t i = 0; i < rendering_context->render_objects.size(); i++)
     {
         const auto& object = rendering_context->render_objects[i];
-        if (object.is_visible(rendering_context->scene_data.view_proj))
+        if (object.is_visible(rendering_context->scene_data.camera.view_proj))
             render_by_material[object.material->get_id()].push_back(i);
     }
 
@@ -172,6 +172,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::CommandBuffer& comma
         command_buffer.beginRendering(info);
 
         scene_data_uniform_buffer->get(frame.frame_index)->set_data_typed<vulkan::GPUSceneData>(rendering_context->scene_data);
+        scene_lights_uniform_buffer->get(frame.frame_index)->set_data_typed<vulkan::GPUSceneLights>(rendering_context->scene_lights);
 
         Reference<vulkan::VulkanPipeline> last_pipeline = nullptr;
         Reference<vulkan::VulkanMaterial> last_material = nullptr;
@@ -240,7 +241,7 @@ void Renderer::draw_geometry(FrameContext& frame, const vk::CommandBuffer& comma
                 command_buffer.bindDescriptorSets(
                     vk::PipelineBindPoint::eGraphics,
                     pipeline->get_vulkan_pipeline_layout(),
-                    1,
+                    2,
                     descriptor_set_array,
                     {}
                 );
@@ -322,15 +323,14 @@ void Renderer::init_global_descriptors(ResourceRegistry& resource_registry)
     // TODO: should this be here or under scene?
     auto frames_in_flight = settings.get_setting<size_t>("application.frames_in_flight", 3);
 
-    auto shader = resource_registry.immediate_load<Shader>(STRING_ID("engine/shaders/default_shader"));
+    auto shader = resource_registry.immediate_load<Shader>(STRING_ID("game/shaders/pbr"));
     const auto hash = shader->compile_with_permutations(
         {},
         {
             {
                 {"has_normal_texture", "bool", "true"},
                 {"has_tangent_texture", "bool", "true"},
-                {"has_metallic_roughness_texture", "bool", "true"},
-                {"has_metalic_texture", "bool", "true"},
+                {"has_metallic_texture", "bool", "true"},
                 {"has_roughness_texture", "bool", "true"},
             }
         }
@@ -341,7 +341,7 @@ void Renderer::init_global_descriptors(ResourceRegistry& resource_registry)
         .shader = variant,
         .debug_name = STRING_ID("Global Set Manager"),
         .start_set = 0,
-        .end_set = 1,
+        .end_set = 2,
         .frame_in_flights = frames_in_flight
     };
     descriptor_set_manager = vulkan::VulkanDescriptorSetManager::create_unique(manager_props, context.get_device());
@@ -353,6 +353,20 @@ void Renderer::init_global_descriptors(ResourceRegistry& resource_registry)
     );
     descriptor_set_manager->set_input(STRING_ID("scene_data"), scene_data_uniform_buffer);
 
+    scene_lights_uniform_buffer = make_reference<vulkan::VulkanUniformBufferSet>(
+        sizeof(vulkan::GPUSceneLights),
+        frames_in_flight,
+        context.get_device()
+    );
+    descriptor_set_manager->set_input(STRING_ID("scene_lights"), scene_lights_uniform_buffer);
+
+    auto texture = resource_registry.get<Texture>(Texture::BLACK_CUBE_TEXTURE_ID);
+
+    descriptor_set_manager->set_input(STRING_ID("scene_data.environment_radiance_texture"), texture.underlying());
+    descriptor_set_manager->set_input(STRING_ID("scene_data.environment_irradiance_texture"), texture.underlying());
+
+    auto lut_texture = resource_registry.immediate_load<Texture>(STRING_ID("game/textures/BRDF_LUT"));
+    descriptor_set_manager->set_input(STRING_ID("scene_data.brdf_lut_texture"), lut_texture.underlying());
 
     descriptor_set_manager->bake();
 }

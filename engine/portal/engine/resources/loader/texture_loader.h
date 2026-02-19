@@ -36,10 +36,16 @@ protected:
      * @param id The texture id
      * @param data The texture data
      * @param extent The texture extent
+     * @param type The type of the texture (cubed or not)
      */
-    void create_standalone_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const;
+    void create_standalone_texture(
+        const StringId& id,
+        std::span<uint32_t> data,
+        vk::Extent3D extent,
+        renderer::TextureType type = renderer::TextureType::Texture
+    ) const;
 
 private:
-   const renderer::vulkan::VulkanContext& context;
+    const renderer::vulkan::VulkanContext& context;
 };
 } // portal
