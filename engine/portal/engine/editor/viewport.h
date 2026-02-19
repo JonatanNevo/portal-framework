@@ -41,7 +41,7 @@ public:
      * @param editor_context The editor context containing viewport settings.
      * @param frame The current frame context.
      */
-    void on_gui_update(const EditorContext& editor_context, const FrameContext& frame);
+    void on_gui_update(EditorContext& editor_context, const FrameContext& frame);
 
     /**
      * @brief Renders the scene to the viewport's render target.
@@ -51,10 +51,12 @@ public:
 
     [[nodiscard]] bool focused() const { return is_focused; }
 
+    void set_gizmo_type(int type);
+
 private:
     void draw_gizmos_toolbar(const EditorContext& editor_context);
     void draw_central_toolbar();
-    void draw_gizmos(const FrameContext& frame);
+    void draw_gizmos(EditorContext& editor_context, const FrameContext& frame);
 
     float get_snap_value() const;
 

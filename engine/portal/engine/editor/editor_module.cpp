@@ -5,6 +5,7 @@
 #include "editor_module.h"
 
 #include <imgui.h>
+#include <ImGuizmo.h>
 #include <imgui_internal.h>
 #include "panel_manager.h"
 #include "panels/details_panel.h"
@@ -52,6 +53,8 @@ EditorModule::EditorModule(
       viewport(swapchain, runtime_module),
       input_router(get_dependency<SystemOrchestrator>(), engine_dispatcher, input_dispatcher)
 {
+    input_router.block_input();
+
     editor_context.restore_default_settings.connect<&EditorModule::restore_default_layout>(this);
     input_dispatcher.sink<KeyPressedEvent>().connect<&EditorModule::on_key_pressed>(this);
     input_dispatcher.sink<KeyReleasedEvent>().connect<&EditorModule::on_key_released>(this);
@@ -174,21 +177,74 @@ void EditorModule::end_frame(FrameContext& frame)
     im_gui_renderer.render_subwindows();
 }
 
-void EditorModule::on_key_pressed(const KeyPressedEvent& event) const
+void EditorModule::on_key_pressed(const KeyPressedEvent& event)
 {
     if (event.key == Key::RightMouseButton)
     {
         if (viewport.focused())
+        {
             input_router.unblock_input();
+            return;
+        }
+    }
+
+    if (!input_router.is_input_blocked())
+        return;
+
+    if (event.key == Key::Z && event.modifiers & KeyModifierBits::Ctrl)
+    {
+        editor_context.snapshot_manager.undo();
+        return;
+    }
+
+    if (event.key == Key::Y && event.modifiers & KeyModifierBits::Ctrl)
+    {
+        editor_context.snapshot_manager.redo();
+        return;
+    }
+
+    if (event.key == Key::S && event.modifiers & KeyModifierBits::Ctrl)
+    {
+        if (event.modifiers & KeyModifierBits::Shift)
+        {
+            // TODO: IMPLEMENT SAVE AS
+            return;
+        }
+        else
+        {
+            // TODO: save current scene
+            // editor_context.resource_registry.save(scene_context->active_scene->get_id());
+            return;
+        }
+    }
+
+    if (event.key == Key::Q)
+    {
+        viewport.set_gizmo_type(-1);
+    }
+    if (event.key == Key::W)
+    {
+        viewport.set_gizmo_type(ImGuizmo::OPERATION::TRANSLATE);
+    }
+    if (event.key == Key::E)
+    {
+        viewport.set_gizmo_type(ImGuizmo::OPERATION::ROTATE);
+    }
+    if (event.key == Key::R)
+    {
+        viewport.set_gizmo_type(ImGuizmo::OPERATION::SCALE);
     }
 }
 
-void EditorModule::on_key_released(const KeyReleasedEvent& event) const
+void EditorModule::on_key_released(const KeyReleasedEvent& event)
 {
     if (event.key == Key::RightMouseButton)
     {
         input_router.block_input();
     }
+
+    if (input_router.is_input_blocked())
+        return;
 }
 
 void EditorModule::setup_layout_config()

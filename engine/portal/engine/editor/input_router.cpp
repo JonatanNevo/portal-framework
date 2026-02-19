@@ -12,7 +12,7 @@ namespace portal
 InputRouter::InputRouter(SystemOrchestrator& orchestrator, entt::dispatcher& engine_dispatcher, entt::dispatcher& input_dispatcher)
     : orchestrator(orchestrator), engine_dispatcher(engine_dispatcher), input_dispatcher(input_dispatcher) {}
 
-void InputRouter::block_input() const
+void InputRouter::block_input()
 {
     engine_dispatcher.trigger(SetMouseCursorEvent{CursorMode::Normal});
     orchestrator.disconnect(input_dispatcher);
@@ -20,9 +20,11 @@ void InputRouter::block_input() const
     auto& io = ImGui::GetIO();
     io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
     io.ConfigFlags &= ~ImGuiConfigFlags_NavNoCaptureKeyboard;
+
+    input_blocked = true;
 }
 
-void InputRouter::unblock_input() const
+void InputRouter::unblock_input()
 {
     engine_dispatcher.trigger(SetMouseCursorEvent{CursorMode::Locked});
     orchestrator.connect(input_dispatcher);
@@ -30,5 +32,7 @@ void InputRouter::unblock_input() const
     auto& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
     io.ConfigFlags |= ImGuiConfigFlags_NavNoCaptureKeyboard;
+
+    input_blocked = false;
 }
 } // portal

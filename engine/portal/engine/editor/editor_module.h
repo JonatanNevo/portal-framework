@@ -55,8 +55,8 @@ public:
     void end_frame(FrameContext& frame) override;
 
 private:
-    void on_key_pressed(const KeyPressedEvent& event) const;
-    void on_key_released(const KeyReleasedEvent& event) const;
+    void on_key_pressed(const KeyPressedEvent& event);
+    void on_key_released(const KeyReleasedEvent& event);
 
     void setup_layout_config();
     void restore_default_layout();
