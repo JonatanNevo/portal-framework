@@ -257,8 +257,6 @@ MeshData MeshLoader::load_from_obj(const ResourceSource& source)
                 vertex.uv_y = attrib.texcoords[2 * idx.texcoord_index + 1];
             }
 
-            vertex.color = {1.f, 1.f, 1.f, 1.f};
-
             auto vertex_index = static_cast<uint32_t>(mesh_data.vertices.size());
             mesh_data.vertices.push_back(vertex);
             unique_vertices[key] = vertex_index;

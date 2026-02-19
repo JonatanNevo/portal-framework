@@ -57,6 +57,9 @@ TextureLoader::TextureLoader(ResourceRegistry& registry, const renderer::vulkan:
     };
 
     create_standalone_texture(renderer::Texture::MISSING_TEXTURE_ID, pixels, missing_extent);
+
+    std::array<uint32_t, 6> black_cube_texture_data = {0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000, 0xff000000};
+    create_standalone_texture(renderer::Texture::BLACK_CUBE_TEXTURE_ID, black_cube_texture_data, default_extent, renderer::TextureType::TextureCube);
 }
 
 ResourceData TextureLoader::load(const SourceMetadata& meta, Reference<ResourceSource> source)
@@ -137,10 +140,16 @@ void TextureLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& 
 
 void TextureLoader::save(ResourceData&) {}
 
-void TextureLoader::create_standalone_texture(const StringId& id, std::span<uint32_t> data, vk::Extent3D extent) const
+void TextureLoader::create_standalone_texture(
+    const StringId& id,
+    const std::span<uint32_t> data,
+    const vk::Extent3D extent,
+    const renderer::TextureType type
+) const
 {
     const renderer::TextureProperties properties = {
         .format = renderer::ImageFormat::RGBA8_UNorm,
+        .type = type,
         .width = static_cast<size_t>(extent.width),
         .height = static_cast<size_t>(extent.height),
         .depth = static_cast<size_t>(extent.depth),

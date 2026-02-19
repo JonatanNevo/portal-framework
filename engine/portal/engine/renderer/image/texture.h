@@ -25,6 +25,7 @@ public:
     const static StringId MISSING_TEXTURE_ID;
     const static StringId WHITE_TEXTURE_ID;
     const static StringId BLACK_TEXTURE_ID;
+    const static StringId BLACK_CUBE_TEXTURE_ID;
 
 public:
     explicit Texture(const StringId& id) : RendererResource(id) {};

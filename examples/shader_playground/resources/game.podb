@@ -1,10 +1,10 @@
 {
-    "dirty": 2,
+    "dirty": 0,
     "ignored_extensions": [],
     "ignored_files": [
         ".gitkeep"
     ],
     "name": "game",
-    "resource_count": 10,
+    "resource_count": 14,
     "version": 1
 }

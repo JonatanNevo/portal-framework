@@ -501,35 +501,19 @@ Job<> GltfLoader::load_material(
         co_return;
 
     MaterialDetails details{
-        .surface_color = {
+        .albedo = {
             material.pbrData.baseColorFactor[0],
             material.pbrData.baseColorFactor[1],
-            material.pbrData.baseColorFactor[2],
-            material.pbrData.baseColorFactor[3]
+            material.pbrData.baseColorFactor[2]
         },
-        .roughness = material.pbrData.roughnessFactor,
         .metallic = material.pbrData.metallicFactor,
+        .roughness = material.pbrData.roughnessFactor,
     };
 
-    if (material.sheen) {
-        details.sheen = material.sheen->sheenRoughnessFactor;
-        const auto& c = material.sheen->sheenColorFactor;
-        details.sheen_tint = 0.2126f * c[0] + 0.7152f * c[1] + 0.0722f * c[2];
-    }
-
-    if (material.clearcoat) {
-        details.clearcoat = material.clearcoat->clearcoatFactor;
-        details.clearcoat_gloss = 1.f - material.clearcoat->clearcoatRoughnessFactor;
-    }
-
-    if (material.specular) {
-        details.specular_strength = material.specular->specularFactor;
-        const auto& c = material.specular->specularColorFactor;
-        details.specular_tint = 0.2126f * c[0] + 0.7152f * c[1] + 0.0722f * c[2];
-    }
-
-    if (material.anisotropy) {
-        details.anistropy = material.anisotropy->anisotropyStrength;
+    if (material.emissiveFactor != fastgltf::math::nvec3(0) && material.emissiveStrength > 0.0f)
+    {
+        const float factor_intensity = std::max({ material.emissiveFactor[0], material.emissiveFactor[1], material.emissiveFactor[2] });
+        details.emission = factor_intensity * material.emissiveStrength;
     }
 
     if (material.alphaMode == fastgltf::AlphaMode::Blend)
@@ -547,7 +531,8 @@ Job<> GltfLoader::load_material(
     {
         auto texture = asset.textures[material.pbrData.metallicRoughnessTexture.value().textureIndex];
         auto [texture_meta, _] = find_image_source(composite_id, base_name, parent_path, asset, texture);
-        details.metallic_roughness_texture = texture_meta.resource_id;
+        details.metallic_texture = texture_meta.resource_id;
+        details.roughness_texture = texture_meta.resource_id;
     }
 
     if (material.normalTexture.has_value())
@@ -613,8 +598,7 @@ Job<> GltfLoader::load_mesh(
                         .position = v,
                         .uv_x = 0,
                         .normal = {1, 0, 0},
-                        .uv_y = 0,
-                        .color = glm::vec4{1.f},
+                        .uv_y = 0
                     };
                 }
             );
@@ -650,18 +634,18 @@ Job<> GltfLoader::load_mesh(
         }
 
         // load vertex colors
-        auto colors = p.findAttribute("COLOR_0");
-        if (colors != p.attributes.end())
-        {
-            fastgltf::iterateAccessorWithIndex<glm::vec4>(
-                asset,
-                asset.accessors[colors->accessorIndex],
-                [&mesh_data, initial_vertex](glm::vec4 v, size_t i)
-                {
-                    mesh_data.vertices[initial_vertex + i].color = v;
-                }
-            );
-        }
+        // auto colors = p.findAttribute("COLOR_0");
+        // if (colors != p.attributes.end())
+        // {
+        //     fastgltf::iterateAccessorWithIndex<glm::vec4>(
+        //         asset,
+        //         asset.accessors[colors->accessorIndex],
+        //         [&mesh_data, initial_vertex](glm::vec4 v, size_t i)
+        //         {
+        //             mesh_data.vertices[initial_vertex + i].color = v;
+        //         }
+        //     );
+        // }
 
         // load tangents
         auto tangents = p.findAttribute("TANGENT");

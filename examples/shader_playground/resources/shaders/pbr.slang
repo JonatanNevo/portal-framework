@@ -6,20 +6,20 @@ import portal_pbr;
 const static float3 f_dielectric = float3(0.04);
 
 public extern const static bool has_normal_texture;
-public extern const static bool has_metalic_texture;
+public extern const static bool has_metallic_texture;
 public extern const static bool has_roughness_texture;
 
 struct MaterialData
 {
     float3 albedo;
-    float metalic;
+    float metallic;
     float roughness;
     float emission;
     float env_map_rotation;
 
     Sampler2D color_texture;
     Conditional<Sampler2D, has_normal_texture> normal_texture;
-    Conditional<Sampler2D, has_metalic_texture> metalic_texture;
+    Conditional<Sampler2D, has_metallic_texture> metallic_texture;
     Conditional<Sampler2D, has_roughness_texture> roughness_texture;
 }
 
@@ -40,6 +40,7 @@ struct Vertex
 
 struct VertexOutput
 {
+    uint vertexID;
     float4 position : SV_Position;
 
     float3 world_position;
@@ -65,6 +66,7 @@ VertexOutput vert_main(uint vertexID : SV_VertexID, uniform float4x4 render_matr
     output.world_transform = float3x3(render_matrix);
 
     output.position = mul(scene_data.camera.view_proj, world_position);
+    output.vertexID = vertexID;
 
     return output;
 }
@@ -80,7 +82,7 @@ float3 ibl(float3 f0, float3 lr, PBRParameters params, SceneData scene_data)
 {
     float3 irradiance = scene_data.environment_irradiance_texture.Sample(params.normal).rgb;
     float3 f = fresnel_schlick_roughness(f0, params.ndotv, params.roughness);
-    float3 kd = (1.f - f) * (1.f - params.metalic);
+    float3 kd = (1.f - f) * (1.f - params.metallic);
     float3 diffuse_ibl = params.albedo * irradiance;
 
     uint width, height, env_radiance_tex_levels;
@@ -144,13 +146,13 @@ FragOutput frag_main(VertexOutput in)
     //       Per GLTF spec, we read metalness from the B channel and roughness from the G channel
     //       This will still work if metalness and roughness are independent greyscale textures,
     //       but it will not work if metalness and roughness are independent textures containing only R channel.
-    if (let texture = material_data.metalic_texture.get())
+    if (let texture = material_data.metallic_texture.get())
     {
-        params.metalic = texture.Sample(uv).b * material_data.metalic;
+        params.metallic = texture.Sample(uv).b * material_data.metallic;
     }
     else
     {
-        params.metalic = material_data.metalic;
+        params.metallic = material_data.metallic;
     }
     
     if (let texture = material_data.roughness_texture.get())
@@ -162,7 +164,7 @@ FragOutput frag_main(VertexOutput in)
         params.roughness = material_data.roughness;
     }
 
-    output.metalness_roughness = float4(params.metalic, params.roughness, 0.f, 1.f);
+    output.metalness_roughness = float4(params.metallic, params.roughness, 0.f, 1.f);
     params.roughness = max(params.roughness, 0.05f); // Minimum roughness of 0.05 to keep specular highlight
 
     // Normals
@@ -186,7 +188,7 @@ FragOutput frag_main(VertexOutput in)
     float3 lr = 2.f * params.ndotv * params.normal - params.view;
 
     // Fresnel reflectance
-    float3 f0 = lerp(f_dielectric, params.albedo, params.metalic);
+    float3 f0 = lerp(f_dielectric, params.albedo, params.metallic);
 
     // TODO implement shadows
 
@@ -197,10 +199,9 @@ FragOutput frag_main(VertexOutput in)
     light_contribution += params.albedo * material_data.emission;
 
     // Indirect lighting
-    float3 ibl_contribution = ibl(f0, lr, params, scene_data) * scene_lights.directional_light.enviornment_map_itensity;
+    float3 ibl_contribution = ibl(f0, lr, params, scene_data) * scene_lights.directional_light.environment_map_intensity;
 
     // final color
     output.color = float4(ibl_contribution + light_contribution, 1.f);
-
     return output;
 }

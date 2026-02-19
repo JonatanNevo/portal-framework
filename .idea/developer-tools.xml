@@ -4,7 +4,7 @@
     <developerToolsConfigurations>
       <developerToolConfiguration developerToolId="color-picker" id="d6355796-d745-4600-9992-0cae66dd8c10" name="Workbench">
         <properties>
-          <property key="selectedColor" type="INPUT" value="com.intellij.ui.JBColor|-1" />
+          <property key="selectedColor" type="INPUT" value="com.intellij.ui.JBColor|-3080381" />
         </properties>
       </developerToolConfiguration>
     </developerToolsConfigurations>

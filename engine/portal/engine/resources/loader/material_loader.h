@@ -39,25 +39,18 @@ enum class MaterialPass: uint8_t
 // TODO: Define some generic standard material format to communicate between this and gltf loader + save to filesystem
 struct MaterialDetails
 {
-    glm::vec4 surface_color;
-    float roughness = 0.5f;
-    float subsurface = 0.f;
-    float sheen = 0.f;
-    float sheen_tint = 0.5;
-
-    float anistropy = 0.f;
-    float specular_strength = 0.5f;
+    glm::vec3 albedo;
     float metallic = 0.f;
-    float specular_tint = 0.5f;
-
-    float clearcoat = 0.0;
-    float clearcoat_gloss = 1.f;
+    float roughness = 0.5f;
+    float emission = 0.f;
+    float env_map_rotation = 0.f;
 
     MaterialPass pass_type;
 
     StringId color_texture = INVALID_STRING_ID;
     StringId normal_texture = INVALID_STRING_ID;
-    StringId metallic_roughness_texture = INVALID_STRING_ID;
+    StringId roughness_texture = INVALID_STRING_ID;
+    StringId metallic_texture = INVALID_STRING_ID;
 
     static MaterialDetails dearchive(ArchiveObject& archive);
 };

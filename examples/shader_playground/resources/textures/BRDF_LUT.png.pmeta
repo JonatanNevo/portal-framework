@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "game/textures/BRDF_LUT",
+    "source": "textures/BRDF_LUT.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 512,
+        "width": 512
+    },
+    "type": "Texture"
+}

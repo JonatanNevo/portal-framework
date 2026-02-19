@@ -20,6 +20,7 @@ public:
     static void execute(FrameContext& frame, ecs::Registry& registry);
 
     static void update_global_descriptors(FrameContext& frame, ecs::Registry& registry);
+    static void update_lights(FrameContext& frame, const ecs::Registry& registry);
     static void add_static_mesh_to_context(FrameContext& frame, ecs::Registry& registry);
 
     [[nodiscard]] static StringId get_name() { return STRING_ID("Scene Rendering"); };

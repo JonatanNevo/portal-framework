@@ -56,9 +56,15 @@ void Application::run()
 
                 modules.begin_frame(context);
                 {
+                    auto update_start = std::chrono::high_resolution_clock::now();
+
                     input_event_dispatcher.update();
                     // Update scene, physics, input, ...
                     modules.update(context);
+
+                    const auto update_end = std::chrono::high_resolution_clock::now();
+                    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(update_end - update_start);
+                    context.stats.scene_update_time = elapsed.count() / 1000.f;
 
                     // TODO: will this differ between runtime and editor?
                     // Draw gui
