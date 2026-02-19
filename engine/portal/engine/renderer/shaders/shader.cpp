@@ -19,9 +19,10 @@ static auto logger = Log::get_logger("Shader");
 Shader::Shader(const StringId& id) : Resource(id)
 {}
 
-void Shader::load_source(Buffer&& new_source, const std::filesystem::path& shader_path)
+void Shader::load_source(Buffer&& new_source, const std::filesystem::path& shader_path, const std::filesystem::path& engine_path)
 {
     source_path = shader_path;
+    engine_shader_path = engine_path;
     source = std::move(new_source);
 }
 
@@ -40,6 +41,7 @@ uint64_t Shader::compile_with_permutations(
         shaders[permutations_hash] = compiler.compile({
             .name = id,
             .shader_path = source_path,
+            .engine_shader_path = engine_shader_path,
             .shader_data = source,
             .defines = permutations,
             .static_constants = static_constants
@@ -55,17 +57,22 @@ uint64_t Shader::calculate_permutations_hash(
     const std::vector<ShaderStaticConstants>& static_constants
 ) const
 {
+    auto combine = [](uint64_t seed, const uint64_t value) -> uint64_t {
+        seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 12) + (seed >> 4);
+        return seed;
+    };
+
     uint64_t hash = id.id;
     for (const auto& [name, value] : permutations)
     {
-        hash ^= hash::rapidhash(name);
-        hash ^= hash::rapidhash(value);
+        hash = combine(hash, hash::rapidhash(name));
+        hash = combine(hash, hash::rapidhash(value));
     }
     for (const auto& [name, type, value] : static_constants)
     {
-        hash ^= hash::rapidhash(name);
-        hash ^= hash::rapidhash(type);
-        hash ^= hash::rapidhash(value);
+        hash = combine(hash, hash::rapidhash(name));
+        hash = combine(hash, hash::rapidhash(type));
+        hash = combine(hash, hash::rapidhash(value));
     }
     return hash;
 }

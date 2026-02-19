@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "game/composite/Bishop_black_base_color",
+    "source": "composite/Bishop_black_base_color.jpg",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 2048,
+        "width": 2048
+    },
+    "type": "Texture"
+}

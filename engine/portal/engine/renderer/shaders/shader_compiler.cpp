@@ -249,9 +249,11 @@ CompiledShader ShaderCompiler::compile(const CompileRequest& request)
     }
 
     auto parent_path = request.shader_path.parent_path().string();
+    auto engine_path = request.engine_shader_path.generic_string();
 
     const char* search_paths[] = {
-        parent_path.c_str()
+        parent_path.c_str(),
+        engine_path.c_str(),
     };
 
     const slang::SessionDesc session_desc{
@@ -267,6 +269,34 @@ CompiledShader ShaderCompiler::compile(const CompileRequest& request)
 
     Slang::ComPtr<slang::ISession> session;
     global_session->createSession(session_desc, session.writeRef());
+
+    std::vector<slang::IComponentType*> component_types {};
+    if (!request.static_constants.empty())
+    {
+        std::string consts_module_string;
+        for (const auto& [name, type, value] : request.static_constants)
+        {
+            consts_module_string += fmt::format("\npublic export const static  {} {} = {};", type, name, value);
+        }
+
+        slang::IModule* consts_module;
+        {
+            Slang::ComPtr<slang::IBlob> diagnostics_blob;
+            consts_module = session->loadModuleFromSourceString(
+                "consts",
+                "consts.slang",
+                consts_module_string.c_str(),
+                diagnostics_blob.writeRef()
+            );
+            diagnose_if_needed(diagnostics_blob);
+            if (!consts_module)
+            {
+                LOGGER_ERROR("Failed to load consts module: {}", request.name);
+                return {};
+            }
+        }
+        component_types.push_back(consts_module);
+    }
 
     Slang::ComPtr<slang::IModule> module;
     {
@@ -290,7 +320,7 @@ CompiledShader ShaderCompiler::compile(const CompileRequest& request)
     LOGGER_DEBUG("Found {} entry points in shader", entry_point_count);
 
     std::vector<Slang::ComPtr<slang::IEntryPoint>> entry_points;
-    std::vector<slang::IComponentType*> component_types = {module};
+    component_types.emplace_back(module);
 
     for (int i = 0; i < entry_point_count; i++)
     {
@@ -318,34 +348,6 @@ CompiledShader ShaderCompiler::compile(const CompileRequest& request)
         LOGGER_DEBUG("found entry point: {}", entry_point_name);
         component_types.push_back(entry_point);
     }
-
-    // if (!request.static_constants.empty())
-    // {
-    //     std::string consts_module_string;
-    //     for (const auto& [name, type, value] : request.static_constants)
-    //     {
-    //         consts_module_string += fmt::format("\npublic export const static  {} {} = {};", type, name, value);
-    //     }
-    //
-    //     slang::IModule* consts_module;
-    //     {
-    //         Slang::ComPtr<slang::IBlob> diagnostics_blob;
-    //         consts_module = session->loadModuleFromSourceString(
-    //             "consts",
-    //             "consts.slang",
-    //             consts_module_string.c_str(),
-    //             diagnostics_blob.writeRef()
-    //         );
-    //         diagnose_if_needed(diagnostics_blob);
-    //         if (!consts_module)
-    //         {
-    //             LOGGER_ERROR("Failed to load consts module: {}", request.name);
-    //             return {};
-    //         }
-    //     }
-    //     component_types.push_back(consts_module);
-    // }
-
 
     slang::IComponentType* composed_program;
     {
@@ -420,6 +422,7 @@ CompiledShader ShaderCompiler::compile(const CompileRequest& request)
 
 ShaderReflection ShaderCompiler::reflect_shader(slang::ProgramLayout* layout)
 {
+    // // Keep this for debug
     // Slang::ComPtr<slang::IBlob> json_blob;
     // layout->toJson(json_blob.writeRef());
     // Buffer json_data = Buffer::copy(json_blob->getBufferPointer(), json_blob->getBufferSize());
@@ -430,8 +433,7 @@ ShaderReflection ShaderCompiler::reflect_shader(slang::ProgramLayout* layout)
     LOGGER_TRACE("===========================");
 
     ShaderReflection reflection;
-
-    process_variable_layout(reflection, layout->getGlobalParamsVarLayout());
+    process_variable_layout(reflection, layout->getGlobalParamsVarLayout(), layout);
 
     // Process each entry point
     const size_t entry_point_count = layout->getEntryPointCount();
@@ -450,15 +452,15 @@ ShaderReflection ShaderCompiler::reflect_shader(slang::ProgramLayout* layout)
     return reflection;
 }
 
-void ShaderCompiler::process_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout)
+void ShaderCompiler::process_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout, slang::ProgramLayout* program_layout)
 {
     if (!var_layout) return;
 
     // Process parameters directly from variable layout
-    process_parameters_from_variable_layout(reflection, var_layout);
+    process_parameters_from_variable_layout(reflection, var_layout, program_layout);
 }
 
-void ShaderCompiler::process_parameters_from_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout)
+void ShaderCompiler::process_parameters_from_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout, slang::ProgramLayout* program_layout)
 {
     const auto type_layout = var_layout->getTypeLayout();
 
@@ -533,7 +535,7 @@ void ShaderCompiler::process_parameters_from_variable_layout(ShaderReflection& r
                 has_parameter_block = true;
                 // Assign our own sequential space instead of using what Slang reports
                 // Parameter blocks always start at binding 0 for the uniform buffer
-                process_parameter_block_parameter(reflection, field_name, field_type_layout, parameter_block_space_counter, 0);
+                process_parameter_block_parameter(reflection, field_name, field_type_layout, parameter_block_space_counter, 0, program_layout);
                 parameter_block_space_counter++;
                 break;
             }
@@ -738,7 +740,8 @@ void ShaderCompiler::process_parameter_block_parameter(
     const char* name,
     slang::TypeLayoutReflection* type_layout,
     const int space,
-    size_t binding_index
+    size_t binding_index,
+    slang::ProgramLayout* program_layout
 )
 {
     const auto element_type_layout = type_layout->getElementTypeLayout();
@@ -777,14 +780,16 @@ void ShaderCompiler::process_parameter_block_parameter(
                 continue;
             }
 
+            // Use the specialization-aware getElementCount overload to determine
+            // if the Conditional's storage array is active (size 1) or inactive (size 0).
+            // The zero-argument overload doesn't account for specialization and always returns 0.
             auto storage = field_layout->getFieldByIndex(0);
-            auto element_count = storage->getTypeLayout()->getElementCount();
+            auto element_count = storage->getTypeLayout()->getElementCount(program_layout);
             if (element_count == 0)
             {
                 resource_binding_counter++;
                 continue;
             }
-
 
             auto resource_type = storage->getTypeLayout()->getElementTypeLayout();
             // TODO: support conditionals that are not textures
@@ -948,31 +953,67 @@ void ShaderCompiler::process_resource_parameter(
 
     auto& desc_set = reflection.descriptor_sets[descriptor_set];
 
-    // For now, assume separate textures - can be extended later
-    shader_reflection::ImageSamplerDescriptor image;
-    image.type = DescriptorType::SampledImage;
-    image.stage = current_stage;
-    image.binding_point = binding_index;
-    image.descriptor_set = descriptor_set;
-    image.name = name_id;
-    image.dimensions = get_image_dimensions_from_shape(base_shape);
-    image.array_size = get_array_size(type_layout);
 
-    desc_set.images[binding_index] = image;
+    if (base_shape & SLANG_STRUCTURED_BUFFER)
+    {
+        const auto buffer_size = type_layout->getElementTypeLayout()->getSize();
 
-    LOGGER_TRACE("Separate Images:");
-    LOGGER_TRACE("  {} ({}, {})", name, descriptor_set, binding_index);
-    LOGGER_TRACE("  Dimensions: {}D", image.dimensions);
-    LOGGER_TRACE("  Array Size: {}", image.array_size);
-    LOGGER_TRACE("-------------------");
+        shader_reflection::BufferDescriptor buffer;
+        buffer.type = DescriptorType::StorageBuffer;
+        buffer.stage = current_stage;
+        buffer.binding_point = binding_index;
+        buffer.name = name_id;
+        buffer.size = buffer_size;
+        buffer.offset = 0;
+        buffer.range = buffer_size;
+        process_buffer_uniforms(buffer, type_layout->getElementTypeLayout(), name_id, 0);
 
-    reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
-        .name = name_id,
-        .type = DescriptorType::SampledImage,
-        .set = descriptor_set,
-        .binding_index = binding_index,
-        .count = get_array_size(type_layout)
-    };
+        desc_set.storage_buffers[binding_index] = buffer;
+
+        LOGGER_TRACE("Storage Buffers:");
+        LOGGER_TRACE("  {} ({}, {})", name, descriptor_set, binding_index);
+        LOGGER_TRACE("  Size: {}", buffer_size);
+        LOGGER_TRACE("  Fields:");
+        for (const auto& [fst, snd] : buffer.uniforms)
+            LOGGER_TRACE("    {}: {}", fst.string, format_property(snd.property));
+        LOGGER_TRACE("-------------------");
+
+        reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
+            .name = name_id,
+            .type = DescriptorType::StorageBuffer,
+            .set = descriptor_set,
+            .binding_index = binding_index,
+            .count = 1
+        };
+    }
+    else
+    {
+        // For now, assume separate textures - can be extended later
+        shader_reflection::ImageSamplerDescriptor image;
+        image.type = DescriptorType::SampledImage;
+        image.stage = current_stage;
+        image.binding_point = binding_index;
+        image.descriptor_set = descriptor_set;
+        image.name = name_id;
+        image.dimensions = get_image_dimensions_from_shape(base_shape);
+        image.array_size = get_array_size(type_layout);
+
+        desc_set.images[binding_index] = image;
+
+        LOGGER_TRACE("Separate Images:");
+        LOGGER_TRACE("  {} ({}, {})", name, descriptor_set, binding_index);
+        LOGGER_TRACE("  Dimensions: {}D", image.dimensions);
+        LOGGER_TRACE("  Array Size: {}", image.array_size);
+        LOGGER_TRACE("-------------------");
+
+        reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
+            .name = name_id,
+            .type = DescriptorType::SampledImage,
+            .set = descriptor_set,
+            .binding_index = binding_index,
+            .count = get_array_size(type_layout)
+        };
+    }
 }
 
 void ShaderCompiler::process_push_constant_parameter(

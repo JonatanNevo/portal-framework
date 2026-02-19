@@ -103,6 +103,23 @@ public:
     PipelineBuilder& disable_multisampling();
 
     /**
+     * @brief Enables multisampling (MSAA)
+     * @param samples Rasterization sample count (e2/e4/e8/...)
+     * @param enable_sample_shading Enables per-sample shading (requires device feature)
+     * @param min_sample_shading Minimum fraction of samples shaded when sample shading is enabled
+     * @param alpha_to_coverage Enables alpha-to-coverage (useful for cutout transparency with MSAA)
+     * @param alpha_to_one Enables alpha-to-one (rarely used)
+     * @return Reference to this builder
+     */
+    PipelineBuilder& enable_multisampling(
+        vk::SampleCountFlagBits samples,
+        bool enable_sample_shading = false,
+        float min_sample_shading = 1.0f,
+        bool alpha_to_coverage = false,
+        bool alpha_to_one = false
+    );
+
+    /**
      * @brief Enables depth/stencil testing
      * @param depth_write_enable Whether depth writes are enabled
      * @param depth_compare_op Depth comparison operator (Less, Greater, etc.)

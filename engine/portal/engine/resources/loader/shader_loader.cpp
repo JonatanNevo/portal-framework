@@ -9,6 +9,7 @@
 
 #include <portal/core/strings/string_utils.h>
 
+#include "portal/engine/project/project.h"
 #include "portal/engine/renderer/renderer_context.h"
 #include "portal/engine/resources/resource_registry.h"
 #include "portal/engine/resources/source/resource_source.h"
@@ -38,8 +39,8 @@ void ShaderLoader::save(ResourceData&) {}
 Reference<Resource> ShaderLoader::load_shader(const SourceMetadata& meta, const ResourceSource& source) const
 {
     auto shader = make_reference<renderer::vulkan::VulkanShader>(meta.resource_id, context);
-    // TODO: use global shader path somehow
-    shader->load_source(source.load(), meta.full_source_path.string);
+    auto& project = registry.get_project();
+    shader->load_source(source.load(), meta.full_source_path.string, project.get_engine_resource_directory() / "shaders");
     return shader;
 }
 

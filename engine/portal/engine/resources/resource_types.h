@@ -196,13 +196,15 @@ enum class ResourceType: uint16_t
     Mesh      = 4,
     Scene     = 6,
     Composite = 7,
-    Font      = 8
+    Font      = 8,
+    EnvironmentMap = 9
 };
 
 enum class SourceFormat: uint8_t
 {
     Unknown,
     Memory,            // Source exists in memory
+    JsonArchive,       // A json archive with the source description
     Image,             // Image formats, e.g. PNG, JPEG
     Texture,           // Ktx or other texture formats
     Material,          // Material files, e.g. MDL

@@ -322,8 +322,19 @@ void Renderer::init_global_descriptors(ResourceRegistry& resource_registry)
     // TODO: should this be here or under scene?
     auto frames_in_flight = settings.get_setting<size_t>("application.frames_in_flight", 3);
 
-    auto shader = resource_registry.immediate_load<Shader>(STRING_ID("game/shaders/default_shader"));
-    const auto hash = shader->compile_with_permutations({}, {});
+    auto shader = resource_registry.immediate_load<Shader>(STRING_ID("engine/shaders/default_shader"));
+    const auto hash = shader->compile_with_permutations(
+        {},
+        {
+            {
+                {"has_normal_texture", "bool", "true"},
+                {"has_tangent_texture", "bool", "true"},
+                {"has_metallic_roughness_texture", "bool", "true"},
+                {"has_metalic_texture", "bool", "true"},
+                {"has_roughness_texture", "bool", "true"},
+            }
+        }
+    );
     const auto variant = shader->get_shader(hash).lock();
 
     const DescriptorSetManagerProperties manager_props{

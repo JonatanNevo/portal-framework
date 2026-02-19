@@ -26,7 +26,7 @@ Reference<Project> Project::open_project(const ProjectType type, const std::file
 
 std::filesystem::path Project::get_engine_resource_directory()
 {
-    return std::filesystem::path(PORTAL_ENGINE_RESOURCES_LOCATION);
+    return std::filesystem::path(PORTAL_ENGINE_RESOURCES_LOCATION) / "engine";
 }
 
 std::filesystem::path Project::get_engine_config_directory()
@@ -48,7 +48,7 @@ Project::Project(const ProjectType type, ProjectProperties project_properties, s
 
     if (properties.include_engine_resources)
     {
-        resource_database.register_database(*this, {DatabaseType::Folder, get_engine_resource_directory() / "engine"});
+        resource_database.register_database(*this, {DatabaseType::Folder, get_engine_resource_directory() });
     }
 
     FileSystem::set_working_directory(project_directory);

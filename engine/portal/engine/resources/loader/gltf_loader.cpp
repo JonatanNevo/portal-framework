@@ -64,9 +64,21 @@ renderer::SamplerMipmapMode extract_mipmap_mode(const fastgltf::Filter filter)
     return renderer::SamplerMipmapMode::Linear;
 }
 
+std::string to_lower_locale(std::string_view s, const std::locale& loc = std::locale{})
+{
+    return std::ranges::to<std::string>(
+        s | std::views::transform(
+            [&](const unsigned char ch)
+            {
+                return static_cast<char>(std::tolower(ch, loc));
+            }
+        )
+    );
+}
+
 std::string create_name_relative(const std::filesystem::path path, const auto& part, const ResourceType type)
 {
-    return (path / fmt::format("gltf-{}-{}", to_string(type), part)).generic_string();
+    return (path  / fmt::format("gltf-{}-{}", to_string(type), part)).generic_string();
 }
 
 GltfLoader::GltfLoader(ResourceRegistry& registry, const renderer::vulkan::VulkanContext& context) : ResourceLoader(registry), context(context)
@@ -112,7 +124,8 @@ ResourceData GltfLoader::load(const SourceMetadata& meta, Reference<ResourceSour
     material_jobs.reserve(gltf.materials.size());
     for (auto& material : gltf.materials)
     {
-        auto material_metadata = composite_meta.children.at(relative_name(material.name.c_str(), ResourceType::Material));
+        auto name = relative_name(material.name.c_str(), ResourceType::Material);
+        auto material_metadata = composite_meta.children.at(name);
         material_jobs.emplace_back(load_material(meta.resource_id, material_metadata, gltf, material));
     }
     registry.wait_all(material_jobs);
@@ -187,13 +200,13 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
         if (material.pbrData.baseColorTexture.has_value())
         {
             auto texture = gltf.textures[material.pbrData.baseColorTexture.value().textureIndex];
-            auto [texture_meta, _] = find_image_source(meta.resource_id,base_name, parent_path, gltf, texture);
+            auto [texture_meta, _] = find_image_source(meta.resource_id, base_name, parent_path, gltf, texture);
             dependencies.push_back(texture_meta.resource_id);
         }
         if (material.pbrData.metallicRoughnessTexture.has_value())
         {
             auto texture = gltf.textures[material.pbrData.metallicRoughnessTexture.value().textureIndex];
-            auto [texture_meta, _] = find_image_source(meta.resource_id,base_name, parent_path, gltf, texture);
+            auto [texture_meta, _] = find_image_source(meta.resource_id, base_name, parent_path, gltf, texture);
             dependencies.push_back(texture_meta.resource_id);
         }
 
@@ -479,6 +492,7 @@ Job<> GltfLoader::load_material(
     const fastgltf::Material& material
 ) const
 {
+    // TODO: fetch texture names from material metadata
     const auto base_name = std::filesystem::path(material_meta.resource_id.string).parent_path();
     const auto parent_path = std::filesystem::path(material_meta.source.string).parent_path();
 
@@ -493,14 +507,35 @@ Job<> GltfLoader::load_material(
             material.pbrData.baseColorFactor[2],
             material.pbrData.baseColorFactor[3]
         },
-        .roughness = material.pbrData.metallicFactor,
+        .roughness = material.pbrData.roughnessFactor,
+        .metallic = material.pbrData.metallicFactor,
     };
+
+    if (material.sheen) {
+        details.sheen = material.sheen->sheenRoughnessFactor;
+        const auto& c = material.sheen->sheenColorFactor;
+        details.sheen_tint = 0.2126f * c[0] + 0.7152f * c[1] + 0.0722f * c[2];
+    }
+
+    if (material.clearcoat) {
+        details.clearcoat = material.clearcoat->clearcoatFactor;
+        details.clearcoat_gloss = 1.f - material.clearcoat->clearcoatRoughnessFactor;
+    }
+
+    if (material.specular) {
+        details.specular_strength = material.specular->specularFactor;
+        const auto& c = material.specular->specularColorFactor;
+        details.specular_tint = 0.2126f * c[0] + 0.7152f * c[1] + 0.0722f * c[2];
+    }
+
+    if (material.anisotropy) {
+        details.anistropy = material.anisotropy->anisotropyStrength;
+    }
 
     if (material.alphaMode == fastgltf::AlphaMode::Blend)
         details.pass_type = MaterialPass::Transparent;
     else
         details.pass_type = MaterialPass::MainColor;
-
     if (material.pbrData.baseColorTexture.has_value())
     {
         auto texture = asset.textures[material.pbrData.baseColorTexture.value().textureIndex];

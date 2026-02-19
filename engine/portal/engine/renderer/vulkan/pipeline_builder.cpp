@@ -73,6 +73,23 @@ PipelineBuilder& PipelineBuilder::disable_multisampling()
     return *this;
 }
 
+PipelineBuilder& PipelineBuilder::enable_multisampling(
+    const vk::SampleCountFlagBits samples,
+    const bool enable_sample_shading,
+    const float min_sample_shading,
+    const bool alpha_to_coverage,
+    const bool alpha_to_one
+)
+{
+    multisampling.rasterizationSamples = samples;
+    multisampling.sampleShadingEnable = enable_sample_shading;
+    multisampling.minSampleShading = min_sample_shading;
+    multisampling.pSampleMask = nullptr;
+    multisampling.alphaToCoverageEnable = alpha_to_coverage;
+    multisampling.alphaToOneEnable = alpha_to_one;
+    return *this;
+}
+
 PipelineBuilder& PipelineBuilder::enable_depth_stencil(const bool depth_write_enable, const DepthCompareOperator depth_compare_op)
 {
     depth_stencil.depthTestEnable = true;

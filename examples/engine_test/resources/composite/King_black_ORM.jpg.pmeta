@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "game/composite/King_black_ORM",
+    "source": "composite/King_black_ORM.jpg",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 2048,
+        "width": 2048
+    },
+    "type": "Texture"
+}

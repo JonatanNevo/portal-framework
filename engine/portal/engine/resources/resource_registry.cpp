@@ -23,7 +23,9 @@ ResourceRegistry::ResourceRegistry(
     ResourceDatabase& database,
     ReferenceManager& reference_manager,
     const renderer::vulkan::VulkanContext& context
-) : ecs_registry(ecs_registry),
+) :
+    project(project),
+    ecs_registry(ecs_registry),
     scheduler(scheduler),
     database(database),
     reference_manager(reference_manager),
@@ -120,7 +122,6 @@ void ResourceRegistry::save_resource(resources::ResourceData& resource_data)
 
 Buffer ResourceRegistry::snapshot_resource(const resources::ResourceData& resource_data)
 {
-
     const auto source = make_reference<resources::MemorySource>();
     auto& loader = loader_factory.get(resource_data.metadata);
     loader.snapshot(resource_data, source);
