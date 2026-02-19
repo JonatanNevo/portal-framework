@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "game/composite/Pawn_normal",
+    "source": "composite/Pawn_normal.jpg",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 2048,
+        "width": 2048
+    },
+    "type": "Texture"
+}

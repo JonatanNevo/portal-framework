@@ -1,7 +1,0 @@
-{
-    "dependencies": [],
-    "format": "Shader",
-    "resource_id": "engine/shaders/pbr",
-    "source": "shaders/pbr.slang",
-    "type": "Shader"
-}

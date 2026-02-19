@@ -76,6 +76,8 @@ ResourceData MaterialLoader::load(const SourceMetadata& meta, Reference<Resource
         // Not yet in MaterialDetails
         {"has_tangent_texture", "bool", "false"},
         {"has_metallic_roughness_texture", "bool", has_roughness ? "true" : "false"},
+        {"has_metalic_texture", "bool", "true"},
+        {"has_roughness_texture", "bool", "true"},
     };
 
     auto shader = registry.immediate_load<renderer::vulkan::VulkanShader>(material_meta.shader);
@@ -134,10 +136,16 @@ ResourceData MaterialLoader::load(const SourceMetadata& meta, Reference<Resource
 
     if (details.pass_type == MaterialPass::Transparent)
         material->set_pipeline(
-            reference_cast<renderer::vulkan::VulkanPipeline>(create_pipeline(STRING_ID("transparent_pipeline"), hash, variant, false))
+            reference_cast<renderer::vulkan::VulkanPipeline>(
+                create_pipeline(STRING_ID(fmt::format("transparent_pipeline_{}", material->get_id().string)), hash, variant, false)
+            )
         );
     else
-        material->set_pipeline(reference_cast<renderer::vulkan::VulkanPipeline>(create_pipeline(STRING_ID("color_pipeline"), hash, variant, true)));
+        material->set_pipeline(
+            reference_cast<renderer::vulkan::VulkanPipeline>(
+                create_pipeline(STRING_ID(fmt::format("color_pipeline_{}", material->get_id().string)), hash, variant, true)
+            )
+        );
 
     return {material, source, meta};
 }

@@ -1,12 +1,14 @@
 {
     "dependencies": [
-        "white_texture",
-        "game/shaders/default_shader",
+        "game/textures/Mud_Albedo",
+        "game/textures/Mud_Normal",
+        "game/textures/Mud_Roughness",
+        "game/shaders/pbr",
         "game/models/sphere"
     ],
     "format": "Material",
     "material": {
-        "shader": "game/shaders/default_shader"
+        "shader": "game/shaders/pbr"
     },
     "resource_id": "game/materials/default_material",
     "source": "materials/default_material.pmaterial",

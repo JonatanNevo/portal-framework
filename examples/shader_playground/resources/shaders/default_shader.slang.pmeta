@@ -1,7 +1,0 @@
-{
-    "dependencies": [],
-    "format": "Shader",
-    "resource_id": "game/shaders/default_shader",
-    "source": "shaders/default_shader.slang",
-    "type": "Shader"
-}

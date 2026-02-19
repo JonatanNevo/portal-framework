@@ -248,6 +248,7 @@ public:
     }
 
     [[nodiscard]] ecs::Registry& get_ecs_registry() const { return ecs_registry; }
+    [[nodiscard]] const Project& get_project() const { return project; }
 
     void save_resource(resources::ResourceData& resource_data);
     Buffer snapshot_resource(const resources::ResourceData& resource_data);
@@ -289,6 +290,7 @@ private:
     void set_dirty(const StringId& resource_id, ResourceDirtyFlags flags);
     ResourceDirtyFlags get_dirty(const StringId& resource_id);
 
+    const Project& project;
     ecs::Registry& ecs_registry;
     jobs::Scheduler& scheduler;
     ResourceDatabase& database;

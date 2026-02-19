@@ -72,7 +72,7 @@ public:
      * @param new_source Shader source buffer
      * @param shader_path Source file path
      */
-    void load_source(Buffer&& new_source, const std::filesystem::path& shader_path);
+    void load_source(Buffer&& new_source, const std::filesystem::path& shader_path, const std::filesystem::path& engine_path);
 
     /**
      * @brief Compiles shader with given defines and specialization constants
@@ -106,6 +106,7 @@ protected:
 
 protected:
     std::filesystem::path source_path;
+    std::filesystem::path engine_shader_path;
     Buffer source;
     SpinLock shader_cache_lock;
     std::unordered_map<uint64_t, CompiledShader> shaders;

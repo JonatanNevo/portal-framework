@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SlangPersistentStateComponentConfig">
-    <option name="explicitSlangdLocation" value="C:\Code\portal-framework\build\ninja-multi\vcpkg_installed\x64-windows\tools\shader-slang" />
+    <option name="additionalIncludePaths">
+      <list>
+        <option value="C:\Code\portal-framework\engine\resources\shaders" />
+      </list>
+    </option>
+    <option name="explicitSlangdLocation" value="C:\VulkanSDK\1.4.304.0\Bin" />
   </component>
 </project>

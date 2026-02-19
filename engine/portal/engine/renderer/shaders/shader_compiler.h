@@ -40,6 +40,7 @@ public:
     {
         StringId name;
         std::filesystem::path shader_path;
+        std::filesystem::path engine_shader_path;
         Buffer shader_data;
         std::vector<ShaderDefine> defines;
         std::vector<ShaderStaticConstants> static_constants;
@@ -60,10 +61,10 @@ private:
     ShaderReflection reflect_shader(slang::ProgramLayout* layout);
 
     /** @brief Processes variable layout reflection */
-    void process_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout);
+    void process_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout, slang::ProgramLayout* program_layout);
 
     /** @brief Processes parameters from variable layout */
-    void process_parameters_from_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout);
+    void process_parameters_from_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout, slang::ProgramLayout* program_layout);
 
     /** @brief Processes entry point parameters */
     void process_entry_point_parameters(ShaderReflection& reflection, slang::EntryPointLayout* entry_point_layout);
@@ -103,7 +104,8 @@ private:
         const char* name,
         slang::TypeLayoutReflection* type_layout,
         int space,
-        size_t binding_index
+        size_t binding_index,
+        slang::ProgramLayout* program_layout
     );
 
     /** @brief Processes combined texture-sampler parameter */

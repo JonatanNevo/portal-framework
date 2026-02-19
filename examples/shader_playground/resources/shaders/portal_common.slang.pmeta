@@ -1,7 +1,0 @@
-{
-    "dependencies": [],
-    "format": "Shader",
-    "resource_id": "game/shaders/portal_common",
-    "source": "shaders/portal_common.slang",
-    "type": "Shader"
-}

@@ -1,0 +1,31 @@
+{
+    "dependencies": [
+        "game/composite/gltf-Mesh-King_Shared",
+        "game/composite/gltf-Material-King_Black",
+        "game/composite/gltf-Material-King_White",
+        "game/composite/gltf-Material-Queen_White",
+        "game/composite/gltf-Material-Queen_Black",
+        "game/composite/gltf-Mesh-Queen_Shared",
+        "game/composite/gltf-Mesh-Chessboard",
+        "game/composite/gltf-Material-Chessboard",
+        "game/composite/gltf-Material-Pawn_Body_White",
+        "game/composite/gltf-Mesh-Pawn_Body_Shared",
+        "game/composite/gltf-Material-Castle_White",
+        "game/composite/gltf-Material-Pawn_Top_White",
+        "game/composite/gltf-Mesh-Knight_Shared",
+        "game/composite/gltf-Mesh-Pawn_Top_Shared",
+        "game/composite/gltf-Material-Pawn_Body_Black",
+        "game/composite/gltf-Material-Pawn_Top_Black",
+        "game/composite/gltf-Material-Castle_Black",
+        "game/composite/gltf-Mesh-Castle_Shared",
+        "game/composite/gltf-Material-Knight_Black",
+        "game/composite/gltf-Material-Knight_White",
+        "game/composite/gltf-Material-Bishop_Black",
+        "game/composite/gltf-Mesh-Bishop_Shared",
+        "game/composite/gltf-Material-Bishop_White"
+    ],
+    "format": "Scene",
+    "resource_id": "game/scenes/default",
+    "source": "scenes/default.pscene",
+    "type": "Scene"
+}
