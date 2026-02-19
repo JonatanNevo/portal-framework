@@ -4,8 +4,8 @@ import portal_common;
 import portal_pbr;
 import portal_scene;
 
-public static const uint MAX_POINT_LIGHTS = 1024;
-public static const uint MAX_SPOT_LIGHTS = 1024;
+public static const uint MAX_POINT_LIGHTS = 128;
+public static const uint MAX_SPOT_LIGHTS = 128;
 
 //////////////////////////////////////////
 // Declerations

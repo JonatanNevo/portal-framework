@@ -28,6 +28,8 @@ std::string format_property(reflection::Property prop)
     case reflection::PropertyContainerType::scalar:
         return std::string(to_string(prop.type));
     case reflection::PropertyContainerType::array:
+        if (prop.type == reflection::PropertyType::object)
+            return fmt::format("{}[{}]", prop.value.as_string(), prop.elements_number);
         return fmt::format("{}[{}]", prop.type, prop.elements_number);
     case reflection::PropertyContainerType::string:
     case reflection::PropertyContainerType::null_term_string:
@@ -270,7 +272,7 @@ CompiledShader ShaderCompiler::compile(const CompileRequest& request)
     Slang::ComPtr<slang::ISession> session;
     global_session->createSession(session_desc, session.writeRef());
 
-    std::vector<slang::IComponentType*> component_types {};
+    std::vector<slang::IComponentType*> component_types{};
     if (!request.static_constants.empty())
     {
         std::string consts_module_string;
@@ -433,7 +435,10 @@ ShaderReflection ShaderCompiler::reflect_shader(slang::ProgramLayout* layout)
     LOGGER_TRACE("===========================");
 
     ShaderReflection reflection;
-    process_variable_layout(reflection, layout->getGlobalParamsVarLayout(), layout);
+
+    const auto global_params = layout->getGlobalParamsVarLayout();
+    if (global_params)
+        process_parameters_from_variable_layout(reflection, global_params, layout);
 
     // Process each entry point
     const size_t entry_point_count = layout->getEntryPointCount();
@@ -452,15 +457,106 @@ ShaderReflection ShaderCompiler::reflect_shader(slang::ProgramLayout* layout)
     return reflection;
 }
 
-void ShaderCompiler::process_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout, slang::ProgramLayout* program_layout)
+shader_reflection::ShaderDescriptorSet& ShaderCompiler::ensure_descriptor_set(ShaderReflection& reflection, size_t descriptor_set)
 {
-    if (!var_layout) return;
-
-    // Process parameters directly from variable layout
-    process_parameters_from_variable_layout(reflection, var_layout, program_layout);
+    if (descriptor_set >= reflection.descriptor_sets.size())
+        reflection.descriptor_sets.resize(descriptor_set + 1);
+    return reflection.descriptor_sets[descriptor_set];
 }
 
-void ShaderCompiler::process_parameters_from_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout, slang::ProgramLayout* program_layout)
+void ShaderCompiler::add_image_descriptor(
+    ShaderReflection& reflection,
+    StringId name_id,
+    DescriptorType type,
+    ShaderStage stage,
+    size_t descriptor_set,
+    size_t binding_index,
+    unsigned base_shape,
+    slang::TypeLayoutReflection* type_layout
+)
+{
+    auto& desc_set = ensure_descriptor_set(reflection, descriptor_set);
+
+    shader_reflection::ImageSamplerDescriptor image;
+    image.type = type;
+    image.stage = stage;
+    image.binding_point = binding_index;
+    image.descriptor_set = descriptor_set;
+    image.name = name_id;
+    image.dimensions = get_image_dimensions_from_shape(base_shape);
+    image.array_size = get_array_size(type_layout);
+
+    if (type == DescriptorType::CombinedImageSampler)
+        desc_set.image_samplers[binding_index] = image;
+    else
+        desc_set.images[binding_index] = image;
+
+    reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
+        .name = name_id,
+        .type = type,
+        .set = descriptor_set,
+        .binding_index = binding_index,
+        .count = get_array_size(type_layout)
+    };
+
+    LOGGER_TRACE("Image Descriptor:");
+    LOGGER_TRACE("  {} ({}, {})", name_id.string, descriptor_set, binding_index);
+    LOGGER_TRACE("  Dimensions: {}D", image.dimensions);
+    LOGGER_TRACE("  Array Size: {}", image.array_size);
+    LOGGER_TRACE("-------------------");
+}
+
+void ShaderCompiler::add_buffer_descriptor(
+    ShaderReflection& reflection,
+    StringId name_id,
+    DescriptorType type,
+    ShaderStage stage,
+    size_t descriptor_set,
+    size_t binding_index,
+    slang::TypeLayoutReflection* element_type_layout
+)
+{
+    auto& desc_set = ensure_descriptor_set(reflection, descriptor_set);
+
+    const auto buffer_size = element_type_layout->getSize();
+
+    shader_reflection::BufferDescriptor buffer;
+    buffer.type = type;
+    buffer.stage = stage;
+    buffer.binding_point = binding_index;
+    buffer.name = name_id;
+    buffer.size = buffer_size;
+    buffer.offset = 0;
+    buffer.range = buffer_size;
+    process_buffer_uniforms(buffer, element_type_layout, name_id, 0);
+
+    if (type == DescriptorType::UniformBuffer)
+        desc_set.uniform_buffers[binding_index] = buffer;
+    else
+        desc_set.storage_buffers[binding_index] = buffer;
+
+    reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
+        .name = name_id,
+        .type = type,
+        .set = descriptor_set,
+        .binding_index = binding_index,
+        .count = 1
+    };
+
+    LOGGER_TRACE("Buffer Descriptor:");
+    LOGGER_TRACE("  {} ({}, {})", name_id.string, descriptor_set, binding_index);
+    LOGGER_TRACE("  Size: {}", buffer_size);
+    LOGGER_TRACE("  Fields:");
+    for (const auto& [fst, snd] : buffer.uniforms)
+        LOGGER_TRACE("    {}: {}", fst.string, format_property(snd.property));
+    LOGGER_TRACE("-------------------");
+}
+
+void ShaderCompiler::process_parameters_from_variable_layout(
+    ShaderReflection& reflection,
+    slang::VariableLayoutReflection* var_layout,
+    slang::ProgramLayout* program_layout
+)
 {
     const auto type_layout = var_layout->getTypeLayout();
 
@@ -497,24 +593,60 @@ void ShaderCompiler::process_parameters_from_variable_layout(ShaderReflection& r
         {
         case slang::TypeReflection::Kind::ConstantBuffer:
             has_global_variables = true;
-            process_constant_buffer_parameter(reflection, field_name, field_type_layout, space, binding_index);
+            add_buffer_descriptor(
+                reflection,
+                STRING_ID(field_name),
+                DescriptorType::UniformBuffer,
+                ShaderStage::All,
+                static_cast<size_t>(space),
+                binding_index,
+                field_type_layout->getElementTypeLayout()
+            );
             break;
 
         case slang::TypeReflection::Kind::Resource:
             {
                 has_global_variables = true;
-                // Check if it's a combined texture sampler
                 const auto resource_shape = field_type->getResourceShape();
                 const auto base_shape = resource_shape & SLANG_RESOURCE_BASE_SHAPE_MASK;
 
                 if ((resource_shape & SLANG_TEXTURE_COMBINED_FLAG) != 0)
                 {
-                    process_combined_texture_sampler_parameter(reflection, field_name, field_type_layout, space, binding_index, base_shape);
+                    add_image_descriptor(
+                        reflection,
+                        STRING_ID(field_name),
+                        DescriptorType::CombinedImageSampler,
+                        current_stage,
+                        static_cast<size_t>(space),
+                        binding_index,
+                        base_shape,
+                        field_type_layout
+                    );
+                }
+                else if (base_shape & SLANG_STRUCTURED_BUFFER)
+                {
+                    add_buffer_descriptor(
+                        reflection,
+                        STRING_ID(field_name),
+                        DescriptorType::StorageBuffer,
+                        current_stage,
+                        static_cast<size_t>(space),
+                        binding_index,
+                        field_type_layout->getElementTypeLayout()
+                    );
                 }
                 else
                 {
-                    // Handle separate textures, samplers, etc.
-                    process_resource_parameter(reflection, field_name, field_type_layout, space, binding_index, resource_shape);
+                    add_image_descriptor(
+                        reflection,
+                        STRING_ID(field_name),
+                        DescriptorType::SampledImage,
+                        current_stage,
+                        static_cast<size_t>(space),
+                        binding_index,
+                        base_shape,
+                        field_type_layout
+                    );
                 }
                 break;
             }
@@ -610,131 +742,6 @@ void ShaderCompiler::process_entry_point_parameters(ShaderReflection& reflection
     }
 }
 
-void ShaderCompiler::process_constant_buffer_parameter(
-    ShaderReflection& reflection,
-    const char* name,
-    slang::TypeLayoutReflection* type_layout,
-    int space,
-    size_t binding_index
-)
-{
-    const auto buffer_size = type_layout->getElementTypeLayout()->getSize();
-    const auto descriptor_set = static_cast<size_t>(space);
-    const StringId name_id = STRING_ID(name);
-
-    // Ensure descriptor set exists
-    if (descriptor_set >= reflection.descriptor_sets.size())
-        reflection.descriptor_sets.resize(descriptor_set + 1);
-
-    auto& desc_set = reflection.descriptor_sets[descriptor_set];
-    shader_reflection::BufferDescriptor uniform_buffer;
-    uniform_buffer.type = DescriptorType::UniformBuffer;
-    uniform_buffer.stage = ShaderStage::All;
-    uniform_buffer.binding_point = binding_index;
-    uniform_buffer.name = name_id;
-    uniform_buffer.size = buffer_size;
-    uniform_buffer.offset = 0;
-    uniform_buffer.range = buffer_size;
-    process_buffer_uniforms(uniform_buffer, type_layout->getElementTypeLayout(), name_id, 0);
-
-    LOGGER_TRACE("Uniform Buffers:");
-    LOGGER_TRACE("  {} ({}, {})", name, descriptor_set, binding_index);
-    LOGGER_TRACE("  Size: {}", buffer_size);
-    LOGGER_TRACE("  Fields:");
-    for (const auto& [fst, snd] : uniform_buffer.uniforms)
-        LOGGER_TRACE("    {}: {}", fst.string, format_property(snd.property));
-    LOGGER_TRACE("-------------------");
-
-    desc_set.uniform_buffers[binding_index] = uniform_buffer;
-
-    reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
-        .name = name_id,
-        .type = DescriptorType::UniformBuffer,
-        .set = descriptor_set,
-        .binding_index = binding_index,
-        .count = 1
-    };
-}
-
-
-void ShaderCompiler::add_combined_texture_sampler_dec(
-    ShaderReflection& reflection,
-    const char* name,
-    const size_t descriptor_set,
-    shader_reflection::ShaderDescriptorSet& desc_set,
-    size_t resource_binding_counter,
-    char const* const field_name,
-    slang::TypeLayoutReflection* const field_layout,
-    const unsigned base_shape
-)
-{
-    // Combined texture sampler
-    const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
-
-    shader_reflection::ImageSamplerDescriptor image_sampler;
-    image_sampler.type = DescriptorType::CombinedImageSampler;
-    image_sampler.stage = ShaderStage::All;
-    image_sampler.binding_point = resource_binding_counter;
-    image_sampler.descriptor_set = descriptor_set;
-    image_sampler.name = resource_name_id;
-    image_sampler.dimensions = get_image_dimensions_from_shape(base_shape);
-    image_sampler.array_size = get_array_size(field_layout);
-
-    desc_set.image_samplers[resource_binding_counter] = image_sampler;
-
-    reflection.resources[resource_name_id] = shader_reflection::ShaderResourceDeclaration{
-        .name = resource_name_id,
-        .type = DescriptorType::CombinedImageSampler,
-        .set = descriptor_set,
-        .binding_index = resource_binding_counter,
-        .count = get_array_size(field_layout)
-    };
-
-    LOGGER_TRACE("Parameter Block Resource - Combined Image Sampler:");
-    LOGGER_TRACE("  {} ({}, {})", resource_name_id.string, descriptor_set, resource_binding_counter);
-    LOGGER_TRACE("  Dimensions: {}D", image_sampler.dimensions);
-    LOGGER_TRACE("  Array Size: {}", image_sampler.array_size);
-}
-
-void ShaderCompiler::add_separate_texture_dec(
-    ShaderReflection& reflection,
-    const char* name,
-    const size_t descriptor_set,
-    shader_reflection::ShaderDescriptorSet& desc_set,
-    size_t resource_binding_counter,
-    char const* const field_name,
-    slang::TypeLayoutReflection* const field_layout,
-    const unsigned base_shape
-)
-{
-    // Separate texture/sampler
-    const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
-
-    shader_reflection::ImageSamplerDescriptor image;
-    image.type = DescriptorType::SampledImage;
-    image.stage = ShaderStage::All;
-    image.binding_point = resource_binding_counter;
-    image.descriptor_set = descriptor_set;
-    image.name = resource_name_id;
-    image.dimensions = get_image_dimensions_from_shape(base_shape);
-    image.array_size = get_array_size(field_layout);
-
-    desc_set.images[resource_binding_counter] = image;
-
-    reflection.resources[resource_name_id] = shader_reflection::ShaderResourceDeclaration{
-        .name = resource_name_id,
-        .type = DescriptorType::SampledImage,
-        .set = descriptor_set,
-        .binding_index = resource_binding_counter,
-        .count = get_array_size(field_layout)
-    };
-
-    LOGGER_TRACE("Parameter Block Resource - Separate Image:");
-    LOGGER_TRACE("  {} ({}, {})", resource_name_id.string, descriptor_set, resource_binding_counter);
-    LOGGER_TRACE("  Dimensions: {}D", image.dimensions);
-    LOGGER_TRACE("  Array Size: {}", image.array_size);
-}
-
 void ShaderCompiler::process_parameter_block_parameter(
     ShaderReflection& reflection,
     const char* name,
@@ -747,12 +754,6 @@ void ShaderCompiler::process_parameter_block_parameter(
     const auto element_type_layout = type_layout->getElementTypeLayout();
     const auto descriptor_set = static_cast<size_t>(space);
     const StringId name_id = STRING_ID(name);
-
-    // Ensure descriptor set exists
-    if (descriptor_set >= reflection.descriptor_sets.size())
-        reflection.descriptor_sets.resize(descriptor_set + 1);
-
-    auto& desc_set = reflection.descriptor_sets[descriptor_set];
 
     // Check if this parameter block contains resources and uniform data
     const auto field_count = element_type_layout->getFieldCount();
@@ -796,55 +797,54 @@ void ShaderCompiler::process_parameter_block_parameter(
 
             const auto resource_shape = resource_type->getResourceShape();
             const auto base_shape = resource_shape & SLANG_RESOURCE_BASE_SHAPE_MASK;
+            const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
+
             if ((resource_shape & SLANG_TEXTURE_COMBINED_FLAG) != 0)
-            {
-                add_combined_texture_sampler_dec(
+                add_image_descriptor(
                     reflection,
-                    name,
+                    resource_name_id,
+                    DescriptorType::CombinedImageSampler,
+                    ShaderStage::All,
                     descriptor_set,
-                    desc_set,
                     resource_binding_counter,
-                    field_name,
-                    storage->getTypeLayout(),
-                    base_shape
+                    base_shape,
+                    storage->getTypeLayout()
+                );
+            else
+                add_image_descriptor(
+                    reflection,
+                    resource_name_id,
+                    DescriptorType::SampledImage,
+                    ShaderStage::All,
+                    descriptor_set,
+                    resource_binding_counter,
+                    base_shape,
+                    field_layout
                 );
 
-                resource_binding_counter++;
-            }
-            else
-            {
-                add_separate_texture_dec(reflection, name, descriptor_set, desc_set, resource_binding_counter, field_name, field_layout, base_shape);
-
-                resource_binding_counter++;
-            }
+            resource_binding_counter++;
         }
         else if (field_type && field_type->getKind() == slang::TypeReflection::Kind::Resource)
         {
-            // This is a resource within the parameter block
             const auto resource_shape = field_type->getResourceShape();
             const auto base_shape = resource_shape & SLANG_RESOURCE_BASE_SHAPE_MASK;
+            const auto resource_name_id = STRING_ID(fmt::format("{}.{}", name, field_name));
 
-            if ((resource_shape & SLANG_TEXTURE_COMBINED_FLAG) != 0)
-            {
-                add_combined_texture_sampler_dec(
-                    reflection,
-                    name,
-                    descriptor_set,
-                    desc_set,
-                    resource_binding_counter,
-                    field_name,
-                    field_layout,
-                    base_shape
-                );
+            const auto type = (resource_shape & SLANG_TEXTURE_COMBINED_FLAG) != 0
+                                  ? DescriptorType::CombinedImageSampler
+                                  : DescriptorType::SampledImage;
 
-                resource_binding_counter++;
-            }
-            else
-            {
-                add_separate_texture_dec(reflection, name, descriptor_set, desc_set, resource_binding_counter, field_name, field_layout, base_shape);
-
-                resource_binding_counter++;
-            }
+            add_image_descriptor(
+                reflection,
+                resource_name_id,
+                type,
+                ShaderStage::All,
+                descriptor_set,
+                resource_binding_counter,
+                base_shape,
+                field_layout
+            );
+            resource_binding_counter++;
         }
         else
         {
@@ -856,164 +856,18 @@ void ShaderCompiler::process_parameter_block_parameter(
     // Second pass: process uniform buffer if it contains uniform data
     if (has_uniform_data)
     {
-        const auto buffer_size = element_type_layout->getSize();
-
-        shader_reflection::BufferDescriptor uniform_buffer;
-        uniform_buffer.type = DescriptorType::UniformBuffer;
-        uniform_buffer.stage = ShaderStage::All;
-        uniform_buffer.binding_point = binding_index;
-        uniform_buffer.name = name_id;
-        uniform_buffer.size = buffer_size;
-        uniform_buffer.offset = 0;
-        uniform_buffer.range = buffer_size;
-        process_buffer_uniforms(uniform_buffer, element_type_layout, name_id, 0);
-
-        LOGGER_TRACE("Parameter Block - Uniform Buffer:");
-        LOGGER_TRACE("  {} ({}, {})", name, descriptor_set, binding_index);
-        LOGGER_TRACE("  Size: {}", buffer_size);
-        LOGGER_TRACE("  Fields:");
-        for (const auto& [fst, snd] : uniform_buffer.uniforms)
-            LOGGER_TRACE("    {}: {}", fst.string, format_property(snd.property));
-
-        desc_set.uniform_buffers[binding_index] = uniform_buffer;
-
-        reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
-            .name = name_id,
-            .type = DescriptorType::UniformBuffer,
-            .set = descriptor_set,
-            .binding_index = binding_index,
-            .count = 1
-        };
+        add_buffer_descriptor(
+            reflection,
+            name_id,
+            DescriptorType::UniformBuffer,
+            ShaderStage::All,
+            descriptor_set,
+            binding_index,
+            element_type_layout
+        );
     }
 
     LOGGER_TRACE("-------------------");
-}
-
-void ShaderCompiler::process_combined_texture_sampler_parameter(
-    ShaderReflection& reflection,
-    const char* name,
-    slang::TypeLayoutReflection* type_layout,
-    int space,
-    size_t binding_index,
-    const unsigned int base_shape
-) const
-{
-    const auto descriptor_set = static_cast<size_t>(space);
-    const auto name_id = STRING_ID(name);
-
-    // Ensure descriptor set exists
-    if (descriptor_set >= reflection.descriptor_sets.size())
-        reflection.descriptor_sets.resize(descriptor_set + 1);
-
-    auto& desc_set = reflection.descriptor_sets[descriptor_set];
-
-    shader_reflection::ImageSamplerDescriptor image_sampler;
-    image_sampler.type = DescriptorType::CombinedImageSampler;
-    image_sampler.stage = current_stage;
-    image_sampler.binding_point = binding_index;
-    image_sampler.descriptor_set = descriptor_set;
-    image_sampler.name = name_id;
-    image_sampler.dimensions = get_image_dimensions_from_shape(base_shape);
-    image_sampler.array_size = get_array_size(type_layout);
-
-    desc_set.image_samplers[binding_index] = image_sampler;
-
-    LOGGER_TRACE("Combined Image Samplers:");
-    LOGGER_TRACE("  {} ({}, {})", name, descriptor_set, binding_index);
-    LOGGER_TRACE("  Dimensions: {}D", image_sampler.dimensions);
-    LOGGER_TRACE("  Array Size: {}", image_sampler.array_size);
-    LOGGER_TRACE("-------------------");
-
-    reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
-        .name = name_id,
-        .type = DescriptorType::CombinedImageSampler,
-        .set = descriptor_set,
-        .binding_index = binding_index,
-        .count = get_array_size(type_layout)
-    };
-}
-
-void ShaderCompiler::process_resource_parameter(
-    ShaderReflection& reflection,
-    const char* name,
-    slang::TypeLayoutReflection* type_layout,
-    const int space,
-    size_t binding_index,
-    const unsigned int resource_shape
-) const
-{
-    // This handles separate textures, samplers, storage images, etc.
-    const auto descriptor_set = static_cast<size_t>(space);
-    const StringId name_id = STRING_ID(name);
-    const auto base_shape = resource_shape & SLANG_RESOURCE_BASE_SHAPE_MASK;
-
-    // Ensure descriptor set exists
-    if (descriptor_set >= reflection.descriptor_sets.size())
-        reflection.descriptor_sets.resize(descriptor_set + 1);
-
-    auto& desc_set = reflection.descriptor_sets[descriptor_set];
-
-
-    if (base_shape & SLANG_STRUCTURED_BUFFER)
-    {
-        const auto buffer_size = type_layout->getElementTypeLayout()->getSize();
-
-        shader_reflection::BufferDescriptor buffer;
-        buffer.type = DescriptorType::StorageBuffer;
-        buffer.stage = current_stage;
-        buffer.binding_point = binding_index;
-        buffer.name = name_id;
-        buffer.size = buffer_size;
-        buffer.offset = 0;
-        buffer.range = buffer_size;
-        process_buffer_uniforms(buffer, type_layout->getElementTypeLayout(), name_id, 0);
-
-        desc_set.storage_buffers[binding_index] = buffer;
-
-        LOGGER_TRACE("Storage Buffers:");
-        LOGGER_TRACE("  {} ({}, {})", name, descriptor_set, binding_index);
-        LOGGER_TRACE("  Size: {}", buffer_size);
-        LOGGER_TRACE("  Fields:");
-        for (const auto& [fst, snd] : buffer.uniforms)
-            LOGGER_TRACE("    {}: {}", fst.string, format_property(snd.property));
-        LOGGER_TRACE("-------------------");
-
-        reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
-            .name = name_id,
-            .type = DescriptorType::StorageBuffer,
-            .set = descriptor_set,
-            .binding_index = binding_index,
-            .count = 1
-        };
-    }
-    else
-    {
-        // For now, assume separate textures - can be extended later
-        shader_reflection::ImageSamplerDescriptor image;
-        image.type = DescriptorType::SampledImage;
-        image.stage = current_stage;
-        image.binding_point = binding_index;
-        image.descriptor_set = descriptor_set;
-        image.name = name_id;
-        image.dimensions = get_image_dimensions_from_shape(base_shape);
-        image.array_size = get_array_size(type_layout);
-
-        desc_set.images[binding_index] = image;
-
-        LOGGER_TRACE("Separate Images:");
-        LOGGER_TRACE("  {} ({}, {})", name, descriptor_set, binding_index);
-        LOGGER_TRACE("  Dimensions: {}D", image.dimensions);
-        LOGGER_TRACE("  Array Size: {}", image.array_size);
-        LOGGER_TRACE("-------------------");
-
-        reflection.resources[name_id] = shader_reflection::ShaderResourceDeclaration{
-            .name = name_id,
-            .type = DescriptorType::SampledImage,
-            .set = descriptor_set,
-            .binding_index = binding_index,
-            .count = get_array_size(type_layout)
-        };
-    }
 }
 
 void ShaderCompiler::process_push_constant_parameter(
@@ -1063,78 +917,66 @@ void ShaderCompiler::process_buffer_uniforms(
             continue;
         }
 
+        // If this field is a struct, recurse into it to produce leaf-level uniform entries
+        if (field_type && field_type->getKind() == slang::TypeReflection::Kind::Struct)
+        {
+            const auto nested_name = STRING_ID(fmt::format("{}.{}", buffer_name.string, member_name));
+            process_buffer_uniforms(buffer, field_layout, nested_name, buffer_offset);
+            continue;
+        }
+
+        // If this field is an array of structs, reflect the struct type and emit a single array uniform
+        if (field_type && field_type->getKind() == slang::TypeReflection::Kind::Array)
+        {
+            const auto element_layout = field_layout->getElementTypeLayout();
+            const auto element_type = element_layout ? element_layout->getType() : nullptr;
+            if (element_type && element_type->getKind() == slang::TypeReflection::Kind::Struct)
+            {
+                const auto struct_name = STRING_ID(element_type->getName());
+
+                // Reflect the struct type if not already registered
+                if (!buffer.struct_types.contains(struct_name))
+                {
+                    buffer.struct_types[struct_name] = reflect_struct_type(element_layout, struct_name);
+                }
+
+                auto field_type_name = element_type->getName();
+
+                // Emit a single uniform for the whole array
+                const auto uniform_name = STRING_ID(fmt::format("{}.{}", buffer_name.string, member_name));
+                shader_reflection::Uniform uniform;
+                uniform.name = uniform_name;
+                uniform.size = field_layout->getSize();
+                uniform.offset = field->getOffset() - buffer_offset;
+                uniform.property = {
+                    .value = Buffer::copy(field_type_name, std::strlen(field_type_name)),
+                    .type = reflection::PropertyType::object,
+                    .container_type = reflection::PropertyContainerType::array,
+                    .elements_number = static_cast<size_t>(field_layout->getElementCount())
+                };
+                buffer.uniforms[uniform_name] = std::move(uniform);
+                continue;
+            }
+        }
+
         const auto uniform_name = STRING_ID(fmt::format("{}.{}", buffer_name.string, member_name));
         const auto size = field_layout->getSize();
         const auto offset = field->getOffset() - buffer_offset;
+        auto field_type_name = field_layout->getName();
 
         shader_reflection::Uniform uniform;
         uniform.name = uniform_name;
         uniform.size = size;
         uniform.offset = offset;
         uniform.property = {
+            .value = Buffer::copy(field_type_name, std::strlen(field_type_name)),
             .type = to_property_type(field_layout),
             .container_type = to_property_container_type(field_layout),
             .elements_number = get_element_number(field_layout)
         };
 
-        buffer.uniforms[uniform_name] = uniform;
+        buffer.uniforms[uniform_name] = std::move(uniform);
     }
-}
-
-size_t ShaderCompiler::get_image_dimensions(slang::TypeLayoutReflection* type_layout)
-{
-    // Get the base type for texture/image resources
-    auto type_reflection = type_layout->getType();
-    if (!type_reflection) return 2; // Default to 2D
-
-    // Check if this is a resource type (texture, image, etc.)
-    if (type_reflection->getKind() == slang::TypeReflection::Kind::Resource)
-    {
-        // Get the resource shape which contains dimension information
-        auto resource_shape = type_reflection->getResourceShape();
-        auto base_shape = resource_shape & SLANG_RESOURCE_BASE_SHAPE_MASK;
-
-        switch (base_shape)
-        {
-        case SLANG_TEXTURE_1D:
-            return 1;
-        case SLANG_TEXTURE_2D:
-            return 2;
-        case SLANG_TEXTURE_3D:
-            return 3;
-        case SLANG_TEXTURE_CUBE:
-            return 2; // Cube maps are 2D faces
-        default:
-            return 2; // Default to 2D
-        }
-    }
-
-    // For array types, get the element type and check its dimensions
-    if (type_reflection->getKind() == slang::TypeReflection::Kind::Array)
-    {
-        const auto element_type = type_reflection->getElementType();
-        if (element_type && element_type->getKind() == slang::TypeReflection::Kind::Resource)
-        {
-            const auto resource_shape = element_type->getResourceShape();
-            const auto base_shape = resource_shape & SLANG_RESOURCE_BASE_SHAPE_MASK;
-
-            switch (base_shape)
-            {
-            case SLANG_TEXTURE_1D:
-                return 1;
-            case SLANG_TEXTURE_2D:
-                return 2;
-            case SLANG_TEXTURE_3D:
-                return 3;
-            case SLANG_TEXTURE_CUBE:
-                return 2;
-            default:
-                return 2;
-            }
-        }
-    }
-
-    return 2; // Default to 2D texture
 }
 
 size_t ShaderCompiler::get_image_dimensions_from_shape(unsigned int base_shape)
@@ -1168,5 +1010,43 @@ size_t ShaderCompiler::get_array_size(slang::TypeLayoutReflection* type_layout)
     }
 
     return 1; // Not an array, single element
+}
+
+shader_reflection::ReflectedStruct ShaderCompiler::reflect_struct_type(
+    slang::TypeLayoutReflection* struct_layout,
+    StringId struct_name
+)
+{
+    shader_reflection::ReflectedStruct result;
+    result.name = struct_name;
+    result.stride = struct_layout->getSize();
+
+    LOGGER_TRACE("Struct Declaration:");
+    LOGGER_TRACE("  {}", struct_name.string);
+    LOGGER_TRACE("  Size: {}, Stride: {}", struct_layout->getSize(), struct_layout->getStride());
+
+    const auto field_count = struct_layout->getFieldCount();
+    LOGGER_TRACE("  Fields:");
+    for (unsigned int i = 0; i < field_count; ++i)
+    {
+        const auto field = struct_layout->getFieldByIndex(i);
+        const auto field_layout = field->getTypeLayout();
+
+        shader_reflection::StructField sf;
+        sf.name = STRING_ID(field->getName());
+        sf.size = field_layout->getSize();
+        sf.offset = field->getOffset();
+        sf.property = {
+            .value = Buffer::copy(sf.name.string.data(), sf.name.string.size()),
+            .type = to_property_type(field_layout),
+            .container_type = to_property_container_type(field_layout),
+            .elements_number = get_element_number(field_layout)
+        };
+        result.fields.push_back(sf);
+        LOGGER_TRACE("    {}: {}", sf.name.string, format_property(sf.property));
+    }
+    LOGGER_TRACE("-------------------");
+
+    return result;
 }
 } // portal

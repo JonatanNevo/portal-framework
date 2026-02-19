@@ -90,6 +90,23 @@ namespace shader_reflection
         size_t offset{};
     };
 
+    /// A single field within a reflected struct type
+    struct StructField
+    {
+        StringId name;
+        reflection::Property property;
+        size_t size{};
+        size_t offset{};  // offset within the struct (relative to struct start)
+    };
+
+    /// A reflected struct type definition (e.g., PointLight)
+    struct ReflectedStruct
+    {
+        StringId name;           // e.g., "PointLight"
+        size_t stride{};         // byte size of one element (including padding)
+        std::vector<StructField> fields;
+    };
+
     /**
      * @struct BufferDescriptor
      * @brief Uniform or storage buffer descriptor metadata
@@ -105,6 +122,7 @@ namespace shader_reflection
         StringId name;
 
         std::unordered_map<StringId, Uniform> uniforms;
+        std::unordered_map<StringId, ReflectedStruct> struct_types;
     };
 
     /**
