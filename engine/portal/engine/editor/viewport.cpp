@@ -70,7 +70,7 @@ Viewport::~Viewport()
     ImGui_ImplVulkan_RemoveTexture(viewport_descriptor_set);
 }
 
-void Viewport::on_gui_update(const EditorContext& editor_context, const FrameContext& frame)
+void Viewport::on_gui_update(EditorContext& editor_context, const FrameContext& frame)
 {
     auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
 
@@ -117,7 +117,7 @@ void Viewport::on_gui_update(const EditorContext& editor_context, const FrameCon
             draw_central_toolbar();
 
             if (is_focused && show_gizmos)
-                draw_gizmos(frame);
+                draw_gizmos(editor_context, frame);
         }
     }
     ImGui::End();
@@ -129,6 +129,11 @@ void Viewport::render(FrameContext& frame) const
 {
     runtime_module.inner_post_update(frame, viewport_render_target);
     runtime_module.inner_end_frame(frame, false);
+}
+
+void Viewport::set_gizmo_type(int type)
+{
+    gizmo_type = type;
 }
 
 void Viewport::draw_gizmos_toolbar(const EditorContext& editor_context)
@@ -304,7 +309,7 @@ void Viewport::draw_central_toolbar()
     ImGui::EndVertical();
 }
 
-void Viewport::draw_gizmos(const FrameContext& frame)
+void Viewport::draw_gizmos(EditorContext& editor_context, const FrameContext& frame)
 {
     const auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
 
@@ -335,6 +340,8 @@ void Viewport::draw_gizmos(const FrameContext& frame)
 
     auto& entity_transform = selected_entity.get_component<TransformComponent>();
 
+    static bool started_dragging = false;
+
     auto transform = entity_transform.get_world_matrix();
     if (ImGuizmo::Manipulate(
         glm::value_ptr(view_matrix),
@@ -346,6 +353,21 @@ void Viewport::draw_gizmos(const FrameContext& frame)
         snap ? snap_values : nullptr
     ))
     {
+        if (!started_dragging)
+        {
+            const char* label;
+            switch (gizmo_type)
+            {
+                case ImGuizmo::OPERATION::TRANSLATE: label = "Translate"; break;
+                case ImGuizmo::OPERATION::ROTATE: label = "Rotate"; break;
+                case ImGuizmo::OPERATION::SCALE: label = "Scale"; break;
+                default: label = "Unknown"; break;
+            }
+
+            editor_context.snapshot_manager.prepare_snapshot(STRING_ID(fmt::format("{} Gizmo", label)));
+            started_dragging = true;
+        }
+
         auto parent = selected_entity.get_parent();
         if (parent && parent != scene->get_scene_entity())
         {
@@ -386,6 +408,12 @@ void Viewport::draw_gizmos(const FrameContext& frame)
                 }
             }
         );
+    }
+
+    if (started_dragging && !ImGuizmo::IsUsingAny())
+    {
+        editor_context.snapshot_manager.commit_snapshot();
+        started_dragging = false;
     }
 }
 

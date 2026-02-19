@@ -19,10 +19,13 @@ public:
         entt::dispatcher& input_dispatcher
         );
 
-    void block_input() const;
-    void unblock_input() const;
+    void block_input();
+    void unblock_input();
+
+    [[nodiscard]] bool is_input_blocked() const { return input_blocked; }
 
 private:
+    bool input_blocked = false;
     SystemOrchestrator& orchestrator;
     entt::dispatcher& engine_dispatcher;
     entt::dispatcher& input_dispatcher;
