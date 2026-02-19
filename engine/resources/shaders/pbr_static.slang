@@ -40,15 +40,12 @@ struct Vertex
 
 struct VertexOutput
 {
-    uint vertexID;
     float4 position : SV_Position;
 
     float3 world_position;
     float3 normal;
     float4 tangent;
     float2 uv;
-
-    float3x3 world_transform;
 };
 
 [shader("vertex")]
@@ -63,10 +60,8 @@ VertexOutput vert_main(uint vertexID : SV_VertexID, uniform float4x4 render_matr
     output.normal = mul(render_matrix, float4(v.normal, 0.0f)).xyz;
     output.uv = float2(v.uv_x, v.uv_y); // TODO: vec2(a_TexCoord.x, 1.0 - a_TexCoord.y); ?
     output.tangent = float4(mul(render_matrix, float4(v.tangent.xyz, 0.0f)).xyz, v.tangent.w);
-    output.world_transform = float3x3(render_matrix);
 
     output.position = mul(scene_data.camera.view_proj, world_position);
-    output.vertexID = vertexID;
 
     return output;
 }
@@ -203,5 +198,6 @@ FragOutput frag_main(VertexOutput in)
 
     // final color
     output.color = float4(ibl_contribution + light_contribution, 1.f);
+
     return output;
 }

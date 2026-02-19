@@ -1,0 +1,7 @@
+{
+    "dependencies": [],
+    "format": "Shader",
+    "resource_id": "engine/shaders/equirectangular_to_cubemap",
+    "source": "shaders/equirectangular_to_cubemap.slang",
+    "type": "Shader"
+}
