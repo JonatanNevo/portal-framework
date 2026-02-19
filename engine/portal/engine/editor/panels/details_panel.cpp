@@ -181,7 +181,7 @@ void draw_material_controls( EditorContext& context, Entity entity)
         {
             auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
             ImGui::AlignTextToFramePadding();
-            ImGui::Text(label);
+            ImGui::Text("%s", label);
         }
         ImGui::SameLine();
         {

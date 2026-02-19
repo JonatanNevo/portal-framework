@@ -96,26 +96,26 @@ void SceneRenderingSystem::update_lights(FrameContext& frame, const ecs::Registr
         found_directional_light = true;
     }
 
-    bool found_skylight = false;
-    for (auto entity: registry.view<SkylightComponent>())
-    {
-        if (found_skylight)
-        {
-            LOGGER_ERROR("Multiple skylights are not supported");
-            break;
-        }
-
-        // const auto& skylight = entity.get_component<SkylightComponent>();
-
-        // TODO: skylight.intensity should map to the `environment_map_intensity` of the directional lights
-
-        found_skylight = true;
-    }
-
-    if (!found_skylight)
-    {
-        // Setup black texture for skylight
-    }
+    // bool found_skylight = false;
+    // for (auto entity: registry.view<SkylightComponent>())
+    // {
+    //     if (found_skylight)
+    //     {
+    //         LOGGER_ERROR("Multiple skylights are not supported");
+    //         break;
+    //     }
+    //
+    //     // const auto& skylight = entity.get_component<SkylightComponent>();
+    //
+    //     // TODO: skylight.intensity should map to the `environment_map_intensity` of the directional lights
+    //
+    //     found_skylight = true;
+    // }
+    //
+    // if (!found_skylight)
+    // {
+    //     // Setup black texture for skylight
+    // }
 }
 
 void SceneRenderingSystem::add_static_mesh_to_context(FrameContext& frame, ecs::Registry& registry)

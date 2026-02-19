@@ -64,18 +64,6 @@ renderer::SamplerMipmapMode extract_mipmap_mode(const fastgltf::Filter filter)
     return renderer::SamplerMipmapMode::Linear;
 }
 
-std::string to_lower_locale(std::string_view s, const std::locale& loc = std::locale{})
-{
-    return std::ranges::to<std::string>(
-        s | std::views::transform(
-            [&](const unsigned char ch)
-            {
-                return static_cast<char>(std::tolower(ch, loc));
-            }
-        )
-    );
-}
-
 std::string create_name_relative(const std::filesystem::path path, const auto& part, const ResourceType type)
 {
     return (path  / fmt::format("gltf-{}-{}", to_string(type), part)).generic_string();
