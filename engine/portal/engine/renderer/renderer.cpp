@@ -323,7 +323,7 @@ void Renderer::init_global_descriptors(ResourceRegistry& resource_registry)
     // TODO: should this be here or under scene?
     auto frames_in_flight = settings.get_setting<size_t>("application.frames_in_flight", 3);
 
-    auto shader = resource_registry.immediate_load<Shader>(STRING_ID("game/shaders/pbr"));
+    auto shader = resource_registry.immediate_load<Shader>(STRING_ID("engine/shaders/pbr_static"));
     const auto hash = shader->compile_with_permutations(
         {},
         {
@@ -365,7 +365,7 @@ void Renderer::init_global_descriptors(ResourceRegistry& resource_registry)
     descriptor_set_manager->set_input(STRING_ID("scene_data.environment_radiance_texture"), texture.underlying());
     descriptor_set_manager->set_input(STRING_ID("scene_data.environment_irradiance_texture"), texture.underlying());
 
-    auto lut_texture = resource_registry.immediate_load<Texture>(STRING_ID("game/textures/BRDF_LUT"));
+    auto lut_texture = resource_registry.immediate_load<Texture>(STRING_ID("engine/textures/BRDF_LUT"));
     descriptor_set_manager->set_input(STRING_ID("scene_data.brdf_lut_texture"), lut_texture.underlying());
 
     descriptor_set_manager->bake();

@@ -3,12 +3,12 @@
         "game/textures/Mud_Albedo",
         "game/textures/Mud_Normal",
         "game/textures/Mud_Roughness",
-        "game/shaders/pbr",
+        "engine/shaders/pbr_static",
         "game/models/sphere"
     ],
     "format": "Material",
     "material": {
-        "shader": "game/shaders/pbr"
+        "shader": "engine/shaders/pbr_static"
     },
     "resource_id": "game/materials/default_material",
     "source": "materials/default_material.pmaterial",

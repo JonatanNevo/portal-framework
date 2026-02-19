@@ -210,6 +210,9 @@ void VulkanTexture::recreate()
 
     image::Properties image_prop{
         .format = properties.format,
+        .flags = (properties.type == TextureType::TextureCube)
+                     ? image::Flags::CubeCompatible
+                     : image::Flags::None,
         .width = properties.width,
         .height = properties.height,
         .depth = properties.depth,

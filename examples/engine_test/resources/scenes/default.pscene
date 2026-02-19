@@ -3,6 +3,27 @@
   "nodes": [
     {
       "icon": "",
+      "name": "Sunlight",
+      "portal::RelationshipComponent": {
+        "parent": "game/scenes/default"
+      },
+      "portal::DirectionalLightComponent": {
+        "direction": [
+          0.0,
+          1.0,
+          0.5
+        ],
+        "radiance": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "intensity": 1.0,
+        "light_size": 0.5
+      }
+    },
+    {
+      "icon": "",
       "name": "node-King_B",
       "portal::RelationshipComponent": {
         "parent": "game/scenes/default"

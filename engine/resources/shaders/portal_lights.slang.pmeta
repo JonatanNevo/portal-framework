@@ -1,7 +1,7 @@
 {
     "dependencies": [],
     "format": "Shader",
-    "resource_id": "game/shaders/portal_lights",
+    "resource_id": "engine/shaders/portal_lights",
     "source": "shaders/portal_lights.slang",
     "type": "Shader"
 }

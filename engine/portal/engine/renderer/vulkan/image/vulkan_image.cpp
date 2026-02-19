@@ -564,7 +564,11 @@ VulkanImageView::VulkanImageView(const ImageViewProperties& image_view_propertie
 
     const vk::ImageViewCreateInfo view_info{
         .image = vulkan_image->get_image().get_handle(),
-        .viewType = image_properties.layers > 1 ? vk::ImageViewType::e2DArray : vk::ImageViewType::e2D,
+        .viewType = (image_properties.flags == image::Flags::CubeCompatible && image_properties.layers == 6)
+                        ? vk::ImageViewType::eCube
+                        : (image_properties.layers > 1
+                               ? vk::ImageViewType::e2DArray
+                               : vk::ImageViewType::e2D),
         .format = to_format(image_properties.format),
         .subresourceRange = {
             .aspectMask = aspect_mask,

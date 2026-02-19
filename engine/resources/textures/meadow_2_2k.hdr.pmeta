@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "engine/textures/meadow_2_2k",
+    "source": "textures/meadow_2_2k.hdr",
+    "texture": {
+        "format": "RGBA32_Float",
+        "hdr": true,
+        "height": 1024,
+        "width": 2048
+    },
+    "type": "Texture"
+}
