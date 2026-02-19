@@ -60,42 +60,36 @@ private:
     /** @brief Extracts reflection from Slang program layout */
     ShaderReflection reflect_shader(slang::ProgramLayout* layout);
 
-    /** @brief Processes variable layout reflection */
-    void process_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout, slang::ProgramLayout* program_layout);
-
     /** @brief Processes parameters from variable layout */
     void process_parameters_from_variable_layout(ShaderReflection& reflection, slang::VariableLayoutReflection* var_layout, slang::ProgramLayout* program_layout);
 
     /** @brief Processes entry point parameters */
     void process_entry_point_parameters(ShaderReflection& reflection, slang::EntryPointLayout* entry_point_layout);
 
-    /** @brief Processes constant buffer parameter */
-    static void process_constant_buffer_parameter(
+    /** @brief Ensures descriptor set exists and returns a reference to it */
+    static shader_reflection::ShaderDescriptorSet& ensure_descriptor_set(ShaderReflection& reflection, size_t descriptor_set);
+
+    /** @brief Creates and registers an image/sampler descriptor */
+    static void add_image_descriptor(
         ShaderReflection& reflection,
-        const char* name,
-        slang::TypeLayoutReflection* type_layout,
-        int space,
-        size_t binding_index
-    );
-    static void add_combined_texture_sampler_dec(
-        ShaderReflection& reflection,
-        const char* name,
+        StringId name_id,
+        DescriptorType type,
+        ShaderStage stage,
         size_t descriptor_set,
-        shader_reflection::ShaderDescriptorSet& desc_set,
-        size_t resource_binding_counter,
-        char const* field_name,
-        slang::TypeLayoutReflection* field_layout,
-        unsigned base_shape
+        size_t binding_index,
+        unsigned base_shape,
+        slang::TypeLayoutReflection* type_layout
     );
-    static void add_separate_texture_dec(
+
+    /** @brief Creates and registers a buffer descriptor */
+    static void add_buffer_descriptor(
         ShaderReflection& reflection,
-        const char* name,
+        StringId name_id,
+        DescriptorType type,
+        ShaderStage stage,
         size_t descriptor_set,
-        shader_reflection::ShaderDescriptorSet& desc_set,
-        size_t resource_binding_counter,
-        char const* field_name,
-        slang::TypeLayoutReflection* field_layout,
-        unsigned base_shape
+        size_t binding_index,
+        slang::TypeLayoutReflection* element_type_layout
     );
 
     /** @brief Processes parameter block parameter */
@@ -108,26 +102,6 @@ private:
         slang::ProgramLayout* program_layout
     );
 
-    /** @brief Processes combined texture-sampler parameter */
-    void process_combined_texture_sampler_parameter(
-        ShaderReflection& reflection,
-        const char* name,
-        slang::TypeLayoutReflection* type_layout,
-        int space,
-        size_t binding_index,
-        unsigned int base_shape
-    ) const;
-
-    /** @brief Processes resource parameter (texture, image, buffer) */
-    void process_resource_parameter(
-        ShaderReflection& reflection,
-        const char* name,
-        slang::TypeLayoutReflection* type_layout,
-        int space,
-        size_t binding_index,
-        unsigned int resource_shape
-    ) const;
-
     /** @brief Processes push constant parameter */
     void process_push_constant_parameter(ShaderReflection& reflection, const char* name, slang::TypeLayoutReflection* type_layout, size_t offset) const;
 
@@ -139,14 +113,17 @@ private:
         size_t buffer_offset
     );
 
-    /** @brief Gets image dimensions from type layout */
-    static size_t get_image_dimensions(slang::TypeLayoutReflection* type_layout);
-
     /** @brief Gets image dimensions from resource shape */
     static size_t get_image_dimensions_from_shape(unsigned int base_shape);
 
     /** @brief Gets array size from type layout */
     static size_t get_array_size(slang::TypeLayoutReflection* type_layout);
+
+    /** @brief Reflects a struct type's fields into a ReflectedStruct */
+    static shader_reflection::ReflectedStruct reflect_struct_type(
+        slang::TypeLayoutReflection* struct_layout,
+        StringId struct_name
+    );
 
 private:
     ShaderStage current_stage;
