@@ -1,0 +1,13 @@
+{
+    "dependencies": [],
+    "format": "Image",
+    "resource_id": "engine/editor/icons/generic/circle-x",
+    "source": "editor/icons/generic/circle-x.png",
+    "texture": {
+        "format": "RGBA8_UNorm",
+        "hdr": false,
+        "height": 128,
+        "width": 128
+    },
+    "type": "Texture"
+}

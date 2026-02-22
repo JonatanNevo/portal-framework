@@ -5,14 +5,16 @@
 
 #pragma once
 
+#include <vector>
+
 #include "register_component.h"
-#include "portal/engine/ecs/entity.h"
+#include "portal/core/strings/string_id.h"
 
 namespace portal
 {
 
 struct SelectionComponent
 {
-    Entity selected_entity;
+    std::vector<StringId> selections;
 };
 }

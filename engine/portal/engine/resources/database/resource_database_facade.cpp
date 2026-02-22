@@ -23,10 +23,13 @@ StringId find_database_prefix(const StringId& resource_id)
     return STRING_ID(first_part);
 }
 
+ResourceDatabaseFacade::ResourceDatabaseFacade() {}
+
 void ResourceDatabaseFacade::register_database(const Project& project, const DatabaseDescription& description)
 {
     auto&& database = ResourceDatabaseFactory::create(project, description);
     PORTAL_ASSERT(database, "Failed to create database");
+
     databases.emplace(database->get_name(), std::move(database));
 }
 
@@ -36,7 +39,6 @@ std::expected<SourceMetadata, DatabaseError> ResourceDatabaseFacade::find(const 
     if (databases.contains(prefix))
         return databases.at(prefix)->find(resource_id);
 
-    LOGGER_ERROR("Cannot find database named: '{}'", prefix);
     return std::unexpected{DatabaseErrorBit::DatabaseMissing};
 }
 

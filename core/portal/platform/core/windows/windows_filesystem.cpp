@@ -83,12 +83,13 @@ bool FileSystem::show_file_in_explorer(const std::filesystem::path& path)
 
 bool FileSystem::open_directory_in_explorer(const std::filesystem::path& path)
 {
-    const auto absolute_path = std::filesystem::canonical(path);
-    if (!exists(absolute_path))
-        return false;
-
-    ShellExecute(nullptr, reinterpret_cast<LPCSTR>(L"explore"), reinterpret_cast<LPCSTR>(absolute_path.c_str()), nullptr, nullptr, SW_SHOWNORMAL);
-    return true;
+    return show_file_in_explorer(path);
+    // const auto absolute_path = std::filesystem::canonical(path);
+    // if (!exists(absolute_path))
+    //     return false;
+    //
+    // ShellExecute(nullptr, reinterpret_cast<LPCSTR>(L"explore"), reinterpret_cast<LPCSTR>(absolute_path.c_str()), nullptr, nullptr, SW_SHOWNORMAL);
+    // return true;
 }
 
 bool FileSystem::open_externally(const std::filesystem::path& path)

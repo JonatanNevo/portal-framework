@@ -32,8 +32,8 @@ void EditorTheme::load_default_dark()
     colors[ThemeColors::AccentPrimaryLeft] = rgb(66, 150, 250); // Main accent left
     colors[ThemeColors::AccentPrimaryRight] = rgb(66, 0, 144);  // Main accent right
     colors[ThemeColors::Accent2] = rgb(96, 115, 181);           // Minor accents
-    colors[ThemeColors::Text1] = rgb(255, 255, 255);            // Main text
-    colors[ThemeColors::Text2] = rgb(128, 128, 128);            // Disabled/secondary text
+    colors[ThemeColors::Text] = rgb(255, 255, 255);            // Main text
+    colors[ThemeColors::TextDarker] = rgb(128, 128, 128);            // Disabled/secondary text
     colors[ThemeColors::Background1] = rgb(37, 37, 38);         // Window background
     colors[ThemeColors::Background2] = rgb(30, 30, 30);         // Group panels
     colors[ThemeColors::Background3] = rgb(51, 51, 51);         // Inner panels
@@ -57,8 +57,8 @@ void EditorTheme::load_default_light()
     colors[ThemeColors::AccentPrimaryLeft] = rgb(90, 140, 200); // Main accent left
     colors[ThemeColors::AccentPrimaryRight] = rgb(54, 0, 118);  // Main accent right
     colors[ThemeColors::Accent2] = rgb(110, 110, 120);          // Minor accents
-    colors[ThemeColors::Text1] = rgb(30, 30, 30);               // Main text
-    colors[ThemeColors::Text2] = rgb(90, 90, 90);               // Disabled/secondary text
+    colors[ThemeColors::Text] = rgb(30, 30, 30);               // Main text
+    colors[ThemeColors::TextDarker] = rgb(90, 90, 90);               // Disabled/secondary text
     colors[ThemeColors::Background1] = rgb(240, 240, 240);      // Window background
     colors[ThemeColors::Background2] = rgb(225, 225, 225);      // Group panels
     colors[ThemeColors::Background3] = rgb(200, 200, 200);      // Inner panels
@@ -140,7 +140,7 @@ void EditorTheme::apply_to_imgui()
     style.Colors[ImGuiCol_Button] = colors[ThemeColors::Primary3];
     style.Colors[ImGuiCol_ButtonHovered] = colors[ThemeColors::Primary1];
     style.Colors[ImGuiCol_ButtonActive] = colors[ThemeColors::Primary2];
-    style.Colors[ImGuiCol_CheckMark] = colors[ThemeColors::Text1];
+    style.Colors[ImGuiCol_CheckMark] = colors[ThemeColors::Text];
     style.Colors[ImGuiCol_SliderGrab] = colors[ThemeColors::Secondary2];
     style.Colors[ImGuiCol_SliderGrabActive] = colors[ThemeColors::AccentPrimaryLeft];
     style.Colors[ImGuiCol_FrameBg] = colors[ThemeColors::Primary3];
@@ -165,8 +165,8 @@ void EditorTheme::apply_to_imgui()
     style.Colors[ImGuiCol_Separator] = colors[ThemeColors::Primary2];
     style.Colors[ImGuiCol_SeparatorHovered] = colors[ThemeColors::Secondary2];
     style.Colors[ImGuiCol_SeparatorActive] = colors[ThemeColors::Secondary2];
-    style.Colors[ImGuiCol_Text] = colors[ThemeColors::Text1];
-    style.Colors[ImGuiCol_TextDisabled] = colors[ThemeColors::Text2];
+    style.Colors[ImGuiCol_Text] = colors[ThemeColors::Text];
+    style.Colors[ImGuiCol_TextDisabled] = colors[ThemeColors::TextDarker];
     style.Colors[ImGuiCol_MenuBarBg] = colors[ThemeColors::Secondary1];
 }
 } // portal

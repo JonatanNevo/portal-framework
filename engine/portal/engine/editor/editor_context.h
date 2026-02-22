@@ -20,7 +20,9 @@ struct EditorContext
     entt::dispatcher& engine_dispatcher;
     Project& project;
     EditorIcons& icons;
+    ecs::Registry& ecs_registry;
     ResourceRegistry& resource_registry;
+    InputManager& input_manager;
 
     entt::delegate<void()> restore_default_settings;
 };

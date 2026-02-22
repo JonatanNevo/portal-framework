@@ -192,9 +192,9 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     ImGui::ResumeLayout();
 
     // Window buttons
-    const auto button_col_n = imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text1], consts.button_normal_multiplier);
-    const auto button_col_h = imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text1], consts.button_hovered_multiplier);
-    const auto button_col_p = editor_context.theme[imgui::ThemeColors::Text2];
+    const auto button_col_n = imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text], consts.button_normal_multiplier);
+    const auto button_col_h = imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text], consts.button_hovered_multiplier);
+    const auto button_col_p = editor_context.theme[imgui::ThemeColors::TextDarker];
 
     ImGui::SetCursorPosY(titlebar_min.y + window_padding.y);
     // Minimize Button
@@ -247,8 +247,8 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
 
         imgui::draw_button_image(
             editor_context.icons.get_descriptor(EditorIcon::Close),
-            editor_context.theme[imgui::ThemeColors::Text1],
-            imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text1], 1.4f),
+            editor_context.theme[imgui::ThemeColors::Text],
+            imgui::color_with_multiplied_value(editor_context.theme[imgui::ThemeColors::Text], 1.4f),
             button_col_p
         );
     }
@@ -299,7 +299,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
         {
             if (ImGui::IsPopupOpen(name))
             {
-                ImGui::PushStyleColor(ImGuiCol_Text, editor_context.theme[imgui::ThemeColors::Text2]);
+                ImGui::PushStyleColor(ImGuiCol_Text, editor_context.theme[imgui::ThemeColors::TextDarker]);
                 return true;
             }
             return false;
@@ -314,7 +314,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
                 color_pushed = false;
 
                 auto hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Accent2);
-                auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
+                auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text);
 
                 imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::NewProject), "Create Project...");
                 imgui::set_tooltip("Not Implemented!");
@@ -368,7 +368,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
                 color_pushed = false;
 
                 auto hovered = editor_context.theme.scoped_color(ImGuiCol_HeaderHovered, imgui::ThemeColors::Accent2);
-                auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
+                auto menu_text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text);
 
                 if (imgui::menu_item_with_image(
                     icons.get_descriptor(EditorIcon::Undo),

@@ -11,7 +11,7 @@
 #include <portal/third_party/imgui/ImGuiNotify.h>
 
 
-#include "selection_manager.h"
+#include "selection_system.h"
 #include "portal/engine/engine_context.h"
 #include "portal/engine/components/base_camera_controller.h"
 #include "portal/engine/components/camera.h"
@@ -83,6 +83,7 @@ void draw_node(
 
     if (ImGui::IsItemClicked())
     {
+        SelectionSystem::deselect_all(scope);
         SelectionSystem::select(entity, scope);
     }
 
