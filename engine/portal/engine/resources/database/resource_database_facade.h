@@ -11,6 +11,16 @@
 
 namespace portal
 {
+namespace resources
+{
+    struct FacadeDatabaseEntry final : DatabaseEntry
+    {
+        using DatabaseEntry::DatabaseEntry;
+
+        std::filesystem::path get_path() const override { return {}; }
+    };
+}
+
 class ResourceDatabaseFacade final : public ResourceDatabase
 {
 public:
@@ -25,12 +35,14 @@ public:
     DatabaseError remove(StringId resource_id) override;
 
     [[nodiscard]] StringId get_name() const override { return STRING_ID("Resource Database Facade"); }
-    [[nodiscard]] resources::DatabaseEntry& get_structure() const override { return const_cast<resources::DatabaseEntry&>(structure); }
+    [[nodiscard]] resources::DatabaseEntry& get_structure() const override { return const_cast<resources::FacadeDatabaseEntry&>(structure); }
+    [[nodiscard]] const std::filesystem::path& get_root_path() const override;
+
+    [[nodiscard]] ResourceDatabase& get_database(StringId name) const;
 
 private:
     std::unordered_map<StringId, std::unique_ptr<ResourceDatabase>> databases;
-    resources::DatabaseEntry structure;
-};
+    resources::FacadeDatabaseEntry structure;
 };
 
 } // portal
