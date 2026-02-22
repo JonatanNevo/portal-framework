@@ -45,6 +45,19 @@ EditorIcons::EditorIcons(ResourceRegistry& registry) : registry(registry)
     load_image(EditorIcon::Redo, STRING_ID("engine/editor/icons/generic/redo"));
     load_image(EditorIcon::Paste, STRING_ID("engine/editor/icons/generic/clipboard"));
     load_image(EditorIcon::Delete, STRING_ID("engine/editor/icons/generic/trash"));
+
+    // Content Browser
+    load_image(EditorIcon::Refresh, STRING_ID("engine/editor/icons/generic/refresh"));
+    load_image(EditorIcon::Back, STRING_ID("engine/editor/icons/generic/arrow-left"));
+    load_image(EditorIcon::Forward, STRING_ID("engine/editor/icons/generic/arrow-right"));
+    load_image(EditorIcon::Search,  STRING_ID("engine/editor/icons/generic/search"));
+    load_image(EditorIcon::Clear,  STRING_ID("engine/editor/icons/generic/circle-x"));
+    load_image(EditorIcon::Settings,  STRING_ID("engine/editor/icons/generic/settings"));
+
+    load_image(EditorIcon::Directory, STRING_ID("engine/editor/icons/generic/folder"));
+    load_image(EditorIcon::DirectoryOpen, STRING_ID("engine/editor/icons/generic/folder-open"));
+    load_image(EditorIcon::File, STRING_ID("engine/editor/icons/generic/file"));
+
 }
 
 EditorIcons::~EditorIcons()

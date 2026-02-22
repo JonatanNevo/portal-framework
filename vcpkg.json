@@ -1,112 +1,168 @@
 {
-  "name" : "portal-framework",
-  "version-string" : "1.0.0",
-  "builtin-baseline" : "6e874449535f1cc48e9b87a308fbfe8a071d56b0",
-  "features" : {
-    "portal-core" : {
-      "description" : "Base module for the Portal framework.",
-      "dependencies" : [ {
-        "name" : "llvm-adt",
-        "version>=" : "0.2.0"
-      }, {
-        "name" : "glm",
-        "version>=" : "1.0.2"
-      }, {
-        "name" : "spdlog",
-        "version>=" : "1.16.0"
-      }, {
-        "name" : "enchantum",
-        "version>=" : "0.3.0"
-      }, {
-        "name" : "frozen",
-        "version>=" : "1.2.0"
-      }, {
-        "name" : "concurrentqueue",
-        "version>=" : "1.0.4"
-      } ]
+  "name": "portal-framework",
+  "version-string": "1.0.0",
+  "builtin-baseline": "6e874449535f1cc48e9b87a308fbfe8a071d56b0",
+  "features": {
+    "portal-core": {
+      "description": "Base module for the Portal framework.",
+      "dependencies": [
+        {
+          "name": "llvm-adt",
+          "version>=": "0.2.0"
+        },
+        {
+          "name": "glm",
+          "version>=": "1.0.2"
+        },
+        {
+          "name": "spdlog",
+          "version>=": "1.16.0"
+        },
+        {
+          "name": "enchantum",
+          "version>=": "0.3.0"
+        },
+        {
+          "name": "frozen",
+          "version>=": "1.2.0"
+        },
+        {
+          "name": "concurrentqueue",
+          "version>=": "1.0.4"
+        },
+        {
+          "name": "nativefiledialog-extended",
+          "version>=": "1.2.1"
+        }
+      ]
     },
-    "serialization" : {
-      "description" : [ "The serialization interface for the Portal framework", "depends: portal-core" ],
-      "dependencies" : [ {
-        "name" : "nlohmann-json",
-        "version>=" : "3.11.3#1"
-      }, {
-        "name" : "glaze",
-        "version>=" : "6.0.1"
-      } ]
+    "serialization": {
+      "description": [
+        "The serialization interface for the Portal framework",
+        "depends: portal-core"
+      ],
+      "dependencies": [
+        {
+          "name": "nlohmann-json",
+          "version>=": "3.11.3#1"
+        },
+        {
+          "name": "glaze",
+          "version>=": "6.0.1"
+        }
+      ]
     },
-    "application" : {
-      "description" : [ "The application module for the Portal framework.", "depends: portal-core,portal-serialization" ],
-      "dependencies" : [ {
-        "name" : "entt",
-        "version>=" : "3.16.0"
-      } ]
+    "application": {
+      "description": [
+        "The application module for the Portal framework.",
+        "depends: portal-core,portal-serialization"
+      ],
+      "dependencies": [
+        {
+          "name": "entt",
+          "version>=": "3.16.0"
+        }
+      ]
     },
-    "input" : {
-      "description" : [ "The input interface for the Portal framework", "depends: portal-core,portal-application" ],
-      "dependencies" : [ {
-        "name" : "glfw3",
-        "version>=" : "3.4#1",
-        "features" : [ "wayland" ],
-        "platform" : "linux"
-      }, {
-        "name" : "glfw3",
-        "version>=" : "3.4#1",
-        "platform" : "!linux"
-      } ]
+    "input": {
+      "description": [
+        "The input interface for the Portal framework",
+        "depends: portal-core,portal-application"
+      ],
+      "dependencies": [
+        {
+          "name": "glfw3",
+          "version>=": "3.4#1",
+          "features": [
+            "wayland"
+          ],
+          "platform": "linux"
+        },
+        {
+          "name": "glfw3",
+          "version>=": "3.4#1",
+          "platform": "!linux"
+        }
+      ]
     },
-    "networking" : {
-      "description" : [ "The networking interface for the Portal framework", "depends: portal-core" ],
-      "dependencies" : [ {
-        "name" : "gamenetworkingsockets",
-        "version>=" : "1.4.1#1"
-      } ]
+    "networking": {
+      "description": [
+        "The networking interface for the Portal framework",
+        "depends: portal-core"
+      ],
+      "dependencies": [
+        {
+          "name": "gamenetworkingsockets",
+          "version>=": "1.4.1#1"
+        }
+      ]
     },
-    "engine" : {
-      "description" : [ "A game engine built on top of the Portal framework", "depends: portal-input,portal-networking,portal-serialization" ],
-      "dependencies" : [ {
-        "name" : "imgui",
-        "version>=" : "1.91.9",
-        "features" : [ "docking-experimental" ]
-      }, {
-        "name" : "stb",
-        "version>=" : "2024-07-29#1"
-      }, {
-        "name" : "vulkan-memory-allocator",
-        "version>=" : "3.3.0"
-      }, {
-        "name" : "vulkan-headers",
-        "version>=" : "1.4.328.0"
-      }, {
-        "name" : "shader-slang",
-        "version>=" : "2025.22.1"
-      }, {
-        "name" : "fastgltf",
-        "version>=" : "0.9.0"
-      }, {
-        "name" : "volk",
-        "version>=" : "1.4.309.0"
-      }, {
-        "name" : "argparse",
-        "version>=" : "3.2"
-      }, {
-        "name" : "imguizmo",
-        "version>=" : "2024-05-29#1"
-      }, {
-        "name" : "tinyobjloader",
-        "version>=" : "2.0.0rc13"
-      } ]
+    "engine": {
+      "description": [
+        "A game engine built on top of the Portal framework",
+        "depends: portal-input,portal-networking,portal-serialization"
+      ],
+      "dependencies": [
+        {
+          "name": "imgui",
+          "version>=": "1.91.9",
+          "features": [
+            "docking-experimental"
+          ]
+        },
+        {
+          "name": "stb",
+          "version>=": "2024-07-29#1"
+        },
+        {
+          "name": "vulkan-memory-allocator",
+          "version>=": "3.3.0"
+        },
+        {
+          "name": "vulkan-headers",
+          "version>=": "1.4.328.0"
+        },
+        {
+          "name": "shader-slang",
+          "version>=": "2025.22.1"
+        },
+        {
+          "name": "fastgltf",
+          "version>=": "0.9.0"
+        },
+        {
+          "name": "volk",
+          "version>=": "1.4.309.0"
+        },
+        {
+          "name": "argparse",
+          "version>=": "3.2"
+        },
+        {
+          "name": "imguizmo",
+          "version>=": "2024-05-29#1"
+        },
+        {
+          "name": "tinyobjloader",
+          "version>=": "2.0.0rc13"
+        }
+      ]
     },
-    "dev" : {
-      "description" : "Builds the framework with additional dependencies for development purposes.",
-      "dependencies" : [ {
-        "name" : "catch2",
-        "version>=" : "3.11.0"
-      }, {
-        "name" : "tracy",
-        "features" : [ "gui-tools" ],
-        "version>=" : "0.11.1#2"
-      } ]
+    "dev": {
+      "description": "Builds the framework with additional dependencies for development purposes.",
+      "dependencies": [
+        {
+          "name": "catch2",
+          "version>=": "3.11.0"
+        },
+        {
+          "name": "tracy",
+          "features": [
+            "gui-tools"
+          ],
+          "version>=": "0.11.1#2"
+        }
+      ]
     }
   }
 }

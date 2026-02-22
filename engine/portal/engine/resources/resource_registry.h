@@ -249,6 +249,7 @@ public:
 
     [[nodiscard]] ecs::Registry& get_ecs_registry() const { return ecs_registry; }
     [[nodiscard]] const Project& get_project() const { return project; }
+    [[nodiscard]] ResourceDatabase& get_resource_database() const { return database; }
 
     void save_resource(resources::ResourceData& resource_data);
     Buffer snapshot_resource(const resources::ResourceData& resource_data);

@@ -6,6 +6,7 @@
 #include "file_system.h"
 
 #include <fstream>
+#include <nfd.h>
 
 #include "portal/core/debug/assert.h"
 
@@ -292,9 +293,32 @@ FileStatus FileSystem::try_open_file_and_wait(const std::filesystem::path& path,
 
 // TODO: Implement these
 
-std::filesystem::path FileSystem::open_file_dialog(const std::initializer_list<FileDialogFilterItem>)
+std::filesystem::path FileSystem::open_file_dialog(const std::initializer_list<FileDialogFilterItem> filter_items)
 {
-    return {};
+    NFD_Init();
+
+    nfdu8char_t* out_path;
+    std::vector<nfdu8filteritem_t> filters(filter_items.size());
+    for (const auto& [name, spec] : filter_items)
+    {
+        filters.push_back({name, spec});
+    }
+
+    nfdopendialogu8args_t args{};
+    args.filterList = filters.data();
+    args.filterCount = static_cast<nfdfiltersize_t>(filters.size());
+
+    const nfdresult_t result = NFD_OpenDialogU8_With(&out_path, &args);
+    if (result != NFD_OKAY)
+    {
+        NFD_Quit();
+        return {};
+    }
+
+    std::filesystem::path result_path(out_path);
+    NFD_FreePath(out_path);
+    NFD_Quit();
+    return result_path;
 }
 
 std::filesystem::path FileSystem::open_folder_dialog(const char*)

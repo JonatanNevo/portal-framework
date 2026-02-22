@@ -100,6 +100,7 @@ void draw_border(ImRect rect, float thickness = 1.f, float rounding = 0.f, ImVec
 
 //=========================================================================================
 ImColor color_with_multiplied_value(const ImColor& color, float multiplier);
+ImColor color_with_multiplied_saturation(const ImColor& color, float multiplier);
 
 //=========================================================================================
 void draw_button_image(
@@ -144,6 +145,12 @@ void draw_button_image(
     ImVec2 uv0 = {0.f, 0.f},
     ImVec2 uv1 = {1.f, 1.f}
 );
+
+const char* generate_id();
+const char* generate_label_id(std::string_view label);
+
+void push_id();
+void pop_id();
 
 //=========================================================================================
 // Returns the number of space characters menu_item_with_image pads onto the label to

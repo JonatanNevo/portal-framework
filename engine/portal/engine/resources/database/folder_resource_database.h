@@ -31,6 +31,10 @@ struct DatabaseMetadata
 class FolderResourceDatabase final : public ResourceDatabase
 {
 public:
+    constexpr static auto RESOURCE_METADATA_EXTENSION = ".pmeta";
+    constexpr static auto DATABASE_METADATA_EXTENSION = ".podb";
+
+public:
     static std::unique_ptr<FolderResourceDatabase> create(const Project& project, const std::filesystem::path& database_path);
 
     ~FolderResourceDatabase() override;
@@ -43,8 +47,8 @@ public:
 
 protected:
     FolderResourceDatabase(
-        std::filesystem::path  root_path,
-        std::filesystem::path  meta_path,
+        std::filesystem::path root_path,
+        std::filesystem::path meta_path,
         DatabaseMetadata metadata
     );
 

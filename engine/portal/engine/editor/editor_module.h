@@ -34,6 +34,8 @@ class EditorModule final : public TaggedModule<
             ModuleTags::PostUpdate,
             ModuleTags::GuiUpdate
         >,
+        InputManager,
+        ecs::Registry,
         SystemOrchestrator,
         ResourcesModule
     >

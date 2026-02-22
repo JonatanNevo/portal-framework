@@ -349,7 +349,7 @@ public:
         return resource_id == other.resource_id;
     }
 
-    template <ResourceConcept U> requires std::is_base_of_v<T, U>
+    template <ResourceConcept U> requires (std::is_base_of_v<T, U> || std::is_base_of_v<U, T>)
     ResourceReference<U> cast() const
     {
         auto casted = reference_cast<U, T>(resource);

@@ -129,6 +129,14 @@ ImColor color_with_multiplied_value(const ImColor& color, const float multiplier
     return ImColor::HSV(hue, sat, std::min(val * multiplier, 1.0f));
 }
 
+ImColor color_with_multiplied_saturation(const ImColor& color, const float multiplier)
+{
+    const ImVec4& raw_value = color.Value;
+    float hue, sat, val;
+    ImGui::ColorConvertRGBtoHSV(raw_value.x, raw_value.y, raw_value.z, hue, sat, val);
+    return ImColor::HSV(hue, std::min(sat * multiplier, 1.0f), val);
+}
+
 void draw_button_image(
     const vk::DescriptorSet image,
     const ImColor tint_normal,
@@ -199,6 +207,35 @@ void draw_button_image(
         draw_list->AddImage(static_cast<VkDescriptorSet>(image_hovered), rect_min, rect_max, uv0, uv1, tint_hovered);
     else
         draw_list->AddImage(static_cast<VkDescriptorSet>(image_normal), rect_min, rect_max, uv0, uv1, tint_normal);
+}
+
+static int s_ui_context_id = 0;
+static uint32_t s_counter = 0;
+static std::array<char, 16 + 3> s_id_buffer = {'#', '#', '\0'};
+static std::array<char, 1024 + 1> s_label_id_buffer = {};
+
+const char* generate_id()
+{
+    sprintf_s(s_id_buffer.data() + 2, 16, "%u", s_counter++);
+    return s_id_buffer.data();
+}
+
+const char* generate_label_id(std::string_view label)
+{
+    *fmt::format_to_n(s_label_id_buffer.data(), s_label_id_buffer.size(), "{}##{}", label, s_counter++).out = 0;
+    return s_label_id_buffer.data();
+}
+
+void push_id()
+{
+    ImGui::PushID(s_ui_context_id++);
+    s_counter = 0;
+}
+
+void pop_id()
+{
+    ImGui::PopID();
+    s_ui_context_id--;
 }
 
 int menu_item_icon_padding(const float icon_size)
