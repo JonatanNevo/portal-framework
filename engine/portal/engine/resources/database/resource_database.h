@@ -211,9 +211,13 @@ namespace resources
     {
         StringId name;
         DatabaseEntry* parent = nullptr;
-        std::unordered_map<StringId, DatabaseEntry> children;
+        std::unordered_map<StringId, Reference<DatabaseEntry>> children;
 
-        std::filesystem::path get_path() const;
+        explicit DatabaseEntry(StringId name = {}) : name(name) {}
+        DatabaseEntry(StringId name, DatabaseEntry* parent) : name(name), parent(parent) {}
+        virtual ~DatabaseEntry() = default;
+
+        virtual std::filesystem::path get_path() const = 0;
     };
 }
 
@@ -277,5 +281,7 @@ public:
     [[nodiscard]] virtual resources::DatabaseEntry& get_structure() const = 0;
 
     [[nodiscard]] virtual StringId get_name() const = 0;
+
+    [[nodiscard]] virtual const std::filesystem::path& get_root_path() const = 0;
 };
 } // portal

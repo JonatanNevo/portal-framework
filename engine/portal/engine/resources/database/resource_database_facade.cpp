@@ -29,10 +29,13 @@ void ResourceDatabaseFacade::register_database(const Project& project, const Dat
 {
     auto&& database = ResourceDatabaseFactory::create(project, description);
     PORTAL_ASSERT(database, "Failed to create database");
-    const auto& db_structure = database->get_structure();
+    auto& db_structure = database->get_structure();
+
+    structure.children[db_structure.name] = make_reference<resources::FacadeDatabaseEntry>(db_structure.name, &structure);
+    auto& facade_entry = structure.children[db_structure.name];
+    facade_entry->children = db_structure.children;
 
     databases.emplace(database->get_name(), std::move(database));
-    structure.children[db_structure.name] = db_structure;
 }
 
 std::expected<SourceMetadata, DatabaseError> ResourceDatabaseFacade::find(const StringId resource_id)
@@ -74,5 +77,17 @@ Reference<resources::ResourceSource> ResourceDatabaseFacade::create_source(Strin
 
     LOGGER_ERROR("Cannot find database named: '{}'", prefix);
     return nullptr;
+}
+const std::filesystem::path& ResourceDatabaseFacade::get_root_path() const
+{
+    static const std::filesystem::path empty_path;
+    return empty_path;
+}
+
+ResourceDatabase& ResourceDatabaseFacade::get_database(StringId name) const
+{
+    auto it = databases.find(name);
+    PORTAL_ASSERT(it != databases.end(), "Database not found: {}", name);
+    return *it->second;
 }
 } // portal

@@ -18,6 +18,7 @@ struct EditorContext
     SnapshotManager snapshot_manager;
     Window& window;
     entt::dispatcher& engine_dispatcher;
+    entt::dispatcher& input_dispatcher;
     Project& project;
     EditorIcons& icons;
     ecs::Registry& ecs_registry;

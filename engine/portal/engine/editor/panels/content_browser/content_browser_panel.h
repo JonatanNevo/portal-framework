@@ -11,6 +11,7 @@
 #include "portal/engine/editor/panels/panel.h"
 #include "portal/engine/project/project.h"
 #include "portal/engine/resources/database/resource_database.h"
+#include "portal/engine/resources/database/resource_database_facade.h"
 #include "portal/input/input_events.h"
 
 namespace portal
@@ -64,7 +65,7 @@ public:
     bool delete_directory(const content_browser::DirectoryInfo& info);
 
 private:
-    StringId process_directory(const std::filesystem::path& directory_path, const Reference<content_browser::DirectoryInfo>& parent);
+    StringId process_directory(const resources::DatabaseEntry& entry, const std::filesystem::path& root_path, const Reference<content_browser::DirectoryInfo>& parent);
 
     void change_directory(const Reference<content_browser::DirectoryInfo>& directory);
     void on_browse_back();
@@ -141,7 +142,7 @@ private:
     content_browser::ItemList current_items;
 
     Reference<content_browser::DirectoryInfo> current_directory;
-    Reference<content_browser::DirectoryInfo> base_directory;
+    std::vector<Reference<content_browser::DirectoryInfo>> base_directories;
     Reference<content_browser::DirectoryInfo> next_directory, prev_directory;
     Reference<content_browser::DirectoryInfo> pending_removal_directory;
 

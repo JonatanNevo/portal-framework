@@ -16,9 +16,15 @@ struct DirectoryInfo
     WeakReference<DirectoryInfo> parent;
 
     std::filesystem::path path;
+    std::string display_name;
     std::vector<StringId> resources;
 
     std::unordered_map<StringId, Reference<DirectoryInfo>> subdirectories;
+
+    [[nodiscard]] std::string get_display_name() const
+    {
+        return display_name.empty() ? path.filename().string() : display_name;
+    }
 };
 
 class DirectoryItem final : public Item

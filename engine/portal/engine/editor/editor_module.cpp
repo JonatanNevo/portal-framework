@@ -46,6 +46,7 @@ EditorModule::EditorModule(
           SnapshotManager{get_dependency<ResourcesModule>().get_registry()},
           window,
           engine_dispatcher,
+          input_dispatcher,
           project,
           icons,
           get_dependency<ecs::Registry>(),

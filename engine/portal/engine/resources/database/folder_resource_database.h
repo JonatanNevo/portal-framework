@@ -28,6 +28,16 @@ struct DatabaseMetadata
     static DatabaseMetadata dearchive(ArchiveObject& archive);
 };
 
+namespace resources
+{
+    struct FolderDatabaseEntry final : DatabaseEntry
+    {
+        using DatabaseEntry::DatabaseEntry;
+
+        std::filesystem::path get_path() const override;
+    };
+}
+
 class FolderResourceDatabase final : public ResourceDatabase
 {
 public:
@@ -70,13 +80,14 @@ protected:
     static DatabaseMetadata load_meta(const std::filesystem::path& meta_path);
 
     [[nodiscard]] StringId get_name() const override;
+    [[nodiscard]] const std::filesystem::path& get_root_path() const override;
 
 private:
     std::filesystem::path root_path;
     std::filesystem::path meta_path;
     DatabaseMetadata metadata;
 
-    resources::DatabaseEntry structure;
+    resources::FolderDatabaseEntry structure;
 
 #ifdef PORTAL_DEBUG
     std::unordered_map<StringId, SourceMetadata> resources;
