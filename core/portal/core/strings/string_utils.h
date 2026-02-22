@@ -25,6 +25,9 @@ T from_string(const std::string_view& str)
     PORTAL_ASSERT(value.has_value(), "Invalid enum value: {}", str);
     return value.value_or(T{});
 }
+
+std::string to_lower_copy(std::string_view str);
+std::string& to_lower(std::string& str);
 }
 
 template <typename T> requires std::is_enum_v<T>

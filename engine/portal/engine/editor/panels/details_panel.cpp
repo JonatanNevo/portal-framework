@@ -13,7 +13,7 @@
 #include "portal/engine/components/mesh.h"
 #include "portal/engine/components/transform.h"
 #include "portal/engine/editor/editor_context.h"
-#include "portal/engine/editor/selection_manager.h"
+#include "portal/engine/editor/selection_system.h"
 #include "portal/engine/renderer/vulkan/vulkan_material.h"
 #include "portal/engine/scene/scene.h"
 #include "portal/engine/scene/scene_context.h"
@@ -60,7 +60,7 @@ void transform_vec3_slider(
     auto button_size = ImVec2(line_height * 0.7f, line_height);
 
     {
-        auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+        auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
         ImGui::Text("%s", label);
     }
 
@@ -179,7 +179,7 @@ void draw_material_controls( EditorContext& context, Entity entity)
     auto show_float_slider = [&material, &context](const char* name, const char* label, const float speed, const float min, const float max)
     {
         {
-            auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+            auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
             ImGui::AlignTextToFramePadding();
             ImGui::Text("%s", label);
         }
@@ -194,7 +194,7 @@ void draw_material_controls( EditorContext& context, Entity entity)
     };
 
     {
-        auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+        auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
         ImGui::AlignTextToFramePadding();
         ImGui::Text("Color:");
     }
@@ -290,7 +290,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
     {
         auto& [name, icon] = selected_entity.get_component<NameComponent>();
         {
-            auto title_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+            auto title_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
             ImGui::AlignTextToFramePadding();
             ImGui::Text("%s Name:", icon.data());
         }
@@ -328,13 +328,13 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
 
             imgui::ScopedStyle frame_padding(ImGuiStyleVar_FramePadding, ImVec2(4, 1));
             {
-                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Main Camera:");
             }
             ImGui::SameLine();
             {
-                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text1);
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text);
                 auto frame_background = editor_context.theme.scoped_color(ImGuiCol_FrameBg, imgui::ThemeColors::Primary1);
 
                 ImGui::BeginDisabled();
@@ -344,7 +344,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
             }
 
             {
-                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Vertical FOV:");
             }
@@ -355,7 +355,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
             }
 
             {
-                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Far Clip:");
             }
@@ -366,7 +366,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
             }
 
             {
-                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
                 ImGui::AlignTextToFramePadding();
                 ImGui::Text("Near Clip:");
             }
@@ -380,7 +380,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
             {
                 auto& controller = entity.get_component<BaseCameraController>();
                 {
-                    auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text2);
+                    auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
                     ImGui::AlignTextToFramePadding();
                     ImGui::Text("Camera Speed:");
                 }

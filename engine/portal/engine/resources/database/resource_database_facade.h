@@ -15,6 +15,8 @@ namespace portal
 class ResourceDatabaseFacade final : public ResourceDatabase
 {
 public:
+    ResourceDatabaseFacade();
+
     void register_database(const Project& project, const DatabaseDescription& description);
 
     std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) override;
@@ -23,8 +25,7 @@ public:
     DatabaseError add(StringId resource_id, SourceMetadata meta) override;
     DatabaseError remove(StringId resource_id) override;
 
-    [[nodiscard]] StringId get_name() const override { return STRING_ID("Resource Database Facade"); };
-
+    [[nodiscard]] StringId get_name() const override { return STRING_ID("Resource Database Facade"); }
 private:
     std::unordered_map<StringId, std::unique_ptr<ResourceDatabase>> databases;
 };

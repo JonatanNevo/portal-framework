@@ -205,6 +205,18 @@ enum class DatabaseErrorBit: uint8_t
 /** @brief Combined flags type for database errors */
 using DatabaseError = Flags<DatabaseErrorBit>;
 
+namespace resources
+{
+    struct DatabaseEntry
+    {
+        StringId name;
+        DatabaseEntry* parent = nullptr;
+        std::unordered_map<StringId, DatabaseEntry> children;
+
+        std::filesystem::path get_path() const;
+    };
+}
+
 /**
  * @class ResourceDatabase
  * @brief Abstract interface for resource metadata storage and file access

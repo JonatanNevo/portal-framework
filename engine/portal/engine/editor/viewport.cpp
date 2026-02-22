@@ -11,7 +11,7 @@
 #include <glm/gtx/matrix_decompose.hpp>
 
 #include "editor_context.h"
-#include "selection_manager.h"
+#include "selection_system.h"
 #include "portal/engine/components/camera.h"
 #include "portal/engine/components/transform.h"
 #include "portal/engine/imgui/imgui_scoped.h"

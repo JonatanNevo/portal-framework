@@ -9,6 +9,7 @@
 #include <imgui_internal.h>
 #include "panel_manager.h"
 #include "panels/details_panel.h"
+#include "panels/content_browser/content_browser_panel.h"
 #include "portal/core/files/file_system.h"
 #include "portal/engine/project/project.h"
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
@@ -47,7 +48,9 @@ EditorModule::EditorModule(
           engine_dispatcher,
           project,
           icons,
-          get_dependency<ResourcesModule>().get_registry()
+          get_dependency<ecs::Registry>(),
+          get_dependency<ResourcesModule>().get_registry(),
+          get_dependency<InputManager>()
       ),
       titlebar(editor_context),
       viewport(swapchain, runtime_module),
@@ -61,6 +64,7 @@ EditorModule::EditorModule(
 
     setup_layout_config();
     panel_manager.add_panel<DetailsPanel>();
+    panel_manager.add_panel<ContentBrowserPanel>(editor_context);
 }
 
 void EditorModule::begin_frame(FrameContext& frame)

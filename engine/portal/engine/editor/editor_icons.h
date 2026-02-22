@@ -44,9 +44,22 @@ enum class EditorIcon
     Undo,
     Redo,
     Paste,
-    Delete
-};
+    Delete,
 
+    // Buttons
+    Back,
+    Forward,
+    Refresh,
+    Search,
+    Clear,
+    Settings,
+
+    // Content Browser
+    Directory,
+    DirectoryOpen,
+    File
+
+};
 class EditorIcons
 {
 public:

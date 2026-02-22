@@ -51,6 +51,7 @@ portal_add_module(core
             enchantum
             frozen
             concurrentqueue
+            nfd
 
         COMPLEX_DEPENDENCIES
             llvm-adt|LINK|llvm::adt

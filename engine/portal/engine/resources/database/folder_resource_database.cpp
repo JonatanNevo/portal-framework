@@ -18,12 +18,9 @@ namespace portal
 {
 using namespace std::literals;
 
-constexpr auto RESOURCE_METADATA_EXTENSION = ".pmeta";
-constexpr auto DATABASE_METADATA_EXTENSION = ".podb";
-
-const auto ROOT_DATABASE_METADATA_FILENAME = fmt::format("root{}", DATABASE_METADATA_EXTENSION);
-
 static auto logger = Log::get_logger("Resources");
+
+const auto ROOT_DATABASE_METADATA_FILENAME = fmt::format("root{}", FolderResourceDatabase::DATABASE_METADATA_EXTENSION);
 
 void DatabaseMetadata::archive(ArchiveObject& archive) const
 {
@@ -87,7 +84,7 @@ std::filesystem::path validate_and_create_meta_path(const std::filesystem::path&
 
     for (const auto& entry : std::filesystem::directory_iterator(root_path))
     {
-        if (entry.is_regular_file() && entry.path().extension() == DATABASE_METADATA_EXTENSION)
+        if (entry.is_regular_file() && entry.path().extension() == FolderResourceDatabase::DATABASE_METADATA_EXTENSION)
         {
             meta_files.push_back(entry.path());
         }
