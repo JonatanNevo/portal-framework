@@ -1062,12 +1062,15 @@ void ContentBrowserPanel::on_key_pressed_event(const KeyPressedEvent& event)
             refresh();
 
             const auto dir_info = get_directory(path);
-            size_t index = current_items.find_item(dir_info->id);
-            if (index != ItemList::invalid_item)
+            if (dir_info)
             {
-                SelectionSystem::deselect_all(selection_context);
-                SelectionSystem::select(dir_info->id, selection_context);
-                current_items[index]->start_renaming();
+                size_t index = current_items.find_item(dir_info->id);
+                if (index != ItemList::invalid_item)
+                {
+                    SelectionSystem::deselect_all(selection_context);
+                    SelectionSystem::select(dir_info->id, selection_context);
+                    current_items[index]->start_renaming();
+                }
             }
         }
         return;
