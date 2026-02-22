@@ -45,6 +45,8 @@ public:
 
     Reference<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) override;
 
+    [[nodiscard]] resources::DatabaseEntry& get_structure() const override;
+
 protected:
     FolderResourceDatabase(
         std::filesystem::path root_path,
@@ -54,6 +56,9 @@ protected:
 
     void populate();
     void populate_from_composite(const SourceMetadata& meta);
+
+    void add_to_structure(StringId resource_id);
+    void remove_from_structure(StringId resource_id);
 
     DatabaseError validate();
     [[nodiscard]] DatabaseError validate_metadata(const SourceMetadata& meta) const;
@@ -70,6 +75,8 @@ private:
     std::filesystem::path root_path;
     std::filesystem::path meta_path;
     DatabaseMetadata metadata;
+
+    resources::DatabaseEntry structure;
 
 #ifdef PORTAL_DEBUG
     std::unordered_map<StringId, SourceMetadata> resources;

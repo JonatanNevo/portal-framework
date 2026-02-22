@@ -120,7 +120,8 @@ FolderResourceDatabase::FolderResourceDatabase(
 )
     : root_path(std::move(root_path)),
       meta_path(std::move(meta_path)),
-      metadata(metadata)
+      metadata(metadata),
+      structure(metadata.name)
 {
     LOGGER_INFO("Loaded folder database {}, version: {}", metadata.name, metadata.version);
 
@@ -173,6 +174,7 @@ DatabaseError FolderResourceDatabase::add(StringId resource_id, SourceMetadata m
 
     // TODO(#45): thread safety?
     resources[resource_id] = meta;
+    add_to_structure(resource_id);
 
     return DatabaseErrorBit::Success;
 }
@@ -214,6 +216,11 @@ Reference<resources::ResourceSource> FolderResourceDatabase::create_source(Strin
     return make_reference<resources::FileSource>(root_path / meta.source.string);
 }
 
+const resources::DatabaseEntry& FolderResourceDatabase::get_structure() const
+{
+    return structure;
+}
+
 void FolderResourceDatabase::populate()
 {
     for (auto& entry : std::filesystem::recursive_directory_iterator(root_path))
@@ -231,6 +238,7 @@ void FolderResourceDatabase::populate()
                 auto resource_metadata = SourceMetadata::dearchive(archiver);
                 resource_metadata.full_source_path = STRING_ID((root_path / entry.path()).replace_extension("").generic_string());
                 resources[resource_metadata.resource_id] = resource_metadata;
+                add_to_structure(resource_metadata.resource_id);
 
                 if (resource_metadata.type == ResourceType::Composite)
                     populate_from_composite(resource_metadata);
@@ -250,7 +258,27 @@ void FolderResourceDatabase::populate_from_composite(const SourceMetadata& meta)
     {
         source_meta.full_source_path = meta.resource_id;
         resources[STRING_ID(name)] = source_meta;
+        add_to_structure(STRING_ID(name));
     }
+}
+
+void FolderResourceDatabase::add_to_structure(StringId resource_id)
+{
+    auto split_view = resource_id.string | std::views::split('/') | std::views::drop(1);
+    size_t part_number = std::ranges::distance(split_view);
+
+    StringId part_string;
+    auto* current_entry = &structure;
+    for (auto part : split_view)
+    {
+        part_string = STRING_ID(std::string_view(part));
+
+        if (part_number-- == 1)
+            break;
+
+        current_entry = &current_entry->children[part_string];
+    }
+    current_entry->children[part_string] = resources::DatabaseEntry(resource_id, current_entry);
 }
 
 DatabaseError FolderResourceDatabase::validate()

@@ -274,6 +274,8 @@ public:
      */
     virtual Reference<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) = 0;
 
+    [[nodiscard]] virtual resources::DatabaseEntry& get_structure() const = 0;
+
     [[nodiscard]] virtual StringId get_name() const = 0;
 };
 } // portal
