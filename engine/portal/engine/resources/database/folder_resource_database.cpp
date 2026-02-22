@@ -216,9 +216,9 @@ Reference<resources::ResourceSource> FolderResourceDatabase::create_source(Strin
     return make_reference<resources::FileSource>(root_path / meta.source.string);
 }
 
-const resources::DatabaseEntry& FolderResourceDatabase::get_structure() const
+resources::DatabaseEntry& FolderResourceDatabase::get_structure() const
 {
-    return structure;
+    return const_cast<resources::FolderDatabaseEntry&>(structure);
 }
 
 void FolderResourceDatabase::populate()
@@ -262,13 +262,30 @@ void FolderResourceDatabase::populate_from_composite(const SourceMetadata& meta)
     }
 }
 
+std::filesystem::path resources::FolderDatabaseEntry::get_path() const
+{
+    std::vector<std::string_view> segments;
+    for (auto* node = static_cast<const DatabaseEntry*>(this); node != nullptr && node->parent != nullptr; node = node->parent)
+    {
+        segments.push_back(node->name.string);
+    }
+    std::ranges::reverse(segments);
+
+    std::filesystem::path result;
+    for (auto& seg : segments)
+    {
+        result /= seg;
+    }
+    return result;
+}
+
 void FolderResourceDatabase::add_to_structure(StringId resource_id)
 {
     auto split_view = resource_id.string | std::views::split('/') | std::views::drop(1);
     size_t part_number = std::ranges::distance(split_view);
 
     StringId part_string;
-    auto* current_entry = &structure;
+    resources::DatabaseEntry* current_entry = &structure;
     for (auto part : split_view)
     {
         part_string = STRING_ID(std::string_view(part));
@@ -276,9 +293,14 @@ void FolderResourceDatabase::add_to_structure(StringId resource_id)
         if (part_number-- == 1)
             break;
 
-        current_entry = &current_entry->children[part_string];
+        auto& child = current_entry->children[part_string];
+        if (!child)
+        {
+            child = make_reference<resources::FolderDatabaseEntry>(part_string, current_entry);
+        }
+        current_entry = child.get();
     }
-    current_entry->children[part_string] = resources::DatabaseEntry(resource_id, current_entry);
+    current_entry->children[part_string] = make_reference<resources::FolderDatabaseEntry>(resource_id, current_entry);
 }
 
 DatabaseError FolderResourceDatabase::validate()
@@ -506,5 +528,10 @@ DatabaseMetadata FolderResourceDatabase::load_meta(const std::filesystem::path& 
 StringId FolderResourceDatabase::get_name() const
 {
     return metadata.name;
+}
+
+const std::filesystem::path& FolderResourceDatabase::get_root_path() const
+{
+    return root_path;
 }
 } // portal

@@ -17,8 +17,6 @@
 #include "portal/engine/imgui/widgets/search_widget.h"
 #include "portal/engine/project/project.h"
 #include "portal/engine/renderer/material/material.h"
-#include "portal/engine/resources/database/folder_resource_database.h"
-#include "portal/serialization/archive/json_archive.h"
 
 namespace portal
 {
@@ -107,6 +105,7 @@ using namespace content_browser;
 
 ContentBrowserPanel::ContentBrowserPanel(const EditorContext& editor_context) : project(editor_context.project)
 {
+    editor_context.input_dispatcher.sink<KeyPressedEvent>().connect<&ContentBrowserPanel::on_key_pressed_event>(this);
     selection_context = editor_context.ecs_registry.create_entity(STRING_ID("Content Browser"));
     std::memset(search_buffer.data(), 0, search_buffer.size());
 
@@ -134,8 +133,7 @@ struct ContentBrowserConsts
 
 void ContentBrowserPanel::on_gui_render(EditorContext& editor_context, FrameContext&)
 {
-    static ContentBrowserConsts consts;
-    imgui::draw_consts_controls("Content Browser Consts", consts);
+    constexpr ContentBrowserConsts consts;
 
     is_hovered = false;
     is_focused = false;
@@ -172,24 +170,20 @@ void ContentBrowserPanel::on_gui_render(EditorContext& editor_context, FrameCont
             imgui::ScopedColor item_header(ImGuiCol_Header, IM_COL32_DISABLE);
             imgui::ScopedColor item_header_active(ImGuiCol_HeaderActive, IM_COL32_DISABLE);
 
-            if (base_directory)
+            if (!base_directories.empty())
             {
-                std::vector<Reference<DirectoryInfo>> subdirs;
-                subdirs.reserve(base_directory->subdirectories.size());
-                for (auto& dir : base_directory->subdirectories | std::views::values)
-                    subdirs.push_back(dir);
-
-                std::ranges::sort(subdirs, [](const auto& a, const auto& b) { return a->path.stem().string() < b->path.stem().string(); });
-                for (const auto& dir : subdirs)
-                    render_directory_tree(editor_context, dir);
+                std::vector<Reference<DirectoryInfo>> sorted_bases(base_directories.begin(), base_directories.end());
+                std::ranges::sort(sorted_bases, [](const auto& a, const auto& b) { return a->path.stem().string() < b->path.stem().string(); });
+                for (const auto& base_dir : sorted_bases)
+                    render_directory_tree(editor_context, base_dir);
             }
 
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{4.f, 4.f});
             if (ImGui::BeginPopupContextWindow(nullptr, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
             {
-                if (ImGui::MenuItem("New Folder"))
+                if (ImGui::MenuItem("New Folder", nullptr, false, !base_directories.empty()))
                 {
-                    auto filepath = FileSystem::get_unique_file_name(project.get_resource_directory() / "New Folder");
+                    auto filepath = FileSystem::get_unique_file_name(base_directories.front()->path / "New Folder");
                     const bool created = FileSystem::create_directory(filepath);
 
                     if (created)
@@ -198,8 +192,8 @@ void ContentBrowserPanel::on_gui_render(EditorContext& editor_context, FrameCont
 
                 ImGui::Separator();
 
-                if (ImGui::MenuItem("Show in Explorer"))
-                    FileSystem::open_directory_in_explorer(project.get_resource_directory());
+                if (ImGui::MenuItem("Show in Explorer", nullptr, false, !base_directories.empty()))
+                    FileSystem::open_directory_in_explorer(base_directories.front()->path);
 
                 ImGui::EndPopup();
             }
@@ -380,39 +374,35 @@ bool ContentBrowserPanel::delete_directory(const DirectoryInfo& info)
     return true;
 }
 
-StringId ContentBrowserPanel::process_directory(const std::filesystem::path& directory_path, const Reference<DirectoryInfo>& parent)
+StringId ContentBrowserPanel::process_directory(
+    const resources::DatabaseEntry& entry,
+    const std::filesystem::path& root_path,
+    const Reference<DirectoryInfo>& parent
+)
 {
-    const auto directory = get_directory(directory_path);
+    auto path = root_path / entry.get_path();
+
+    const auto directory = get_directory(path);
     if (directory)
         return directory->id;
 
     Reference<DirectoryInfo> info = make_reference<DirectoryInfo>();
-    info->id = STRING_ID(directory_path.generic_string());
+    info->id = STRING_ID(path.generic_string());
     info->parent = parent;
-    info->path = directory_path;
+    info->path = path;
+    if (!parent)
+        info->display_name = std::string(entry.name.string);
 
-    for (auto entry : std::filesystem::directory_iterator(directory_path))
+    for (auto& [child_name, child] : entry.children)
     {
-        if (entry.is_directory())
+        if (!child->children.empty())
         {
-            StringId subdir = process_directory(entry.path(), info);
+            StringId subdir = process_directory(*child, root_path, info);
             info->subdirectories[subdir] = directories[subdir];
         }
-
-        if (entry.path().extension() == FolderResourceDatabase::RESOURCE_METADATA_EXTENSION)
+        else
         {
-            JsonArchive archiver;
-            archiver.read(entry.path());
-
-            // TODO: Add serialization checks
-            auto resource_metadata = SourceMetadata::dearchive(archiver);
-            auto resource_id = resource_metadata.resource_id;
-
-            auto meta = project.get_resource_database().find(resource_id);
-            if (meta.has_value())
-            {
-                info->resources.push_back(resource_id);
-            }
+            info->resources.push_back(child->name);
         }
     }
 
@@ -492,8 +482,8 @@ namespace
 
 void ContentBrowserPanel::render_directory_tree(EditorContext& editor_context, Reference<DirectoryInfo> directory)
 {
-    auto name = directory->path.filename().string();
-    auto id = fmt::format("{}_tree_node", name);
+    auto name = directory->get_display_name();
+    auto id = fmt::format("{}_tree_node", directory->path.generic_string());
     bool prev_state = ImGui::TreeNodeUpdateNextOpen(ImGui::GetID(id.c_str()), 0);
 
     // ImGui item height hack
@@ -572,13 +562,15 @@ void ContentBrowserPanel::render_directory_tree(EditorContext& editor_context, R
     // Tree Node
     //----------
 
-    bool open = directory_node(
-        id,
-        name,
-        flags,
-        editor_context.icons.get_descriptor(EditorIcon::Directory),
-        editor_context.icons.get_descriptor(EditorIcon::DirectoryOpen)
-    );
+    const bool is_database_root = directory->parent.expired();
+    const auto icon = is_database_root
+                          ? editor_context.icons.get_descriptor(EditorIcon::BuildResourceDB)
+                          : editor_context.icons.get_descriptor(EditorIcon::Directory);
+    const auto icon_open = is_database_root
+                               ? editor_context.icons.get_descriptor(EditorIcon::BuildResourceDB)
+                               : editor_context.icons.get_descriptor(EditorIcon::DirectoryOpen);
+
+    bool open = directory_node(id, name, flags, icon, icon_open);
 
     if (is_active_directory || is_item_clicked)
         ImGui::PopStyleColor();
@@ -624,6 +616,7 @@ void ContentBrowserPanel::render_directory_tree(EditorContext& editor_context, R
         ImGui::EndPopup();
     }
     ImGui::PopStyleVar();
+    ImGui::Dummy(ImVec2(0, 0));
 
     // Draw children
     //--------------
@@ -771,22 +764,13 @@ void ContentBrowserPanel::draw_topbar(EditorContext& editor_context, float heigh
             imgui::ScopedFont bold_font(STRING_ID("Bold"));
             auto text_color = editor_context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::TextDarker);
 
-            const auto& resource_directory = project.get_resource_directory();
-            const auto text_size = ImGui::CalcTextSize(resource_directory.generic_string().c_str());
             const float text_padding = ImGui::GetStyle().ItemSpacing.y;
-
-            if (ImGui::Selectable(resource_directory.generic_string().c_str(), false, 0, ImVec2(text_size.x, text_size.y + text_padding)))
-            {
-                SelectionSystem::deselect_all(selection_context);
-                change_directory(base_directory);
-            }
-            update_drop_area(base_directory);
 
             for (auto& dir : bread_crumb_data)
             {
                 ImGui::TextUnformatted("/");
 
-                auto dir_name = dir->path.filename().string();
+                auto dir_name = dir->get_display_name();
                 auto dir_text_size = ImGui::CalcTextSize(dir_name.c_str());
                 if (ImGui::Selectable(dir_name.c_str(), false, 0, ImVec2(dir_text_size.x, dir_text_size.y + text_padding)))
                 {
@@ -991,7 +975,15 @@ void ContentBrowserPanel::draw_bottombar(EditorContext&, float height)
 
                 if (!file_path.empty())
                 {
-                    file_path = std::filesystem::relative(file_path, base_directory->path);
+                    for (const auto& base_dir : base_directories)
+                    {
+                        auto rel = std::filesystem::relative(file_path, base_dir->path);
+                        if (!rel.empty() && rel.native()[0] != '.')
+                        {
+                            file_path = base_dir->path.filename() / rel;
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -1010,15 +1002,24 @@ void ContentBrowserPanel::refresh()
 {
     current_items.clear();
     directories.clear();
+    base_directories.clear();
 
     auto current_dir = current_directory;
-    auto base_dir_id = process_directory(project.get_resource_directory(), nullptr);
-    base_directory = directories[base_dir_id];
+    auto& facade = static_cast<ResourceDatabaseFacade&>(project.get_resource_database());
+    auto& structure = facade.get_structure();
+
+    for (auto& [name, db_entry] : structure.children)
+    {
+        auto& database = facade.get_database(name);
+        auto dir_id = process_directory(*db_entry, database.get_root_path(), nullptr);
+        base_directories.push_back(directories[dir_id]);
+    }
+
     if (current_dir)
         current_directory = get_directory(current_dir->path);
 
-    if (!current_directory)
-        current_directory = base_directory;
+    if (!current_directory && !base_directories.empty())
+        current_directory = base_directories.front();
 
     change_directory(current_directory);
 }
@@ -1273,7 +1274,8 @@ void ContentBrowserPanel::render_delete_folder_dialog(EditorContext&)
                     auto parent = current_directory->parent.lock()->path;
                     if (parent.empty())
                     {
-                        change_directory(base_directory);
+                        if (!base_directories.empty())
+                            change_directory(base_directories.front());
                     }
                     else
                     {
