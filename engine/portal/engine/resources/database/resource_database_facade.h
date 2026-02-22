@@ -11,7 +11,6 @@
 
 namespace portal
 {
-
 class ResourceDatabaseFacade final : public ResourceDatabase
 {
 public:
@@ -20,14 +19,18 @@ public:
     void register_database(const Project& project, const DatabaseDescription& description);
 
     std::expected<SourceMetadata, DatabaseError> find(StringId resource_id) override;
-    Reference<resources::ResourceSource> create_source(StringId resource_id,SourceMetadata meta) override;
+    Reference<resources::ResourceSource> create_source(StringId resource_id, SourceMetadata meta) override;
 
     DatabaseError add(StringId resource_id, SourceMetadata meta) override;
     DatabaseError remove(StringId resource_id) override;
 
     [[nodiscard]] StringId get_name() const override { return STRING_ID("Resource Database Facade"); }
+    [[nodiscard]] resources::DatabaseEntry& get_structure() const override { return const_cast<resources::DatabaseEntry&>(structure); }
+
 private:
     std::unordered_map<StringId, std::unique_ptr<ResourceDatabase>> databases;
+    resources::DatabaseEntry structure;
+};
 };
 
 } // portal

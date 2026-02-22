@@ -23,14 +23,16 @@ StringId find_database_prefix(const StringId& resource_id)
     return STRING_ID(first_part);
 }
 
-ResourceDatabaseFacade::ResourceDatabaseFacade() {}
+ResourceDatabaseFacade::ResourceDatabaseFacade(): structure(STRING_ID("root")) {}
 
 void ResourceDatabaseFacade::register_database(const Project& project, const DatabaseDescription& description)
 {
     auto&& database = ResourceDatabaseFactory::create(project, description);
     PORTAL_ASSERT(database, "Failed to create database");
+    const auto& db_structure = database->get_structure();
 
     databases.emplace(database->get_name(), std::move(database));
+    structure.children[db_structure.name] = db_structure;
 }
 
 std::expected<SourceMetadata, DatabaseError> ResourceDatabaseFacade::find(const StringId resource_id)
