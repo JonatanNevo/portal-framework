@@ -9,6 +9,7 @@
 #include <imgui_internal.h>
 #include "panel_manager.h"
 #include "panels/details_panel.h"
+#include "panels/statistics_panel.h"
 #include "panels/content_browser/content_browser_panel.h"
 #include "portal/core/files/file_system.h"
 #include "portal/engine/project/project.h"
@@ -39,9 +40,11 @@ EditorModule::EditorModule(
       engine_dispatcher(engine_dispatcher),
       input_dispatcher(input_dispatcher),
       runtime_module(stack, project, context, swapchain, window),
+      panel_manager(project.get_config_directory() / "editor_panels.json"),
       im_gui_renderer(get_dependency<ResourcesModule>().get_registry(), window, swapchain),
       icons(get_dependency<ResourcesModule>().get_registry()),
       editor_context(
+          context,
           {},
           SnapshotManager{get_dependency<ResourcesModule>().get_registry()},
           window,
@@ -54,7 +57,6 @@ EditorModule::EditorModule(
           get_dependency<InputManager>()
       ),
       titlebar(editor_context),
-      viewport(swapchain, runtime_module),
       input_router(get_dependency<SystemOrchestrator>(), engine_dispatcher, input_dispatcher)
 {
     input_router.block_input();
@@ -64,8 +66,12 @@ EditorModule::EditorModule(
     input_dispatcher.sink<KeyReleasedEvent>().connect<&EditorModule::on_key_released>(this);
 
     setup_layout_config();
-    panel_manager.add_panel<DetailsPanel>();
-    panel_manager.add_panel<ContentBrowserPanel>(editor_context);
+    viewport = panel_manager.add_panel<Viewport>(PanelMenuCategory::View, STRING_ID("Viewport"), true, swapchain, runtime_module);
+
+    panel_manager.add_panel<DetailsPanel>(PanelMenuCategory::View, STRING_ID("Details"), true);
+    panel_manager.add_panel<ContentBrowserPanel>(PanelMenuCategory::View, STRING_ID("Content Browser"), true, editor_context);
+    panel_manager.add_panel<StatisticsPanel>(PanelMenuCategory::View, STRING_ID("Statistics"), true);
+    // TODO: add Scene Graph Panel, Project Settings, Debug Panels,
 }
 
 void EditorModule::begin_frame(FrameContext& frame)
@@ -141,7 +147,7 @@ void EditorModule::gui_update(FrameContext& frame)
         );
     }
 
-    titlebar.on_gui_render(editor_context, frame);
+    titlebar.on_gui_render(editor_context, frame, panel_manager);
     ImGui::SetCursorPosY(titlebar.get_height() + ImGui::GetCurrentWindow()->WindowPadding.y);
 
     const auto min_win_size = style.WindowMinSize;
@@ -152,7 +158,6 @@ void EditorModule::gui_update(FrameContext& frame)
 
 
     panel_manager.on_gui_render(editor_context, frame);
-    viewport.on_gui_update(editor_context, frame);
 
     ImGui::End();
 
@@ -169,7 +174,7 @@ void EditorModule::gui_update(FrameContext& frame)
 
 void EditorModule::post_update(FrameContext& frame)
 {
-    viewport.render(frame);
+    viewport->render(frame);
 }
 
 void EditorModule::end_frame(FrameContext& frame)
@@ -186,7 +191,7 @@ void EditorModule::on_key_pressed(const KeyPressedEvent& event)
 {
     if (event.key == Key::RightMouseButton)
     {
-        if (viewport.focused())
+        if (viewport->focused())
         {
             input_router.unblock_input();
             return;
@@ -225,19 +230,19 @@ void EditorModule::on_key_pressed(const KeyPressedEvent& event)
 
     if (event.key == Key::Q)
     {
-        viewport.set_gizmo_type(-1);
+        viewport->set_gizmo_type(-1);
     }
     if (event.key == Key::W)
     {
-        viewport.set_gizmo_type(ImGuizmo::OPERATION::TRANSLATE);
+        viewport->set_gizmo_type(ImGuizmo::OPERATION::TRANSLATE);
     }
     if (event.key == Key::E)
     {
-        viewport.set_gizmo_type(ImGuizmo::OPERATION::ROTATE);
+        viewport->set_gizmo_type(ImGuizmo::OPERATION::ROTATE);
     }
     if (event.key == Key::R)
     {
-        viewport.set_gizmo_type(ImGuizmo::OPERATION::SCALE);
+        viewport->set_gizmo_type(ImGuizmo::OPERATION::SCALE);
     }
 }
 

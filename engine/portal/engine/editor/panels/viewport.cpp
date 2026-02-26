@@ -10,8 +10,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
-#include "editor_context.h"
-#include "selection_system.h"
+#include "../editor_context.h"
+#include "../selection_system.h"
 #include "portal/engine/components/camera.h"
 #include "portal/engine/components/transform.h"
 #include "portal/engine/imgui/imgui_scoped.h"
@@ -70,13 +70,13 @@ Viewport::~Viewport()
     ImGui_ImplVulkan_RemoveTexture(viewport_descriptor_set);
 }
 
-void Viewport::on_gui_update(EditorContext& editor_context, const FrameContext& frame)
+void Viewport::on_gui_render(EditorContext& editor_context, FrameContext& frame, bool& is_open)
 {
     auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2(640.f, 360.f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
-    if (ImGui::Begin("Viewport"))
+    if (ImGui::Begin("Viewport", &is_open))
     {
         is_mouse_over = ImGui::IsWindowHovered();
         is_focused = ImGui::IsWindowFocused();

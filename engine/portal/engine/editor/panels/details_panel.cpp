@@ -268,7 +268,7 @@ void show_transform_controls(const ResourceReference<Scene>& active_scene, Edito
 }
 
 
-void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
+void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame, bool& is_open)
 {
     auto scene = std::any_cast<SceneContext>(&frame.scene_context)->active_scene;
 
@@ -278,7 +278,7 @@ void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame)
     std::string window_title = show_changes
                                    ? ICON_FA_SLIDERS " Details*###Details"
                                    : ICON_FA_SLIDERS " Details###Details";
-    imgui::ScopedWindow details_window(window_title.c_str());
+    imgui::ScopedWindow details_window(window_title.c_str(), &is_open);
 
     if (!SelectionSystem::has_selection(scene->get_scene_entity()))
         return;

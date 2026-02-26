@@ -10,6 +10,7 @@
 
 #include "portal/engine/renderer/vulkan/image/vulkan_texture.h"
 #include "portal/engine/editor/editor_context.h"
+#include "portal/engine/editor/panel_manager.h"
 #include "portal/engine/imgui/imgui_scoped.h"
 #include "portal/engine/project/project.h"
 #include "portal/engine/renderer/vulkan/image/vulkan_image.h"
@@ -53,7 +54,7 @@ struct WindowTitleConsts
     float animation_time = 0.15f;
 };
 
-void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& frame_context)
+void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& frame_context, PanelManager& panel_manager)
 {
     constexpr WindowTitleConsts consts;
 
@@ -166,7 +167,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     {
         const float logo_offset = consts.menubar_x_offset_component + logo_width + window_padding.x;
         ImGui::SetCursorPos(ImVec2(logo_offset, consts.menubar_y_offset));
-        draw_menubar(editor_context, frame_context);
+        draw_menubar(editor_context, frame_context, panel_manager);
 
         if (ImGui::IsItemHovered())
             titlebar_hovered = false;
@@ -259,7 +260,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     height = titlebar_height;
 }
 
-void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& frame)
+void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& frame, PanelManager& panel_manager)
 {
     auto* scene_context = std::any_cast<SceneContext>(&frame.scene_context);
     auto& icons = editor_context.icons;
@@ -438,10 +439,12 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
                 color_pushed = false;
                 ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
 
-                ImGui::MenuItem("Viewports");
-                imgui::set_tooltip("Not Implemented!");
-                ImGui::MenuItem("Statistics");
-                imgui::set_tooltip("Not Implemented!");
+                for (const auto& data : panel_manager.get_panels(PanelMenuCategory::View) | std::views::values)
+                {
+                    if (ImGui::MenuItem(data.name, nullptr, &data.open))
+                        panel_manager.save_state();
+                }
+
                 ImGui::Separator();
                 ImGui::MenuItem("Reset To Default");
                 imgui::set_tooltip("Not Implemented!");

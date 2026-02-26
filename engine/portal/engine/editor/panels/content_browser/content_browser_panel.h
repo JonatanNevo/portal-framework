@@ -53,7 +53,7 @@ public:
 
     Entity get_selection_context() const { return selection_context; }
 
-    void on_gui_render(EditorContext& editor_context, FrameContext& frame_context) override;
+    void on_gui_render(EditorContext& editor_context, FrameContext& frame_context, bool& is_open) override;
 
     content_browser::ItemList& get_current_items() { return current_items; }
     Reference<content_browser::DirectoryInfo> get_directory(const std::filesystem::path& path) const;

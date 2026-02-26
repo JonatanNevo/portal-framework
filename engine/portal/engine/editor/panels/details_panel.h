@@ -15,10 +15,10 @@
 
 namespace portal
 {
-class DetailsPanel : public Panel
+class DetailsPanel final : public Panel
 {
 public:
-    void on_gui_render(EditorContext& context, FrameContext& frame) override;
+    void on_gui_render(EditorContext& context, FrameContext& frame, bool& is_open) override;
 
 private:
     // TODO: use the same way `std::hash` works and have each component implement some struct in order to facilitate this instead of passing a function

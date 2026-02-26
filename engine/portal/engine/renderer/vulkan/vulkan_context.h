@@ -12,6 +12,18 @@
 #include "portal/engine/renderer/vulkan/vulkan_instance.h"
 #include "device/vulkan_physical_device.h"
 
+namespace portal::renderer
+{
+
+struct Capabilities
+{
+    std::string vendor;
+    std::string device;
+    DriverVersion version;
+};
+
+}
+
 namespace portal::renderer::vulkan
 {
 /**
@@ -52,6 +64,8 @@ public:
     /** @brief Gets the selected physical device (GPU) */
     [[nodiscard]] const VulkanPhysicalDevice& get_physical_device() const;
 
+    [[nodiscard]] const Capabilities& get_capabilities() const;
+
 private:
     VulkanContext();
 
@@ -60,5 +74,7 @@ private:
 
     VulkanPhysicalDevice& physical_device;
     VulkanDevice device;
+
+    Capabilities capabilities;
 };
 } // portal

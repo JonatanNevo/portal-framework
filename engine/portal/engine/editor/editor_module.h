@@ -7,8 +7,8 @@
 #include "editor_context.h"
 #include "input_router.h"
 #include "panel_manager.h"
-#include "viewport.h"
-#include "panels/window_titlebar.h"
+#include "panels/viewport.h"
+#include "layout/window_titlebar.h"
 #include "portal/application/modules/module.h"
 #include "portal/engine/imgui/imgui_renderer.h"
 #include "portal/engine/modules/resources_module.h"
@@ -77,7 +77,7 @@ private:
 
     EditorContext editor_context;
     WindowTitlebar titlebar;
-    Viewport viewport;
+    Reference<Viewport> viewport;
 
     InputRouter input_router;
 
