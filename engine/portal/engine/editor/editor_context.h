@@ -4,6 +4,7 @@
 //
 
 #pragma once
+
 #include "editor_icons.h"
 #include "snapshot_manager.h"
 #include "portal/engine/imgui/theme/editor_theme.h"
@@ -14,6 +15,7 @@ namespace portal
 
 struct EditorContext
 {
+    renderer::vulkan::VulkanContext& vulkan_context;
     imgui::EditorTheme theme;
     SnapshotManager snapshot_manager;
     Window& window;

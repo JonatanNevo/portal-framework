@@ -7,6 +7,7 @@
 #include "portal/engine/reference.h"
 #include <vulkan/vulkan_raii.hpp>
 
+#include "panel.h"
 #include "portal/engine/modules/runtime_module.h"
 #include "portal/engine/renderer/render_target/render_target.h"
 
@@ -21,7 +22,7 @@ struct EditorContext;
  * swapchain. This rendered image is then displayed as an ImGui::Image within a "Viewport"
  * window.
  */
-class Viewport
+class Viewport final : public Panel
 {
 public:
     /**
@@ -31,7 +32,7 @@ public:
      */
     Viewport(const renderer::vulkan::VulkanSwapchain& swapchain, RuntimeModule& runtime_module);
 
-    ~Viewport();
+    ~Viewport() override;
 
     /**
      * @brief Renders the viewport image in an ImGui window.
@@ -41,7 +42,7 @@ public:
      * @param editor_context The editor context containing viewport settings.
      * @param frame The current frame context.
      */
-    void on_gui_update(EditorContext& editor_context, const FrameContext& frame);
+    void on_gui_render(EditorContext& editor_context, FrameContext& frame, bool& is_open) override;
 
     /**
      * @brief Renders the scene to the viewport's render target.
@@ -81,4 +82,5 @@ private:
     float rotation_snap_value = 45.f;
     float scale_snap_value = 0.1f;
 };
+
 } // portal

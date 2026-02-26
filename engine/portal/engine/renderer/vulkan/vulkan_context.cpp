@@ -41,7 +41,12 @@ std::unique_ptr<VulkanContext> VulkanContext::create()
 VulkanContext::VulkanContext() :
     instance(context),
     physical_device(instance.get_suitable_gpu()),
-    device(physical_device, physical_device.get_features_chain())
+    device(physical_device, physical_device.get_features_chain()),
+    capabilities(
+        physical_device.get_vendor_name(),
+        physical_device.get_device_name(),
+        physical_device.get_driver_version()
+    )
 {
     allocation::init(instance.get_instance(), physical_device.get_handle(), device.get_handle());
 }
@@ -69,5 +74,10 @@ VulkanDevice& VulkanContext::get_device()
 const VulkanPhysicalDevice& VulkanContext::get_physical_device() const
 {
     return physical_device;
+}
+
+const Capabilities& VulkanContext::get_capabilities() const
+{
+    return capabilities;
 }
 } // portal

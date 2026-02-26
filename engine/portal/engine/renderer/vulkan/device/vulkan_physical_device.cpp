@@ -50,7 +50,8 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(vk::raii::PhysicalDevice&& physical_d
         {.shaderDrawParameters = true},
         vulkan12_features,
         {.synchronization2 = true, .dynamicRendering = true},
-        {.extendedDynamicState = true}};
+        {.extendedDynamicState = true}
+    };
 
     properties = physical_device.getProperties();
     memory_properties = physical_device.getMemoryProperties();
@@ -79,7 +80,12 @@ vk::Format VulkanPhysicalDevice::find_depth_format() const
     // Since all depth formats may be optional, we need to find a suitable depth format to use
     // Start with the highest precision packed format
     std::vector possible_depth_formats = {
-        vk::Format::eD32SfloatS8Uint, vk::Format::eD32Sfloat, vk::Format::eD24UnormS8Uint, vk::Format::eD16UnormS8Uint, vk::Format::eD16Unorm};
+        vk::Format::eD32SfloatS8Uint,
+        vk::Format::eD32Sfloat,
+        vk::Format::eD24UnormS8Uint,
+        vk::Format::eD16UnormS8Uint,
+        vk::Format::eD16Unorm
+    };
 
     for (const auto& format : possible_depth_formats)
     {
@@ -122,7 +128,9 @@ DriverVersion VulkanPhysicalDevice::get_driver_version() const
 bool VulkanPhysicalDevice::is_extension_supported(std::string_view extensions_name) const
 {
     return std::ranges::find_if(
-               supported_extensions, [extensions_name](const auto& ext) { return std::strcmp(ext.data(), extensions_name.data()) == 0; }) !=
+            supported_extensions,
+            [extensions_name](const auto& ext) { return std::strcmp(ext.data(), extensions_name.data()) == 0; }
+        ) !=
         supported_extensions.end();
 }
 
@@ -151,7 +159,8 @@ VulkanPhysicalDevice::QueueFamilyIndices VulkanPhysicalDevice::get_queue_family_
                 return (
                     (prop.queueFlags & queue_type) != static_cast<vk::QueueFlags>(0) &&
                     (prop.queueFlags & vk::QueueFlagBits::eGraphics) == static_cast<vk::QueueFlags>(0));
-            });
+            }
+        );
 
         if (it == queue_family_properties.end())
             return -1;
@@ -196,5 +205,31 @@ VulkanPhysicalDevice::QueueFamilyIndices VulkanPhysicalDevice::get_queue_family_
     }
 
     return indices;
+}
+
+namespace
+{
+    const char* vendor_id_to_string(const uint32_t vendorID)
+    {
+        switch (vendorID)
+        {
+        case 0x10DE: return "NVIDIA";
+        case 0x1002: return "AMD";
+        case 0x8086: return "INTEL";
+        case 0x13B5: return "ARM";
+        default:
+            return "Unknown";
+        }
+    }
+}
+
+std::string VulkanPhysicalDevice::get_vendor_name() const
+{
+    return vendor_id_to_string(properties.vendorID);
+}
+
+std::string VulkanPhysicalDevice::get_device_name() const
+{
+    return properties.deviceName.data();
 }
 } // namespace portal::renderer::vulkan

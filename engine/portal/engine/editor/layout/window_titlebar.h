@@ -4,27 +4,26 @@
 //
 
 #pragma once
-#include "panel.h"
 
-#include <vulkan/vulkan.hpp>
 
+
+#include "portal/engine/editor/editor_context.h"
 #include "portal/engine/editor/editor_icons.h"
 #include "portal/engine/imgui/theme/editor_theme.h"
-#include "portal/engine/renderer/vulkan/image/vulkan_texture.h"
 
 namespace portal
 {
+class PanelManager;
 
-// TODO: is this really a panel?
-class WindowTitlebar final : public Panel
+class WindowTitlebar
 {
 public:
     WindowTitlebar(EditorContext& context);
-    void on_gui_render(EditorContext& editor_context, FrameContext& frame_context) override;
+    void on_gui_render(EditorContext& editor_context, FrameContext& frame_context, PanelManager& panel_manager);
     [[nodiscard]] float get_height() const { return height; }
 
 private:
-    void draw_menubar(EditorContext& editor_context, FrameContext& frame);
+    void draw_menubar(EditorContext& editor_context, FrameContext& frame, PanelManager& panel_manager);
 
 private:
     float height = 0;

@@ -131,16 +131,14 @@ struct ContentBrowserConsts
     float row_spacing = 12.f;
 };
 
-void ContentBrowserPanel::on_gui_render(EditorContext& editor_context, FrameContext&)
+void ContentBrowserPanel::on_gui_render(EditorContext& editor_context, FrameContext&, bool& is_open)
 {
     constexpr ContentBrowserConsts consts;
 
     is_hovered = false;
     is_focused = false;
 
-    bool open;
-
-    imgui::ScopedWindow content_browser_window("Content Browser", &open, ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar);
+    imgui::ScopedWindow content_browser_window("Content Browser", &is_open, ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoScrollbar);
     if (!content_browser_window)
         return;
 

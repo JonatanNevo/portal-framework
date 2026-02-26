@@ -105,6 +105,9 @@ public:
      */
     [[nodiscard]] QueueFamilyIndices get_queue_family_indices(vk::QueueFlags queue_flags) const;
 
+    [[nodiscard]] std::string get_vendor_name() const;
+    [[nodiscard]] std::string get_device_name() const;
+
 private:
     vk::raii::PhysicalDevice handle = nullptr;
 
