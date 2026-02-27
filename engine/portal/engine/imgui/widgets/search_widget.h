@@ -15,6 +15,14 @@
 namespace portal::imgui
 {
 
+bool is_matching_search(
+    std::string_view item,
+    std::string_view search_query,
+    bool case_sensitive = false,
+    bool strip_white_spaces = false,
+    bool strip_underscores = false
+);
+
 struct SearchWidgetConsts
 {
     float widget_cursor_shift = 1.f;
@@ -27,7 +35,7 @@ struct SearchWidgetConsts
     float clear_icon_rect_expand = 2.f;
 };
 
-template <size_t buffer_size, typename StringType>
+template <size_t buffer_size = 256, typename StringType>
 bool search_widget(EditorContext& context, StringType& search_string, const char* hint = "Search...", bool* grab_focus = nullptr)
 {
     constexpr SearchWidgetConsts consts;
@@ -58,7 +66,7 @@ bool search_widget(EditorContext& context, StringType& search_string, const char
     if constexpr (std::is_same_v<StringType, std::string>)
     {
         std::array<char, buffer_size + 1> search_buffer{};
-        strncpy_s(search_buffer.data(), search_string.c_str(), buffer_size);
+        strncpy_s(search_buffer.data(), search_buffer.size(), search_string.c_str(), buffer_size);
         if (ImGui::InputText(generate_id(), search_buffer.data(), buffer_size))
         {
             search_string = search_buffer.data();
@@ -165,7 +173,7 @@ bool search_widget(EditorContext& context, StringType& search_string, const char
 
         const auto text = context.theme[imgui::ThemeColors::Text];
         draw_button_image(
-        context.icons.get_descriptor(EditorIcon::Clear),
+            context.icons.get_descriptor(EditorIcon::Clear),
             text,
             color_with_multiplied_value(text, 1.2f),
             color_with_multiplied_value(text, 0.8f),

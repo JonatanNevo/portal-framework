@@ -89,10 +89,8 @@ public:
     /** @brief Main execution entry point, renders all editor panels. */
     void on_gui_render(EditorContext& editor_context, FrameContext& frame);
 
-    [[nodiscard]] const std::unordered_map<StringId, PanelData>& get_panels(const PanelMenuCategory category) const
-    {
-        return panels[std::to_underlying(category)];
-    }
+    [[nodiscard]] std::unordered_map<StringId, PanelData>& get_panels(PanelMenuCategory category);
+    [[nodiscard]] const std::unordered_map<StringId, PanelData>& get_panels(PanelMenuCategory category) const;
 
     void save_state();
     void load_state();

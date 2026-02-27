@@ -137,6 +137,14 @@ ChildRange Entity::children() const
     return ChildRange(*this);
 }
 
+bool Entity::has_children() const
+{
+    if (!has_component<RelationshipComponent>())
+        return false;
+
+    return get_component<RelationshipComponent>().children > 0;
+}
+
 RecursiveChildRange Entity::descendants() const
 {
     PORTAL_ASSERT(has_component<RelationshipComponent>(), "Entity does not have a RelationshipComponent");

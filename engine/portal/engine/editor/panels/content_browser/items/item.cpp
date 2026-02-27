@@ -70,11 +70,11 @@ Action Item::on_render(
         {
             auto* draw_list = ImGui::GetWindowDrawList();
 
-            draw_list->AddRectFilled(top_left, thump_bottom_right, ImGui::GetColorU32(editor_context.theme[imgui::ThemeColors::Background2]));
+            draw_list->AddRectFilled(top_left, thump_bottom_right, editor_context.theme[imgui::ThemeColors::Background2]);
             draw_list->AddRectFilled(
                 info_top_left,
                 bottom_right,
-                ImGui::GetColorU32(editor_context.theme[imgui::ThemeColors::Background1]),
+                editor_context.theme[imgui::ThemeColors::Background1],
                 6.0f,
                 ImDrawFlags_RoundCornersBottom
             );
@@ -87,7 +87,7 @@ Action Item::on_render(
             draw_list->AddRectFilled(
                 info_top_left,
                 bottom_right,
-                ImGui::GetColorU32(editor_context.theme[imgui::ThemeColors::Background1]),
+                editor_context.theme[imgui::ThemeColors::Background1],
                 6.0f
             );
         }
@@ -246,7 +246,7 @@ Action Item::on_render(
             draw_list->AddRect(
                 item_rect.Min,
                 item_rect.Max,
-                mouse_down ? static_cast<ImU32>(col_transition) : ImGui::GetColorU32(editor_context.theme[imgui::ThemeColors::Primary1]),
+                mouse_down ? static_cast<ImU32>(col_transition) : static_cast<ImU32>(editor_context.theme[imgui::ThemeColors::Primary1]),
                 6.f,
                 type == Type::Directory ? 0 : ImDrawFlags_RoundCornersBottom,
                 1.f
@@ -259,7 +259,7 @@ Action Item::on_render(
                 draw_list->AddRect(
                     item_rect.Min,
                     item_rect.Max,
-                    ImGui::GetColorU32(editor_context.theme[imgui::ThemeColors::Primary2]),
+                    editor_context.theme[imgui::ThemeColors::Primary2],
                     6.f,
                     ImDrawFlags_RoundCornersBottom,
                     1.f
@@ -352,7 +352,7 @@ Action Item::on_render(
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4.0f, 4.0f));
     if (ImGui::BeginPopupContextItem("CBItemContextMenu"))
     {
-         result |= ActionBit::Selected;
+        result |= ActionBit::Selected;
         on_context_menu_open(selection_context, result);
         ImGui::EndPopup();
     }

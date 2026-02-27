@@ -323,4 +323,38 @@ bool begin_menu_with_image(vk::DescriptorSet image, const char* label, bool enab
 
     return clicked;
 }
+
+void underline(const ImU32 color, const bool full_width, const float offset_x, const float offset_y)
+{
+    if (full_width)
+    {
+        if (ImGui::GetCurrentWindow()->DC.CurrentColumns != nullptr)
+            ImGui::PushColumnsBackground();
+        else if (ImGui::GetCurrentTable() != nullptr)
+            ImGui::TablePushBackgroundChannel();
+    }
+
+    const float width = full_width ? ImGui::GetWindowWidth() : ImGui::GetContentRegionAvail().x;
+    const ImVec2 cursor = ImGui::GetCursorScreenPos();
+    ImGui::GetWindowDrawList()->AddLine(
+        ImVec2(cursor.x + offset_x, cursor.y + offset_y),
+        ImVec2(cursor.x + width, cursor.y + offset_y),
+        color,
+        1.0f
+    );
+
+    if (full_width)
+    {
+        if (ImGui::GetCurrentWindow()->DC.CurrentColumns != nullptr)
+            ImGui::PopColumnsBackground();
+        else if (ImGui::GetCurrentTable() != nullptr)
+            ImGui::TablePopBackgroundChannel();
+    }
+}
+
+bool navigated_to()
+{
+    ImGuiContext* g = ImGui::GetCurrentContext();
+    return g->NavJustMovedToId == g->LastItemData.ID;
+}
 }

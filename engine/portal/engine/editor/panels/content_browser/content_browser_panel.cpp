@@ -550,7 +550,7 @@ void ContentBrowserPanel::render_directory_tree(EditorContext& editor_context, R
             fill_with_color(imgui::color_with_multiplied_saturation(col, 0.7f));
         }
 
-        ImGui::PushStyleColor(ImGuiCol_Text, editor_context.theme[imgui::ThemeColors::TextDarker]);
+        ImGui::PushStyleColor(ImGuiCol_Text, editor_context.theme.get_color(imgui::ThemeColors::TextDarker));
     }
     else if (is_any_descendant_selected)
     {

@@ -176,4 +176,10 @@ bool begin_menu_with_image(
     bool enabled = true,
     float icon_size = 16.f
 );
+
+//=========================================================================================
+void underline(ImU32 color, bool full_width = false, float offset_x = 0.f, float offset_y = -1.f);
+
+//=========================================================================================
+bool navigated_to();
 }

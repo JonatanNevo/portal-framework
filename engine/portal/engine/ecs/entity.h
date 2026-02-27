@@ -494,6 +494,8 @@ public:
      */
     [[nodiscard]] ChildRange children() const;
 
+    bool has_children() const;
+
     /**
      * @brief Returns a range of all descendants (recursive).
      *
