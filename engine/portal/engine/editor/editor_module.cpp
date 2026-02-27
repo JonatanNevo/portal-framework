@@ -9,6 +9,7 @@
 #include <imgui_internal.h>
 #include "panel_manager.h"
 #include "panels/details_panel.h"
+#include "panels/scene_graph_panel.h"
 #include "panels/statistics_panel.h"
 #include "panels/content_browser/content_browser_panel.h"
 #include "portal/core/files/file_system.h"
@@ -71,6 +72,7 @@ EditorModule::EditorModule(
     panel_manager.add_panel<DetailsPanel>(PanelMenuCategory::View, STRING_ID("Details"), true);
     panel_manager.add_panel<ContentBrowserPanel>(PanelMenuCategory::View, STRING_ID("Content Browser"), true, editor_context);
     panel_manager.add_panel<StatisticsPanel>(PanelMenuCategory::View, STRING_ID("Statistics"), true);
+    panel_manager.add_panel<SceneGraphPanel>(PanelMenuCategory::View, STRING_ID("Scene Graph"), true);
     // TODO: add Scene Graph Panel, Project Settings, Debug Panels,
 }
 
@@ -126,7 +128,7 @@ void EditorModule::gui_update(FrameContext& frame)
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, is_maximized ? ImVec2(0.0f, 0.0f) : ImVec2(1.0f, 1.0f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, is_maximized ? 0.f : 3.0f);
     ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImVec4{0.0f, 0.0f, 0.0f, 0.0f});
-    ImGui::PushStyleColor(ImGuiCol_Border, editor_context.theme[imgui::ThemeColors::Background2]);
+    ImGui::PushStyleColor(ImGuiCol_Border, editor_context.theme.get_color(imgui::ThemeColors::Background2));
 
     ImGui::Begin("Main Window", nullptr, is_maximized ? window_flags | ImGuiWindowFlags_NoResize : window_flags);
 

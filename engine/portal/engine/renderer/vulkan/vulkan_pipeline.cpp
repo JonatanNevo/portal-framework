@@ -20,13 +20,11 @@ VulkanPipeline::VulkanPipeline(const PipelineProperties& prop, const VulkanConte
     PORTAL_ASSERT(prop.shader, "Invalid pipeline shader");
 
     initialize();
-    LOG_TRACE("PIPELINE CREATED {}", prop.debug_name);
 }
 
 VulkanPipeline::~VulkanPipeline()
 {
     // TODO: submit resources for destruction?
-    LOG_TRACE("PIPELINE DEAD {}", prop.debug_name);
 }
 
 PipelineProperties& VulkanPipeline::get_properties()

@@ -130,6 +130,16 @@ void PanelManager::on_gui_render(EditorContext& editor_context, FrameContext& fr
     }
 }
 
+std::unordered_map<StringId, PanelData>& PanelManager::get_panels(const PanelMenuCategory category)
+{
+    return panels[std::to_underlying(category)];
+}
+
+const std::unordered_map<StringId, PanelData>& PanelManager::get_panels(const PanelMenuCategory category) const
+{
+    return panels[std::to_underlying(category)];
+}
+
 // struct SceneContext;
 
 // void draw_node(

@@ -54,13 +54,14 @@ public:
 
     [[nodiscard]] ScopedColor scoped_color(ImGuiCol widget, ThemeColors color, float alpha = 1.f) const;
 
-    ImVec4& operator[](ThemeColors color);
-    const ImVec4& operator[](ThemeColors color) const;
+    ImVec4 get_color(ThemeColors color) const;
+    ImColor& operator[](ThemeColors color);
+    const ImColor& operator[](ThemeColors color) const;
 
     void show_color_picker();
 
 private:
-    std::unordered_map<ThemeColors, ImVec4> colors;
+    std::unordered_map<ThemeColors, ImColor> colors;
 
     void apply_to_imgui();
 };

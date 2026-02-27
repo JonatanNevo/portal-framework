@@ -84,29 +84,34 @@ void EditorTheme::save_to_file(std::filesystem::path)
 
 void EditorTheme::push_color(const ImGuiCol widget, const ThemeColors color, const float alpha) const
 {
-    auto theme_color = colors.at(color);
+    ImVec4 theme_color = colors.at(color);
     theme_color.w = alpha;
     ImGui::PushStyleColor(widget, theme_color);
 }
 
-void EditorTheme::pop_color(size_t count) const
+void EditorTheme::pop_color(const size_t count) const
 {
     ImGui::PopStyleColor(static_cast<int>(count));
 }
 
 ScopedColor EditorTheme::scoped_color(const ImGuiCol widget, const ThemeColors color, const float alpha) const
 {
-    auto theme_color = colors.at(color);
+    ImVec4 theme_color = colors.at(color);
     theme_color.w = alpha;
     return ScopedColor(widget, theme_color);
 }
 
-ImVec4& EditorTheme::operator[](const ThemeColors color)
+ImVec4 EditorTheme::get_color(ThemeColors color) const
+{
+    return colors.at(color);
+}
+
+ImColor& EditorTheme::operator[](const ThemeColors color)
 {
     return colors[color];
 }
 
-const ImVec4& EditorTheme::operator[](const ThemeColors color) const
+const ImColor& EditorTheme::operator[](const ThemeColors color) const
 {
     return colors.at(color);
 }
@@ -118,7 +123,7 @@ void EditorTheme::show_color_picker()
 
     for (auto& [name, color] : colors)
     {
-        auto* ptr = &color.x;
+        auto* ptr = &color.Value.x;
         changed |= ImGui::ColorEdit4(enchantum::to_string(name).data(), ptr);
     }
     if (changed)

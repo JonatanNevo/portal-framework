@@ -70,7 +70,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     };
 
     auto* draw_list = ImGui::GetWindowDrawList();
-    auto titlebar_color = ImGui::GetColorU32(editor_context.theme[imgui::ThemeColors::Background1]);
+    ImU32 titlebar_color = editor_context.theme[imgui::ThemeColors::Background1];
     draw_list->AddRectFilled(titlebar_min, titlebar_max, titlebar_color);
 
     static float s_current_animation_timer = consts.animation_time;
@@ -94,7 +94,7 @@ void WindowTitlebar::on_gui_render(EditorContext& editor_context, FrameContext& 
     }
 
     auto left_color = ImGui::GetColorU32(active_color);
-    auto right_color = ImGui::GetColorU32(editor_context.theme[imgui::ThemeColors::AccentPrimaryRight]);
+    ImU32 right_color = editor_context.theme[imgui::ThemeColors::AccentPrimaryRight];
 
     draw_list->AddRectFilledMultiColor(
         titlebar_min,
@@ -283,8 +283,8 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
 
         if (menu_open)
         {
-            ImGui::PushStyleColor(ImGuiCol_Header, editor_context.theme[imgui::ThemeColors::AccentPrimaryLeft]);
-            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::AccentPrimaryLeft]);
+            ImGui::PushStyleColor(ImGuiCol_Header, editor_context.theme.get_color(imgui::ThemeColors::AccentPrimaryLeft));
+            ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme.get_color(imgui::ThemeColors::AccentPrimaryLeft));
         }
 
         auto pop_item_highlight = [&menu_open]
@@ -300,7 +300,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
         {
             if (ImGui::IsPopupOpen(name))
             {
-                ImGui::PushStyleColor(ImGuiCol_Text, editor_context.theme[imgui::ThemeColors::TextDarker]);
+                ImGui::PushStyleColor(ImGuiCol_Text, editor_context.theme.get_color(imgui::ThemeColors::TextDarker));
                 return true;
             }
             return false;
@@ -437,9 +437,9 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
             {
                 pop_item_highlight();
                 color_pushed = false;
-                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme.get_color(imgui::ThemeColors::Background4));
 
-                for (const auto& data : panel_manager.get_panels(PanelMenuCategory::View) | std::views::values)
+                for (auto& data : panel_manager.get_panels(PanelMenuCategory::View) | std::views::values)
                 {
                     if (ImGui::MenuItem(data.name, nullptr, &data.open))
                         panel_manager.save_state();
@@ -466,7 +466,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
             {
                 pop_item_highlight();
                 color_pushed = false;
-                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme.get_color(imgui::ThemeColors::Background4));
 
                 ImGui::MenuItem("Something");
                 imgui::set_tooltip("Not Implemented!");
@@ -488,7 +488,7 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
             {
                 pop_item_highlight();
                 color_pushed = false;
-                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme[imgui::ThemeColors::Background4]);
+                ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme.get_color(imgui::ThemeColors::Background4));
 
                 ImGui::MenuItem("About");
                 imgui::set_tooltip("Not Implemented!");
