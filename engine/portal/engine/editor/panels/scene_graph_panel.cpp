@@ -176,7 +176,7 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
 
     bool is_selected = SelectionSystem::is_selected(name, scene_entity);
 
-    auto flags = (is_selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None) | ImGuiTreeNodeFlags_OpenOnArrow |
+    auto flags = (is_selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_AllowOverlap |
         ImGuiTreeNodeFlags_SpanAvailWidth;
     if (has_children_matching_search)
         flags |= ImGuiTreeNodeFlags_DefaultOpen;
@@ -187,18 +187,61 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
     auto name_id = ImGui::GetID(name.string.data());
 
     ImGui::PushClipRect(row_area_min, row_area_max, false);
+    ImGui::ItemAdd(ImRect(row_area_min, row_area_max), name_id);
     bool is_hovered, is_held;
-    ImGui::SetNextItemAllowOverlap();
     bool is_row_clicked = ImGui::ButtonBehavior(
         ImRect(row_area_min, row_area_max),
         name_id,
         &is_hovered,
         &is_held,
-        ImGuiButtonFlags_AllowOverlap | ImGuiButtonFlags_PressedOnClickRelease
-        | ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight
+        static_cast<int>(ImGuiButtonFlags_PressedOnClickRelease) | ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight
     );
     bool was_row_right_clicked = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
     ImGui::PopClipRect();
+
+    // Drag & Drop
+    //------------
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+    {
+        auto& selected_entities = SelectionSystem::get_selections(scene_entity);
+        if (!SelectionSystem::is_selected(name, scene_entity))
+        {
+            ImGui::TextUnformatted(name.string.data());
+            ImGui::SetDragDropPayload("scene_entity_hierarchy", &name, sizeof(StringId)); // TODO: should I set the entire entity as a payload?
+        }
+        else
+        {
+            for (const auto& selected_entity : selected_entities)
+            {
+                ImGui::TextUnformatted(selected_entity.string.data());
+            }
+            ImGui::SetDragDropPayload("scene_entity_hierarchy", selected_entities.data(), selected_entities.size() * sizeof(StringId));
+            // TODO: should I set the entire entity as a payload?
+        }
+
+        ImGui::EndDragDropSource();
+    }
+
+    if (ImGui::BeginDragDropTarget())
+    {
+        const auto* payload = ImGui::AcceptDragDropPayload("scene_entity_hierarchy", ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+
+        if (payload)
+        {
+            std::span payload_span{static_cast<StringId*>(payload->Data), payload->DataSize / sizeof(StringId)};
+
+            for (auto& payload_name : payload_span)
+            {
+                auto dropped_entity = editor_context.ecs_registry.find_by_name(payload_name);
+                if (!dropped_entity.has_value())
+                    continue;
+
+                dropped_entity->set_parent(entity);
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
 
     // Row colouring
     //--------------
@@ -263,7 +306,9 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
     const float arrow_hit_x2 = (text_pos.x - text_offset_x) + (g.FontSize + padding.x * 2.0f) + style.TouchExtraPadding.x;
     const bool is_mouse_x_over_arrow = (g.IO.MousePos.x >= arrow_hit_x1 && g.IO.MousePos.x < arrow_hit_x2);
 
-    bool previous_state = ImGui::TreeNodeUpdateNextOpen(name_id, flags);
+
+    auto node_id = fmt::format("{}##node", name.string);
+    bool previous_state = ImGui::TreeNodeUpdateNextOpen(ImGui::GetID(node_id.c_str()), flags);
 
     if (is_mouse_x_over_arrow && is_row_clicked)
         ImGui::SetNextItemOpen(!previous_state);
@@ -271,8 +316,9 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
     if (!is_selected && check_descendants_selected(entity, check_descendants_selected))
         ImGui::SetNextItemOpen(true);
 
+
     // TODO: add icon based on node type
-    const auto opened = tree_node_with_icon(nullptr, nullptr, name_id, flags, name.string.data(), nullptr);
+    const auto opened = tree_node_with_icon(nullptr, nullptr, ImGui::GetID(node_id.c_str()), flags, name.string.data(), nullptr);
 
     const auto row_index = ImGui::TableGetRowIndex();
     if (row_index >= first_selected_row && row_index <= last_selected_row && !SelectionSystem::is_selected(name, scene_entity) &&
@@ -340,50 +386,6 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
         }
 
         ImGui::FocusWindow(ImGui::GetCurrentWindow());
-    }
-
-    // Drag & Drop
-    //------------
-    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-    {
-        auto& selected_entities = SelectionSystem::get_selections(scene_entity);
-        if (!SelectionSystem::is_selected(name, scene_entity))
-        {
-            ImGui::TextUnformatted(name.string.data());
-            ImGui::SetDragDropPayload("scene_entity_hierarchy", &name, sizeof(StringId)); // TODO: should I set the entire entity as a payload?
-        }
-        else
-        {
-            for (const auto& selected_entity : selected_entities)
-            {
-                ImGui::TextUnformatted(selected_entity.string.data());
-            }
-            ImGui::SetDragDropPayload("scene_entity_hierarchy", selected_entities.data(), selected_entities.size() * sizeof(StringId));
-            // TODO: should I set the entire entity as a payload?
-        }
-
-        ImGui::EndDragDropSource();
-    }
-
-    if (ImGui::BeginDragDropTarget())
-    {
-        const auto* payload = ImGui::AcceptDragDropPayload("scene_entity_hierarchy", ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
-
-        if (payload)
-        {
-            std::span payload_span{static_cast<StringId*>(payload->Data), payload->DataSize / sizeof(StringId)};
-
-            for (auto& payload_name : payload_span)
-            {
-                auto dropped_entity = editor_context.ecs_registry.find_by_name(payload_name);
-                if (!dropped_entity.has_value())
-                    continue;
-
-                dropped_entity->set_parent(entity);
-            }
-        }
-
-        ImGui::EndDragDropTarget();
     }
 
     ImGui::TableNextColumn();
