@@ -5,6 +5,7 @@
 
 #pragma once
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include "panel.h"
 #include "portal/engine/ecs/entity.h"
@@ -19,10 +20,13 @@ public:
 
 private:
     void draw_entity_node(EditorContext& editor_context, const Entity& entity, const Entity& scene_entity);
+    void draw_entity_create_menu(Entity parent);
 
     bool name_search_recursive(const Entity& entity, uint32_t search_depth, uint32_t current_depth = 0);
 
 private:
+    ImRect window_bounds;
+
     std::string search_string;
     bool activate_search_widget = false;
 

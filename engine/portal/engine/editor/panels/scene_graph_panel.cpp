@@ -35,7 +35,8 @@ void SceneGraphPanel::on_gui_render(EditorContext& editor_context, [[maybe_unuse
 
     window_focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
 
-    ImRect window_rect = {ImGui::GetWindowContentRegionMin(), ImGui::GetWindowContentRegionMax()};
+    auto* scene_context = std::any_cast<SceneContext>(&frame_context.scene_context);
+    auto scene = scene_context->active_scene;
 
     {
         imgui::shift_cursor(consts.edge_offset * 3.f, consts.edge_offset * 2.f);
@@ -98,9 +99,6 @@ void SceneGraphPanel::on_gui_render(EditorContext& editor_context, [[maybe_unuse
                     imgui::ScopedColor disable_hovered(ImGuiCol_HeaderHovered, IM_COL32_DISABLE);
                     imgui::ScopedColor disable_active(ImGuiCol_HeaderActive, IM_COL32_DISABLE);
 
-                    auto* scene_context = std::any_cast<SceneContext>(&frame_context.scene_context);
-
-                    auto scene = scene_context->active_scene;
                     const auto relationship_group = frame_context.ecs_registry->group<NameComponent>(
                         entt::get<RelationshipComponent, TransformComponent>
                     );
@@ -123,6 +121,12 @@ void SceneGraphPanel::on_gui_render(EditorContext& editor_context, [[maybe_unuse
                     }
                 }
 
+                if (ImGui::BeginPopupContextWindow(nullptr, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+                {
+                    draw_entity_create_menu(scene->get_scene_entity());
+                    ImGui::EndPopup();
+                }
+
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::Spacing();
@@ -131,7 +135,30 @@ void SceneGraphPanel::on_gui_render(EditorContext& editor_context, [[maybe_unuse
                 ImGui::EndTable();
             }
         }
+
+        window_bounds = ImGui::GetCurrentWindow()->Rect();
     }
+
+    if (ImGui::BeginDragDropTargetCustom(window_bounds, ImGui::GetCurrentWindow()->ID))
+    {
+        auto* payload = ImGui::AcceptDragDropPayload("scene_entity_hierarchy", ImGuiDragDropFlags_AcceptNoDrawDefaultRect);
+
+        if (payload)
+        {
+            const std::span payload_span{static_cast<StringId*>(payload->Data), payload->DataSize / sizeof(StringId)};
+
+            for (auto& payload_name : payload_span)
+            {
+                auto dropped_entity = editor_context.ecs_registry.find_by_name(payload_name);
+                if (!dropped_entity.has_value())
+                    continue;
+                dropped_entity->set_parent(scene->get_scene_entity());
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+
 
     ImGui::End();
 }
@@ -401,6 +428,9 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
 
         ImGui::TreePop();
     }
+}
+
+void SceneGraphPanel::draw_entity_create_menu(Entity) {
 }
 
 bool SceneGraphPanel::name_search_recursive(const Entity& entity, const uint32_t search_depth, const uint32_t current_depth)
