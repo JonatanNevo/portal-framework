@@ -58,6 +58,12 @@ EditorIcons::EditorIcons(ResourceRegistry& registry) : registry(registry)
     load_image(EditorIcon::DirectoryOpen, STRING_ID("engine/editor/icons/generic/folder-open"));
     load_image(EditorIcon::File, STRING_ID("engine/editor/icons/generic/file"));
 
+    // Actions
+    load_image(EditorIcon::Edit, STRING_ID("engine/editor/icons/generic/pencil"));
+    load_image(EditorIcon::Add, STRING_ID("engine/editor/icons/generic/plus"));
+
+    // Resources
+    load_image(EditorIcon::Resource, STRING_ID("engine/editor/icons/generic/box"));
 }
 
 EditorIcons::~EditorIcons()

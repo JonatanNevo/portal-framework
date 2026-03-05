@@ -28,15 +28,20 @@ void SceneGraphPanel::on_gui_render(EditorContext& editor_context, [[maybe_unuse
 {
     constexpr SceneGraphConsts consts;
 
+    auto* scene_context = std::any_cast<SceneContext>(&frame_context.scene_context);
+    auto scene = scene_context->active_scene;
+
+    bool show_changes = static_cast<bool>(scene.get_dirty() & ResourceDirtyBits::StateChange);
+
+    std::string window_title = show_changes
+                                   ? "Scene Graph*###Scene Graph"
+                                   : "Scene Graph###Scene Graph";
     {
         imgui::ScopedStyle padding(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-        ImGui::Begin("Scene Graph", &is_open);
+        ImGui::Begin(window_title.c_str(), &is_open);
     }
 
     window_focused = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
-
-    auto* scene_context = std::any_cast<SceneContext>(&frame_context.scene_context);
-    auto scene = scene_context->active_scene;
 
     {
         imgui::shift_cursor(consts.edge_offset * 3.f, consts.edge_offset * 2.f);
@@ -203,7 +208,8 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
 
     bool is_selected = SelectionSystem::is_selected(name, scene_entity);
 
-    auto flags = (is_selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_AllowOverlap |
+    auto flags = (is_selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None) | ImGuiTreeNodeFlags_OpenOnArrow |
+        ImGuiTreeNodeFlags_AllowOverlap |
         ImGuiTreeNodeFlags_SpanAvailWidth;
     if (has_children_matching_search)
         flags |= ImGuiTreeNodeFlags_DefaultOpen;

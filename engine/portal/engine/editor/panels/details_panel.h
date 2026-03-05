@@ -7,10 +7,12 @@
 #include "panel.h"
 #include <imgui.h>
 
+#include "components/component_editor.h"
 #include "portal/engine/imgui/imgui_scoped.h"
-#include "portal/engine/imgui/dialogs.h"
+#include "portal/engine/imgui/tree_node_with_icon.h"
 #include "portal/engine/ecs/entity.h"
 #include "portal/engine/editor/editor_context.h"
+#include "portal/engine/editor/selection_system.h"
 #include "portal/third_party/font_awsome/IconsFontAwesome6.h"
 
 namespace portal
@@ -21,106 +23,163 @@ public:
     void on_gui_render(EditorContext& context, FrameContext& frame, bool& is_open) override;
 
 private:
-    // TODO: use the same way `std::hash` works and have each component implement some struct in order to facilitate this instead of passing a function
-    template <typename T, typename Func>
+    void draw_components(EditorContext& context, Entity scene_entity, std::span<Entity> entities);
+
+private:
+    template <typename T>
     static void draw_component(
         EditorContext& context,
-        const std::string_view title,
-        Entity& entity,
-        Func&& draw_func,
-        const bool removable = true
+        const std::string_view name,
+        Entity& scene_entity,
+        vk::DescriptorSet icon = nullptr
     )
     {
         struct DrawComponentConsts
         {
-            ImVec2 padding = {3.f, 3.f};
-            float icon_padding_scale = 2.f;
-            float margin_right = 5.f;
+            ImVec2 tree_node_size = {14.f, 14.f};
+            float item_padding = 4.f;
+            float same_line_options = 5.f;
+            float shift_line_scale_y_options = 3.f;
         };
-
-        constexpr ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowOverlap
-            | ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_FramePadding;
 
         constexpr DrawComponentConsts consts{};
 
-        if (!entity.has_component<T>())
+        constexpr ImGuiTreeNodeFlags tree_flags = ImGuiTreeNodeFlags_Framed
+            | ImGuiTreeNodeFlags_SpanAvailWidth
+            | ImGuiTreeNodeFlags_AllowOverlap
+            | ImGuiTreeNodeFlags_FramePadding
+            | ImGuiTreeNodeFlags_DefaultOpen;
+
+        if constexpr (!HasDetailsFunction<T>)
             return;
 
-        static bool delete_component = false;
-        imgui::ScopedID id(title.data());
+        bool should_draw = true;
 
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, consts.padding);
-
-        auto frame_background = context.theme.scoped_color(ImGuiCol_FrameBg, imgui::ThemeColors::Secondary1);
-        auto header_color = context.theme.scoped_color(ImGuiCol_Header, imgui::ThemeColors::Secondary1);
+        auto& entities = SelectionSystem::get_selections(scene_entity);
+        for (auto& id : entities)
         {
-            auto child_str = fmt::format("{}_child", title);
-            imgui::ScopedChild child(
-                child_str.data(),
-                ImVec2(-std::numeric_limits<float>::min(), 0.0f),
-                ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_FrameStyle
-            );
-
-            ImVec2 window_width = ImGui::GetContentRegionAvail();
-            float delete_button_width = ImGui::CalcTextSize(ICON_FA_TRASH).x + ImGui::GetStyle().FramePadding.x * consts.icon_padding_scale;
-            float option_button_width = ImGui::CalcTextSize(ICON_FA_GEARS).x + ImGui::GetStyle().FramePadding.x * consts.icon_padding_scale;
-
+            auto entity = context.ecs_registry.find_by_name(id);
+            if (!entity.has_value())
             {
-                const imgui::ScopedTreeNodeEx tree_node(title.data(), tree_flags);
-                ImGui::SameLine(window_width.x - delete_button_width - option_button_width);
+                should_draw = false;
+                break;
+            }
+
+            if (!entity->template has_component<T>())
+            {
+                should_draw = false;
+                break;
+            }
+        }
+
+        if (!should_draw || entities.empty())
+            return;
+
+        if (icon == nullptr)
+            icon = context.icons.get_descriptor(EditorIcon::Resource);
+
+        //  This fixes an issue where the first "+" button would display the "Remove" buttons for ALL components on an Entity.
+        //  This is due to ImGui::TreeNodeEx only pushing the id for it's children if it's actually open
+        ImGui::PushID(reinterpret_cast<void*>(typeid(T).hash_code()));
+        ImVec2 content_region_available = ImGui::GetContentRegionAvail();
+
+        bool open = tree_node_with_icon(icon, icon, name.data(), tree_flags);
+        bool right_clicked = ImGui::IsItemClicked(ImGuiMouseButton_Right);
+        float line_height = ImGui::GetItemRectMax().y - ImGui::GetItemRectMin().y;
+
+        bool reset_values = false;
+        bool remove_component = false;
+
+        ImGui::SameLine(content_region_available.x - line_height - consts.same_line_options);
+        imgui::shift_cursor(0.f, line_height / consts.shift_line_scale_y_options);
+        if (ImGui::InvisibleButton("##options", ImVec2(line_height, line_height)) || right_clicked)
+        {
+            ImGui::OpenPopup("ComponentOptions");
+        }
+        imgui::draw_button_image(
+            context.icons.get_descriptor(EditorIcon::Settings),
+            context.theme.get_color(imgui::ThemeColors::Text, 0.8f),
+            context.theme.get_color(imgui::ThemeColors::Text, 1.f),
+            context.theme.get_color(imgui::ThemeColors::Text, 0.6f),
+            imgui::get_item_rect()
+        );
+
+        if (ImGui::BeginPopup("ComponentOptions"))
+        {
+            {
+                imgui::ScopedStyle item_padding(ImGuiStyleVar_FramePadding, ImVec2{consts.item_padding, 0.f});
+
+                auto entity = context.ecs_registry.find_by_name(entities.front());
+
+                if constexpr (HasOptionsFunction<T>)
                 {
-                    auto button_color = context.theme.scoped_color(ImGuiCol_Button, imgui::ThemeColors::Primary1, 0.f);
-                    if (removable)
-                    {
-                        if (ImGui::Button(ICON_FA_TRASH))
-                        {
-                            delete_component = true;
-                            ImGui::OpenPopup(ICON_FA_TRASH " Delete Component");
-                        }
-
-                        imgui::confirm_and_execute(
-                            delete_component,
-                            ICON_FA_TRASH " Delete Component",
-                            "Are you sure you want to delete this component?",
-                            [&]()
-                            {
-                                entity.remove_component<T>();
-                            },
-                            context
-                        );
-                    }
-
-                    ImGui::SameLine(window_width.x - option_button_width);
-                    if (ImGui::Button(ICON_FA_GEARS))
-                    {
-                        ImGui::OpenPopup(ICON_FA_GEARS " Component Settings");
-                    }
-                    ImGui::PopStyleVar();
-
-                    if (ImGui::BeginPopup(ICON_FA_GEARS " Component Settings"))
-                    {
-                        if (ImGui::MenuItem("Reset"))
-                        {
-                            entity.remove_component<T>();
-                            entity.add_component<T>();
-                        }
-                        ImGui::EndPopup();
-                    }
+                    ComponentEditorFunctions<T>::draw_options(context, entity);
                 }
 
-                if (tree_node.is_open)
-                {
-                    const float avail_width = ImGui::GetContentRegionAvail().x;
-                    const float margin_right = consts.margin_right; // pixels to leave empty on the right
-                    imgui::ScopedChild dummy_child("dummy", ImVec2{avail_width - margin_right, 0.f}, ImGuiChildFlags_AutoResizeY);
+                if (ImGui::MenuItem("Reset"))
+                    reset_values = true;
 
-                    if (entity.has_component<T>())
+                if constexpr (ComponentEditorFunctions<T>::removable)
+                {
+                    if (ImGui::MenuItem("Remove"))
+                        remove_component = true;
+                }
+            }
+
+            ImGui::EndPopup();
+        }
+
+        if (open)
+        {
+            auto entity = context.ecs_registry.find_by_name(entities.front());
+            auto& first_comp = entity->template get_component<T>();
+
+            const bool is_multi_edit = entities.size() > 1;
+            ComponentEditorFunctions<T>::draw_details(context, scene_entity, first_comp, entities, is_multi_edit);
+            ImGui::TreePop();
+        }
+
+        for (auto& id : entities)
+        {
+            auto entity = context.ecs_registry.find_by_name(id);
+            if (entity.has_value() && entity->template has_component<T>())
+            {
+                if (remove_component)
+                {
+                    context.snapshot_manager.prepare_snapshot(STRING_ID(fmt::format("Removed Component {} for {}", glz::type_name<T>, id.string)));
+                    if constexpr (HasRemovedFunction<T>) // TODO: should I use this or entt callbacks?
                     {
-                        draw_func(context, entity);
+                        ComponentEditorFunctions<T>::removed(context, entity.value());
+                    }
+
+                    entity->remove_component<T>();
+                    context.snapshot_manager.commit_snapshot();
+                }
+
+                if (reset_values)
+                {
+                    context.snapshot_manager.prepare_snapshot(STRING_ID(fmt::format("Reset Component {} for {}", glz::type_name<T>, id.string)));
+                    if constexpr (HasResetFunction<T>)
+                    {
+                        ComponentEditorFunctions<T>::reset(context, entity.value());
+                    }
+                    else
+                    {
+                        entity->remove_component<T>();
+                        entity->add_component<T>();
+                        if constexpr (HasAddedFunction<T>) // TODO: should I use this or entt callbacks?
+                        {
+                            ComponentEditorFunctions<T>::added(context, entity.value());
+                        }
                     }
                 }
             }
         }
+
+        if (!open)
+            imgui::shift_cursor(0.f, -(ImGui::GetStyle().ItemSpacing.y + 1.0f));
+
+        ImGui::PopID();
     }
 };
 } // portal
