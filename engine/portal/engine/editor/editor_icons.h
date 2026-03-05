@@ -57,7 +57,14 @@ enum class EditorIcon
     // Content Browser
     Directory,
     DirectoryOpen,
-    File
+    File,
+
+    // Actions
+    Edit,
+    Add,
+
+    // Resources
+    Resource,
 
 };
 class EditorIcons

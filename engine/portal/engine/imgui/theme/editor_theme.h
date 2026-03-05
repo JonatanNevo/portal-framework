@@ -54,7 +54,7 @@ public:
 
     [[nodiscard]] ScopedColor scoped_color(ImGuiCol widget, ThemeColors color, float alpha = 1.f) const;
 
-    ImVec4 get_color(ThemeColors color) const;
+    ImVec4 get_color(ThemeColors color, float alpha = 1.f) const;
     ImColor& operator[](ThemeColors color);
     const ImColor& operator[](ThemeColors color) const;
 

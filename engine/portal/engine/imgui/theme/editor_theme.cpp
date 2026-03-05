@@ -101,9 +101,11 @@ ScopedColor EditorTheme::scoped_color(const ImGuiCol widget, const ThemeColors c
     return ScopedColor(widget, theme_color);
 }
 
-ImVec4 EditorTheme::get_color(ThemeColors color) const
+ImVec4 EditorTheme::get_color(ThemeColors color, const float alpha) const
 {
-    return colors.at(color);
+    ImVec4 theme_color = colors.at(color);
+    theme_color.w = alpha;
+    return theme_color;
 }
 
 ImColor& EditorTheme::operator[](const ThemeColors color)
