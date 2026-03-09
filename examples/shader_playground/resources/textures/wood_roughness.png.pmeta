@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "wood_roughness",
     "resource_id": "game/textures/wood_roughness",
     "source": "textures/wood_roughness.png",
     "texture": {

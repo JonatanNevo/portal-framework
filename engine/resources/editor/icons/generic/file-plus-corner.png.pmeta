@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "file-plus-corner",
     "resource_id": "engine/editor/icons/generic/file-plus-corner",
     "source": "editor/icons/generic/file-plus-corner.png",
     "texture": {

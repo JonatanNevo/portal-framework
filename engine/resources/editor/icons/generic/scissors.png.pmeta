@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "scissors",
     "resource_id": "engine/editor/icons/generic/scissors",
     "source": "editor/icons/generic/scissors.png",
     "texture": {

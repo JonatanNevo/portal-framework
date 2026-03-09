@@ -108,7 +108,7 @@ bool resource_search_popup(
                     if (!valid_type)
                         continue;
 
-                    auto resource_name = resource.get_resource_id().string;
+                    auto resource_name = resource.get_resource_name().string;
 
                     if (!search_string.empty() && is_matching_search(resource_name, search_string))
                         continue;
@@ -116,17 +116,18 @@ bool resource_search_popup(
                     resources.push_back(resource);
                 }
 
-                std::ranges::sort(resources, [](const auto& a, const auto& b) { return a.get_resource_id().string < b.get_resource_id().string; });
+                std::ranges::sort(resources, [](const auto& a, const auto& b) { return a.get_resource_name().string < b.get_resource_name().string; });
 
                 for (auto& resource : resources)
                 {
                     const bool is_selected = current == selected;
-                    if (ImGui::Selectable(resource.get_resource_id().string.data(), is_selected))
+                    if (ImGui::Selectable(resource.get_resource_name().string.data(), is_selected))
                     {
                         current = selected;
                         selected = resource;
                         modified = true;
                     }
+                    set_tooltip(resource.get_resource_id().string);
 
                     {
                         auto resource_type = to_string(resource.get_resource_type());

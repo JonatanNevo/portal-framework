@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "copy",
     "resource_id": "engine/editor/icons/generic/copy",
     "source": "editor/icons/generic/copy.png",
     "texture": {

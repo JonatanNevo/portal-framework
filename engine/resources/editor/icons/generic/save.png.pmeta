@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "save",
     "resource_id": "engine/editor/icons/generic/save",
     "source": "editor/icons/generic/save.png",
     "texture": {

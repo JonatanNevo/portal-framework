@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "axis-3d",
     "resource_id": "engine/editor/icons/gizmos/axis-3d",
     "source": "editor/icons/gizmos/axis-3d.png",
     "texture": {

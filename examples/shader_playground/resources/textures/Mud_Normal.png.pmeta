@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Mud_Normal",
     "resource_id": "game/textures/Mud_Normal",
     "source": "textures/Mud_Normal.png",
     "texture": {

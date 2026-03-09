@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "settings",
     "resource_id": "engine/editor/icons/generic/settings",
     "source": "editor/icons/generic/settings.png",
     "texture": {

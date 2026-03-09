@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Mud_Roughness",
     "resource_id": "game/textures/Mud_Roughness",
     "source": "textures/Mud_Roughness.png",
     "texture": {

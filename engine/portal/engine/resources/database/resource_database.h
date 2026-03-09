@@ -153,7 +153,8 @@ struct FontMetadata
 struct SourceMetadata
 {
     // Resource Information
-    StringId resource_id = INVALID_STRING_ID;
+    StringId name = INVALID_STRING_ID;        // Resource Name (not unique)
+    StringId resource_id = INVALID_STRING_ID; // Resource ID (unique)
     ResourceType type = ResourceType::Unknown;
     llvm::SmallVector<StringId> dependencies{};
 
@@ -196,7 +197,8 @@ enum class DatabaseErrorBit: uint8_t
     StaleMetadata   = 0b00001000,
     MissingMetadata = 0b00010000,
     CorruptMetadata = 0b00100000,
-    DatabaseMissing = 0b01000000,
+    MissingName     = 0b01000000,
+    DatabaseMissing = 0b10000000,
 
 
     Unspecified = std::numeric_limits<uint8_t>::max(),

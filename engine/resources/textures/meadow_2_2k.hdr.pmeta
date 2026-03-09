@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "meadow_2_2k",
     "resource_id": "engine/textures/meadow_2_2k",
     "source": "textures/meadow_2_2k.hdr",
     "texture": {

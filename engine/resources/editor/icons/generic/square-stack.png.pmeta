@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "square-stack",
     "resource_id": "engine/editor/icons/generic/square-stack",
     "source": "editor/icons/generic/square-stack.png",
     "texture": {

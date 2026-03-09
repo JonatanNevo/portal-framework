@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "wood_normal",
     "resource_id": "game/textures/wood_normal",
     "source": "textures/wood_normal.png",
     "texture": {

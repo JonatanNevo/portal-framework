@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "undo",
     "resource_id": "engine/editor/icons/generic/undo",
     "source": "editor/icons/generic/undo.png",
     "texture": {

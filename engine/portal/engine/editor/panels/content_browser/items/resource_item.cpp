@@ -7,24 +7,12 @@
 
 namespace portal::content_browser
 {
-std::string extract_name(StringId resource_id)
-{
-    auto split_view = resource_id.string | std::views::split('/');
-    PORTAL_ASSERT(std::ranges::distance(split_view) > 1, "Invalid resource id");
-
-    for (auto [index, part] : split_view | std::views::enumerate)
-    {
-        if (index == std::ranges::distance(split_view) - 1)
-            return std::string(std::string_view(part));
-    }
-    return "";
-}
 
 ResourceItem::ResourceItem(const SourceMetadata& metadata, const EditorIcon icon)
     : Item(
           Type::Resource,
           metadata.resource_id,
-          extract_name(metadata.resource_id),
+          std::string(metadata.name.string),
           icon
       ),
       metadata(metadata) {}

@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Obj",
+    "name": "cube",
     "resource_id": "game/models/cube",
     "source": "models/cube.obj",
     "type": "Mesh"

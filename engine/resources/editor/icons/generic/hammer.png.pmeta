@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "hammer",
     "resource_id": "engine/editor/icons/generic/hammer",
     "source": "editor/icons/generic/hammer.png",
     "texture": {

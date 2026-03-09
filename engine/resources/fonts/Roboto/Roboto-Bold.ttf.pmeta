@@ -3,9 +3,10 @@
     "font": {
         "glyph_range_max": 0,
         "glyph_range_min": 0,
-        "name": "Roboto Bold"
+        "name": "Invalid"
     },
     "format": "FontFile",
+    "name": "Roboto-Bold",
     "resource_id": "engine/fonts/Roboto/Roboto-Bold",
     "source": "fonts/Roboto/Roboto-Bold.ttf",
     "type": "Font"

@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "refresh",
     "resource_id": "engine/editor/icons/generic/refresh",
     "source": "editor/icons/generic/refresh.png",
     "texture": {

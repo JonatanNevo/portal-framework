@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "search",
     "resource_id": "engine/editor/icons/generic/search",
     "source": "editor/icons/generic/search.png",
     "texture": {

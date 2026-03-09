@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "blocks",
     "resource_id": "engine/editor/icons/generic/blocks",
     "source": "editor/icons/generic/blocks.png",
     "texture": {

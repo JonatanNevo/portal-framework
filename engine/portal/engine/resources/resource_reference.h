@@ -141,8 +141,8 @@ public:
     /** @brief Nullptr constructor - creates a Null reference */
     explicit ResourceReference(std::nullptr_t) : ResourceReference() {};
 
-    ResourceReference(const StringId& resource_id)
-        : resource_id(resource_id), type(ResourceType::Unknown), state(ResourceState::Missing) {}
+    explicit ResourceReference(const StringId& resource_id)
+        : resource_id(resource_id), state(ResourceState::Missing) {}
 
     ~ResourceReference()
     {
@@ -154,6 +154,7 @@ public:
         reference_manager(other.reference_manager),
         registry(other.registry),
         resource_id(other.resource_id),
+        resource_name(other.resource_name),
         type(other.type),
         state(other.state),
         resource(other.resource)
@@ -170,6 +171,7 @@ public:
         reference_manager(other.reference_manager),
         registry(other.registry),
         resource_id(std::exchange(other.resource_id, INVALID_STRING_ID)),
+        resource_name(std::exchange(other.resource_name, STRING_ID("Unnamed"))),
         type(std::exchange(other.type, ResourceType::Unknown)),
         state(std::exchange(other.state, ResourceState::Unknown)),
         resource(std::exchange(other.resource, nullptr))
@@ -197,6 +199,7 @@ public:
         PORTAL_ASSERT((type == ResourceType::Unknown || other.type == ResourceType::Unknown) || type == other.type, "Resource types don't match");
 
         resource_id = other.resource_id;
+        resource_name = other.resource_name;
         type = other.type;
         state = other.state;
         resource = other.resource;
@@ -223,6 +226,7 @@ public:
         PORTAL_ASSERT((type == ResourceType::Unknown || other.type == ResourceType::Unknown) || type == other.type, "Resource types don't match");
 
         resource_id = std::exchange(other.resource_id, INVALID_STRING_ID);
+        resource_name = std::exchange(other.resource_name, STRING_ID("Unnamed"));
         type = std::exchange(other.type, ResourceType::Unknown);
         state = std::exchange(other.state, ResourceState::Unknown);
         resource = std::exchange(other.resource, nullptr);
@@ -364,13 +368,26 @@ public:
         if (!casted)
         {
             LOG_ERROR_TAG("Resource", "Failed to cast resource \"{}\" to type \"{}\"", resource_id, U::static_type());
-            return ResourceReference<U>(resource_id, utils::to_resource_type<U>(), registry.value().get(), reference_manager.value().get());
+            return ResourceReference<U>(
+                resource_id,
+                resource_name,
+                utils::to_resource_type<U>(),
+                registry.value().get(),
+                reference_manager.value().get()
+            );
         }
 
-        return ResourceReference<U>(resource_id, utils::to_resource_type<U>(), registry.value().get(), reference_manager.value().get());
+        return ResourceReference<U>(
+            resource_id,
+            resource_name,
+            utils::to_resource_type<U>(),
+            registry.value().get(),
+            reference_manager.value().get()
+        );
     }
 
     [[nodiscard]] StringId get_resource_id() const { return resource_id; }
+    [[nodiscard]] StringId get_resource_name() const { return resource_name; }
     [[nodiscard]] ResourceType get_resource_type() const { return type; }
 
 private:
@@ -382,12 +399,14 @@ private:
 
     ResourceReference(
         const StringId& resource_id,
+        const StringId& resource_name,
         const ResourceType& type,
         ResourceRegistry& registry,
         ReferenceManager& reference_manager
     ) : reference_manager(reference_manager),
         registry(registry),
         resource_id(resource_id),
+        resource_name(resource_name),
         type(type),
         state(ResourceState::Unknown)
     {
@@ -407,6 +426,7 @@ private:
     std::optional<std::reference_wrapper<ResourceRegistry>> registry = std::nullopt;
 
     StringId resource_id = INVALID_STRING_ID;
+    StringId resource_name = STRING_ID("Unnamed");
     ResourceType type = ResourceType::Unknown;
 
     mutable ResourceState state = ResourceState::Null;

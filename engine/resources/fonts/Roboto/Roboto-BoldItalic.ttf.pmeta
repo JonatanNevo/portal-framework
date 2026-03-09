@@ -3,9 +3,10 @@
     "font": {
         "glyph_range_max": 0,
         "glyph_range_min": 0,
-        "name": "Roboto Bold Italic"
+        "name": "Invalid"
     },
     "format": "FontFile",
+    "name": "Roboto-BoldItalic",
     "resource_id": "engine/fonts/Roboto/Roboto-BoldItalic",
     "source": "fonts/Roboto/Roboto-BoldItalic.ttf",
     "type": "Font"

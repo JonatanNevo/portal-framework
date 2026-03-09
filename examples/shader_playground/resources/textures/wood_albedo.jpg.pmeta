@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "wood_albedo",
     "resource_id": "game/textures/wood_albedo",
     "source": "textures/wood_albedo.jpg",
     "texture": {

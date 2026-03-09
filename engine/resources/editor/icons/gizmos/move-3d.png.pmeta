@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "move-3d",
     "resource_id": "engine/editor/icons/gizmos/move-3d",
     "source": "editor/icons/gizmos/move-3d.png",
     "texture": {

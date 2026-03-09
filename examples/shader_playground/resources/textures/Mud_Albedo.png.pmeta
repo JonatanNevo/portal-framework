@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Mud_Albedo",
     "resource_id": "game/textures/Mud_Albedo",
     "source": "textures/Mud_Albedo.png",
     "texture": {

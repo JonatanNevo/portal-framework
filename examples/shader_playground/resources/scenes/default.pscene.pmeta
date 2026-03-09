@@ -4,6 +4,7 @@
         "game/materials/default_material"
     ],
     "format": "Scene",
+    "name": "default",
     "resource_id": "game/scenes/default",
     "source": "scenes/default.pscene",
     "type": "Scene"

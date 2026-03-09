@@ -26,6 +26,8 @@ T from_string(const std::string_view& str)
     return value.value_or(T{});
 }
 
+std::string get_last_part(std::string_view string, char separator = '/');
+
 std::string to_lower_copy(std::string_view str);
 std::string& to_lower(std::string& str);
 }

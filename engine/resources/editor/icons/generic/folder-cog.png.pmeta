@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "folder-cog",
     "resource_id": "engine/editor/icons/generic/folder-cog",
     "source": "editor/icons/generic/folder-cog.png",
     "texture": {

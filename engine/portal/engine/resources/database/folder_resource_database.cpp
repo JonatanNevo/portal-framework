@@ -407,6 +407,9 @@ DatabaseError FolderResourceDatabase::validate_metadata(const SourceMetadata& me
     if (meta.resource_id != expected_resource_id)
         return DatabaseErrorBit::CorruptMetadata;
 
+    if (meta.name == INVALID_STRING_ID || meta.name.string.empty())
+        return DatabaseErrorBit::MissingName;
+
     return DatabaseErrorBit::Success;
 }
 
@@ -466,7 +469,7 @@ void FolderResourceDatabase::mend(const DatabaseError error)
         metadata.dirty |= ResourceDirtyBits::DataChange;
     }
 
-    if (error & DatabaseErrorBit::CorruptMetadata)
+    if (error & DatabaseErrorBit::CorruptMetadata || error & DatabaseErrorBit::MissingName)
     {
         for (auto& entry : std::filesystem::recursive_directory_iterator(root_path))
         {
@@ -480,14 +483,25 @@ void FolderResourceDatabase::mend(const DatabaseError error)
                     JsonArchive archiver;
                     archiver.read(entry.path());
                     SourceMetadata meta = SourceMetadata::dearchive(archiver);
-                    if (validate_metadata(meta) & DatabaseErrorBit::CorruptMetadata)
+
+                    auto meta_errors = validate_metadata(meta);
+                    if (meta_errors != DatabaseErrorBit::Success)
                     {
-                        LOGGER_DEBUG("Mending corrupt metadata: {}", relative_path.generic_string());
                         remove(meta.resource_id);
 
-                        meta.resource_id = STRING_ID(
-                            fmt::format("{}/{}", get_name().string, relative_path.replace_extension("").generic_string())
-                        );
+                        if (meta_errors & DatabaseErrorBit::CorruptMetadata)
+                        {
+                            LOGGER_DEBUG("Mending corrupt metadata: {}", relative_path.generic_string());
+                            meta.resource_id = STRING_ID(
+                                fmt::format("{}/{}", get_name().string, relative_path.replace_extension("").generic_string())
+                            );
+                        }
+                        if (meta_errors & DatabaseErrorBit::MissingName)
+                        {
+
+                            LOGGER_DEBUG("Mending missing name: {}", relative_path.generic_string());
+                            meta.name = STRING_ID(get_last_part(meta.resource_id.string));
+                        }
 
                         add(meta.resource_id, meta);
                     }

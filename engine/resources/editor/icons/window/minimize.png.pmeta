@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "minimize",
     "resource_id": "engine/editor/icons/window/minimize",
     "source": "editor/icons/window/minimize.png",
     "texture": {

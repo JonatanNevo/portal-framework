@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "log-out",
     "resource_id": "engine/editor/icons/generic/log-out",
     "source": "editor/icons/generic/log-out.png",
     "texture": {

@@ -725,30 +725,30 @@ std::pair<std::string, bool> resource_validity_and_name(ResourceReference<Resour
     {
     case ResourceState::Loaded:
         {
-            name = reference->get_id().string;
+            name = reference.get_resource_name().string;
             valid = true;
             break;
         }
     case ResourceState::Pending:
         {
-            name = std::string(reference->get_id().string) + " (pending)";
+            name = std::string(reference.get_resource_name().string) + " (pending)";
             valid = true;
             break;
         }
     case ResourceState::Unloaded:
         {
-            name = std::string(reference->get_id().string) + " (unloaded)";;
+            name = std::string(reference.get_resource_name().string) + " (unloaded)";;
             valid = true;
             break;
         }
     case ResourceState::Missing:
         {
-            name = std::string(reference->get_id().string) + " (missing)";;
+            name = std::string(reference.get_resource_name().string) + " (missing)";;
             break;
         }
     case ResourceState::Error:
         {
-            name = std::string(reference->get_id().string) + " (errored)";;
+            name = std::string(reference.get_resource_name().string) + " (errored)";;
             break;
         }
     case ResourceState::Null:

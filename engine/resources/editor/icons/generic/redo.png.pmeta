@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "redo",
     "resource_id": "engine/editor/icons/generic/redo",
     "source": "editor/icons/generic/redo.png",
     "texture": {
