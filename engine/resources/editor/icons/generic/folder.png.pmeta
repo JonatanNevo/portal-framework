@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "folder",
     "resource_id": "engine/editor/icons/generic/folder",
     "source": "editor/icons/generic/folder.png",
     "texture": {

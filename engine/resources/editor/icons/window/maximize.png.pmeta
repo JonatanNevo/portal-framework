@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "maximize",
     "resource_id": "engine/editor/icons/window/maximize",
     "source": "editor/icons/window/maximize.png",
     "texture": {

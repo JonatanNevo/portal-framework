@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "folder-open",
     "resource_id": "engine/editor/icons/generic/folder-open",
     "source": "editor/icons/generic/folder-open.png",
     "texture": {

@@ -10,6 +10,7 @@
     "material": {
         "shader": "engine/shaders/pbr_static"
     },
+    "name": "default_material",
     "resource_id": "game/materials/default_material",
     "source": "materials/default_material.pmaterial",
     "type": "Material"

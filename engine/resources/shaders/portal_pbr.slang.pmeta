@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Shader",
+    "name": "portal_pbr",
     "resource_id": "engine/shaders/portal_pbr",
     "source": "shaders/portal_pbr.slang",
     "type": "Shader"

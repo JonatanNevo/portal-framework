@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "restore",
     "resource_id": "engine/editor/icons/window/restore",
     "source": "editor/icons/window/restore.png",
     "texture": {

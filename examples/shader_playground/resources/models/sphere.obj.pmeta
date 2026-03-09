@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Obj",
+    "name": "sphere",
     "resource_id": "game/models/sphere",
     "source": "models/sphere.obj",
     "type": "Mesh"

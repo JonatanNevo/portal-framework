@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "close",
     "resource_id": "engine/editor/icons/window/close",
     "source": "editor/icons/window/close.png",
     "texture": {

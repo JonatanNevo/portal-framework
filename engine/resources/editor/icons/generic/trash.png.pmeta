@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "trash",
     "resource_id": "engine/editor/icons/generic/trash",
     "source": "editor/icons/generic/trash.png",
     "texture": {

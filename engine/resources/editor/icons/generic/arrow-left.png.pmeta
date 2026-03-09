@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "arrow-left",
     "resource_id": "engine/editor/icons/generic/arrow-left",
     "source": "editor/icons/generic/arrow-left.png",
     "texture": {

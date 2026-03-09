@@ -148,8 +148,7 @@ public:
         auto type = utils::to_resource_type<T>();
         create_resource(resource_id, type);
 
-        auto reference = ResourceReference<T>(resource_id, type, *this, reference_manager);
-        return reference;
+        return get<T>(resource_id);
     }
 
     /**
@@ -162,11 +161,9 @@ public:
     template <ResourceConcept T>
     ResourceReference<T> immediate_load(StringId resource_id)
     {
-        auto type = utils::to_resource_type<T>();
         create_resource_immediate(resource_id);
 
-        auto reference = ResourceReference<T>(resource_id, type, *this, reference_manager);
-        return reference;
+        return get<T>(resource_id);
     }
 
     void save(const StringId& resource_id);
@@ -190,16 +187,16 @@ public:
     {
         auto res = database.find(resource_id);
         if (res.has_value())
-            return ResourceReference<T>(res->resource_id, res->type, *this, reference_manager);
+            return ResourceReference<T>(res->resource_id, res->name, res->type, *this, reference_manager);
 
         if (resources.contains(resource_id))
         {
             const auto& ref = resources.at(resource_id);
-            return ResourceReference<T>(resource_id, ref.resource->get_resource_type(), *this, reference_manager);
+            return ResourceReference<T>(resource_id, ref.metadata.name, ref.metadata.type, *this, reference_manager);
         }
 
         auto type = utils::to_resource_type<T>();
-        return ResourceReference<T>(INVALID_STRING_ID, type, *this, reference_manager);
+        return ResourceReference<T>(INVALID_STRING_ID, INVALID_STRING_ID, type, *this, reference_manager);
     }
 
     /**

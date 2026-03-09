@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "pencil",
     "resource_id": "engine/editor/icons/generic/pencil",
     "source": "editor/icons/generic/pencil.png",
     "texture": {

@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "portal_icon_64x64",
     "resource_id": "engine/portal_icon_64x64",
     "source": "portal_icon_64x64.png",
     "texture": {

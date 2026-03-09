@@ -7,6 +7,7 @@
 #include "resource_database.h"
 
 #include <ranges>
+#include <argparse/argparse.hpp>
 #include <llvm/ADT/STLExtras.h>
 
 #include "portal/core/strings/string_utils.h"
@@ -98,6 +99,7 @@ FontMetadata FontMetadata::dearchive(const ArchiveObject& archive)
 
 void SourceMetadata::archive(ArchiveObject& archive) const
 {
+    archive.add_property("name", name);
     archive.add_property("resource_id", resource_id.string);
     archive.add_property("type", to_string(type));
     archive.add_property(
@@ -119,14 +121,15 @@ void SourceMetadata::archive(ArchiveObject& archive) const
 
 SourceMetadata SourceMetadata::dearchive(ArchiveObject& archive)
 {
-    std::string resource_name;
+    std::string resource_id, resource_name;
     std::string type_string;
 
     std::string source;
     std::string format_string;
     std::vector<std::string> dependencies;
 
-    archive.get_property<std::string>("resource_id", resource_name);
+    archive.get_property<std::string>("name", resource_name);
+    archive.get_property<std::string>("resource_id", resource_id);
     archive.get_property<std::string>("type", type_string);
     archive.get_property<std::vector<std::string>>("dependencies", dependencies);
 
@@ -136,6 +139,7 @@ SourceMetadata SourceMetadata::dearchive(ArchiveObject& archive)
     auto string_id_view = dependencies | std::ranges::views::transform([](const auto& id) { return STRING_ID(id); });
     SourceMetadata metadata{
         STRING_ID(resource_name),
+        STRING_ID(resource_id),
         from_string<ResourceType>(type_string),
         std::ranges::to<llvm::SmallVector<StringId>>(string_id_view),
         STRING_ID(source),

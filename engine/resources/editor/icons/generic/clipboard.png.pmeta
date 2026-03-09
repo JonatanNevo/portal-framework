@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "clipboard",
     "resource_id": "engine/editor/icons/generic/clipboard",
     "source": "editor/icons/generic/clipboard.png",
     "texture": {

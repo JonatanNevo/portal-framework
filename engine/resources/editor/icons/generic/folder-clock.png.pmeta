@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "folder-clock",
     "resource_id": "engine/editor/icons/generic/folder-clock",
     "source": "editor/icons/generic/folder-clock.png",
     "texture": {

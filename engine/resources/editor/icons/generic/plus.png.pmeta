@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "plus",
     "resource_id": "engine/editor/icons/generic/plus",
     "source": "editor/icons/generic/plus.png",
     "texture": {

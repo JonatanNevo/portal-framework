@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "box",
     "resource_id": "engine/editor/icons/generic/box",
     "source": "editor/icons/generic/box.png",
     "texture": {

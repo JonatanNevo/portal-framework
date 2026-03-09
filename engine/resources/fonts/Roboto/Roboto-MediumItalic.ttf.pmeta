@@ -3,9 +3,10 @@
     "font": {
         "glyph_range_max": 0,
         "glyph_range_min": 0,
-        "name": "Roboto Medium Italic"
+        "name": "Invalid"
     },
     "format": "FontFile",
+    "name": "Roboto-MediumItalic",
     "resource_id": "engine/fonts/Roboto/Roboto-MediumItalic",
     "source": "fonts/Roboto/Roboto-MediumItalic.ttf",
     "type": "Font"

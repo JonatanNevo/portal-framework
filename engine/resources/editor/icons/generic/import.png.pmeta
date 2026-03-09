@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "import",
     "resource_id": "engine/editor/icons/generic/import",
     "source": "editor/icons/generic/import.png",
     "texture": {

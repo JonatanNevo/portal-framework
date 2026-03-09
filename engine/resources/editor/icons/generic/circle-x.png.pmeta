@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "circle-x",
     "resource_id": "engine/editor/icons/generic/circle-x",
     "source": "editor/icons/generic/circle-x.png",
     "texture": {
