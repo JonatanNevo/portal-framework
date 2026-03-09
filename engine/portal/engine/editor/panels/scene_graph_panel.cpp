@@ -95,7 +95,7 @@ void SceneGraphPanel::on_gui_render(EditorContext& editor_context, [[maybe_unuse
                         imgui::shift_cursor(-consts.edge_offset * 3.f, -consts.edge_offset * 2.f);
                     }
                     // ImGui::SetCursorPosX(ImGui::GetCurrentTable()->OuterRect.Min.x);
-                    imgui::underline(editor_context.theme[imgui::ThemeColors::Background3], true, 0.f, 5.f);
+                    imgui::underline(editor_context.theme[imgui::ThemeColors::Primary2], true, 0.f, 5.f);
                 }
 
                 // List

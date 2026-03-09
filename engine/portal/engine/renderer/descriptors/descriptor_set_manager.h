@@ -73,7 +73,7 @@ public:
     template <typename T>
     Reference<T> get_input(const StringId name)
     {
-        return reference_cast<T, RendererResource>(get_input(name));
+        return reference_cast<T, BaseDescriptor>(get_input(name));
     }
 
     /**
@@ -81,7 +81,7 @@ public:
      * @param name Binding name
      * @return Resource reference
      */
-    virtual Reference<RendererResource> get_input(StringId name) = 0;
+    virtual Reference<BaseDescriptor> get_input(StringId name) = 0;
 
     /**
      * @brief Checks if binding is invalidated

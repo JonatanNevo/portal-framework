@@ -21,6 +21,8 @@ struct FontProperties
 class Font final : public Resource
 {
 public:
+    DECLARE_RESOURCE(ResourceType::Font);
+
     explicit Font(const StringId& id, const FontProperties& properties) : Resource(id), properties(properties) {}
     [[nodiscard]] const FontProperties& get_properties() const { return properties; }
 

@@ -10,10 +10,12 @@
 #include "portal/engine/components/base.h"
 #include "portal/engine/components/base_camera_controller.h"
 #include "portal/engine/components/camera.h"
+#include "portal/engine/components/light_components.h"
 #include "portal/engine/components/mesh.h"
 #include "portal/engine/components/transform.h"
 #include "portal/engine/editor/editor_context.h"
 #include "portal/engine/editor/selection_system.h"
+#include "portal/engine/imgui/utils.h"
 #include "portal/engine/imgui/widgets/edit_vec3.h"
 #include "portal/engine/renderer/vulkan/vulkan_material.h"
 #include "portal/engine/scene/scene.h"
@@ -119,33 +121,34 @@ namespace
     }
 }
 
-
 bool draw_vec3_control(
     EditorContext& context,
     const std::string_view label,
-    const glm::vec3& value,
+    glm::vec3& value,
     bool& manually_edited,
     const float reset_value = 0.f,
-    const imgui::VectorAxis render_multi_selected_axes = imgui::VectorAxisBits::None
+    const imgui::VectorAxis render_multi_selected_axes = imgui::VectorAxisBits::None,
+    float speed = 1.f
 )
 {
-    // struct TransformVec3Consts
-    // {
-    //     ImVec2 shift_cursor_label = {17.f, 17.f};
-    //     ImVec2 shift_cursor_slider = {7.f, 0.f};
-    // };
-    // constexpr static TransformVec3Consts consts;
+    struct TransformVec3Consts
+    {
+        ImVec2 shift_cursor_label = {3.f, 0.f};
+        ImVec2 shift_cursor_slider = {4.f, 0.f};
+    };
+
+    constexpr static TransformVec3Consts consts;
 
     bool modified = false;
     imgui::push_id();
     ImGui::TableSetColumnIndex(0);
-    // imgui::shift_cursor(consts.shift_cursor_label);
+    imgui::shift_cursor(consts.shift_cursor_label);
 
     ImGui::TextUnformatted(label.data());
-    imgui::underline(context.theme[imgui::ThemeColors::Background3], false, 0.f, 2.f);
+    // imgui::underline(context.theme[imgui::ThemeColors::Primary2], false, 0.f, 0.f);
 
     ImGui::TableSetColumnIndex(1);
-    // imgui::shift_cursor(consts.shift_cursor_slider);
+    imgui::shift_cursor(consts.shift_cursor_slider);
 
     modified = imgui::edit_vec3(
         context,
@@ -154,21 +157,13 @@ bool draw_vec3_control(
         reset_value,
         manually_edited,
         value,
-        render_multi_selected_axes
+        render_multi_selected_axes,
+        speed
     );
 
     imgui::pop_id();
     return modified;
 }
-
-struct TransformDetailsConsts
-{
-    ImVec2 item_spacing = {8.0f, 8.0f};
-    ImVec2 frame_padding = {4.0f, 4.0f};
-    float label_column_width = 100.0f;
-    float shift_cursor_underline_y = 8.f; // 8.f
-    float shift_cursor_end = 18.f;        // 18.f
-};
 
 template <>
 struct ComponentEditorFunctions<TransformComponent>
@@ -183,8 +178,16 @@ struct ComponentEditorFunctions<TransformComponent>
         bool is_multi_edit
     )
     {
-        static TransformDetailsConsts consts;
-        imgui::draw_consts_controls("Transform Component Consts", consts);
+        struct TransformDetailsConsts
+        {
+            ImVec2 item_spacing = {8.0f, 8.0f};
+            ImVec2 frame_padding = {4.0f, 4.0f};
+            float label_column_width = 100.0f;
+            float shift_cursor_underline_y = 8.f; // 8.f
+            float shift_cursor_end = 18.f;        // 18.f
+        };
+
+        constexpr static TransformDetailsConsts consts;
 
         imgui::ScopedStyle spacing(ImGuiStyleVar_ItemSpacing, consts.item_spacing);
         imgui::ScopedStyle padding(ImGuiStyleVar_FramePadding, consts.frame_padding);
@@ -230,7 +233,7 @@ struct ComponentEditorFunctions<TransformComponent>
             auto old_scale = scale;
 
             ImGui::TableNextRow();
-            bool changed = draw_vec3_control(context, "Translation", translation, translation_manually_edited, 0.0f, translation_axes);
+            bool changed = draw_vec3_control(context, "Translation", translation, translation_manually_edited, 0.0f, translation_axes, 0.1f);
 
             ImGui::TableNextRow();
             changed |= draw_vec3_control(context, "Rotation", rotation, rotation_manually_edited, 0.0f, rotation_axes);
@@ -357,6 +360,158 @@ struct ComponentEditorFunctions<TransformComponent>
         ImGui::EndTable();
     }
 };
+
+template <>
+struct ComponentEditorFunctions<StaticMeshComponent>
+{
+    static constexpr bool removable = false;
+
+    static void draw_details(
+        EditorContext& context,
+        Entity scene_entity,
+        StaticMeshComponent& first_component,
+        std::span<const StringId> entities,
+        bool is_multi_edit
+    )
+    {
+        // struct StaticMeshDetailsConsts
+        // {
+        // };
+        //
+        // constexpr static StaticMeshDetailsConsts consts;
+
+        imgui::begin_property_grid();
+        ImGui::PushItemFlag(
+            ImGuiItemFlags_MixedValue,
+            is_multi_edit && is_inconsistent_primitive<bool, StaticMeshComponent>(
+                context.ecs_registry,
+                scene_entity,
+                [](const StaticMeshComponent& other) { return other.visible; }
+            )
+        );
+        if (imgui::property("Visible", first_component.visible))
+        {
+            for (auto& id : entities)
+            {
+                auto entity = context.ecs_registry.find_by_name(id);
+                auto& mesh = entity->get_component<StaticMeshComponent>();
+                mesh.visible = first_component.visible;
+            }
+        }
+        ImGui::PopItemFlag();
+
+        auto mesh_ref = first_component.mesh;
+
+        ImGui::PushItemFlag(
+            ImGuiItemFlags_MixedValue,
+            is_multi_edit && is_inconsistent_primitive<StringId, StaticMeshComponent>(
+                context.ecs_registry,
+                scene_entity,
+                [](const StaticMeshComponent& other) { return other.mesh->get_id(); }
+            )
+        );
+
+        auto res = imgui::property_resource_reference_with_conversion<MeshGeometry, MeshGeometry>(
+            context,
+            "Static Mesh",
+            mesh_ref,
+            [](ResourceReference<MeshGeometry>) {}
+        );
+        if (res.has_value() && res.value())
+        {
+            for (auto& id : entities)
+            {
+                // TODO: add snapshot for undo
+                auto entity = context.ecs_registry.find_by_name(id);
+                entity->patch_component<StaticMeshComponent>([&mesh_ref](StaticMeshComponent& comp) { comp.mesh = mesh_ref; });
+            }
+        }
+
+        ImGui::PopItemFlag();
+        imgui::end_property_grid();
+    }
+};
+
+//
+// template <>
+// struct ComponentEditorFunctions<CameraComponent>
+// {
+//     static constexpr bool removable = false;
+//
+//     static void draw_details(
+//         EditorContext& context,
+//         Entity scene_entity,
+//         CameraComponent& first_component,
+//         std::span<const StringId> entities,
+//         bool is_multi_edit
+//     )
+//     {
+//     }
+// };
+//
+// template <>
+// struct ComponentEditorFunctions<DirectionalLightComponent>
+// {
+//     static constexpr bool removable = false;
+//
+//     static void draw_details(
+//         EditorContext& context,
+//         Entity scene_entity,
+//         DirectionalLightComponent& first_component,
+//         std::span<const StringId> entities,
+//         bool is_multi_edit
+//     )
+//     {
+//     }
+// };
+//
+// template <>
+// struct ComponentEditorFunctions<PointLightComponent>
+// {
+//     static constexpr bool removable = false;
+//
+//     static void draw_details(
+//         EditorContext& context,
+//         Entity scene_entity,
+//         PointLightComponent& first_component,
+//         std::span<const StringId> entities,
+//         bool is_multi_edit
+//     )
+//     {
+//     }
+// };
+//
+// template <>
+// struct ComponentEditorFunctions<SpotlightComponent>
+// {
+//     static constexpr bool removable = false;
+//
+//     static void draw_details(
+//         EditorContext& context,
+//         Entity scene_entity,
+//         SpotlightComponent& first_component,
+//         std::span<const StringId> entities,
+//         bool is_multi_edit
+//     )
+//     {
+//     }
+// };
+//
+// template <>
+// struct ComponentEditorFunctions<SkylightComponent>
+// {
+//     static constexpr bool removable = false;
+//
+//     static void draw_details(
+//         EditorContext& context,
+//         Entity scene_entity,
+//         SkylightComponent& first_component,
+//         std::span<const StringId> entities,
+//         bool is_multi_edit
+//     )
+//     {
+//     }
+// };
 
 
 void DetailsPanel::on_gui_render(EditorContext& context, FrameContext& frame, bool& is_open)
@@ -539,6 +694,7 @@ void DetailsPanel::draw_components(EditorContext& context, Entity scene_entity, 
 
         // TODO: automatically call for all registered components
         draw_component<TransformComponent>(context, "Transform", scene_entity);
+        draw_component<StaticMeshComponent>(context, "Static Mesh", scene_entity);
     }
 
     // draw_component<TransformComponent>(

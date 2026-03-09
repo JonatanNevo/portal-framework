@@ -18,6 +18,8 @@ namespace portal
 class Composite final : public Resource
 {
 public:
+    DECLARE_RESOURCE(ResourceType::Composite);
+
     explicit Composite(const StringId& id) : Resource(id) {}
 
     std::optional<ResourceReference<renderer::Texture>> get_texture(const StringId& resource_id) const;

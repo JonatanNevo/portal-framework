@@ -14,6 +14,8 @@ namespace portal
 class Scene final : public Resource
 {
 public:
+    DECLARE_RESOURCE(ResourceType::Scene);
+
     explicit Scene(const StringId& name, ecs::Registry& registry);
 
     [[nodiscard]] Entity get_scene_entity() const { return scene_entity; }

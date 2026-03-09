@@ -142,7 +142,7 @@ public:
     explicit ResourceReference(std::nullptr_t) : ResourceReference() {};
 
     ResourceReference(const StringId& resource_id)
-        : resource_id(resource_id), state(ResourceState::Missing) {}
+        : resource_id(resource_id), type(ResourceType::Unknown), state(ResourceState::Missing) {}
 
     ~ResourceReference()
     {
@@ -154,6 +154,7 @@ public:
         reference_manager(other.reference_manager),
         registry(other.registry),
         resource_id(other.resource_id),
+        type(other.type),
         state(other.state),
         resource(other.resource)
     {
@@ -169,6 +170,7 @@ public:
         reference_manager(other.reference_manager),
         registry(other.registry),
         resource_id(std::exchange(other.resource_id, INVALID_STRING_ID)),
+        type(std::exchange(other.type, ResourceType::Unknown)),
         state(std::exchange(other.state, ResourceState::Unknown)),
         resource(std::exchange(other.resource, nullptr))
     {
@@ -192,7 +194,10 @@ public:
         if (reference_manager.has_value())
             reference_manager.value().get().unregister_reference(resource_id, this);
 
+        PORTAL_ASSERT((type == ResourceType::Unknown || other.type == ResourceType::Unknown) || type == other.type, "Resource types don't match");
+
         resource_id = other.resource_id;
+        type = other.type;
         state = other.state;
         resource = other.resource;
         reference_manager = other.reference_manager;
@@ -215,7 +220,10 @@ public:
         if (reference_manager.has_value())
             reference_manager.value().get().unregister_reference(resource_id, this);
 
+        PORTAL_ASSERT((type == ResourceType::Unknown || other.type == ResourceType::Unknown) || type == other.type, "Resource types don't match");
+
         resource_id = std::exchange(other.resource_id, INVALID_STRING_ID);
+        type = std::exchange(other.type, ResourceType::Unknown);
         state = std::exchange(other.state, ResourceState::Unknown);
         resource = std::exchange(other.resource, nullptr);
         reference_manager = std::exchange(other.reference_manager, std::nullopt);
@@ -356,13 +364,14 @@ public:
         if (!casted)
         {
             LOG_ERROR_TAG("Resource", "Failed to cast resource \"{}\" to type \"{}\"", resource_id, U::static_type());
-            return ResourceReference<U>(resource_id, registry.value().get(), reference_manager.value().get());
+            return ResourceReference<U>(resource_id, utils::to_resource_type<U>(), registry.value().get(), reference_manager.value().get());
         }
 
-        return ResourceReference<U>(resource_id, registry.value().get(), reference_manager.value().get());
+        return ResourceReference<U>(resource_id, utils::to_resource_type<U>(), registry.value().get(), reference_manager.value().get());
     }
 
     [[nodiscard]] StringId get_resource_id() const { return resource_id; }
+    [[nodiscard]] ResourceType get_resource_type() const { return type; }
 
 private:
     friend class ResourceRegistry;
@@ -373,11 +382,13 @@ private:
 
     ResourceReference(
         const StringId& resource_id,
+        const ResourceType& type,
         ResourceRegistry& registry,
         ReferenceManager& reference_manager
     ) : reference_manager(reference_manager),
         registry(registry),
         resource_id(resource_id),
+        type(type),
         state(ResourceState::Unknown)
     {
         if (resource_id != INVALID_STRING_ID)
@@ -396,6 +407,7 @@ private:
     std::optional<std::reference_wrapper<ResourceRegistry>> registry = std::nullopt;
 
     StringId resource_id = INVALID_STRING_ID;
+    ResourceType type = ResourceType::Unknown;
 
     mutable ResourceState state = ResourceState::Null;
     mutable Reference<T> resource = nullptr;

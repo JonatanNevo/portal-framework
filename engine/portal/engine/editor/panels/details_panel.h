@@ -13,6 +13,7 @@
 #include "portal/engine/ecs/entity.h"
 #include "portal/engine/editor/editor_context.h"
 #include "portal/engine/editor/selection_system.h"
+#include "portal/engine/imgui/utils.h"
 #include "portal/third_party/font_awsome/IconsFontAwesome6.h"
 
 namespace portal
@@ -100,8 +101,7 @@ private:
             context.icons.get_descriptor(EditorIcon::Settings),
             context.theme.get_color(imgui::ThemeColors::Text, 0.8f),
             context.theme.get_color(imgui::ThemeColors::Text, 1.f),
-            context.theme.get_color(imgui::ThemeColors::Text, 0.6f),
-            imgui::get_item_rect()
+            context.theme.get_color(imgui::ThemeColors::Text, 0.6f)
         );
 
         if (ImGui::BeginPopup("ComponentOptions"))

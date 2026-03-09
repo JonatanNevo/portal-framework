@@ -148,7 +148,7 @@ public:
         auto type = utils::to_resource_type<T>();
         create_resource(resource_id, type);
 
-        auto reference = ResourceReference<T>(resource_id, *this, reference_manager);
+        auto reference = ResourceReference<T>(resource_id, type, *this, reference_manager);
         return reference;
     }
 
@@ -162,9 +162,10 @@ public:
     template <ResourceConcept T>
     ResourceReference<T> immediate_load(StringId resource_id)
     {
+        auto type = utils::to_resource_type<T>();
         create_resource_immediate(resource_id);
 
-        auto reference = ResourceReference<T>(resource_id, *this, reference_manager);
+        auto reference = ResourceReference<T>(resource_id, type, *this, reference_manager);
         return reference;
     }
 
@@ -187,14 +188,18 @@ public:
     template <ResourceConcept T>
     ResourceReference<T> get(const StringId resource_id)
     {
-        if (resources.contains(resource_id))
-            return ResourceReference<T>(resource_id, *this, reference_manager);
-
         auto res = database.find(resource_id);
         if (res.has_value())
-            return ResourceReference<T>(res->resource_id, *this, reference_manager);
+            return ResourceReference<T>(res->resource_id, res->type, *this, reference_manager);
 
-        return ResourceReference<T>(INVALID_STRING_ID, *this, reference_manager);
+        if (resources.contains(resource_id))
+        {
+            const auto& ref = resources.at(resource_id);
+            return ResourceReference<T>(resource_id, ref.resource->get_resource_type(), *this, reference_manager);
+        }
+
+        auto type = utils::to_resource_type<T>();
+        return ResourceReference<T>(INVALID_STRING_ID, type, *this, reference_manager);
     }
 
     /**
@@ -246,6 +251,8 @@ public:
             }
         );
     }
+
+    std::vector<ResourceReference<Resource>> list_all_resources();
 
     [[nodiscard]] ecs::Registry& get_ecs_registry() const { return ecs_registry; }
     [[nodiscard]] const Project& get_project() const { return project; }

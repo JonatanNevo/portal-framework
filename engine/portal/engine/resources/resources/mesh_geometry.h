@@ -59,6 +59,8 @@ namespace resources
 class MeshGeometry final : public Resource
 {
 public:
+    DECLARE_RESOURCE(ResourceType::Mesh);
+
     explicit MeshGeometry(const StringId& id, const resources::MeshGeometryData& geometry);
 
     [[nodiscard]] const std::shared_ptr<renderer::vulkan::AllocatedBuffer>& get_index_buffer() const;
