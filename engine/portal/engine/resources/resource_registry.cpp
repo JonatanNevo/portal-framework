@@ -103,6 +103,20 @@ void ResourceRegistry::wait_all(const std::span<Job<>> jobs) const
     scheduler.wait_for_jobs(jobs);
 }
 
+std::vector<ResourceReference<Resource>> ResourceRegistry::list_all_resources()
+{
+    auto vec = std::ranges::to<std::vector>(
+        resources | std::ranges::views::transform(
+            [this](auto& it)
+            {
+                return this->get<Resource>(it.first);
+            }
+        )
+    );
+
+    return vec;
+}
+
 void ResourceRegistry::save_resource(resources::ResourceData& resource_data)
 {
     {

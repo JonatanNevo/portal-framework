@@ -5,6 +5,8 @@
 
 #include "edit_vec3.h"
 
+#include "portal/engine/imgui/utils.h"
+
 namespace portal::imgui
 {
 struct EditVec3Consts
@@ -16,6 +18,7 @@ struct EditVec3Consts
     float size_addition_x = 2.f;
     float input_item_width_scale = 3.f;
     float button_rounding = 1.f;
+    float input_padding_y = 2.5f;
 };
 
 bool edit_vec3(
@@ -24,7 +27,7 @@ bool edit_vec3(
     ImVec2 size,
     float reset_value,
     bool& manually_edited,
-    glm::vec3 value,
+    glm::vec3& value,
     VectorAxis render_multi_select_axes,
     float speed,
     glm::vec3 v_min,
@@ -33,7 +36,7 @@ bool edit_vec3(
     ImGuiSliderFlags flags
 )
 {
-    constexpr static EditVec3Consts consts;
+    static constexpr EditVec3Consts consts;
 
     ImGui::BeginVertical((std::string(label) + "vertical").data());
     bool changed = false;
@@ -73,14 +76,20 @@ bool edit_vec3(
     {
         ScopedStyle button_frame(ImGuiStyleVar_FramePadding, ImVec2{consts.frame_padding, 0.f});
         ScopedStyle button_rounding(ImGuiStyleVar_FrameRounding, consts.button_rounding);
+        ScopedStyle disable_item_spacing(ImGuiStyleVar_ItemSpacing, ImVec2{0, 0});
 
         ScopedColor button_color(ImGuiCol_Button, color_normal);
         ScopedColor button_hovered_color(ImGuiCol_ButtonHovered, color_hovered);
         ScopedColor button_active_color(ImGuiCol_ButtonActive, color_active);
 
-        ScopedFont bold_fond(STRING_ID("Bold"));
+        const auto id = fmt::format("##{}", label);
+        ScopedID scoped_id(id.c_str());
+
+        ImGui::SetNextItemWidth(line_height);
 
         shift_cursor(0.f, consts.frame_padding / 2.f);
+        auto text_color = context.theme.scoped_color(ImGuiCol_Text, imgui::ThemeColors::Text);
+        ScopedFont bold_font(STRING_ID("Bold"));
         const auto button_clicked = ImGui::Button(value_label.c_str(), button_size);
         if (ImGui::IsItemActivated())
         {
@@ -96,10 +105,12 @@ bool edit_vec3(
         {
             on_deactivate();
         }
+        shift_cursor(0.f, -consts.frame_padding / 2.f);
 
         ImGui::SameLine(0.f, consts.outline_spacing);
         ImGui::SetNextItemWidth(input_item_width);
-        shift_cursor(0.f, -consts.frame_padding / 2.f);
+
+        shift_cursor(0.f, consts.input_padding_y);
 
         ImGui::PushItemFlag(ImGuiItemFlags_MixedValue, render_multi_select);
         const bool was_temp_input_active = ImGui::TempInputIsActive(ImGui::GetID(("##" + value_label).c_str()));
@@ -182,6 +193,12 @@ bool edit_vec3(
 }
 
 
+// struct TransformVec3Consts
+// {
+//     float column_width = 70.f;
+//     float frame_padding_scale = 2.f;
+//     float columns_width_offset = 30.f;
+// };
 
 // template <typename Func>
 // void transform_vec3_slider(

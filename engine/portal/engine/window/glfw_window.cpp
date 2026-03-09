@@ -180,8 +180,13 @@ static void glfw_key_callback(GLFWwindow* handle, int key, int, int action, int 
 {
     if (auto* dispatcher = static_cast<entt::dispatcher*>(glfwGetWindowUserPointer(handle)))
     {
-        auto portal_key = KEY_MAPPING.at(key);
+        if (!KEY_MAPPING.contains(key))
+        {
+            LOGGER_WARN("Unknown key: {}", key);
+            return;
+        }
 
+        auto portal_key = KEY_MAPPING.at(key);
 
         KeyModifierFlag modifiers = KeyModifierBits::None;
         if (mods & GLFW_MOD_SHIFT)

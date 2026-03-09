@@ -12,6 +12,7 @@
 #include "portal/engine/editor/editor_context.h"
 #include "portal/engine/editor/selection_system.h"
 #include "portal/engine/imgui/imgui_scoped.h"
+#include "portal/engine/imgui/utils.h"
 #include "portal/input/input_manager.h"
 
 namespace portal::content_browser
@@ -97,7 +98,8 @@ Action Item::on_render(
         //==========
 
         // TODO: implement some thumbnail caching system
-        ImGui::InvisibleButton("##thumbnailButton", ImVec2{thumbnail_size, thumbnail_size});
+        ImGui::Dummy(ImVec2{thumbnail_size, thumbnail_size});
+
         // TODO: render thumbnail
 
         imgui::draw_button_image(
@@ -231,6 +233,43 @@ Action Item::on_render(
     //======================
     ImGui::EndGroup();
 
+    // Drag and Drop
+    //===============
+    if (!is_selected)
+        update_drop(item_list, result);
+
+    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
+    {
+        dragging = true;
+
+        const auto& selections = SelectionSystem::get_selections(selection_context);
+        if (!SelectionSystem::is_selected(resource_id, selection_context))
+            result |= ActionBit::ClearSelections;
+
+
+        if (!selections.empty())
+        {
+            for (auto& selected_item : selections)
+            {
+                // TODO: is this the correct id?
+                size_t index = item_list.find_item(selected_item);
+                if (index == ItemList::invalid_item)
+                    continue;
+
+                auto& item = item_list[index];
+                ImGui::Image(static_cast<VkDescriptorSet>(editor_context.icons.get_descriptor(item->get_icon())), ImVec2(20, 20));
+                ImGui::SameLine();
+                const auto name = item->get_display_name();
+                ImGui::TextUnformatted(name.c_str());
+            }
+
+            ImGui::SetDragDropPayload("resource_payload", selections.data(), sizeof(StringId) * selections.size());
+        }
+
+        result |= ActionBit::Selected;
+        ImGui::EndDragDropSource();
+    }
+
     // Draw outline
     //-------------
     if (is_selected || ImGui::IsItemHovered())
@@ -270,41 +309,6 @@ Action Item::on_render(
 
     // Mouse Events handling
     //======================
-
-    if (!is_selected)
-        update_drop(item_list, result);
-
-    if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_SourceAllowNullID))
-    {
-        dragging = true;
-
-        const auto& selections = SelectionSystem::get_selections(selection_context);
-        if (!SelectionSystem::is_selected(resource_id, selection_context))
-            result |= ActionBit::ClearSelections;
-
-
-        if (!selections.empty())
-        {
-            for (auto& selected_item : selections)
-            {
-                // TODO: is this the correct id?
-                size_t index = item_list.find_item(selected_item);
-                if (index == ItemList::invalid_item)
-                    continue;
-
-                auto& item = item_list[index];
-                ImGui::Image(static_cast<VkDescriptorSet>(editor_context.icons.get_descriptor(item->get_icon())), ImVec2(20, 20));
-                ImGui::SameLine();
-                const auto name = item->get_display_name();
-                ImGui::TextUnformatted(name.c_str());
-            }
-
-            ImGui::SetDragDropPayload("resource_payload", selections.data(), sizeof(StringId) * selections.size());
-        }
-
-        result |= ActionBit::Selected;
-        ImGui::EndDragDropSource();
-    }
 
     if (ImGui::IsItemHovered())
     {

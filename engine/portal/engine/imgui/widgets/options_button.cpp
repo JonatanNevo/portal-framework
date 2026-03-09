@@ -9,6 +9,7 @@
 #include <imgui.h>
 
 #include "portal/engine/editor/editor_context.h"
+#include "portal/engine/imgui/utils.h"
 
 namespace portal::imgui
 {

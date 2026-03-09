@@ -4,11 +4,10 @@
 //
 
 #pragma once
-#include <memory>
 #include <vector>
 
+#include "base_descriptor.h"
 #include "portal/engine/reference.h"
-#include "portal/engine/renderer/renderer_resource.h"
 #include "portal/engine/renderer/descriptors/descriptor_types.h"
 
 
@@ -32,7 +31,7 @@ class ImageView;
 struct DescriptorInput
 {
     DescriptorResourceType type = DescriptorResourceType::Unknown;
-    std::vector<Reference<RendererResource>> input;
+    std::vector<Reference<BaseDescriptor>> input;
 
     DescriptorInput() = default;
     DescriptorInput(const Reference<UniformBuffer>& buffer);

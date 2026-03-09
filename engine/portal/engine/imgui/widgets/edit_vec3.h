@@ -26,11 +26,11 @@ bool edit_vec3(
     ImVec2 size,
     float reset_value,
     bool& manually_edited,
-    glm::vec3 value,
+    glm::vec3& value,
     VectorAxis render_multi_select_axes = VectorAxisBits::None,
     float speed = 1.f,
     glm::vec3 v_min = glm::zero<glm::vec3>(),
-    glm::vec3 v_max = glm::one<glm::vec3>(),
+    glm::vec3 v_max = glm::zero<glm::vec3>(),
     const char* format = "%.2f",
     ImGuiSliderFlags flags = ImGuiSliderFlags_None
 );

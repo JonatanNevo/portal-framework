@@ -8,7 +8,7 @@
 #include "image_types.h"
 #include "portal/core/buffer.h"
 #include "portal/engine/reference.h"
-#include "portal/engine/renderer/renderer_resource.h"
+#include "portal/engine/renderer/descriptors/base_descriptor.h"
 
 namespace portal::renderer
 {
@@ -21,10 +21,10 @@ class ImageView;
  * Provides dimension queries, data transfer, mipmap support, and per-layer view creation.
  * Concrete implementations (VulkanImage) handle actual GPU allocation.
  */
-class Image : public RendererResource
+class Image: public BaseDescriptor
 {
 public:
-    explicit Image(const StringId& id) : RendererResource(id) {}
+    explicit Image(const StringId& id): id(id) {}
 
     /** @brief Resizes image (recreates GPU allocation) */
     virtual void resize(size_t width, size_t height) = 0;
@@ -75,6 +75,11 @@ public:
      * @return CPU buffer with image data
      */
     virtual Buffer copy_to_host_buffer() = 0;
+
+    [[nodiscard]] StringId get_id() const { return id; }
+
+protected:
+    StringId id;
 };
 
 /**
@@ -95,10 +100,10 @@ struct ImageViewProperties
  * @class ImageView
  * @brief Abstract image view interface for specific mip/layer access
  */
-class ImageView : public RendererResource
+class ImageView: public BaseDescriptor
 {
 public:
-    explicit ImageView(const ImageViewProperties& properties) : RendererResource(properties.name), properties(properties)
+    explicit ImageView(const ImageViewProperties& properties) : properties(properties)
     {
         PORTAL_ASSERT(properties.image != nullptr, "Image cannot be nullptr");
         if (properties.name == INVALID_STRING_ID)

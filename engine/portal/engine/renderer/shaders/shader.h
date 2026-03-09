@@ -13,6 +13,7 @@
 #include "portal/core/concurrency/spin_lock.h"
 #include "portal/engine/reference.h"
 #include "portal/engine/renderer/shaders/shader_types.h"
+#include "portal/engine/resources/resources/resource.h"
 
 namespace portal
 {

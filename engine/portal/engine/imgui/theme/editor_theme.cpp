@@ -7,16 +7,10 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "portal/engine/imgui/utils.h"
+
 namespace portal::imgui
 {
-namespace
-{
-    ImVec4 rgb(const float r, const float g, const float b, const float a = 255.f)
-    {
-        return ImVec4(r / 255.f, g / 255.f, b / 255.f, a / 255.f);
-    }
-}
-
 EditorTheme::EditorTheme()
 {
     load_default_dark();
@@ -32,8 +26,8 @@ void EditorTheme::load_default_dark()
     colors[ThemeColors::AccentPrimaryLeft] = rgb(66, 150, 250); // Main accent left
     colors[ThemeColors::AccentPrimaryRight] = rgb(66, 0, 144);  // Main accent right
     colors[ThemeColors::Accent2] = rgb(96, 115, 181);           // Minor accents
-    colors[ThemeColors::Text] = rgb(255, 255, 255);            // Main text
-    colors[ThemeColors::TextDarker] = rgb(128, 128, 128);            // Disabled/secondary text
+    colors[ThemeColors::Text] = rgb(255, 255, 255);             // Main text
+    colors[ThemeColors::TextDarker] = rgb(128, 128, 128);       // Disabled/secondary text
     colors[ThemeColors::Background1] = rgb(37, 37, 38);         // Window background
     colors[ThemeColors::Background2] = rgb(30, 30, 30);         // Group panels
     colors[ThemeColors::Background3] = rgb(51, 51, 51);         // Inner panels
@@ -57,8 +51,8 @@ void EditorTheme::load_default_light()
     colors[ThemeColors::AccentPrimaryLeft] = rgb(90, 140, 200); // Main accent left
     colors[ThemeColors::AccentPrimaryRight] = rgb(54, 0, 118);  // Main accent right
     colors[ThemeColors::Accent2] = rgb(110, 110, 120);          // Minor accents
-    colors[ThemeColors::Text] = rgb(30, 30, 30);               // Main text
-    colors[ThemeColors::TextDarker] = rgb(90, 90, 90);               // Disabled/secondary text
+    colors[ThemeColors::Text] = rgb(30, 30, 30);                // Main text
+    colors[ThemeColors::TextDarker] = rgb(90, 90, 90);          // Disabled/secondary text
     colors[ThemeColors::Background1] = rgb(240, 240, 240);      // Window background
     colors[ThemeColors::Background2] = rgb(225, 225, 225);      // Group panels
     colors[ThemeColors::Background3] = rgb(200, 200, 200);      // Inner panels

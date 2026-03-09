@@ -83,7 +83,7 @@ public:
      * @param name Binding name
      * @return Resource reference
      */
-    Reference<RendererResource> get_input(StringId name) override;
+    Reference<BaseDescriptor> get_input(StringId name) override;
 
     /**
      * @brief Checks if binding is invalidated

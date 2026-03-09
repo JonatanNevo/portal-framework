@@ -38,6 +38,7 @@ public:
     virtual ~Resource() = default;
 
     static ResourceType static_type() { return ResourceType::Unknown; }
+    [[nodiscard]] virtual ResourceType get_resource_type() const { return static_type(); }
     [[nodiscard]] const StringId& get_id() const { return id; }
 
     bool operator==(const Resource& other) const;
@@ -47,8 +48,9 @@ protected:
     ResourceDirtyFlags dirty_flags;
 };
 
-#define DECLARE_RESOURCE(type) static portal::ResourceType static_type() { return type; }
-
+#define DECLARE_RESOURCE(type)                                 \
+    static portal::ResourceType static_type() { return type; } \
+    [[nodiscard]] ResourceType get_resource_type() const override { return type; }
 
 template <typename T>
 concept ResourceConcept = requires {

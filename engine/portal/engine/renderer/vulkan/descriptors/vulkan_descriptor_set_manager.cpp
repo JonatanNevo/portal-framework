@@ -217,7 +217,7 @@ void VulkanDescriptorSetManager::set_input(StringId name, const Reference<ImageV
         LOGGER_WARN("[{}] Input {} not found", properties.debug_name.string, name.string);
 }
 
-Reference<RendererResource> VulkanDescriptorSetManager::get_input(StringId name)
+Reference<BaseDescriptor> VulkanDescriptorSetManager::get_input(StringId name)
 {
     auto* decl = get_input_declaration(name);
     if (decl)

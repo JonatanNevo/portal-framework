@@ -5,8 +5,11 @@
 
 #include "utils.h"
 #include <imgui_internal.h>
+#include <imgui_stdlib.h>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "imgui_scoped.h"
+#include "widgets/edit_vec3.h"
 
 namespace portal::imgui
 {
@@ -238,6 +241,524 @@ void pop_id()
     s_ui_context_id--;
 }
 
+void help_marker(const std::string_view description)
+{
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered())
+    {
+        ImGui::BeginTooltip();
+        ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+        ImGui::TextUnformatted(description.data());
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
+}
+
+void begin_property_grid(const size_t columns)
+{
+    push_id();
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 8.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4.0f, 4.0f));
+    ImGui::Columns(static_cast<int>(columns));
+}
+
+void end_property_grid()
+{
+    ImGui::Columns(1);
+    underline();
+    ImGui::PopStyleVar(2);
+    // shift_cursor(0.0f, 18.0f);
+    pop_id();
+}
+
+void begin_property(const std::string_view label, const std::string_view help_text)
+{
+    // shift_cursor(10.f, 9.f);
+    ImGui::TextUnformatted(label.data());
+
+    if (!help_text.empty())
+    {
+        ImGui::SameLine();
+        help_marker(help_text);
+    }
+
+    ImGui::NextColumn();
+    // shift_cursor(0, 4.f);
+    ImGui::PushItemWidth(-1.f);
+}
+
+void end_property()
+{
+    ImGui::PopItemWidth();
+    ImGui::NextColumn();
+    // underline();
+}
+
+bool property_button(const std::string_view label, const std::string_view button_text, const std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::Button(fmt::format("{}##{}", button_text.data(), label.data()).c_str());
+
+    end_property();
+    return modified;
+}
+
+bool property_radio(
+    std::string_view label,
+    int& choice,
+    const std::map<int, const std::string_view>& options,
+    std::string_view help_text,
+    const std::map<int, const std::string_view>& options_help_text
+)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    for (auto [value, option] : options)
+    {
+        auto radio_label = fmt::format("{}##{}", option, label);
+        if (ImGui::RadioButton(radio_label.c_str(), &choice, value))
+            modified = true;
+
+        if (auto option_help_text = options_help_text.find(value); option_help_text != options_help_text.end())
+        {
+            if (!option_help_text->second.empty())
+            {
+                ImGui::SameLine();
+                help_marker(option_help_text->second);
+            }
+        }
+    }
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, std::string& value, const std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputText(fmt::format("##{}", label).c_str(), &value);
+
+    end_property();
+    return modified;
+}
+
+void property(std::string_view label, const std::string& value, const std::string_view help_text)
+{
+    begin_property(label, help_text);
+
+    ImGui::BeginDisabled();
+    ImGui::InputText(fmt::format("##{}", label).c_str(), const_cast<char*>(value.c_str()), value.size(), ImGuiInputTextFlags_ReadOnly);
+    ImGui::EndDisabled();
+
+    end_property();
+}
+
+void Property(std::string_view label, std::string_view value, const std::string_view help_text)
+{
+    begin_property(label, help_text);
+
+    ImGui::BeginDisabled();
+    ImGui::InputText(fmt::format("##{}", label).c_str(), const_cast<char*>(value.data()), value.size(), ImGuiInputTextFlags_ReadOnly);
+    ImGui::EndDisabled();
+
+    end_property();
+}
+
+bool property_multiline(std::string_view label, std::string& value, const std::string_view help_text)
+{
+    bool modified = false;
+
+    ImGui::TextUnformatted(label.data());
+    if (!help_text.empty())
+    {
+        ImGui::SameLine();
+        help_marker(help_text);
+    }
+
+    ImGui::NextColumn();
+    ImGui::PushItemWidth(-1.f);
+
+    modified = ImGui::InputTextMultiline(fmt::format("##{}", label).c_str(), &value);
+
+    ImGui::PopItemWidth();
+    ImGui::NextColumn();
+
+    return modified;
+}
+
+bool property(std::string_view label, bool& value, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::Checkbox(fmt::format("##{}", label).c_str(), &value);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, int8_t& value, int8_t min, int8_t max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_S8, &value, 1.f, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, int16_t& value, int16_t min, int16_t max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_S16, &value, 1.f, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, int32_t& value, int32_t min, int32_t max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_S32, &value, 1.f, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, int64_t& value, int64_t min, int64_t max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_S64, &value, 1.f, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, uint8_t& value, uint8_t min, uint8_t max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_U8, &value, 1.f, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, uint16_t& value, uint16_t min, uint16_t max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_U16, &value, 1.f, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, uint32_t& value, uint32_t min, uint32_t max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_U32, &value, 1.f, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, uint64_t& value, uint64_t min, uint64_t max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_U64, &value, 1.f, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property_slider(std::string_view label, int& value, int min, int max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::SliderInt(fmt::format("##{}", label).c_str(), &value, min, max);
+
+    end_property();
+    return modified;
+}
+
+bool property_input(std::string_view label, int8_t& value, int8_t step, int8_t step_fast, ImGuiInputTextFlags flag, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_S8, &value, &step, &step_fast, nullptr, flag);
+
+    end_property();
+    return modified;
+}
+
+bool property_input(std::string_view label, int16_t& value, int16_t step, int16_t step_fast, ImGuiInputTextFlags flag, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_S16, &value, &step, &step_fast, nullptr, flag);
+
+    end_property();
+    return modified;
+}
+
+bool property_input(std::string_view label, int32_t& value, int32_t step, int32_t step_fast, ImGuiInputTextFlags flag, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_S32, &value, &step, &step_fast, nullptr, flag);
+
+    end_property();
+    return modified;
+}
+
+bool property_input(std::string_view label, int64_t& value, int64_t step, int64_t step_fast, ImGuiInputTextFlags flag, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_S64, &value, &step, &step_fast, nullptr, flag);
+
+    end_property();
+    return modified;
+}
+
+bool property_input(std::string_view label, uint8_t& value, uint8_t step, uint8_t step_fast, ImGuiInputTextFlags flag, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_U8, &value, &step, &step_fast, nullptr, flag);
+
+    end_property();
+    return modified;
+}
+
+bool property_input(std::string_view label, uint16_t& value, uint16_t step, uint16_t step_fast, ImGuiInputTextFlags flag, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_U16, &value, &step, &step_fast, nullptr, flag);
+
+    end_property();
+    return modified;
+}
+
+bool property_input(std::string_view label, uint32_t& value, uint32_t step, uint32_t step_fast, ImGuiInputTextFlags flag, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_U32, &value, &step, &step_fast, nullptr, flag);
+
+    end_property();
+    return modified;
+}
+
+bool property_input(std::string_view label, uint64_t& value, uint64_t step, uint64_t step_fast, ImGuiInputTextFlags flag, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_U64, &value, &step, &step_fast, nullptr, flag);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, float& value, float delta, float min, float max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_Float, &value, delta, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, double& value, float delta, double min, double max, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::DragScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_Double, &value, delta, &min, &max);
+
+    end_property();
+    return modified;
+}
+
+bool property_slider(std::string_view label, float& value, float step, float step_fast, ImGuiInputTextFlags flag, std::string_view help_text)
+{
+    bool modified = false;
+    begin_property(label, help_text);
+
+    modified = ImGui::InputScalar(fmt::format("##{}", label).c_str(), ImGuiDataType_Float, &value, &step, &step_fast, nullptr, flag);
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, glm::vec2& value, float delta, float min, float max, std::string_view help_text)
+{
+    begin_property(label, help_text);
+
+    const bool modified = ImGui::DragFloat2(fmt::format("##{}", label).c_str(), glm::value_ptr(value), delta, min, max);
+
+    end_property();
+    return modified;
+}
+
+bool property(EditorContext& context, std::string_view label, glm::vec3& value, float delta, float min, float max, std::string_view help_text)\
+{
+    begin_property(label, help_text);
+
+    const ImVec2 size(ImGui::GetContentRegionAvail().x - 8.0f, ImGui::GetFrameHeightWithSpacing());
+    [[maybe_unused]] bool manually_edited = false;
+    const bool modified = edit_vec3(
+        context,
+        std::format("##{0}", label).c_str(),
+        size,
+        0.0f,
+        manually_edited,
+        value,
+        VectorAxisBits::None,
+        delta,
+        glm::vec3{min},
+        glm::vec3{max}
+    );
+
+    end_property();
+    return modified;
+}
+
+bool property(std::string_view label, glm::vec4& value, float delta, float min, float max, std::string_view help_text)
+{
+    begin_property(label, help_text);
+
+    const bool modified = ImGui::DragFloat4(fmt::format("##{}", label).c_str(), glm::value_ptr(value), delta, min, max);
+
+    end_property();
+    return modified;
+}
+
+bool property_slider(std::string_view label, glm::vec2& value, float min, float max, std::string_view help_text)
+{
+    begin_property(label, help_text);
+
+    const bool modified = ImGui::SliderFloat2(fmt::format("##{}", label).c_str(), glm::value_ptr(value), min, max);
+
+    end_property();
+    return modified;
+}
+
+bool property_slider(std::string_view label, glm::vec3& value, float min, float max, std::string_view help_text)
+{
+    begin_property(label, help_text);
+
+    const bool modified = ImGui::SliderFloat3(fmt::format("##{}", label).c_str(), glm::value_ptr(value), min, max);
+
+    end_property();
+    return modified;
+}
+
+bool property_slider(std::string_view label, glm::vec4& value, float min, float max, std::string_view help_text)
+{
+    begin_property(label, help_text);
+
+    const bool modified = ImGui::SliderFloat4(fmt::format("##{}", label).c_str(), glm::value_ptr(value), min, max);
+
+    end_property();
+    return modified;
+}
+
+bool property_color(std::string_view label, glm::vec3& value, std::string_view help_text)
+{
+    begin_property(label, help_text);
+
+    const bool modified = ImGui::ColorEdit3(fmt::format("##{}", label).c_str(), glm::value_ptr(value));
+
+    end_property();
+    return modified;
+}
+
+bool property_color(std::string_view label, glm::vec4& value, std::string_view help_text)
+{
+    begin_property(label, help_text);
+
+    const bool modified = ImGui::ColorEdit4(fmt::format("##{}", label).c_str(), glm::value_ptr(value));
+
+    end_property();
+    return modified;
+}
+
+std::pair<std::string, bool> resource_validity_and_name(ResourceReference<Resource>& reference, const PropertyResourceReferenceSettings&)
+{
+    std::string name = "Null";
+    bool valid = false;
+
+    const auto state = reference.get_state();
+    switch (state)
+    {
+    case ResourceState::Loaded:
+        {
+            name = reference->get_id().string;
+            valid = true;
+            break;
+        }
+    case ResourceState::Pending:
+        {
+            name = std::string(reference->get_id().string) + " (pending)";
+            valid = true;
+            break;
+        }
+    case ResourceState::Unloaded:
+        {
+            name = std::string(reference->get_id().string) + " (unloaded)";;
+            valid = true;
+            break;
+        }
+    case ResourceState::Missing:
+        {
+            name = std::string(reference->get_id().string) + " (missing)";;
+            break;
+        }
+    case ResourceState::Error:
+        {
+            name = std::string(reference->get_id().string) + " (errored)";;
+            break;
+        }
+    case ResourceState::Null:
+    case ResourceState::Unknown:
+        break;
+    }
+
+    return {name, valid};
+}
+
 int menu_item_icon_padding(const float icon_size)
 {
     const float space_width = ImGui::CalcTextSize(" ").x;
@@ -322,6 +843,12 @@ bool begin_menu_with_image(vk::DescriptorSet image, const char* label, bool enab
     );
 
     return clicked;
+}
+
+void underline(const bool full_width, const float offset_x, const float offset_y)
+{
+    const ImU32 color = ImGui::GetColorU32(ImGui::GetStyle().Colors[ImGuiCol_Separator]);
+    underline(color, full_width, offset_x, offset_y);
 }
 
 void underline(const ImU32 color, const bool full_width, const float offset_x, const float offset_y)

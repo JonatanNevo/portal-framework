@@ -6,8 +6,9 @@
 #pragma once
 #include "portal/core/buffer.h"
 #include "portal/engine/reference.h"
-#include "portal/engine/renderer/renderer_resource.h"
+#include "portal/engine/renderer/descriptors/base_descriptor.h"
 #include "portal/engine/renderer/image/image_types.h"
+#include "portal/engine/resources/resources/resource.h"
 
 namespace portal::renderer
 {
@@ -19,7 +20,7 @@ namespace portal::renderer
  * predefined texture IDs (missing/white/black), and texture type (2D/cube).
  * Supports CPU buffer access and resizing.
  */
-class Texture : public RendererResource
+class Texture : public Resource, public BaseDescriptor
 {
 public:
     const static StringId MISSING_TEXTURE_ID;
@@ -28,7 +29,9 @@ public:
     const static StringId BLACK_CUBE_TEXTURE_ID;
 
 public:
-    explicit Texture(const StringId& id) : RendererResource(id) {};
+    DECLARE_RESOURCE(ResourceType::Texture);
+
+    explicit Texture(const StringId& id) : Resource(id) {};
 
     /** @brief Gets texture format */
     [[nodiscard]] virtual ImageFormat get_format() const = 0;
@@ -83,7 +86,5 @@ public:
 
     /** @brief Gets texture type (2D/cube) */
     [[nodiscard]] virtual TextureType get_type() const = 0;
-
-    static ResourceType static_type() { return ResourceType::Texture; }
 };
 }
