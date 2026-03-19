@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Chessboard_ORM",
     "resource_id": "game/composite/Chessboard_ORM",
     "source": "composite/Chessboard_ORM.jpg",
     "texture": {

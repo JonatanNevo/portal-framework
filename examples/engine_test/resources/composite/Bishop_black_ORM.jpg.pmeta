@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Bishop_black_ORM",
     "resource_id": "game/composite/Bishop_black_ORM",
     "source": "composite/Bishop_black_ORM.jpg",
     "texture": {

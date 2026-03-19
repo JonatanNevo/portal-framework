@@ -73,7 +73,7 @@ public:
     explicit EditorIcons(ResourceRegistry& registry);
     ~EditorIcons();
 
-    vk::DescriptorSet get_descriptor(EditorIcon name) const;
+    [[nodiscard]] VkDescriptorSet get_descriptor(EditorIcon name) const;
     ResourceReference<renderer::vulkan::VulkanTexture> get_texture(EditorIcon name);
 
 private:

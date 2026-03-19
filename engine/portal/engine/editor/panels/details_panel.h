@@ -18,6 +18,7 @@
 
 namespace portal
 {
+
 class DetailsPanel final : public Panel
 {
 public:
@@ -37,9 +38,9 @@ private:
     {
         struct DrawComponentConsts
         {
-            ImVec2 tree_node_size = {14.f, 14.f};
             float item_padding = 4.f;
-            float same_line_options = 5.f;
+            float same_line_options = -7.f;
+            ImVec2 options_icon_size = {20.f, 20.f};
             float shift_line_scale_y_options = 3.f;
         };
 
@@ -91,18 +92,20 @@ private:
         bool reset_values = false;
         bool remove_component = false;
 
-        ImGui::SameLine(content_region_available.x - line_height - consts.same_line_options);
-        imgui::shift_cursor(0.f, line_height / consts.shift_line_scale_y_options);
-        if (ImGui::InvisibleButton("##options", ImVec2(line_height, line_height)) || right_clicked)
-        {
-            ImGui::OpenPopup("ComponentOptions");
-        }
+        ImGui::SameLine(content_region_available.x - consts.options_icon_size.x - consts.same_line_options);
+        // imgui::shift_cursor(0.f, line_height / consts.shift_line_scale_y_options);
         imgui::draw_button_image(
             context.icons.get_descriptor(EditorIcon::Settings),
             context.theme.get_color(imgui::ThemeColors::Text, 0.8f),
             context.theme.get_color(imgui::ThemeColors::Text, 1.f),
-            context.theme.get_color(imgui::ThemeColors::Text, 0.6f)
+            context.theme.get_color(imgui::ThemeColors::Text, 0.6f),
+            consts.options_icon_size
         );
+
+        if (ImGui::InvisibleButton("##options", ImVec2(line_height, line_height)) || right_clicked)
+        {
+            ImGui::OpenPopup("ComponentOptions");
+        }
 
         if (ImGui::BeginPopup("ComponentOptions"))
         {

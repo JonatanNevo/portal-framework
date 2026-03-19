@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Queen_black_normal",
     "resource_id": "game/composite/Queen_black_normal",
     "source": "composite/Queen_black_normal.jpg",
     "texture": {

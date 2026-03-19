@@ -200,6 +200,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
 
         auto resource_id = STRING_ID(create_name(material.name, ResourceType::Material));
         SourceMetadata material_meta{
+            .name = STRING_ID(get_last_part(resource_id.string)),
             .resource_id = resource_id,
             .type = ResourceType::Material,
             .dependencies = dependencies,
@@ -230,6 +231,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
         auto resource_id = STRING_ID(create_name(mesh.name, ResourceType::Mesh));
 
         SourceMetadata mesh_meta = {
+            .name = STRING_ID(get_last_part(resource_id.string)),
             .resource_id = resource_id,
             .type = ResourceType::Mesh,
             .dependencies = dependencies,
@@ -269,6 +271,7 @@ void GltfLoader::enrich_metadata(SourceMetadata& meta, const ResourceSource& sou
 
         auto resource_id = STRING_ID(create_name(scene.name, ResourceType::Scene));
         SourceMetadata mesh_meta = {
+            .name = STRING_ID(get_last_part(resource_id.string)),
             .resource_id = resource_id,
             .type = ResourceType::Scene,
             .dependencies = dependencies,
@@ -343,11 +346,13 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
         [&](const fastgltf::sources::URI& uri_source)
         {
             image_source = nullptr;
-            auto uri_path = uri_source.uri.path();
-            auto uri_filename = std::filesystem::path(uri_path).stem();
+            const auto uri_path = uri_source.uri.path();
+            const auto uri_filename = std::filesystem::path(uri_path).stem();
 
+            const auto resource_id = STRING_ID((base_name / uri_filename).generic_string());
             image_source_meta = SourceMetadata{
-                .resource_id = STRING_ID((base_name / uri_filename).generic_string()),
+                .name = STRING_ID(get_last_part(resource_id.string)),
+                .resource_id = resource_id,
                 .type = ResourceType::Texture,
                 .source = STRING_ID((base_path / std::filesystem::path(uri_source.uri.path())).generic_string()),
                 .format = SourceFormat::Image,
@@ -355,8 +360,10 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
         },
         [&](const fastgltf::sources::Array& array_source)
         {
+            const auto resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture));
             image_source_meta = SourceMetadata{
-                .resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture)),
+                .name = STRING_ID(get_last_part(resource_id.string)),
+                .resource_id = resource_id,
                 .type = ResourceType::Texture,
                 .source = STRING_ID(fmt::format("composite://{}/gltf/texture/array/{}", composite_id.string, texture_name)),
                 .format = SourceFormat::Memory,
@@ -366,8 +373,10 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
         },
         [&](const fastgltf::sources::Vector& vector_source)
         {
+            const auto resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture));
             image_source_meta = SourceMetadata{
-                .resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture)),
+                .name = STRING_ID(get_last_part(resource_id.string)),
+                .resource_id = resource_id,
                 .type = ResourceType::Texture,
                 .source = STRING_ID(fmt::format("composite://{}/gltf/texture/vector/{}", composite_id.string, texture_name)),
                 .format = SourceFormat::Memory,
@@ -386,8 +395,10 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
                         const auto* data_ptr = array_buffer.bytes.data() + buffer_view.byteOffset;
                         const auto data_size = buffer_view.byteLength;
 
+                        const auto resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture));
                         image_source_meta = SourceMetadata{
-                            .resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture)),
+                            .name = STRING_ID(get_last_part(resource_id.string)),
+                            .resource_id = resource_id,
                             .type = ResourceType::Texture,
                             .source = STRING_ID(fmt::format("composite://{}/gltf/texture/view/array/{}", composite_id.string, texture_name)),
                             .format = SourceFormat::Memory,
@@ -400,8 +411,10 @@ std::pair<SourceMetadata, Reference<ResourceSource>> GltfLoader::find_image_sour
                         const auto* data_ptr = vector_buffer.bytes.data() + buffer_view.byteOffset;
                         const auto data_size = buffer_view.byteLength;
 
+                        const auto resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture));
                         image_source_meta = SourceMetadata{
-                            .resource_id = STRING_ID(create_name_relative(base_name, texture_name, ResourceType::Texture)),
+                            .name = STRING_ID(get_last_part(resource_id.string)),
+                            .resource_id = resource_id,
                             .type = ResourceType::Texture,
                             .source = STRING_ID(fmt::format("composite://{}/gltf/texture/view/vector/{}", composite_id.string, texture_name)),
                             .format = SourceFormat::Memory,

@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Pawn_ORM",
     "resource_id": "game/composite/Pawn_ORM",
     "source": "composite/Pawn_ORM.jpg",
     "texture": {

@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Chessboard_base_color",
     "resource_id": "game/composite/Chessboard_base_color",
     "source": "composite/Chessboard_base_color.jpg",
     "texture": {

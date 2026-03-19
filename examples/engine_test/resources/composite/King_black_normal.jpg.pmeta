@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "King_black_normal",
     "resource_id": "game/composite/King_black_normal",
     "source": "composite/King_black_normal.jpg",
     "texture": {
