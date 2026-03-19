@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Pawn_white_base_color",
     "resource_id": "game/composite/Pawn_white_base_color",
     "source": "composite/Pawn_white_base_color.jpg",
     "texture": {

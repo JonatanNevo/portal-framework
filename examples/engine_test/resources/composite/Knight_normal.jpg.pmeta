@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Knight_normal",
     "resource_id": "game/composite/Knight_normal",
     "source": "composite/Knight_normal.jpg",
     "texture": {

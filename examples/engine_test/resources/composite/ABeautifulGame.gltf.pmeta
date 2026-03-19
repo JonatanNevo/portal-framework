@@ -11,6 +11,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Bishop_Black",
                 "resource_id": "game/composite/gltf-Material-Bishop_Black",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Bishop_Black",
                 "type": "Material"
@@ -25,6 +26,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Bishop_White",
                 "resource_id": "game/composite/gltf-Material-Bishop_White",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Bishop_White",
                 "type": "Material"
@@ -39,6 +41,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Castle_Black",
                 "resource_id": "game/composite/gltf-Material-Castle_Black",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Castle_Black",
                 "type": "Material"
@@ -53,6 +56,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Castle_White",
                 "resource_id": "game/composite/gltf-Material-Castle_White",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Castle_White",
                 "type": "Material"
@@ -67,6 +71,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Chessboard",
                 "resource_id": "game/composite/gltf-Material-Chessboard",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Chessboard",
                 "type": "Material"
@@ -81,6 +86,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-King_Black",
                 "resource_id": "game/composite/gltf-Material-King_Black",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/King_Black",
                 "type": "Material"
@@ -95,6 +101,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-King_White",
                 "resource_id": "game/composite/gltf-Material-King_White",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/King_White",
                 "type": "Material"
@@ -109,6 +116,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Knight_Black",
                 "resource_id": "game/composite/gltf-Material-Knight_Black",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Knight_Black",
                 "type": "Material"
@@ -123,6 +131,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Knight_White",
                 "resource_id": "game/composite/gltf-Material-Knight_White",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Knight_White",
                 "type": "Material"
@@ -137,6 +146,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Pawn_Body_Black",
                 "resource_id": "game/composite/gltf-Material-Pawn_Body_Black",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Pawn_Body_Black",
                 "type": "Material"
@@ -151,6 +161,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Pawn_Body_White",
                 "resource_id": "game/composite/gltf-Material-Pawn_Body_White",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Pawn_Body_White",
                 "type": "Material"
@@ -164,6 +175,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Pawn_Top_Black",
                 "resource_id": "game/composite/gltf-Material-Pawn_Top_Black",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Pawn_Top_Black",
                 "type": "Material"
@@ -177,6 +189,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Pawn_Top_White",
                 "resource_id": "game/composite/gltf-Material-Pawn_Top_White",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Pawn_Top_White",
                 "type": "Material"
@@ -191,6 +204,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Queen_Black",
                 "resource_id": "game/composite/gltf-Material-Queen_Black",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Queen_Black",
                 "type": "Material"
@@ -205,6 +219,7 @@
                 "material": {
                     "shader": "engine/shaders/pbr_static"
                 },
+                "name": "gltf-Material-Queen_White",
                 "resource_id": "game/composite/gltf-Material-Queen_White",
                 "source": "composite://game/composite/ABeautifulGame/gltf/material/Queen_White",
                 "type": "Material"
@@ -214,6 +229,7 @@
                     "game/composite/gltf-Material-Bishop_White"
                 ],
                 "format": "Memory",
+                "name": "gltf-Mesh-Bishop_Shared",
                 "resource_id": "game/composite/gltf-Mesh-Bishop_Shared",
                 "source": "composite://game/composite/ABeautifulGame/gltf/mesh/Bishop_Shared",
                 "type": "Mesh"
@@ -223,6 +239,7 @@
                     "game/composite/gltf-Material-Castle_White"
                 ],
                 "format": "Memory",
+                "name": "gltf-Mesh-Castle_Shared",
                 "resource_id": "game/composite/gltf-Mesh-Castle_Shared",
                 "source": "composite://game/composite/ABeautifulGame/gltf/mesh/Castle_Shared",
                 "type": "Mesh"
@@ -232,6 +249,7 @@
                     "game/composite/gltf-Material-Chessboard"
                 ],
                 "format": "Memory",
+                "name": "gltf-Mesh-Chessboard",
                 "resource_id": "game/composite/gltf-Mesh-Chessboard",
                 "source": "composite://game/composite/ABeautifulGame/gltf/mesh/Chessboard",
                 "type": "Mesh"
@@ -241,6 +259,7 @@
                     "game/composite/gltf-Material-King_White"
                 ],
                 "format": "Memory",
+                "name": "gltf-Mesh-King_Shared",
                 "resource_id": "game/composite/gltf-Mesh-King_Shared",
                 "source": "composite://game/composite/ABeautifulGame/gltf/mesh/King_Shared",
                 "type": "Mesh"
@@ -250,6 +269,7 @@
                     "game/composite/gltf-Material-Knight_White"
                 ],
                 "format": "Memory",
+                "name": "gltf-Mesh-Knight_Shared",
                 "resource_id": "game/composite/gltf-Mesh-Knight_Shared",
                 "source": "composite://game/composite/ABeautifulGame/gltf/mesh/Knight_Shared",
                 "type": "Mesh"
@@ -259,6 +279,7 @@
                     "game/composite/gltf-Material-Pawn_Body_Black"
                 ],
                 "format": "Memory",
+                "name": "gltf-Mesh-Pawn_Body_Shared",
                 "resource_id": "game/composite/gltf-Mesh-Pawn_Body_Shared",
                 "source": "composite://game/composite/ABeautifulGame/gltf/mesh/Pawn_Body_Shared",
                 "type": "Mesh"
@@ -268,6 +289,7 @@
                     "game/composite/gltf-Material-Pawn_Top_Black"
                 ],
                 "format": "Memory",
+                "name": "gltf-Mesh-Pawn_Top_Shared",
                 "resource_id": "game/composite/gltf-Mesh-Pawn_Top_Shared",
                 "source": "composite://game/composite/ABeautifulGame/gltf/mesh/Pawn_Top_Shared",
                 "type": "Mesh"
@@ -277,6 +299,7 @@
                     "game/composite/gltf-Material-Queen_White"
                 ],
                 "format": "Memory",
+                "name": "gltf-Mesh-Queen_Shared",
                 "resource_id": "game/composite/gltf-Mesh-Queen_Shared",
                 "source": "composite://game/composite/ABeautifulGame/gltf/mesh/Queen_Shared",
                 "type": "Mesh"
@@ -334,6 +357,7 @@
                     "game/composite/gltf-Mesh-Bishop_Shared"
                 ],
                 "format": "Memory",
+                "name": "gltf-Scene-Scene",
                 "resource_id": "game/composite/gltf-Scene-Scene",
                 "source": "composite://game/composite/ABeautifulGame/gltf/scene/Scene",
                 "type": "Scene"
@@ -415,9 +439,84 @@
         "game/composite/gltf-Mesh-Knight_Shared",
         "game/composite/gltf-Mesh-Bishop_Shared",
         "game/composite/gltf-Mesh-Bishop_Shared",
+        "game/composite/gltf-Scene-Scene",
+        "game/composite/King_black_normal",
+        "game/composite/King_black_ORM",
+        "game/composite/King_black_base_color",
+        "game/composite/King_white_normal",
+        "game/composite/King_white_ORM",
+        "game/composite/King_white_base_color",
+        "game/composite/Queen_black_normal",
+        "game/composite/Queen_black_ORM",
+        "game/composite/Queen_black_base_color",
+        "game/composite/Queen_white_normal",
+        "game/composite/Queen_white_ORM",
+        "game/composite/Queen_white_base_color",
+        "game/composite/Chessboard_normal",
+        "game/composite/Chessboard_ORM",
+        "game/composite/Chessboard_base_color",
+        "game/composite/Pawn_normal",
+        "game/composite/Pawn_ORM",
+        "game/composite/Pawn_normal",
+        "game/composite/Pawn_ORM",
+        "game/composite/Pawn_white_base_color",
+        "game/composite/Pawn_normal",
+        "game/composite/Pawn_ORM",
+        "game/composite/Pawn_normal",
+        "game/composite/Pawn_ORM",
+        "game/composite/Pawn_black_base_color",
+        "game/composite/Castle_normal",
+        "game/composite/Castle_ORM",
+        "game/composite/Castle_black_base_color",
+        "game/composite/Castle_normal",
+        "game/composite/Castle_ORM",
+        "game/composite/Castle_white_base_color",
+        "game/composite/Knight_normal",
+        "game/composite/Knight_ORM",
+        "game/composite/Knight_black_base_color",
+        "game/composite/Knight_normal",
+        "game/composite/Knight_ORM",
+        "game/composite/Knight_white_base_color",
+        "game/composite/Bishop_black_normal",
+        "game/composite/Bishop_black_ORM",
+        "game/composite/Bishop_black_base_color",
+        "game/composite/Bishop_white_normal",
+        "game/composite/Bishop_white_ORM",
+        "game/composite/Bishop_white_base_color",
+        "game/composite/gltf-Material-King_Black",
+        "game/composite/gltf-Material-King_White",
+        "game/composite/gltf-Material-Queen_Black",
+        "game/composite/gltf-Material-Queen_White",
+        "game/composite/gltf-Material-Chessboard",
+        "game/composite/gltf-Material-Pawn_Top_White",
+        "game/composite/gltf-Material-Pawn_Body_White",
+        "game/composite/gltf-Material-Pawn_Top_Black",
+        "game/composite/gltf-Material-Pawn_Body_Black",
+        "game/composite/gltf-Material-Castle_Black",
+        "game/composite/gltf-Material-Castle_White",
+        "game/composite/gltf-Material-Knight_Black",
+        "game/composite/gltf-Material-Knight_White",
+        "game/composite/gltf-Material-Bishop_Black",
+        "game/composite/gltf-Material-Bishop_White",
+        "game/composite/gltf-Mesh-King_Shared",
+        "game/composite/gltf-Mesh-King_Shared",
+        "game/composite/gltf-Mesh-Queen_Shared",
+        "game/composite/gltf-Mesh-Queen_Shared",
+        "game/composite/gltf-Mesh-Chessboard",
+        "game/composite/gltf-Mesh-Pawn_Top_Shared",
+        "game/composite/gltf-Mesh-Pawn_Body_Shared",
+        "game/composite/gltf-Mesh-Pawn_Top_Shared",
+        "game/composite/gltf-Mesh-Pawn_Body_Shared",
+        "game/composite/gltf-Mesh-Castle_Shared",
+        "game/composite/gltf-Mesh-Castle_Shared",
+        "game/composite/gltf-Mesh-Knight_Shared",
+        "game/composite/gltf-Mesh-Knight_Shared",
+        "game/composite/gltf-Mesh-Bishop_Shared",
+        "game/composite/gltf-Mesh-Bishop_Shared",
         "game/composite/gltf-Scene-Scene"
     ],
     "format": "Glft",
+    "name": "ABeautifulGame",
     "resource_id": "game/composite/ABeautifulGame",
     "source": "composite/ABeautifulGame.gltf",
     "type": "Composite"

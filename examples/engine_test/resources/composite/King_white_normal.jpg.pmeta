@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "King_white_normal",
     "resource_id": "game/composite/King_white_normal",
     "source": "composite/King_white_normal.jpg",
     "texture": {

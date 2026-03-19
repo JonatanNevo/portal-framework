@@ -121,6 +121,7 @@ void draw_button_image(
     ImColor tint_normal,
     ImColor tint_hovered,
     ImColor tint_pressed,
+    ImVec2 size = {0.f, 0.f},
     ImVec2 uv0 = {0.f, 0.f},
     ImVec2 uv1 = {1.f, 1.f}
 );

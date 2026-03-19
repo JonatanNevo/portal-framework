@@ -3,6 +3,8 @@
 // Distributed under the MIT license (see LICENSE file).
 //
 
+#define IMGUI_DEFINE_MATH_OPERATORS
+
 #include "utils.h"
 #include <imgui_internal.h>
 #include <imgui_stdlib.h>
@@ -145,10 +147,25 @@ void draw_button_image(
     const ImColor tint_normal,
     const ImColor tint_hovered,
     const ImColor tint_pressed,
+    [[maybe_unused]] const ImVec2 size,
     const ImVec2 uv0,
     const ImVec2 uv1
 )
 {
+    ImVec2 rect_min, rect_max;
+    if (size.x != 0.f && size.y != 0.f)
+    {
+        const ImGuiWindow* window = ImGui::GetCurrentWindow();
+        const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
+        rect_min = bb.Min;
+        rect_max = bb.Max;
+    }
+    else
+    {
+        rect_min = ImGui::GetItemRectMin();
+        rect_max = ImGui::GetItemRectMax();
+    }
+
     return draw_button_image(
         image,
         image,
@@ -156,8 +173,8 @@ void draw_button_image(
         tint_normal,
         tint_hovered,
         tint_pressed,
-        ImGui::GetItemRectMin(),
-        ImGui::GetItemRectMax(),
+        rect_min,
+        rect_max,
         uv0,
         uv1
     );

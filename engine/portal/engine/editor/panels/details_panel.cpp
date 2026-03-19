@@ -433,38 +433,231 @@ struct ComponentEditorFunctions<StaticMeshComponent>
 };
 
 //
-// template <>
-// struct ComponentEditorFunctions<CameraComponent>
-// {
-//     static constexpr bool removable = false;
-//
-//     static void draw_details(
-//         EditorContext& context,
-//         Entity scene_entity,
-//         CameraComponent& first_component,
-//         std::span<const StringId> entities,
-//         bool is_multi_edit
-//     )
-//     {
-//     }
-// };
-//
-// template <>
-// struct ComponentEditorFunctions<DirectionalLightComponent>
-// {
-//     static constexpr bool removable = false;
-//
-//     static void draw_details(
-//         EditorContext& context,
-//         Entity scene_entity,
-//         DirectionalLightComponent& first_component,
-//         std::span<const StringId> entities,
-//         bool is_multi_edit
-//     )
-//     {
-//     }
-// };
-//
+template <>
+struct ComponentEditorFunctions<CameraComponent>
+{
+    static constexpr bool removable = false;
+
+    static void draw_details(
+        EditorContext& context,
+        Entity scene_entity,
+        CameraComponent& first_component,
+        std::span<const StringId> entities,
+        bool is_multi_edit
+    )
+    {
+        imgui::begin_property_grid();
+
+        float vertical_pov = first_component.vertical_fov;
+        ImGui::PushItemFlag(
+            ImGuiItemFlags_MixedValue,
+            is_multi_edit && is_inconsistent_primitive<float, CameraComponent>(
+                context.ecs_registry,
+                scene_entity,
+                [](const CameraComponent& other) { return other.vertical_fov; }
+            )
+        );
+        if (imgui::property("Vertical FOV", vertical_pov))
+        {
+            for (auto& id : entities)
+            {
+                auto entity = context.ecs_registry.find_by_name(id);
+                entity->patch_component<CameraComponent>(
+                    [&vertical_pov](CameraComponent& comp)
+                    {
+                        comp.vertical_fov = vertical_pov;
+                        comp.calculate_projection(); // TODO: have this run automatically based on component change
+                    }
+                );
+            }
+        }
+        ImGui::PopItemFlag();
+
+        float near_clip = first_component.near_clip;
+        ImGui::PushItemFlag(
+            ImGuiItemFlags_MixedValue,
+            is_multi_edit && is_inconsistent_primitive<float, CameraComponent>(
+                context.ecs_registry,
+                scene_entity,
+                [](const CameraComponent& other) { return other.near_clip; }
+            )
+        );
+
+        // In my rendering system the far and near clip are swapped
+        if (imgui::property("Far Clip", near_clip))
+        {
+            for (auto& id : entities)
+            {
+                auto entity = context.ecs_registry.find_by_name(id);
+                entity->patch_component<CameraComponent>(
+                    [&near_clip](CameraComponent& comp)
+                    {
+                        comp.near_clip = near_clip;
+                        comp.calculate_projection(); // TODO: have this run automatically based on component change
+                    }
+                );
+            }
+        }
+        ImGui::PopItemFlag();
+
+        float far_clip = first_component.far_clip;
+        ImGui::PushItemFlag(
+            ImGuiItemFlags_MixedValue,
+            is_multi_edit && is_inconsistent_primitive<float, CameraComponent>(
+                context.ecs_registry,
+                scene_entity,
+                [](const CameraComponent& other) { return other.far_clip; }
+            )
+        );
+        if (imgui::property("Near Clip", far_clip))
+        {
+            for (auto& id : entities)
+            {
+                auto entity = context.ecs_registry.find_by_name(id);
+                entity->patch_component<CameraComponent>(
+                    [&far_clip](CameraComponent& comp)
+                    {
+                        comp.far_clip = far_clip;
+                        comp.calculate_projection(); // TODO: have this run automatically based on component change
+                    }
+                );
+            }
+        }
+        ImGui::PopItemFlag();
+
+        ImGui::BeginDisabled();
+        const auto first_entity = context.ecs_registry.find_by_name(entities[0]);
+        bool main_camera = first_entity->has_component<MainCameraTag>();
+        imgui::property("Main Camera", main_camera);
+        ImGui::EndDisabled();
+
+        imgui::end_property_grid();
+    }
+};
+
+template <>
+struct ComponentEditorFunctions<DirectionalLightComponent>
+{
+    static constexpr bool removable = false;
+
+    static void draw_details(
+        EditorContext& context,
+        Entity scene_entity,
+        DirectionalLightComponent& first_component,
+        std::span<const StringId> entities,
+        bool is_multi_edit
+    )
+    {
+        imgui::begin_property_grid();
+
+        {
+            auto direction = glm::degrees(first_component.direction);
+            ImGui::PushItemFlag(
+                ImGuiItemFlags_MixedValue,
+                is_multi_edit && is_inconsistent_primitive<glm::vec3, DirectionalLightComponent>(
+                    context.ecs_registry,
+                    scene_entity,
+                    [](const DirectionalLightComponent& other) { return other.direction; }
+                )
+            );
+            if (imgui::property(context, "Direction", direction))
+            {
+                for (auto& id : entities)
+                {
+                    auto entity = context.ecs_registry.find_by_name(id);
+                    entity->patch_component<DirectionalLightComponent>(
+                        [&direction](DirectionalLightComponent& comp)
+                        {
+                            comp.direction = glm::radians(direction);
+                        }
+                    );
+                }
+            }
+            ImGui::PopItemFlag();
+        }
+
+        {
+            auto radiance = first_component.radiance;
+            ImGui::PushItemFlag(
+                ImGuiItemFlags_MixedValue,
+                is_multi_edit && is_inconsistent_primitive<glm::vec3, DirectionalLightComponent>(
+                    context.ecs_registry,
+                    scene_entity,
+                    [](const DirectionalLightComponent& other) { return other.radiance; }
+                )
+            );
+            if (imgui::property_color("Radiance", radiance))
+            {
+                for (auto& id : entities)
+                {
+                    auto entity = context.ecs_registry.find_by_name(id);
+                    entity->patch_component<DirectionalLightComponent>(
+                        [&radiance](DirectionalLightComponent& comp)
+                        {
+                            comp.radiance = radiance;
+                        }
+                    );
+                }
+            }
+            ImGui::PopItemFlag();
+        }
+
+        {
+            auto intensity = first_component.intensity;
+            ImGui::PushItemFlag(
+                ImGuiItemFlags_MixedValue,
+                is_multi_edit && is_inconsistent_primitive<float, DirectionalLightComponent>(
+                    context.ecs_registry,
+                    scene_entity,
+                    [](const DirectionalLightComponent& other) { return other.intensity; }
+                )
+            );
+            if (imgui::property("Intensity", intensity))
+            {
+                for (auto& id : entities)
+                {
+                    auto entity = context.ecs_registry.find_by_name(id);
+                    entity->patch_component<DirectionalLightComponent>(
+                        [&intensity](DirectionalLightComponent& comp)
+                        {
+                            comp.intensity = intensity;
+                        }
+                    );
+                }
+            }
+            ImGui::PopItemFlag();
+        }
+
+        {
+            auto light_size = first_component.light_size;
+            ImGui::PushItemFlag(
+                ImGuiItemFlags_MixedValue,
+                is_multi_edit && is_inconsistent_primitive<float, DirectionalLightComponent>(
+                    context.ecs_registry,
+                    scene_entity,
+                    [](const DirectionalLightComponent& other) { return other.light_size; }
+                )
+            );
+            if (imgui::property("Light Size", light_size))
+            {
+                for (auto& id : entities)
+                {
+                    auto entity = context.ecs_registry.find_by_name(id);
+                    entity->patch_component<DirectionalLightComponent>(
+                        [&light_size](DirectionalLightComponent& comp)
+                        {
+                            comp.light_size = light_size;
+                        }
+                    );
+                }
+            }
+            ImGui::PopItemFlag();
+        }
+
+        imgui::end_property_grid();
+    }
+};
+
 // template <>
 // struct ComponentEditorFunctions<PointLightComponent>
 // {
@@ -695,6 +888,8 @@ void DetailsPanel::draw_components(EditorContext& context, Entity scene_entity, 
         // TODO: automatically call for all registered components
         draw_component<TransformComponent>(context, "Transform", scene_entity);
         draw_component<StaticMeshComponent>(context, "Static Mesh", scene_entity);
+        draw_component<CameraComponent>(context, "Camera", scene_entity);
+        draw_component<DirectionalLightComponent>(context, "Directional Light", scene_entity);
     }
 
     // draw_component<TransformComponent>(

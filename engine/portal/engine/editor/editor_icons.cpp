@@ -77,6 +77,7 @@ void EditorIcons::load_image(const EditorIcon name, const StringId& texture_id)
     auto texture = registry.immediate_load<renderer::vulkan::VulkanTexture>(texture_id);
     const auto vulkan_image = reference_cast<renderer::vulkan::VulkanImage>(texture->get_image());
     const auto& img_info = vulkan_image->get_image_info();
+
     images[name] = {
         texture,
         ImGui_ImplVulkan_AddTexture(
@@ -87,7 +88,7 @@ void EditorIcons::load_image(const EditorIcon name, const StringId& texture_id)
     };
 }
 
-vk::DescriptorSet EditorIcons::get_descriptor(const EditorIcon name) const
+VkDescriptorSet EditorIcons::get_descriptor(const EditorIcon name) const
 {
     return images.at(name).descriptor;
 }

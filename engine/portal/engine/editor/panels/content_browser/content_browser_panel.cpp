@@ -1147,14 +1147,14 @@ void ContentBrowserPanel::paste_copied_resources()
         {
             original_path = std::filesystem::path(reference_cast<ResourceItem>(item)->get_metadata().full_source_path.string);
             auto new_path = get_unique_path(current_directory->path / original_path.filename());
-            PORTAL_ASSERT(std::filesystem::exists(new_path), "File already exists");
+            PORTAL_ASSERT(!std::filesystem::exists(new_path), "File already exists");
             FileSystem::copy(original_path, new_path);
         }
         else
         {
             original_path = reference_cast<DirectoryItem>(item)->get_directory_info()->path;
             auto new_path = get_unique_path(current_directory->path / original_path.filename());
-            PORTAL_ASSERT(std::filesystem::exists(new_path), "File already exists");
+            PORTAL_ASSERT(!std::filesystem::exists(new_path), "File already exists");
             std::filesystem::copy(original_path, new_path, std::filesystem::copy_options::recursive);
         }
     }

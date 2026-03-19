@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Castle_normal",
     "resource_id": "game/composite/Castle_normal",
     "source": "composite/Castle_normal.jpg",
     "texture": {

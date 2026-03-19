@@ -120,6 +120,7 @@ bool resource_search_popup(
 
                 for (auto& resource : resources)
                 {
+                    ImGui::PushID(resource.get_resource_id().string.data());
                     const bool is_selected = current == selected;
                     if (ImGui::Selectable(resource.get_resource_name().string.data(), is_selected))
                     {
@@ -149,6 +150,8 @@ bool resource_search_popup(
                     {
                         ImGui::SetItemDefaultFocus();
                     }
+
+                    ImGui::PopID();
                 }
 
                 ImGui::EndListBox();

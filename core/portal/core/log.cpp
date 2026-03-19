@@ -55,10 +55,6 @@ public:
             {
                 location += std::string(width_ - location.length(), ' ');
             }
-            else if (location.length() > width_)
-            {
-                location = location.substr(0, width_);
-            }
 
             dest.append(location.data(), location.data() + location.size());
         }

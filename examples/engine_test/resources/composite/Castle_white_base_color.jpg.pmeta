@@ -1,6 +1,7 @@
 {
     "dependencies": [],
     "format": "Image",
+    "name": "Castle_white_base_color",
     "resource_id": "game/composite/Castle_white_base_color",
     "source": "composite/Castle_white_base_color.jpg",
     "texture": {
