@@ -328,7 +328,6 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
     auto& g = *ImGui::GetCurrentContext();
     auto& style = ImGui::GetStyle();
 
-    const ImVec2 label_size = ImGui::CalcTextSize(name.string.data(), nullptr, false);
     const ImVec2 padding = ((flags & ImGuiTreeNodeFlags_FramePadding))
                                ? style.FramePadding
                                : ImVec2(style.FramePadding.x, ImMin(window->DC.CurrLineTextBaseOffset, style.FramePadding.y));
@@ -358,7 +357,7 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
         shift_selection_running)
     {
         SelectionSystem::select(name, scene_entity);
-        if (SelectionSystem::selection_count(scene_entity) == (last_selected_row - first_selected_row) + 1)
+        if (SelectionSystem::selection_count(scene_entity) == static_cast<size_t>(last_selected_row - first_selected_row) + 1)
             shift_selection_running = false;
     }
 

@@ -41,8 +41,8 @@ EditorModule::EditorModule(
       engine_dispatcher(engine_dispatcher),
       input_dispatcher(input_dispatcher),
       runtime_module(stack, project, context, swapchain, window),
-      panel_manager(project.get_config_directory() / "editor_panels.json"),
       im_gui_renderer(get_dependency<ResourcesModule>().get_registry(), window, swapchain),
+      panel_manager(project.get_config_directory() / "editor_panels.json"),
       icons(get_dependency<ResourcesModule>().get_registry()),
       editor_context(
           context,

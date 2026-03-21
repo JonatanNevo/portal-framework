@@ -989,7 +989,7 @@ void ContentBrowserPanel::draw_bottombar(EditorContext&, float height)
         }
         else if (selection_count > 1)
         {
-            ImGui::Text("%d items selected", selection_count);
+            ImGui::Text("%zu items selected", selection_count);
         }
     }
     ImGui::EndHorizontal();
@@ -1208,7 +1208,7 @@ void ContentBrowserPanel::render_delete_dialog(EditorContext&)
         if (SelectionSystem::selection_count(selection_context) == 0)
             ImGui::CloseCurrentPopup();
 
-        ImGui::Text("Are you sure you want to delete %d items?", SelectionSystem::selection_count(selection_context));
+        ImGui::Text("Are you sure you want to delete %zu items?", SelectionSystem::selection_count(selection_context));
 
         const float content_region_width = ImGui::GetContentRegionAvail().x;
         constexpr float button_width = 60.f;
