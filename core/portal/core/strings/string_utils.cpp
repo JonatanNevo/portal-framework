@@ -5,6 +5,7 @@
 
 #include "string_utils.h"
 
+#include <algorithm>
 #include <ranges>
 
 namespace portal
