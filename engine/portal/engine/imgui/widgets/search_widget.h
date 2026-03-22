@@ -66,7 +66,7 @@ bool search_widget(EditorContext& context, StringType& search_string, const char
     if constexpr (std::is_same_v<StringType, std::string>)
     {
         std::array<char, buffer_size + 1> search_buffer{};
-        std::strncpy(search_buffer.data(), search_string.c_str(), buffer_size);
+        std::memcpy(search_buffer.data(), search_string.c_str(), std::min(search_string.size(), buffer_size));
         if (ImGui::InputText(generate_id(), search_buffer.data(), buffer_size))
         {
             search_string = search_buffer.data();
