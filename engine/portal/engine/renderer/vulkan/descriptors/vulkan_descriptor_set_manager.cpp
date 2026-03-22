@@ -308,7 +308,6 @@ void VulkanDescriptorSetManager::bake()
     }
 
     // If valid, we can create descriptor sets
-
     auto buffer_sets = get_buffer_sets();
     const size_t descriptor_set_count = properties.frame_in_flights;
     descriptor_sets.resize(descriptor_set_count);

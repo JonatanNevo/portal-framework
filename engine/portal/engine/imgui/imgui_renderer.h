@@ -54,6 +54,7 @@ public:
 private:
     Reference<renderer::RenderTarget> current_render_target = nullptr;
 
+    const Window& window;
     const renderer::vulkan::VulkanSwapchain& swapchain;
     vk::raii::DescriptorPool imgui_pool = nullptr;
     vk::Format color_format;  // Must persist for viewport pipeline creation

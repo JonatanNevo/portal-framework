@@ -6,6 +6,7 @@
 #include "engine.h"
 
 #include "portal/application/settings.h"
+#include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "editor/editor_module.h"
 #include "modules/resources_module.h"
 #include "modules/system_orchestrator.h"
@@ -13,7 +14,6 @@
 #include "portal/engine/resources/resources/composite.h"
 #include "portal/engine/window/glfw_window.h"
 #include "project/project.h"
-#include "resources/database/resource_database_facade.h"
 #include "window/window_events.h"
 
 namespace portal
@@ -51,6 +51,7 @@ Engine::Engine(const Reference<Project>& project, const ApplicationProperties& p
     // TODO: find better surface control
     vulkan_context->get_device().add_present_queue(*surface);
     swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(project->get_settings(), *vulkan_context, surface);
+    vulkan_context->set_present_format(renderer::vulkan::to_format(swapchain->get_non_linear_color_format()));
 
     if (project->get_type() == ProjectType::Editor)
     {

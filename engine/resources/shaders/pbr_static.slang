@@ -69,8 +69,9 @@ VertexOutput vert_main(uint vertexID : SV_VertexID, uniform float4x4 render_matr
 struct FragOutput
 {
     float4 color : SV_Target0;
-    float4 view_normal_luminance : SV_Target1;
-    float4 metalness_roughness : SV_Target2;
+//    These two will be bound in the future when ill implement G-Buffer rendering
+//    float4 view_normal_luminance : SV_Target1;
+//    float4 metalness_roughness : SV_Target2;
 };
 
 float3 ibl(float3 f0, float3 lr, PBRParameters params, SceneData scene_data)
@@ -86,7 +87,7 @@ float3 ibl(float3 f0, float3 lr, PBRParameters params, SceneData scene_data)
                                                                             rotate_vector_about_y(material_data.env_map_rotation, lr),
                                                                             params.roughness * float(env_radiance_tex_levels)
                                                                         ) .rgb;
-    
+
     float2 specular_brdf = scene_data.brdf_lut_texture.Sample(float2(params.ndotv, params.roughness)).rg;
     float3 spebular_ibl = specular_irradiance * (f0 * specular_brdf.x + specular_brdf.y);
     return kd * diffuse_ibl + spebular_ibl;
@@ -149,7 +150,7 @@ FragOutput frag_main(VertexOutput in)
     {
         params.metallic = material_data.metallic;
     }
-    
+
     if (let texture = material_data.roughness_texture.get())
     {
         params.roughness = texture.Sample(uv).g * material_data.roughness;
@@ -159,7 +160,7 @@ FragOutput frag_main(VertexOutput in)
         params.roughness = material_data.roughness;
     }
 
-    output.metalness_roughness = float4(params.metallic, params.roughness, 0.f, 1.f);
+//    output.metalness_roughness = float4(params.metallic, params.roughness, 0.f, 1.f);
     params.roughness = max(params.roughness, 0.05f); // Minimum roughness of 0.05 to keep specular highlight
 
     // Normals
@@ -173,7 +174,7 @@ FragOutput frag_main(VertexOutput in)
         params.normal = normalize(in.normal);
     }
 
-    output.view_normal_luminance.xyz = mul(float3x3(scene_data.camera.view), params.normal);
+//    output.view_normal_luminance.xyz = mul(float3x3(scene_data.camera.view), params.normal);
 
     float3 camera_position = float3(scene_data.camera.inverse_view[0][3], scene_data.camera.inverse_view[1][3], scene_data.camera.inverse_view[2][3]);
     params.view = normalize(camera_position - in.world_position);

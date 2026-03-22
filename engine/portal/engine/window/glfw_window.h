@@ -54,9 +54,19 @@ protected:
     void maximize_or_restore();
     void request_minimize();
     void request_close();
+    void inner_update_maximized(WindowUpdateMaximizedEvent event);
 
 private:
     ProjectSettings& settings;
     GLFWwindow* handle = nullptr;
+
+    // GLFW has a bug in macOS regarding when its considers maximized or not when using undecorated windows.
+    // Until this is fixed, we are tracking the state ourselves
+    bool maximized = false;
+
+#if PORTAL_PLATFORM == MACOS
+    int saved_xpos = 0, saved_ypos = 0;
+    int saved_width = 0, saved_height = 0;
+#endif
 };
 } // portal

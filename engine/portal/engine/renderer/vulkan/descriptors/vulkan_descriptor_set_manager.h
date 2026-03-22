@@ -133,7 +133,7 @@ private:
     std::set<size_t> get_buffer_sets();
 
 public:
-    std::unordered_map<size_t, std::unordered_map<size_t, DescriptorInput>> input_resources;
+    std::map<size_t, std::unordered_map<size_t, DescriptorInput>> input_resources;
     std::unordered_map<size_t, std::unordered_map<size_t, DescriptorInput>> invalid_input_resources;
     std::unordered_map<StringId, shader_reflection::ShaderResourceDeclaration> input_declarations;
 

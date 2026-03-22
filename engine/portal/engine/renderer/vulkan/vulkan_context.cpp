@@ -80,4 +80,14 @@ const Capabilities& VulkanContext::get_capabilities() const
 {
     return capabilities;
 }
+
+void VulkanContext::set_present_format(const ImageFormat format)
+{
+    present_format = format;
+}
+
+ImageFormat VulkanContext::get_present_format() const
+{
+    return present_format;
+}
 } // portal

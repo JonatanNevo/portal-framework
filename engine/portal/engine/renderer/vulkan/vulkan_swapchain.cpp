@@ -469,6 +469,12 @@ size_t VulkanSwapchain::acquire_next_image(const FrameContext& frame)
         if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
         {
             on_resize(width, height);
+
+            // Recreate the semaphore so it's unsignaled for the retry.
+            auto old_name = fmt::format("swapchain_image_available_semaphore_{}", frame.frame_index);
+            resources.image_available_semaphore = context.get_device().get_handle().createSemaphore({});
+            context.get_device().set_debug_name(resources.image_available_semaphore, old_name.c_str());
+
             auto [new_result, new_index] = swapchain.acquireNextImage(
                 std::numeric_limits<uint64_t>::max(),
                 resources.image_available_semaphore,

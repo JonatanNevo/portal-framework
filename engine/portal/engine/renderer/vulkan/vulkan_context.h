@@ -8,6 +8,7 @@
 #include <volk.h>
 #include <vulkan/vulkan_raii.hpp>
 
+#include "portal/engine/renderer/image/image_types.h"
 #include "portal/engine/renderer/vulkan/vulkan_device.h"
 #include "portal/engine/renderer/vulkan/vulkan_instance.h"
 #include "device/vulkan_physical_device.h"
@@ -66,6 +67,12 @@ public:
 
     [[nodiscard]] const Capabilities& get_capabilities() const;
 
+    /** @brief Sets the present image format (call after swapchain creation) */
+    void set_present_format(ImageFormat format);
+
+    /** @brief Gets the present image format */
+    [[nodiscard]] ImageFormat get_present_format() const;
+
 private:
     VulkanContext();
 
@@ -76,5 +83,6 @@ private:
     VulkanDevice device;
 
     Capabilities capabilities;
+    ImageFormat present_format = ImageFormat::SRGBA;
 };
 } // portal

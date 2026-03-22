@@ -236,7 +236,7 @@ static std::array<char, 1024 + 1> s_label_id_buffer = {};
 
 const char* generate_id()
 {
-    sprintf_s(s_id_buffer.data() + 2, 16, "%u", s_counter++);
+    std::snprintf(s_id_buffer.data() + 2, 16, "%u", s_counter++);
     return s_id_buffer.data();
 }
 

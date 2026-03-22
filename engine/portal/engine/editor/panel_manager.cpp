@@ -11,6 +11,7 @@
 
 
 #include "selection_system.h"
+#include "portal/core/files/file_system.h"
 #include "portal/engine/engine_context.h"
 #include "portal/serialization/archive/json_archive.h"
 
@@ -37,6 +38,9 @@ PanelData PanelData::dearchive(ArchiveObject& object)
 
 PanelManager::PanelManager(std::filesystem::path state_path) : state_path(std::move(state_path))
 {
+    if (!FileSystem::exists(this->state_path))
+        FileSystem::write_file(this->state_path, "{}");
+
     load_state();
 }
 
