@@ -263,6 +263,14 @@ static void glfw_cursor_pos_callback(GLFWwindow* handle, double x_pos, double y_
     }
 }
 
+static void glfw_on_maximized_callback(GLFWwindow* handle, const int maximized)
+{
+    if (auto* dispatcher = static_cast<entt::dispatcher*>(glfwGetWindowUserPointer(handle)))
+    {
+        dispatcher->enqueue<WindowUpdateMaximizedEvent>(maximized == GLFW_TRUE);
+    }
+}
+
 GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& properties, entt::dispatcher& dispatcher) : Window(properties, dispatcher),
     settings(settings)
 {
@@ -279,6 +287,8 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
     if (!properties.decorated)
     {
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+        saved_height = static_cast<int>(properties.extent.height);
+        saved_width = static_cast<int>(properties.extent.width);
     }
 
     // Create Handle
@@ -290,6 +300,7 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
             // TODO: get window monitor from settings
             auto* monitor = glfwGetPrimaryMonitor();
             auto* mode = glfwGetVideoMode(monitor);
+            maximized = true;
             handle = glfwCreateWindow(mode->width, mode->height, properties.title.string.data(), monitor, nullptr);
             break;
         }
@@ -302,10 +313,12 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
             glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
             glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
             glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+            maximized = true;
             handle = glfwCreateWindow(mode->width, mode->height, properties.title.string.data(), monitor, nullptr);
             break;
         }
     default:
+        maximized = false;
         handle = glfwCreateWindow(
             static_cast<int>(properties.extent.width),
             static_cast<int>(properties.extent.height),
@@ -355,6 +368,7 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
     glfwSetMouseButtonCallback(handle, glfw_mouse_button_callback);
     glfwSetCursorPosCallback(handle, glfw_cursor_pos_callback);
     glfwSetScrollCallback(handle, glfw_scroll_callback);
+    glfwSetWindowMaximizeCallback(handle, glfw_on_maximized_callback);
 
     glfwSetInputMode(handle, GLFW_LOCK_KEY_MODS, GLFW_TRUE);
 
@@ -371,6 +385,7 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
     dispatcher.sink<WindowDragEvent>().connect<&GlfwWindow::window_drag>(this);
     dispatcher.sink<WindowRequestMinimizeEvent>().connect<&GlfwWindow::request_minimize>(this);
     dispatcher.sink<WindowRequestCloseEvent>().connect<&GlfwWindow::request_close>(this);
+    dispatcher.sink<WindowUpdateMaximizedEvent>().connect<&GlfwWindow::inner_update_maximized>(this);
 }
 
 GlfwWindow::~GlfwWindow()
@@ -430,12 +445,48 @@ float GlfwWindow::get_dpi_factor() const
 
 void GlfwWindow::maximize()
 {
+    // Issue in glfw for macOS that prevents undecorated windows to be maximized properly
+    // https://github.com/glfw/glfw/issues/1737
+#if PORTAL_PLATFORM == MACOS
+    if (properties.decorated)
+    {
+        glfwMaximizeWindow(handle);
+        return;
+    }
+
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+
+    int xpos, ypos, width, height;
+    glfwGetMonitorWorkarea(monitor, &xpos, &ypos, &width, &height);
+
+    glfwGetWindowPos(handle, &saved_xpos, &saved_ypos);
+    glfwGetWindowSize(handle, &saved_width, &saved_height);
+
+    glfwSetWindowPos(handle, xpos, ypos);
+    glfwSetWindowSize(handle, width, height);
+    maximized = true;
+
+#else
     glfwMaximizeWindow(handle);
+#endif
 }
 
 void GlfwWindow::restore()
 {
+#if PORTAL_PLATFORM == MACOS
+    if (properties.decorated)
+    {
+        glfwMaximizeWindow(handle);
+        return;
+    }
+
+    glfwSetWindowPos(handle, saved_xpos, saved_ypos);
+    glfwSetWindowSize(handle, saved_width, saved_height);
+    maximized = false;
+
+#else
     glfwRestoreWindow(handle);
+#endif
 }
 
 void GlfwWindow::minimize()
@@ -492,12 +543,12 @@ GLFWwindow* GlfwWindow::get_handle() const
 
 bool GlfwWindow::is_maximised() const
 {
-    return glfwGetWindowAttrib(handle, GLFW_MAXIMIZED) != 0;
+    return maximized;
 }
 
 bool GlfwWindow::is_minimized() const
 {
-    return glfwGetWindowAttrib(handle, GLFW_ICONIFIED) != 0;
+    return glfwGetWindowAttrib(handle, GLFW_ICONIFIED) == GLFW_TRUE;
 }
 
 void GlfwWindow::change_mouse_mode(SetMouseCursorEvent event) const
@@ -560,5 +611,10 @@ void GlfwWindow::request_close()
 {
     close();
     dispatcher.enqueue<WindowClosedEvent>();
+}
+
+void GlfwWindow::inner_update_maximized(const WindowUpdateMaximizedEvent event)
+{
+    maximized = event.maximized;
 }
 } // portal

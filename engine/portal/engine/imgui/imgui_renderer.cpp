@@ -20,7 +20,7 @@
 namespace portal
 {
 ImGuiRenderer::ImGuiRenderer(ResourceRegistry& resource_registry, const Window& window, const renderer::vulkan::VulkanSwapchain& swapchain)
-    : swapchain(swapchain)
+    : window(window), swapchain(swapchain)
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -176,6 +176,9 @@ ImGuiRenderer::~ImGuiRenderer()
 
 void ImGuiRenderer::begin_frame(const FrameContext&, const Reference<renderer::RenderTarget>& render_target)
 {
+    if (window.is_minimized())
+        return;
+
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -187,6 +190,9 @@ void ImGuiRenderer::begin_frame(const FrameContext&, const Reference<renderer::R
 void ImGuiRenderer::end_frame(FrameContext& frame)
 {
     PORTAL_PROF_ZONE();
+
+    if (window.is_minimized())
+        return;
 
     auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
 

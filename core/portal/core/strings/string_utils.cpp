@@ -9,17 +9,11 @@
 
 namespace portal
 {
-std::string get_last_part(std::string_view string, char separator)
+std::string get_last_part(const std::string_view string, const char separator)
 {
-    auto split_view = string | std::views::split(separator);
-    PORTAL_ASSERT(std::ranges::distance(split_view) > 1, "Invalid resource id");
-
-    for (auto [index, part] : split_view | std::views::enumerate)
-    {
-        if (index == std::ranges::distance(split_view) - 1)
-            return std::string(std::string_view(part));
-    }
-    return "";
+    const auto pos = string.rfind(separator);
+    PORTAL_ASSERT(pos != std::string_view::npos, "Invalid resource id");
+    return std::string(string.substr(pos + 1));
 }
 
 std::string to_lower_copy(const std::string_view str)

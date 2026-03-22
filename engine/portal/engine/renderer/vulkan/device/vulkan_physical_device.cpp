@@ -217,6 +217,7 @@ namespace
         case 0x1002: return "AMD";
         case 0x8086: return "INTEL";
         case 0x13B5: return "ARM";
+        case 0x106b: return "Apple";
         default:
             return "Unknown";
         }

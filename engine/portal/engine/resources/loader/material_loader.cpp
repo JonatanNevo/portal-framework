@@ -190,11 +190,10 @@ Reference<renderer::Pipeline> MaterialLoader::create_pipeline(
     renderer::PipelineProperties pipeline_properties{
         .shader = shader,
         .attachments = {
-            // TODO: Find a way to extract this from current swapchain
             .attachment_images = {
                 // Present Image
                 {
-                    .format = renderer::ImageFormat::SRGBA,
+                    .format = context.get_present_format(),
                     .blend = false
                 },
                 // Depth Image

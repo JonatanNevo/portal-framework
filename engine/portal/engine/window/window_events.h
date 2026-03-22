@@ -25,6 +25,11 @@ struct WindowRequestMinimizeEvent{};
 struct WindowRequestMaximizeOrRestoreEvent{};
 struct WindowRequestCloseEvent{};
 
+struct WindowUpdateMaximizedEvent
+{
+    bool maximized;
+};
+
 
 struct WindowDragEvent
 {
