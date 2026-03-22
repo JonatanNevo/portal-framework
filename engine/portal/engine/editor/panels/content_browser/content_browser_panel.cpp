@@ -1049,7 +1049,7 @@ void ContentBrowserPanel::on_key_pressed_event(const KeyPressedEvent& event)
         }
     }
 
-    if (event.key == Key::N && event.modifiers & KeyModifierBits::Shift | KeyModifierBits::Ctrl)
+    if (event.key == Key::N && event.modifiers & (KeyModifierBits::Shift | KeyModifierBits::Ctrl))
     {
         auto path = current_directory->path / "New Folder";
 

@@ -120,7 +120,8 @@ void SceneGraphPanel::on_gui_render(EditorContext& editor_context, [[maybe_unuse
                         }
                     );
 
-                    for (auto entity : scene->get_scene_entity().children())
+                    auto children =  scene->get_scene_entity().children();
+                    for (auto entity : children)
                     {
                         draw_entity_node(editor_context, entity, scene->get_scene_entity());
                     }
@@ -357,7 +358,7 @@ void SceneGraphPanel::draw_entity_node(EditorContext& editor_context, const Enti
         shift_selection_running)
     {
         SelectionSystem::select(name, scene_entity);
-        if (SelectionSystem::selection_count(scene_entity) == static_cast<size_t>(last_selected_row - first_selected_row) + 1)
+        if (SelectionSystem::selection_count(scene_entity) == (last_selected_row - first_selected_row) + 1ull)
             shift_selection_running = false;
     }
 

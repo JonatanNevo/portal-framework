@@ -287,8 +287,10 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
     if (!properties.decorated)
     {
         glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+#ifdef PORTAL_PLATFORM_MACOS
         saved_height = static_cast<int>(properties.extent.height);
         saved_width = static_cast<int>(properties.extent.width);
+#endif
     }
 
     // Create Handle
@@ -447,7 +449,7 @@ void GlfwWindow::maximize()
 {
     // Issue in glfw for macOS that prevents undecorated windows to be maximized properly
     // https://github.com/glfw/glfw/issues/1737
-#if PORTAL_PLATFORM == MACOS
+#ifdef PORTAL_PLATFORM_MACOS
     if (properties.decorated)
     {
         glfwMaximizeWindow(handle);
@@ -473,7 +475,7 @@ void GlfwWindow::maximize()
 
 void GlfwWindow::restore()
 {
-#if PORTAL_PLATFORM == MACOS
+#ifdef PORTAL_PLATFORM_MACOS
     if (properties.decorated)
     {
         glfwMaximizeWindow(handle);

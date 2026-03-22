@@ -64,7 +64,7 @@ private:
     // Until this is fixed, we are tracking the state ourselves
     bool maximized = false;
 
-#if PORTAL_PLATFORM == MACOS
+#ifdef PORTAL_PLATFORM_MACOS
     int saved_xpos = 0, saved_ypos = 0;
     int saved_width = 0, saved_height = 0;
 #endif
