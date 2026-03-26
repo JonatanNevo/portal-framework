@@ -2,11 +2,16 @@
 
 ## Platform Support
 
-| Platform                         | Compiler               |
-|----------------------------------|------------------------|
-| Windows                          | MSVC 2022+ / Clang 20+ |
-| Linux (Only Ubuntu24+ is tested) | GCC 14+ / Clang 20+    |
-| macOS                            | Clang 20+              |
+| Platform | Compiler               |
+|----------|------------------------|
+| Windows  | MSVC 2022+ / Clang 20+ |
+| Linux    | GCC 14+ / Clang 20+    |
+| macOS    | Clang 20+              |
+
+```{Note}
+I tested running on linux using Ubuntu 24 and Arch with hyprland.
+Other versions / distros might not work out of the box and require manual dependency installation
+```
 
 ## Prerequisites
 
@@ -125,6 +130,11 @@ You can download the Vulkan SDK from [here](https://vulkan.lunarg.com/sdk/home).
 
 ### Other Linux Distros
 Portal Engine is not yet tested on other linux distros.
+
+```{Info}
+Arch step-by-step guide is work in progress
+```
+
 :::
 
 :::{tab-item} macOS
