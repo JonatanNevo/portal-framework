@@ -169,5 +169,8 @@ private:
     size_t current_frame = 0;
 
     size_t frames_in_flight = 0;
+
+    // Deferred resize: set when suboptimal is detected, applied at start of next frame
+    bool needs_resize = false;
 };
 } // portal

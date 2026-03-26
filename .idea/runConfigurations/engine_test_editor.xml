@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="engine_test_editor" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$/examples/engine_test" PASS_PARENT_ENVS_2="true" PROJECT_NAME="portal_framework" TARGET_NAME="engine_test_editor" CONFIG_NAME="ninja-multi - debug" RUN_TARGET_PROJECT_NAME="portal_framework" RUN_TARGET_NAME="engine_test_editor">
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>

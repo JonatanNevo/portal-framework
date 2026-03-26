@@ -149,11 +149,13 @@ void VulkanSwapchain::create(uint32_t* request_width, uint32_t* request_height, 
         formats = {linear_color_format};
     }
 
+    vk::ImageFormatListCreateInfo format_list_info{
+        .viewFormatCount = static_cast<uint32_t>(formats.size()),
+        .pViewFormats = formats.data(),
+    };
+
     vk::SwapchainCreateInfoKHR swap_chain_create_info = {
-        .pNext = vk::ImageFormatListCreateInfo{
-            .viewFormatCount = static_cast<uint32_t>(formats.size()),
-            .pViewFormats = formats.data(),
-        },
+        .pNext = &format_list_info,
         .flags = vk::SwapchainCreateFlagBitsKHR::eMutableFormat,
         .surface = surface->get_vulkan_surface(),
         .minImageCount = static_cast<uint32_t>(min_image_count),
@@ -332,9 +334,15 @@ FrameRenderingContext VulkanSwapchain::prepare_frame(const FrameContext& frame)
         .frame_descriptors = &frame_resources[frame.frame_index].frame_descriptors,
     };
 
+    // Handle deferred resize from previous frame's suboptimal present/acquire
+    if (needs_resize)
+    {
+        needs_resize = false;
+        on_resize(width, height);
+    }
+
     current_image = acquire_next_image(frame);
     auto& image_data = images_data[current_image];
-    image_data.last_used_frame = frame.frame_index;
 
     // If this image was used before, wait for the fence from the frame that last used it
     if (image_data.last_used_frame != std::numeric_limits<size_t>::max())
@@ -343,6 +351,9 @@ FrameRenderingContext VulkanSwapchain::prepare_frame(const FrameContext& frame)
         const auto& last_frame = frame_resources[image_data.last_used_frame];
         context.get_device().wait_for_fences(std::span{&*last_frame.wait_fence, 1}, true);
     }
+
+    // Mark this image as used by the current frame (after waiting for previous user)
+    image_data.last_used_frame = frame.frame_index;
 
     // Resets descriptor pools
     clean_frame(frame);
@@ -426,17 +437,19 @@ void VulkanSwapchain::present(const FrameContext& frame)
         try
         {
             const auto result = context.get_device().get_present_queue().present(present_info);
-            if (result != vk::Result::eSuccess)
+            if (result == vk::Result::eSuboptimalKHR)
             {
-                if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
-                {
-                    on_resize(width, height);
-                }
-                else
-                {
-                    LOGGER_ERROR("Error while presenting to the present queue!");
-                    //TODO: exit?
-                }
+                // Present succeeded but suboptimal — defer resize to next frame
+                needs_resize = true;
+            }
+            else if (result == vk::Result::eErrorOutOfDateKHR)
+            {
+                on_resize(width, height);
+            }
+            else if (result != vk::Result::eSuccess)
+            {
+                LOGGER_ERROR("Error while presenting to the present queue!");
+                //TODO: exit?
             }
         }
         catch (vk::OutOfDateKHRError&)
@@ -464,30 +477,34 @@ size_t VulkanSwapchain::acquire_next_image(const FrameContext& frame)
         nullptr
     );
 
-    if (result != vk::Result::eSuccess)
+    if (result == vk::Result::eSuboptimalKHR)
     {
-        if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR)
+        // Image was acquired and semaphore is signaled — use it, but resize next frame
+        needs_resize = true;
+    }
+    else if (result == vk::Result::eErrorOutOfDateKHR)
+    {
+        on_resize(width, height);
+
+        // Recreate the semaphore so it's unsignaled for the retry.
+        auto old_name = fmt::format("swapchain_image_available_semaphore_{}", frame.frame_index);
+        resources.image_available_semaphore = context.get_device().get_handle().createSemaphore({});
+        context.get_device().set_debug_name(resources.image_available_semaphore, old_name.c_str());
+
+        auto [new_result, new_index] = swapchain.acquireNextImage(
+            std::numeric_limits<uint64_t>::max(),
+            resources.image_available_semaphore,
+            nullptr
+        );
+        if (new_result != vk::Result::eSuccess && new_result != vk::Result::eSuboptimalKHR)
         {
-            on_resize(width, height);
-
-            // Recreate the semaphore so it's unsignaled for the retry.
-            auto old_name = fmt::format("swapchain_image_available_semaphore_{}", frame.frame_index);
-            resources.image_available_semaphore = context.get_device().get_handle().createSemaphore({});
-            context.get_device().set_debug_name(resources.image_available_semaphore, old_name.c_str());
-
-            auto [new_result, new_index] = swapchain.acquireNextImage(
-                std::numeric_limits<uint64_t>::max(),
-                resources.image_available_semaphore,
-                nullptr
-            );
-            if (new_result != vk::Result::eSuccess)
-            {
-                LOGGER_ERROR("Failed to acquire swapchain image!");
-                // TODO: exit?
-                return 0;
-            }
-            index = new_index;
+            LOGGER_ERROR("Failed to acquire swapchain image!");
+            // TODO: exit?
+            return 0;
         }
+        if (new_result == vk::Result::eSuboptimalKHR)
+            needs_resize = true;
+        index = new_index;
     }
 
     return index;

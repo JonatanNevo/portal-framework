@@ -43,11 +43,19 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(vk::raii::PhysicalDevice&& physical_d
         vulkan12_features.vulkanMemoryModel = true;
         vulkan12_features.vulkanMemoryModelDeviceScope = true;
         vulkan12_features.storageBuffer8BitAccess = true;
+        vulkan12_features.scalarBlockLayout = true;
+    }
+
+    vk::PhysicalDeviceVulkan11Features vulkan11_features{.shaderDrawParameters = true};
+
+    if constexpr (ENABLE_VALIDATION_LAYERS)
+    {
+        vulkan11_features.storageBuffer16BitAccess = true;
     }
 
     features_chain = {
         {.features = requested_features},
-        {.shaderDrawParameters = true},
+        vulkan11_features,
         vulkan12_features,
         {.synchronization2 = true, .dynamicRendering = true},
         {.extendedDynamicState = true}

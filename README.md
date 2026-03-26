@@ -42,6 +42,7 @@ The focus so far was on a establishing  stable infrastructure to help with the d
 - **Windows 11** - Clang 20+ (recommended) or MSVC 17+
 - **macOS 15+** (Sequoia or later)
 - **Linux** - Clang 20+ or GCC 14+
+  - Tested on Ubuntu 2024 and Arch with Hyprland 
 
 ## Getting Started
 
