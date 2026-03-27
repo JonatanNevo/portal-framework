@@ -476,7 +476,17 @@ function(portal_setup_config_pch MODULE_NAME)
 
         file(WRITE "${PCH_PATH}" "${PCH_HEADER_CONTENT}")
 
-        target_precompile_headers(${TARGET_NAME} PUBLIC "${PCH_PATH}")
+        target_precompile_headers(${TARGET_NAME} PUBLIC
+                "$<BUILD_INTERFACE:${PCH_PATH}>"
+                "$<INSTALL_INTERFACE:portal/${MODULE_NAME}/config_pch.h>"
+        )
+
+        target_sources(${TARGET_NAME} PUBLIC
+                FILE_SET additional_headers
+                TYPE HEADERS
+                BASE_DIRS ${CMAKE_CURRENT_BINARY_DIR}
+                FILES ${PCH_PATH}
+        )
     endif ()
 endfunction()
 
