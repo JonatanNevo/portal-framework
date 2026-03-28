@@ -38,7 +38,6 @@ portal_add_module(engine
 
         PORTAL_DEPENDENCIES
             input
-            networking
             serialization
 
         PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}
