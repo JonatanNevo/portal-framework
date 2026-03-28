@@ -26,6 +26,9 @@ portal_add_module(application
         DEPENDENCIES
             EnTT
 
+        COMPLEX_DEPENDENCIES
+            glfw3|LINK|glfw
+
         PORTAL_DEPENDENCIES
             core
             serialization

@@ -61,15 +61,7 @@
         {
           "name": "entt",
           "version>=": "3.16.0"
-        }
-      ]
-    },
-    "input": {
-      "description": [
-        "The input interface for the Portal framework",
-        "depends: portal-core,portal-application"
-      ],
-      "dependencies": [
+        },
         {
           "name": "glfw3",
           "version>=": "3.4#1",
@@ -83,6 +75,12 @@
           "version>=": "3.4#1",
           "platform": "!linux"
         }
+      ]
+    },
+    "input": {
+      "description": [
+        "The input interface for the Portal framework",
+        "depends: portal-core,portal-application"
       ]
     },
     "networking": {
