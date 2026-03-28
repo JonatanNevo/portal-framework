@@ -39,5 +39,5 @@ public float4 to_linear(float4 srgb)
     bool4 cutoff = srgb < 0.04045f;
     float4 higher = pow((srgb + 0.055f) / 1.055f, float4(2.4f));
     float4 lower = srgb / float4(12.92f);
-    return lerp(higher, lower, cutoff);
+    return lerp(higher, lower, float4(cutoff));
 }

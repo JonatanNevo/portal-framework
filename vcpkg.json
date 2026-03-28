@@ -1,7 +1,7 @@
 {
   "name": "portal-framework",
   "version-string": "1.0.0",
-  "builtin-baseline": "6e874449535f1cc48e9b87a308fbfe8a071d56b0",
+  "builtin-baseline": "b5d1a94fb7f88fd835e360fd23a45a09ceedbf48",
   "features": {
     "portal-core": {
       "description": "Base module for the Portal framework.",
@@ -155,10 +155,7 @@
         },
         {
           "name": "tracy",
-          "features": [
-            "gui-tools"
-          ],
-          "version>=": "0.11.1#2"
+          "version>=": "0.13.1"
         }
       ]
     }
