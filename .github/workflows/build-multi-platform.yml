@@ -57,7 +57,7 @@ jobs:
       - uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}', '-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}','-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
           buildPreset: 'dist'
           testPreset: 'test-ci'
 
