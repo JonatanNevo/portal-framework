@@ -54,6 +54,12 @@ jobs:
             setapikey "${{ secrets.GITHUB_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
 
+      - name: Clear vcpkg recursive data
+        shell: bash
+        run: |
+          echo "X_VCPKG_RECURSIVE_DATA=" >> $GITHUB_ENV
+          echo "VCPKG_INSTALLATION_ROOT=" >> $GITHUB_ENV
+
       - uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi'
