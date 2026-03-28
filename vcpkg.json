@@ -98,7 +98,7 @@
     "engine": {
       "description": [
         "A game engine built on top of the Portal framework",
-        "depends: portal-input,portal-networking,portal-serialization"
+        "depends: portal-input,portal-serialization"
       ],
       "dependencies": [
         {
