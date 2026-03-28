@@ -54,12 +54,6 @@ jobs:
             setapikey "${{ secrets.GITHUB_TOKEN }}" `
             -Source "${{ env.FEED_URL }}"
 
-      - name: Clear vcpkg recursive data
-        shell: bash
-        run: |
-          echo "X_VCPKG_RECURSIVE_DATA=" >> $GITHUB_ENV
-          echo "VCPKG_INSTALLATION_ROOT=" >> $GITHUB_ENV
-
       - uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ninja-multi'
@@ -174,7 +168,7 @@ jobs:
       - run: pip install portal_tool
       - run: python -m portal_tool install -y --only-dependencies
 
-      - uses: lukka/run-vcpkg@b3dd708d38df5c856fe1c18dc0d59ab771f93921
+      - uses: lukka/run-vcpkg@08ab0cc59d3f33647c5dc2b1e8f2093266c7b873
         with:
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
 
@@ -198,7 +192,7 @@ jobs:
           mono "$NUGET_PATH" setapikey "${{ secrets.GITHUB_TOKEN }}" \
             -Source "${{ env.FEED_URL }}"
 
-      - uses: lukka/run-cmake@v10
+      - uses: lukka/run-cmake@v10.9
         with:
           configurePreset: 'ninja-multi'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}', '-DCMAKE_C_COMPILER=${{ matrix.c_compiler }}']"
