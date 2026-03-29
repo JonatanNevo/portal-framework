@@ -78,9 +78,4 @@ struct SkylightComponent
     std::vector<StringId> get_dependencies() const;
 };
 
-REGISTER_COMPONENT(DirectionalLightComponent);
-REGISTER_COMPONENT(PointLightComponent);
-REGISTER_COMPONENT(SpotlightComponent);
-REGISTER_COMPONENT(SkylightComponent);
-
 }

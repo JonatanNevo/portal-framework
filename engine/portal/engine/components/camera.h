@@ -43,7 +43,4 @@ struct CameraComponent
     void serialize(Serializer& serializer) const;
     static CameraComponent deserialize(Deserializer& deserializer);
 };
-
-REGISTER_COMPONENT(MainCameraTag);
-REGISTER_COMPONENT(CameraComponent);
 } // portal

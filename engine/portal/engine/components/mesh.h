@@ -26,6 +26,4 @@ struct StaticMeshComponent
     void post_serialization(Entity entity, ResourceRegistry& reg);
     std::vector<StringId> get_dependencies();
 };
-
-REGISTER_COMPONENT(StaticMeshComponent);
 } // portal

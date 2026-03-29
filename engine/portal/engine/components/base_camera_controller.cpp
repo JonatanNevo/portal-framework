@@ -10,6 +10,8 @@
 
 namespace portal
 {
+REGISTER_COMPONENT(BaseCameraController);
+
 void BaseCameraController::move_up(float scale)
 {
     if (!should_move)

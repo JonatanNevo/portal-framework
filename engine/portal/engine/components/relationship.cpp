@@ -9,6 +9,9 @@
 
 namespace portal
 {
+
+REGISTER_COMPONENT(RelationshipComponent);
+
 void RelationshipComponent::archive(ArchiveObject& archive) const
 {
     archive.add_property("parent", parent.get_component<NameComponent>().name);
