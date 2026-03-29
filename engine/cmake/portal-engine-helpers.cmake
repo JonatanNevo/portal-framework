@@ -1472,9 +1472,11 @@ macro(_portal_configure_runtime_target)
         target_compile_definitions(${TARGET_NAME} PRIVATE PORTAL_STANDALONE_EXE)
     endif ()
 
+    # WHOLE_ARCHIVE ensures static registrar instances from REGISTER_COMPONENT
+    # are not stripped by the linker when the engine is consumed as a static library.
     target_link_libraries(
             ${TARGET_NAME}
-            portal::engine
+            $<LINK_LIBRARY:WHOLE_ARCHIVE,portal::engine>
             ${ARG_LINK_LIBRARIES}
     )
 endmacro()
@@ -1487,9 +1489,11 @@ macro(_portal_configure_editor_target)
     set_target_properties(${TARGET_NAME}_editor PROPERTIES PORTAL_MACOS_ICON ${ICON_ICNS_FILE})
     set_target_properties(${TARGET_NAME}_editor PROPERTIES PORTAL_LOGO ${LOGO_PNG_FILE})
 
+    # WHOLE_ARCHIVE ensures static registrar instances from REGISTER_COMPONENT
+    # are not stripped by the linker when the engine is consumed as a static library.
     target_link_libraries(
             ${TARGET_NAME}_editor
-            portal::engine
+            $<LINK_LIBRARY:WHOLE_ARCHIVE,portal::engine>
             ${ARG_LINK_LIBRARIES}
     )
     target_compile_definitions(${TARGET_NAME}_editor PRIVATE PORTAL_BUILD_EDITOR)
