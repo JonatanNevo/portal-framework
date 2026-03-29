@@ -272,6 +272,10 @@ function(portal_add_resources TARGET_NAME RESOURCE_PATH)
     list(APPEND EXISTING_RESOURCES "${ARG_OUTPUT_NAME}")
     set_target_properties(${TARGET_NAME} PROPERTIES PORTAL_RESOURCES "${EXISTING_RESOURCES}")
     set_property(TARGET ${TARGET_NAME} APPEND PROPERTY EXPORT_PROPERTIES PORTAL_RESOURCES)
+
+    # Store mapping from output name to source directory for portal_fetch_resources
+    # to copy directly from the source tree (avoids Windows file locking issues with parallel builds)
+    set_property(TARGET ${TARGET_NAME} PROPERTY PORTAL_RESOURCE_SOURCE_DIR_${ARG_OUTPUT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/${RESOURCE_PATH}")
 endfunction()
 
 
@@ -503,11 +507,9 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
 
     # Check if the target has a PORTAL_RESOURCE_PREFIX property (for installed targets)
     get_target_property(RESOURCE_PREFIX ${TARGET_TO_FETCH} PORTAL_RESOURCE_PREFIX)
-    if (NOT RESOURCE_PREFIX OR RESOURCE_PREFIX STREQUAL "PORTAL_RESOURCE_PREFIX-NOTFOUND")
-        # For local targets, use TARGET_FILE_DIR
-        set(RESOURCE_BASE_PATH "$<TARGET_FILE_DIR:${TARGET_TO_FETCH}>/resources")
-    else ()
-        # For installed/imported targets, use the PORTAL_RESOURCE_PREFIX property
+    set(IS_INSTALLED_TARGET FALSE)
+    if (RESOURCE_PREFIX AND NOT RESOURCE_PREFIX STREQUAL "PORTAL_RESOURCE_PREFIX-NOTFOUND")
+        set(IS_INSTALLED_TARGET TRUE)
         set(RESOURCE_BASE_PATH "${RESOURCE_PREFIX}")
     endif ()
 
@@ -519,21 +521,24 @@ function(portal_fetch_resources TARGET_NAME TARGET_TO_FETCH)
 
         set(FETCH_TARGET_NAME "${TARGET_NAME}_fetch_${RESOURCE_PATH}_from_${_TARGET_TO_FETCH_NORMALIZED}")
 
-        set(SOURCE_COPY_TARGET "${TARGET_TO_FETCH}_copy_${RESOURCE_PATH}")
+        # For local targets, copy directly from the source tree to avoid
+        # Windows file locking issues when multiple targets copy from the same build output.
+        if (IS_INSTALLED_TARGET)
+            set(FETCH_SOURCE_PATH "${RESOURCE_BASE_PATH}/${RESOURCE_PATH}")
+        else ()
+            get_target_property(RESOURCE_SOURCE_DIR ${TARGET_TO_FETCH} PORTAL_RESOURCE_SOURCE_DIR_${RESOURCE_PATH})
+            set(FETCH_SOURCE_PATH "${RESOURCE_SOURCE_DIR}")
+        endif ()
 
         add_custom_target(${FETCH_TARGET_NAME}
                 COMMAND ${CMAKE_COMMAND} -E copy_directory
-                "${RESOURCE_BASE_PATH}/${RESOURCE_PATH}"
+                "${FETCH_SOURCE_PATH}"
                 "$<TARGET_FILE_DIR:${TARGET_NAME}>/resources/${RESOURCE_PATH}"
                 COMMENT "Fetching resources for ${TARGET_NAME}: ${TARGET_TO_FETCH}/resources/${RESOURCE_PATH} -> resources/${RESOURCE_PATH}"
                 VERBATIM
         )
 
-        if (TARGET ${SOURCE_COPY_TARGET})
-            add_dependencies(${FETCH_TARGET_NAME} ${SOURCE_COPY_TARGET})
-        endif ()
         add_dependencies(${FETCH_TARGET_NAME} ${TARGET_TO_FETCH})
-
         add_dependencies(${TARGET_NAME} ${FETCH_TARGET_NAME})
     endforeach ()
 
