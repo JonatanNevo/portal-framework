@@ -20,7 +20,6 @@
 
 namespace portal
 {
-
 WindowTitlebar::WindowTitlebar(EditorContext& context)
 {
     active_color = target_color = context.theme[imgui::ThemeColors::AccentPrimaryLeft];
@@ -422,6 +421,14 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
                 imgui::set_tooltip("Not Implemented!");
                 imgui::menu_item_with_image(icons.get_descriptor(EditorIcon::Delete), "Delete", "DELETE");
                 imgui::set_tooltip("Not Implemented!");
+
+                ImGui::Separator();
+
+                for (auto& panel : panel_manager.get_panels(PanelMenuCategory::Edit) | std::views::values)
+                {
+                    if (ImGui::MenuItem(panel.name, nullptr, &panel.open))
+                        panel_manager.save_state();
+                }
             }
 
             if (color_pushed)
@@ -439,10 +446,15 @@ void WindowTitlebar::draw_menubar(EditorContext& editor_context, FrameContext& f
                 color_pushed = false;
                 ImGui::PushStyleColor(ImGuiCol_HeaderHovered, editor_context.theme.get_color(imgui::ThemeColors::Background4));
 
-                for (auto& data : panel_manager.get_panels(PanelMenuCategory::View) | std::views::values)
+                // TODO: change icon
+                if (imgui::begin_menu_with_image(icons.get_descriptor(EditorIcon::Copy), "Panels"))
                 {
-                    if (ImGui::MenuItem(data.name, nullptr, &data.open))
-                        panel_manager.save_state();
+                    for (auto& data : panel_manager.get_panels(PanelMenuCategory::View) | std::views::values)
+                    {
+                        if (ImGui::MenuItem(data.name, nullptr, &data.open))
+                            panel_manager.save_state();
+                    }
+                    ImGui::EndMenu();
                 }
 
                 ImGui::Separator();

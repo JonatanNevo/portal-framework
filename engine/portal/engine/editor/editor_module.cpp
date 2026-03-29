@@ -26,6 +26,25 @@ namespace portal
 constexpr static auto DEFAULT_CONFIGS_NAME = "default_editor_imgui.ini";
 constexpr static auto CONFIGS_NAME = "editor_imgui.ini";
 
+// TODO: remove this
+class ControlsPanel : public Panel
+{
+public:
+    void on_gui_render(EditorContext&, FrameContext&, bool& is_open) override
+    {
+        ImGui::Begin("Controls", &is_open);
+        ImGui::Text("RMB - Enter Movement Mode");
+        ImGui::Separator();
+        ImGui::Text("W - Move Forwards");
+        ImGui::Text("S - Move Backwards");
+        ImGui::Text("A - Move Left");
+        ImGui::Text("D - Move Right");
+        ImGui::Text("E - Move Up");
+        ImGui::Text("Q - Move Down");
+        ImGui::End();
+    }
+};
+
 EditorModule::EditorModule(
     ModuleStack& stack,
     Project& project,
@@ -73,6 +92,8 @@ EditorModule::EditorModule(
     panel_manager.add_panel<ContentBrowserPanel>(PanelMenuCategory::View, STRING_ID("Content Browser"), true, editor_context);
     panel_manager.add_panel<StatisticsPanel>(PanelMenuCategory::View, STRING_ID("Statistics"), true);
     panel_manager.add_panel<SceneGraphPanel>(PanelMenuCategory::View, STRING_ID("Scene Graph"), true);
+
+    panel_manager.add_panel<ControlsPanel>(PanelMenuCategory::View, STRING_ID("Editor Controls"), false);
     // TODO: add Scene Graph Panel, Project Settings, Debug Panels,
 }
 
