@@ -39,7 +39,7 @@ void RuntimeModule::begin_frame(FrameContext& frame)
 
 void RuntimeModule::post_update(FrameContext& frame)
 {
-    inner_post_update(frame, swapchain.get_current_render_target());
+    inner_post_update(frame, swapchain.get_current_render_target(false));
 }
 
 void RuntimeModule::end_frame(FrameContext& frame)
