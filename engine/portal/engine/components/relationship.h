@@ -27,6 +27,4 @@ struct RelationshipComponent
     void serialize(Serializer& serialize) const;
     static RelationshipComponent deserialize(Deserializer& deserializer, Entity entity, ecs::Registry& ecs_reg);
 };
-
-REGISTER_COMPONENT(RelationshipComponent);
 }

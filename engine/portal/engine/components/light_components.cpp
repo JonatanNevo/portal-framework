@@ -7,6 +7,12 @@
 
 namespace portal
 {
+
+REGISTER_COMPONENT(DirectionalLightComponent);
+REGISTER_COMPONENT(PointLightComponent);
+REGISTER_COMPONENT(SpotlightComponent);
+REGISTER_COMPONENT(SkylightComponent);
+
 void SkylightComponent::archive(ArchiveObject& archive) const
 {
     archive.add_property("radiance_map", radiance_map->get_id());

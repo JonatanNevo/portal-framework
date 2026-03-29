@@ -299,6 +299,7 @@ template <typename T>
 void register_component()
 {
     using namespace entt::literals;
+    LOG_DEBUG_TAG("ECS", "Registering component {}", glz::type_name<T>);
 
     entt::meta_factory<T>()
         .type(static_cast<entt::id_type>(STRING_ID(glz::type_name<T>).id), STRING_ID(glz::type_name<T>).string.data())
@@ -320,6 +321,4 @@ ComponentType##_registrar() { \
 }; \
 inline ComponentType##_registrar ComponentType##_registrar_instance; \
 }
-
-REGISTER_COMPONENT(PlayerTag);
 }

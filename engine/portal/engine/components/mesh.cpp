@@ -7,6 +7,8 @@
 
 namespace portal
 {
+REGISTER_COMPONENT(StaticMeshComponent);
+
 void StaticMeshComponent::archive(ArchiveObject& archive) const
 {
     archive.add_property("mesh", mesh->get_id());

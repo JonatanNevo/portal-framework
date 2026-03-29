@@ -9,6 +9,10 @@
 
 namespace portal
 {
+
+REGISTER_COMPONENT(MainCameraTag);
+REGISTER_COMPONENT(CameraComponent);
+
 void CameraComponent::calculate_projection()
 {
     projection = glm::perspectiveFov(glm::radians(vertical_fov), static_cast<float>(width), static_cast<float>(height), near_clip, far_clip);
