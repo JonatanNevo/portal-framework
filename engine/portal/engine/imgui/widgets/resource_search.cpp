@@ -110,10 +110,8 @@ bool resource_search_popup(
 
                     auto resource_name = resource.get_resource_name().string;
 
-                    if (!search_string.empty() && is_matching_search(resource_name, search_string))
-                        continue;
-
-                    resources.push_back(resource);
+                    if (search_string.empty() || is_matching_search(resource_name, search_string))
+                        resources.push_back(resource);
                 }
 
                 std::ranges::sort(resources, [](const auto& a, const auto& b) { return a.get_resource_name().string < b.get_resource_name().string; });
