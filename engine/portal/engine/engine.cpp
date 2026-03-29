@@ -51,15 +51,14 @@ Engine::Engine(const Reference<Project>& project, const ApplicationProperties& p
     // TODO: find better surface control
     vulkan_context->get_device().add_present_queue(*surface);
     swapchain = make_reference<renderer::vulkan::VulkanSwapchain>(project->get_settings(), *vulkan_context, surface);
-    vulkan_context->set_present_format(renderer::vulkan::to_format(swapchain->get_non_linear_color_format()));
-
     if (project->get_type() == ProjectType::Editor)
     {
+        vulkan_context->set_present_format(renderer::vulkan::to_format(swapchain->get_non_linear_color_format()));
         modules.add_module<EditorModule>(*project, *vulkan_context, *swapchain, *window, engine_event_dispatcher, input_event_dispatcher);
     }
     else
     {
-        system_orchestrator.connect(input_event_dispatcher);
+        vulkan_context->set_present_format(renderer::vulkan::to_format(swapchain->get_linear_color_format()));
         modules.add_module<RuntimeModule>(*project, *vulkan_context, *swapchain, *window);
     }
 
@@ -106,6 +105,12 @@ void Engine::prepare()
         auto scene = engine_context->get_resource_registry().list_all_resources_of_type<Scene>() | std::ranges::views::take(1);
         scene.front()->set_viewport_bounds({0, 0, swapchain->get_width(), swapchain->get_height()});
         engine_context->get_system_orchestrator().set_active_scene(scene.front());
+    }
+
+    if (project->get_type() != ProjectType::Editor)
+    {
+        engine_context->get_system_orchestrator().connect(input_event_dispatcher);
+        engine_event_dispatcher.trigger(SetMouseCursorEvent{CursorMode::Locked});
     }
 }
 
