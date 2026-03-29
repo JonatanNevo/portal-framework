@@ -194,7 +194,12 @@ void SceneLoader::dearchive_scene(const Reference<Scene>& scene, ArchiveObject& 
 
                 if (!result)
                 {
-                    LOG_WARN("Failed to invoke dearchive for type: {}", type.name());
+                    LOG_ERROR(
+                        "Failed to invoke dearchive for type: {} Entity: {}[{}]",
+                        type.name(),
+                        name.string,
+                        static_cast<entt::id_type>(entity.get_id())
+                    );
                 }
             }
         }
