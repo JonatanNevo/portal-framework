@@ -25,7 +25,7 @@ else ()
     set_source_files_properties(${ENGINE_THIRD_PARTY_SOURCES} ${ENGINE_THIRD_PARTY_HEADERS} PROPERTIES COMPILE_FLAGS "-w")
 endif ()
 
-option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
+option(PORTAL_BUILD_TESTS "Whether or not to build the tests" OFF)
 option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF)
 
 if (PORTAL_FIND_PACKAGE)

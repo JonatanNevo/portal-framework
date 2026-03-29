@@ -104,6 +104,7 @@ function(portal_add_test_target TARGET_NAME)
     set(TEST_TARGET ${TARGET_NAME}-test)
     add_executable(${TEST_TARGET} ${ARG_SOURCES})
 
+    message(STATUS "Adding test target ${TEST_TARGET}")
     target_link_libraries(${TEST_TARGET}
             PRIVATE
             ${TARGET_NAME}

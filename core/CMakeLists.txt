@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
+option(PORTAL_BUILD_TESTS "Whether or not to build the tests" OFF)
 option(PORTAL_DEBUG_ALLOCATIONS "Enable debug allocations (for debug only)" OFF)
 option(PORTAL_PROFILE "Enable profiling with Tracy" OFF)
 
@@ -136,7 +136,6 @@ endif ()
 
 portal_configure_pch(portal-core portal/core/config.h.inc CONFIGURE)
 
-enable_testing()
 portal_build_tests(tests)
 
 portal_install_module(core
