@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(PORTAL_BUILD_TESTS "Whether or not to build the tests" ON)
+option(PORTAL_BUILD_TESTS "Whether or not to build the tests" OFF)
 option(PORTAL_FIND_PACKAGE "Whether or not to look for portal components" OFF) #OFF by default
 
 if (PORTAL_FIND_PACKAGE)
@@ -34,7 +34,6 @@ portal_add_module(serialization
         glaze
 )
 
-enable_testing()
 portal_build_tests(tests)
 
 portal_install_module(serialization)
