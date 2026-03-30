@@ -324,7 +324,7 @@ struct ComponentEditorFunctions<TransformComponent>
             glm::vec3 scale = first_component.get_scale();
 
             ImGui::TableNextRow();
-            if (draw_vec3_control(context, "Translation", translation, translation_manually_edited, 0.0f))
+            if (draw_vec3_control(context, "Translation", translation, translation_manually_edited, 0.0f, imgui::VectorAxisBits::None, 0.1f))
             {
                 entity->patch_component<TransformComponent>(
                     [&](TransformComponent& comp)

@@ -181,16 +181,6 @@ std::string FileSystem::get_environment_variable(const std::string& name)
     return value ? std::string(value) : std::string{};
 }
 
-std::filesystem::path FileSystem::get_binary_path()
-{
-    return std::filesystem::current_path();
-}
-
-std::filesystem::path FileSystem::get_resource_path()
-{
-    return std::filesystem::current_path();
-}
-
 std::filesystem::path FileSystem::get_root_path()
 {
     return std::filesystem::current_path();

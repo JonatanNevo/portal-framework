@@ -118,19 +118,8 @@ namespace portal
 };
 ]=]
     )
-    get_target_property(RESOURCE_PREFIX portal::engine PORTAL_RESOURCE_PREFIX)
-    if (NOT RESOURCE_PREFIX OR RESOURCE_PREFIX STREQUAL "PORTAL_RESOURCE_PREFIX-NOTFOUND")
-        set(ENGINE_RESOURCES_PATH "$<TARGET_FILE_DIR:portal::engine>/resources")
-    else ()
-        set(ENGINE_RESOURCES_PATH "${RESOURCE_PREFIX}")
-    endif ()
-
-    get_target_property(CONFIG_PREFIX portal::engine PORTAL_CONFIG_PREFIX)
-    if (NOT CONFIG_PREFIX OR CONFIG_PREFIX STREQUAL "PORTAL_CONFIG_PREFIX-NOTFOUND")
-        set(ENGINE_CONFIG_PATH "$<TARGET_FILE_DIR:portal::engine>/config")
-    else ()
-        set(ENGINE_CONFIG_PATH "${CONFIG_PREFIX}")
-    endif ()
+    set(ENGINE_RESOURCES_PATH "resources")
+    set(ENGINE_CONFIG_PATH "config")
 
     string(REPLACE "@SETTINGS_FILE@" "${SETTINGS_FILE}" CONFIGURE_FILE "${CONFIGURE_FILE}")
     string(REPLACE "@ICON_FILE@" "${ICON_FILE}" CONFIGURE_FILE "${CONFIGURE_FILE}")
@@ -1569,8 +1558,9 @@ function(portal_add_game TARGET_NAME)
         portal_add_configs(${TARGET_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/config)
     endif ()
 
-    portal_setup_compile_configs(${TARGET_NAME} ${ARG_SETTINGS_FILE_NAME} ${ICON_PNG_FILE})
-    portal_setup_compile_configs(${TARGET_NAME}_editor ${ARG_SETTINGS_FILE_NAME} ${ICON_PNG_FILE})
+    cmake_path(GET ICON_PNG_FILE FILENAME ICON_PNG_FILENAME)
+    portal_setup_compile_configs(${TARGET_NAME} ${ARG_SETTINGS_FILE_NAME} ${ICON_PNG_FILENAME})
+    portal_setup_compile_configs(${TARGET_NAME}_editor ${ARG_SETTINGS_FILE_NAME} ${ICON_PNG_FILENAME})
 
     portal_install_game(${TARGET_NAME})
 

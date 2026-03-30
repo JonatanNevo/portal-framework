@@ -12,6 +12,20 @@
 
 namespace portal
 {
+
+static std::filesystem::path s_binary_path;
+
+void FileSystem::set_binary_path(const std::filesystem::path& path)
+{
+    s_binary_path = path;
+}
+
+std::filesystem::path FileSystem::get_binary_path()
+{
+    return s_binary_path;
+}
+
+
 std::filesystem::path FileSystem::get_working_directory()
 {
     return std::filesystem::current_path();

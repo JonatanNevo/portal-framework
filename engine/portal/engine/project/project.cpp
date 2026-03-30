@@ -26,12 +26,12 @@ Reference<Project> Project::open_project(const ProjectType type, const std::file
 
 std::filesystem::path Project::get_engine_resource_directory()
 {
-    return std::filesystem::path(PORTAL_ENGINE_RESOURCES_LOCATION) / "engine";
+    return FileSystem::get_binary_path() / PORTAL_ENGINE_RESOURCES_LOCATION / "engine";
 }
 
 std::filesystem::path Project::get_engine_config_directory()
 {
-    return std::filesystem::path(PORTAL_ENGINE_CONFIG_LOCATION);
+    return FileSystem::get_binary_path() / PORTAL_ENGINE_CONFIG_LOCATION;
 }
 
 Project::Project(const ProjectType type, ProjectProperties project_properties, std::filesystem::path working_directory, ProjectSettings&& settings) :
