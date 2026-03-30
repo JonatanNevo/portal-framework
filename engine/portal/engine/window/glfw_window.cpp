@@ -337,7 +337,10 @@ GlfwWindow::GlfwWindow(ProjectSettings& settings, const WindowProperties& proper
     }
 
     // Setup icon
-    const std::filesystem::path icon_path = PORTAL_ICON_FILE_NAME;
+    const auto project_icon = FileSystem::get_working_directory() / "resources" / PORTAL_ICON_FILE_NAME;
+    const std::filesystem::path icon_path = std::filesystem::exists(project_icon)
+        ? project_icon
+        : FileSystem::get_binary_path() / PORTAL_ENGINE_RESOURCES_LOCATION / "engine" / PORTAL_ICON_FILE_NAME;
     // TODO: add an `platform::allows_window_icon` check before calling
     if (std::filesystem::exists(icon_path))
     {

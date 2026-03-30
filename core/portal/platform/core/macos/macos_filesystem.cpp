@@ -112,35 +112,6 @@ std::string FileSystem::get_environment_variable(const std::string& name)
     return value ? std::string(value) : std::string{};
 }
 
-std::filesystem::path FileSystem::get_binary_path()
-{
-    const CFURLRef executable_url = CFBundleCopyExecutableURL(get_bundle());
-    if (!executable_url)
-        throw std::runtime_error("Failed to get executable URL");
-
-    char executable_path[PATH_MAX];
-    if (!CFURLGetFileSystemRepresentation(executable_url, TRUE, reinterpret_cast<UInt8*>(executable_path), PATH_MAX))
-    {
-        CFRelease(executable_url);
-        throw std::runtime_error("Failed to get executable path");
-    }
-    CFRelease(executable_url);
-    return std::filesystem::path(executable_path).parent_path();
-}
-
-std::filesystem::path FileSystem::get_resource_path()
-{
-    const CFURLRef resource_url = CFBundleCopyResourcesDirectoryURL(get_bundle());
-    char resource_path[PATH_MAX];
-    if (!CFURLGetFileSystemRepresentation(resource_url, TRUE, reinterpret_cast<UInt8*>(resource_path), PATH_MAX))
-    {
-        CFRelease(resource_url);
-        throw std::runtime_error("Failed to get resource path");
-    }
-    CFRelease(resource_url);
-    return resource_path;
-}
-
 std::filesystem::path FileSystem::get_root_path()
 {
     const CFURLRef bundle_url = CFBundleCopyBundleURL(get_bundle());

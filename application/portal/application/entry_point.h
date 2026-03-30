@@ -49,6 +49,8 @@ namespace portal
  */
 int main(int argc, char** argv)
 {
+    FileSystem::set_binary_path(std::filesystem::absolute(std::filesystem::path(argv[0])).parent_path());
+
     // TODO: fetch default log levels from environment?
     Log::init(
         {
