@@ -1,5 +1,29 @@
 cmake_minimum_required(VERSION 3.30)
 
+# Load .env before project() so the vcpkg toolchain picks up
+# VCPKG_BINARY_SOURCES / VCPKG_NUGET_REPOSITORY when it loads.
+if(EXISTS "${CMAKE_SOURCE_DIR}/.env")
+    file(STRINGS "${CMAKE_SOURCE_DIR}/.env" _portal_env_lines)
+    foreach(_portal_env_line IN LISTS _portal_env_lines)
+        if(_portal_env_line MATCHES "^[ \t]*#" OR _portal_env_line STREQUAL "")
+            continue()
+        endif()
+        if(_portal_env_line MATCHES "^[ \t]*([A-Za-z_][A-Za-z0-9_]*)[ \t]*=(.*)$")
+            set(_portal_env_key "${CMAKE_MATCH_1}")
+            set(_portal_env_val "${CMAKE_MATCH_2}")
+            string(REGEX REPLACE "^\"(.*)\"$" "\\1" _portal_env_val "${_portal_env_val}")
+            string(REGEX REPLACE "^'(.*)'$" "\\1" _portal_env_val "${_portal_env_val}")
+            if(NOT DEFINED ENV{${_portal_env_key}})
+                set(ENV{${_portal_env_key}} "${_portal_env_val}")
+            endif()
+        endif()
+    endforeach()
+    unset(_portal_env_lines)
+    unset(_portal_env_line)
+    unset(_portal_env_key)
+    unset(_portal_env_val)
+endif()
+
 project(portal_framework)
 
 set(CMAKE_CXX_STANDARD 23)

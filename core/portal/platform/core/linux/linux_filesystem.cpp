@@ -16,6 +16,7 @@
 #include <pwd.h>
 #include <ranges>
 #include <sstream>
+#include <unistd.h>
 
 
 namespace portal

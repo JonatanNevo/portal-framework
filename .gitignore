@@ -150,3 +150,6 @@ CLAUDE.md
 
 # Packaging
 dist/
+
+# Enviornment File
+.env

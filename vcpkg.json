@@ -1,7 +1,7 @@
 {
   "name": "portal-framework",
   "version-string": "1.0.0",
-  "builtin-baseline": "b5d1a94fb7f88fd835e360fd23a45a09ceedbf48",
+  "builtin-baseline": "2b65c20fc66eda893aa15a15a453c3cf09500b19",
   "features": {
     "portal-core": {
       "description": "Base module for the Portal framework.",
@@ -138,7 +138,7 @@
         },
         {
           "name": "imguizmo",
-          "version>=": "2024-05-29#1"
+          "version>=": "1.9#0"
         },
         {
           "name": "tinyobjloader",
