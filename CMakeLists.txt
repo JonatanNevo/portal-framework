@@ -33,6 +33,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(PORTAL_BUILD_DOCS "Build API documentation with Doxygen" OFF)
+option(PORTAL_SANITIZE "Add sanitizers to build" OFF)
+option(PORTAL_ASAN "Add address sanitizers (mutually exclusive to PORTAL_TSAN)" OFF)
+option(PORTAL_TSAN "Add thread sanitizers (mutually exclusive to PORTAL_ASAN)" OFF)
+
 if(PORTAL_BUILD_DOCS)
     find_package(Doxygen REQUIRED)
     if(NOT DOXYGEN_FOUND)
@@ -41,6 +45,29 @@ if(PORTAL_BUILD_DOCS)
 
     set_property(GLOBAL PROPERTY PORTAL_DOCS_TARGETS "")
     set(PORTAL_DOCS_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs/build)
+endif()
+
+if(PORTAL_SANITIZE)
+    if(PORTAL_ASAN AND PORTAL_TSAN)
+        message(FATAL_ERROR "Could not enable both ASAN and TSAN")
+    endif ()
+
+    if (PORTAL_ASAN)
+        message(STATUS "Enabling address sanitizers")
+
+        add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=address,undefined)
+    elseif (PORTAL_TSAN)
+        message(STATUS "Enabling thread sanitizers")
+
+        add_compile_options(-fsanitize=thread -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=thread)
+
+        # moodycamel's concurrentqueue uses std::atomic_thread_fence, which gcc
+        # warns can't be fully modelled by TSan. Demote the warning so the build
+        # succeeds; TSan still catches races outside the queue fences.
+        add_compile_options(-Wno-error=tsan)
+    endif ()
 endif()
 
 enable_testing()

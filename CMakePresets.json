@@ -18,6 +18,15 @@
       "generator": "Ninja Multi-Config"
     },
     {
+      "name": "sanitizers",
+      "inherits": "ninja-multi",
+      "cacheVariables": {
+        "PORTAL_SANITIZE": "ON",
+        "PORTAL_ASAN": "ON",
+        "PORTAL_TSAN": "OFF"
+      }
+    },
+    {
       "name": "docs",
       "inherits": "ninja-multi",
       "binaryDir": "${sourceDir}/build/ninja-multi",
@@ -43,6 +52,11 @@
       "configuration": "Release"
     },
     {
+      "name": "sanitizers",
+      "configurePreset": "sanitizers",
+      "configuration": "RelWithDebInfo"
+    },
+    {
       "name": "docs",
       "configurePreset": "docs",
       "configuration": "Release",
@@ -54,6 +68,14 @@
       "name": "test-ci",
       "configurePreset": "ninja-multi",
       "configuration": "Release",
+      "output": {
+        "verbosity": "extra"
+      }
+    },
+    {
+      "name": "test-sanitizers",
+      "configurePreset": "sanitizers",
+      "configuration": "RelWithDebInfo",
       "output": {
         "verbosity": "extra"
       }
