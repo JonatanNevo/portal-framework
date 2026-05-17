@@ -35,24 +35,21 @@ std::coroutine_handle<> SuspendJob::await_suspend(const std::coroutine_handle<> 
     job_promise_handler.promise().add_switch_information(SwitchType::Pause);
 
     const auto& promise = job_promise_handler.promise();
-    auto* counter = promise.get_counter();
     auto* scheduler = promise.get_scheduler();
+    const auto continuation = promise.get_continuation();
 
     // Put the current coroutine to the back of the scheduler queue as it has been fully suspended at this point.
     // We are pausing the job so no need to pass on the counter
     // TODO: save the priority somewhere?
     scheduler->dispatch_job({job_promise_handler}, JobPriority::Normal, nullptr);
 
-    if (counter)
-    {
-        // We must unblock/awake the scheduling thread each time we suspend a coroutine so that the scheduling worker may pick up work again,
-        // in case it had been put to sleep earlier.
-        counter->blocking.clear(std::memory_order_release);
-        counter->blocking.notify_all();
-    }
+    // Wake any thread waiting in wait_for_counter so it can pick up the
+    // re-dispatched job. The wake flag lives on the Scheduler (which outlives
+    // every wait_for_counter call); the user's Counter is left untouched here.
+    scheduler->signal_wake();
 
     // Return the context back to the caller (usually the thread event loop)
-    return promise.get_continuation();
+    return continuation;
 }
 
 std::coroutine_handle<> FinalizeJob::await_suspend(const std::coroutine_handle<> handle) noexcept
@@ -64,12 +61,15 @@ std::coroutine_handle<> FinalizeJob::await_suspend(const std::coroutine_handle<>
     const auto counter = job_promise_handler.promise().get_counter();
     if (counter)
     {
-        const auto value = counter->count.fetch_sub(1, std::memory_order_release) - 1;
-        if (value <= 0)
-        {
-            counter->blocking.clear(std::memory_order_release);
-            counter->blocking.notify_all();
-        }
+        counter->count.fetch_sub(1, std::memory_order_release);
+    }
+
+    // Always wake potential waiters via the Scheduler-owned signal; spurious
+    // wakes are harmless (the waiter re-checks its own counter).
+    auto* scheduler = job_promise_handler.promise().get_scheduler();
+    if (scheduler)
+    {
+        scheduler->signal_wake();
     }
 
     return job_promise_handler.promise().get_continuation();

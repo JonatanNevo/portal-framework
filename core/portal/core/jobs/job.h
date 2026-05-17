@@ -308,7 +308,10 @@ public:
     JobBase(const handle_type handle) : handle(handle) {}
 
     JobBase(const JobBase&) = delete;
-    JobBase(JobBase&& other) noexcept : handle(std::exchange(other.handle, nullptr)), owning_result(std::exchange(other.owning_result, false)) {}
+    JobBase(JobBase&& other) noexcept
+        : handle(std::exchange(other.handle, nullptr)),
+          dispatched(std::exchange(other.dispatched, false)),
+          owning_result(std::exchange(other.owning_result, false)) {}
 
     JobBase& operator=(const JobBase&) = delete;
 

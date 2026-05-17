@@ -83,19 +83,21 @@ void Scheduler::wait_for_counter(Counter& counter)
 #if ENABLE_JOB_STATS
             const auto idle_start = std::chrono::high_resolution_clock::now();
 #endif
-            counter.blocking.test_and_set(std::memory_order_acquire);
+            // The wake_signal lives on the Scheduler, not the Counter, so the
+            // finalizer that drives count to zero never has to touch Counter
+            // after the fetch_sub the waiter synchronizes with. Spurious wakes
+            // (from unrelated suspends/finalizes) are handled by re-checking
+            // counter.count on the next loop iteration.
+            wake_signal.test_and_set(std::memory_order_acquire);
 
             // Failed to fetch a job, meaning that there are no pending jobs, only in progress, therefore, we still need to wait
             if (counter.count.load(std::memory_order_acquire) > 0)
             {
-                // Wait for the flag to be set - this is the case if any of these happen:
-                //    * the scheduler is destroyed
-                //    * the last job has completed, and all jobs are now done.
-                counter.blocking.wait(true, std::memory_order_acquire);
+                wake_signal.wait(true, std::memory_order_acquire);
             }
             else
             {
-                counter.blocking.clear(std::memory_order_release);
+                wake_signal.clear(std::memory_order_release);
             }
 #if ENABLE_JOB_STATS
             const auto idle_end = std::chrono::high_resolution_clock::now();
@@ -130,12 +132,17 @@ void Scheduler::dispatch_jobs(const std::span<JobBase> jobs, const JobPriority p
         job_pointers.push_back(job.handle);
     }
 
+    // Bump the counter *before* submitting jobs to the queue so that any worker
+    // that dequeues a job sees count > 0. Otherwise the worker can finalize a
+    // job before this increment, fetch_sub on a 0-valued size_t underflows, and
+    // the eventual fetch_add wraps it back — masking the bug while skipping the
+    // notify on that finalizer.
+    if (counter)
+        counter->count.fetch_add(jobs.size(), std::memory_order_release);
+
     auto& context = get_context();
     context.queue.submit_job_batch(job_pointers, priority);
     stats.record_work_submitted(tls_worker_id, priority, jobs.size());
-
-    if (counter)
-        counter->count.fetch_add(jobs.size(), std::memory_order_release);
 }
 
 void Scheduler::dispatch_job(JobBase job, const JobPriority priority, Counter* counter)

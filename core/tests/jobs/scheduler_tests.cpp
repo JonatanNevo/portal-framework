@@ -538,6 +538,40 @@ TEST_CASE("Scheduler Destructor & Cleanup", "[jobs][scheduler]")
         REQUIRE(true);
     }
 
+    // Regression guard for the use-after-free fixed in FinalizeJob /
+    // wait_for_counter: the finalizer used to write to Counter::blocking
+    // after the waiter could exit and let the user's stack-allocated Counter
+    // be destroyed. Looping the destructor scenario inline makes the race
+    // window (if it ever returns) hit reliably within a single ctest run,
+    // and surfaces immediately under ASan/TSan without needing --repeat.
+    SECTION("RegressionStressDestructorWithPendingJobs")
+    {
+        std::atomic<int> executed_count{0};
+        constexpr int iterations = 50;
+        constexpr int jobs_per_iter = 10;
+
+        for (int iter = 0; iter < iterations; ++iter)
+        {
+            jobs::Scheduler scheduler{1};
+
+            std::vector<Job<>> jobs;
+            for (int i = 0; i < jobs_per_iter; ++i)
+            {
+                auto job = [&executed_count]() -> Job<>
+                {
+                    executed_count.fetch_add(1, std::memory_order_relaxed);
+                    co_return;
+                };
+                jobs.push_back(job());
+            }
+
+            scheduler.wait_for_jobs(std::span{jobs});
+            // Scheduler destructs here on each iteration.
+        }
+
+        REQUIRE(executed_count.load() == iterations * jobs_per_iter);
+    }
+
     job_test_teardown();
 }
 } // namespace portal

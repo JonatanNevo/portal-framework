@@ -153,27 +153,6 @@ TEST_CASE("Counter Blocking/Unblocking", "[jobs][counter]")
 {
     job_test_setup();
 
-    SECTION("BlockingFlagPreventsMultipleThreadsFromBlocking")
-    {
-        jobs::Scheduler scheduler{0};
-        jobs::Counter counter{};
-
-        // Initially the blocking flag should be clear
-        REQUIRE_FALSE(counter.blocking.test(std::memory_order_acquire));
-
-        // Simulate wait_for_jobs behavior: set the blocking flag
-        counter.blocking.test_and_set(std::memory_order_acquire);
-        REQUIRE(counter.blocking.test(std::memory_order_acquire));
-
-        // If another thread tries to set it, test_and_set returns the previous value (true)
-        bool was_already_set = counter.blocking.test_and_set(std::memory_order_acquire);
-        REQUIRE(was_already_set);
-
-        // Clear for cleanup
-        counter.blocking.clear(std::memory_order_release);
-        REQUIRE_FALSE(counter.blocking.test(std::memory_order_acquire));
-    }
-
     SECTION("CounterUnblocksWhenCountReachesZero")
     {
         jobs::Scheduler scheduler{0};
@@ -303,62 +282,6 @@ TEST_CASE("Counter Memory Ordering", "[jobs][counter]")
         REQUIRE(counter.count.load(std::memory_order_acquire) == 0);
     }
 
-    SECTION("BlockingFlagUsesProperAcquireRelease")
-    {
-        jobs::Scheduler scheduler{0};
-        jobs::Counter counter{};
-
-        // Test the blocking flag memory ordering pattern
-        // Set flag with test_and_set (acquire ordering)
-        bool was_set = counter.blocking.test_and_set(std::memory_order_acquire);
-        REQUIRE_FALSE(was_set);
-
-        // Test with acquire
-        bool is_set = counter.blocking.test(std::memory_order_acquire);
-        REQUIRE(is_set);
-
-        // Clear with release
-        counter.blocking.clear(std::memory_order_release);
-
-        // Verify with acquire
-        is_set = counter.blocking.test(std::memory_order_acquire);
-        REQUIRE_FALSE(is_set);
-    }
-
-    SECTION("TestAndSetUsesAcquireOrdering")
-    {
-        jobs::Counter counter{};
-
-        // test_and_set should use acquire ordering to ensure
-        // any prior writes are visible after acquiring the flag
-        bool was_set = counter.blocking.test_and_set(std::memory_order_acquire);
-        REQUIRE_FALSE(was_set);
-
-        // Calling again should return true (was already set)
-        was_set = counter.blocking.test_and_set(std::memory_order_acquire);
-        REQUIRE(was_set);
-
-        // The acquire ordering ensures we see any writes that happened-before the set
-        counter.blocking.clear(std::memory_order_release);
-    }
-
-    SECTION("ClearUsesReleaseOrdering")
-    {
-        jobs::Counter counter{};
-
-        // Set the flag
-        counter.blocking.test_and_set(std::memory_order_acquire);
-        REQUIRE(counter.blocking.test(std::memory_order_acquire));
-
-        // Clear should use release ordering to ensure all prior writes
-        // are visible to threads that later acquire the flag
-        counter.blocking.clear(std::memory_order_release);
-
-        // Verify with acquire ordering
-        bool is_set = counter.blocking.test(std::memory_order_acquire);
-        REQUIRE_FALSE(is_set);
-    }
-
     SECTION("CounterMemoryOrderingIntegrationTest")
     {
         jobs::Scheduler scheduler{0};
@@ -369,34 +292,15 @@ TEST_CASE("Counter Memory Ordering", "[jobs][counter]")
         jobs.push_back(simple_counter_job());
         jobs.push_back(simple_counter_job());
 
-        // This test verifies the complete memory ordering interaction:
-        // 1. dispatch_jobs: fetch_add with release
-        // 2. wait loop: load with acquire
-        // 3. FinalizeJob: fetch_sub with release
-        // 4. blocking flag: test_and_set with acquire, clear with release
-
+        // Verifies the complete memory-ordering interaction visible through the
+        // public API: dispatch_jobs (fetch_add release), the wait loop driving
+        // count to zero via acquire loads, and FinalizeJob's release-RMW.
         scheduler.dispatch_jobs(std::span{jobs}, JobPriority::Normal, &counter);
-
-        // Simulate wait_for_jobs pattern with correct memory ordering
-        counter.blocking.test_and_set(std::memory_order_acquire);
 
         while (counter.count.load(std::memory_order_acquire) > 0)
         {
-            // If no work, we would normally wait, but for test just iterate
-            auto state = scheduler.main_thread_do_work();
-            if (state == jobs::WorkerIterationState::EmptyQueue)
-            {
-                // In real code, would wait on blocking flag
-                // For test, just clear and check count again
-                counter.blocking.clear(std::memory_order_release);
-                if (counter.count.load(std::memory_order_acquire) > 0)
-                {
-                    counter.blocking.test_and_set(std::memory_order_acquire);
-                }
-            }
+            scheduler.main_thread_do_work();
         }
-
-        counter.blocking.clear(std::memory_order_release);
 
         REQUIRE(counter.count.load(std::memory_order_acquire) == 0);
     }

@@ -48,7 +48,6 @@ namespace portal::jobs
 struct Counter
 {
     std::atomic<size_t> count;
-    std::atomic_flag blocking;
 };
 
 /**
@@ -284,6 +283,18 @@ public:
      */
     WorkerIterationState main_thread_do_work();
 
+    /**
+     * Wake any thread blocked in wait_for_counter so it can re-check its counter
+     * and resume work-stealing. Called by FinalizeJob and SuspendJob; the signal
+     * lives on the Scheduler (not on user-owned Counter) so that signalling is
+     * safe even after the waiter's stack-allocated Counter has been destroyed.
+     */
+    void signal_wake() noexcept
+    {
+        wake_signal.clear(std::memory_order_release);
+        wake_signal.notify_all();
+    }
+
 private:
     void worker_thread_loop(const std::stop_token& token, size_t worker_id);
     WorkerIterationState worker_thread_iteration(WorkerContext& context);
@@ -303,6 +314,13 @@ private:
 
     std::vector<Thread> threads;
     JobStats stats;
+
+    // Shared wake signal for wait_for_counter. Lives on the Scheduler (not on
+    // user-owned Counter) so that finalizers can safely signal *after* the
+    // Counter's stack frame has been destroyed by the waiter — the Scheduler
+    // outlives every wait_for_counter call (workers are joined before this
+    // member is torn down in ~Scheduler).
+    std::atomic_flag wake_signal;
 };
 
 template <typename... Results>
@@ -346,8 +364,14 @@ auto Scheduler::wait_for_jobs(const std::span<Job<Result>> jobs, const JobPriori
     PORTAL_PROF_ZONE();
     llvm::SmallVector<JobBase> job_list;
     job_list.reserve(jobs.size());
-    for (const auto& job : jobs)
+    for (auto& job : jobs)
+    {
         job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
+        // Caller's Job<> shares ownership of the same coroutine frame. Mark it
+        // dispatched so its destructor doesn't double-free while a worker is
+        // still finalizing it.
+        job.set_dispatched();
+    }
 
     wait_for_jobs(job_list, priority);
 
@@ -368,8 +392,13 @@ void Scheduler::wait_for_jobs(const std::span<Job<Result>> jobs, const JobPriori
     PORTAL_PROF_ZONE();
     llvm::SmallVector<JobBase> job_list;
     job_list.reserve(jobs.size());
-    for (const auto& job : jobs)
+    for (auto& job : jobs)
+    {
         job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
+        // See the non-void overload above: must mark the caller's Job<> as
+        // dispatched so it doesn't double-free the coroutine frame on destruction.
+        job.set_dispatched();
+    }
 
     wait_for_jobs(job_list, priority);
 }
@@ -397,7 +426,9 @@ void Scheduler::dispatch_jobs(std::tuple<Job<Results...>> jobs, const JobPriorit
     std::apply(
         [&](auto&... job)
         {
-            (job_list.push_back(JobBase::handle_type::from_address(job.handle.address())), ...);
+            // Mark each caller-side Job<> as dispatched in the same step so its
+            // destructor doesn't try to destroy the coroutine frame later.
+            ((job_list.push_back(JobBase::handle_type::from_address(job.handle.address())), job.set_dispatched()), ...);
         },
         jobs
     );
@@ -411,8 +442,11 @@ void Scheduler::dispatch_jobs(std::span<Job<Result>> jobs, JobPriority priority,
     PORTAL_PROF_ZONE();
     llvm::SmallVector<JobBase> job_list;
     job_list.reserve(jobs.size());
-    for (const auto& job : jobs)
+    for (auto& job : jobs)
+    {
         job_list.push_back(JobBase::handle_type::from_address(job.handle.address()));
+        job.set_dispatched();
+    }
 
     dispatch_jobs(job_list, priority, counter);
 }
@@ -421,6 +455,10 @@ template <typename Result>
 void Scheduler::dispatch_job(Job<Result> job, JobPriority priority, Counter* counter)
 {
     PORTAL_PROF_ZONE();
+    // Mark the local parameter as dispatched before its destructor runs at
+    // function exit, otherwise ~JobBase would destroy the coroutine frame
+    // we just submitted to the scheduler.
+    job.set_dispatched();
     dispatch_job(JobBase::handle_type::from_address(job.handle.address()), priority, counter);
 }
 } // portal
