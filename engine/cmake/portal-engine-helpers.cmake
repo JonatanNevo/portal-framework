@@ -1505,6 +1505,8 @@ function(portal_add_game TARGET_NAME)
     )
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    _portal_fix_vcpkg_nfd_dbus_path()
+
     if (NOT ARG_SETTINGS_FILE_NAME)
         set(ARG_SETTINGS_FILE_NAME "settings.json")
     endif ()

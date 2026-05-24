@@ -340,6 +340,8 @@ function(portal_add_dependency MODULE_NAME DEPENDENCY)
     if (NOT ARG_SKIP_LINK)
         target_link_libraries(portal-${MODULE_NAME} PUBLIC ${ARG_LINK})
     endif ()
+
+    _portal_fix_vcpkg_nfd_dbus_path()
 endfunction()
 
 #[=======================================================================[.rst:
