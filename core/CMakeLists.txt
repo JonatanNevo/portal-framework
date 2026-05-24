@@ -16,6 +16,7 @@ option(PORTAL_PROFILE "Enable profiling with Tracy" OFF)
 
 include(cmake/portal-test-helpers.cmake)
 include(cmake/portal-install-helpers.cmake)
+include(cmake/portal-vcpkg-rpath-fix.cmake)
 include(cmake/portal-module-helpers.cmake)
 
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS "portal/core/*.cpp")
@@ -143,4 +144,5 @@ portal_install_module(core
         cmake/portal-test-helpers.cmake
         cmake/portal-install-helpers.cmake
         cmake/portal-module-helpers.cmake
+        cmake/portal-vcpkg-rpath-fix.cmake
 )
