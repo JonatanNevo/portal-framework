@@ -8,6 +8,8 @@
 #include <atomic>
 #include <thread>
 
+#include "cpu_relax.h"
+
 namespace portal
 {
 /**
@@ -32,6 +34,8 @@ namespace portal
  */
 class SpinLock
 {
+    static constexpr auto SPIN_BACKOFF_COUNT = 16;
+
 public:
     SpinLock() = default;
 
@@ -42,9 +46,7 @@ public:
      */
     bool try_lock()
     {
-        // Use an acquire fence to ensure all subsequent reads by this thread will be valid
-        const bool already_locked = locked.test_and_set(std::memory_order_acquire);
-        return !already_locked;
+        return !locked.load(std::memory_order_relaxed) && !locked.exchange(true, std::memory_order_acquire);
     }
 
     /**
@@ -52,23 +54,17 @@ public:
      */
     void lock()
     {
-        unsigned backoff = 1;
-
-        if (try_lock())
-            return;
-
-        // Exponential back-off strategy
-        while (true)
+        for (int spin_count = 0; !try_lock(); ++spin_count)
         {
-            for (unsigned i = 0; i < backoff; ++i)
+            if (spin_count < SPIN_BACKOFF_COUNT)
+            {
+                cpu_relax();
+            }
+            else
+            {
                 std::this_thread::yield();
-
-            if (try_lock())
-                return;
-
-            // Increase back-off time (with a reasonable upper limit)
-            if (backoff < 1024)
-                backoff *= 2;
+                spin_count = 0;
+            }
         }
     }
 
@@ -79,11 +75,10 @@ public:
      */
     void unlock() noexcept
     {
-        // Use release semantics to ensure that all prior write have been fully commited before we unlock
-        locked.clear(std::memory_order_release);
+        locked.store(false, std::memory_order_release);
     }
 
 private:
-    std::atomic_flag locked = ATOMIC_FLAG_INIT;
+    std::atomic<bool> locked = false;
 };
 }

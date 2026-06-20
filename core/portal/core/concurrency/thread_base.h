@@ -4,6 +4,7 @@
 #include <functional>
 #include <string>
 #include <type_traits>
+#include <utility>
 
 namespace portal
 {
@@ -39,7 +40,7 @@ class ThreadBase
 public:
     ThreadBase() = default;
 
-    explicit ThreadBase(const ThreadSpecification& spec) : spec(spec) {}
+    explicit ThreadBase(ThreadSpecification spec) : spec(std::move(spec)) {}
 
     virtual ~ThreadBase();
     ThreadBase(const ThreadBase&) = delete;
@@ -54,7 +55,7 @@ public:
     void detach();
 
     [[nodiscard]] std::thread::id get_id() const noexcept;
-    [[nodiscard]] std::string get_name() const noexcept;
+    [[nodiscard]] std::string_view get_name() const noexcept;
 
     bool request_stop() noexcept;
 
@@ -75,7 +76,7 @@ protected:
                         return std::invoke(func, st, (std::get<0>(t))...);
                     },
                     std::forward_as_tuple(bound...)
-                );
+                    );
             };
         }
         else
@@ -83,7 +84,7 @@ protected:
             return [
                     func = std::decay_t<F>(std::forward<F>(f)),
                     ...bound = std::tuple<Args&&>(std::forward<Args>(args))
-                ](std::stop_token) mutable
+                ](const std::stop_token&) mutable
             {
                 return std::apply(
                     [&](auto&... t)
@@ -91,7 +92,7 @@ protected:
                         return std::invoke(func, (std::get<0>(t))...);
                     },
                     std::forward_as_tuple(bound...)
-                );
+                    );
             };
         }
     }

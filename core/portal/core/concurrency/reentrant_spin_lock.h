@@ -8,6 +8,7 @@
 #include <atomic>
 #include <thread>
 
+#include "cpu_relax.h"
 #include "portal/core/debug/assert.h"
 
 namespace portal
@@ -40,6 +41,7 @@ namespace portal
 template <typename T = uint32_t> requires std::is_integral_v<T>
 class ReentrantSpinLock
 {
+    static constexpr auto SPIN_BACKOFF_COUNT = 16;
 public:
     ReentrantSpinLock() : locked_thread(0), ref_count(0) {}
 
@@ -87,10 +89,18 @@ public:
         {
             // spin wait until we can acquire the lock
             size_t unlocked_value = 0;
-            while (!locked_thread.compare_exchange_weak(unlocked_value, thread_id, std::memory_order_relaxed, std::memory_order_relaxed))
+            for (int spin_count = 0; !locked_thread.compare_exchange_weak(unlocked_value, thread_id, std::memory_order_relaxed, std::memory_order_relaxed); ++spin_count)
             {
                 unlocked_value = 0;
-                std::this_thread::yield();
+                if (spin_count < SPIN_BACKOFF_COUNT)
+                {
+                    cpu_relax();
+                }
+                else
+                {
+                    std::this_thread::yield();
+                    spin_count = 0;
+                }
             }
         }
 

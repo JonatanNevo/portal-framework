@@ -45,7 +45,7 @@ std::thread::id ThreadBase::get_id() const noexcept
     return thread.get_id();
 }
 
-std::string ThreadBase::get_name() const noexcept
+std::string_view ThreadBase::get_name() const noexcept
 {
     return spec.name;
 }
@@ -54,7 +54,6 @@ bool ThreadBase::request_stop() noexcept
 {
     return thread.request_stop();
 }
-
 
 void ThreadBase::try_cancel_and_join()
 {
@@ -67,6 +66,6 @@ void ThreadBase::try_cancel_and_join()
 
 void ThreadBase::set_name([[maybe_unused]] const std::string& name)
 {
-    PORTAL_NAME_THREAD(name.c_str());
+    PORTAL_PROF_NAME_THREAD(name.c_str());
 }
 }

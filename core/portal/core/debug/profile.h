@@ -32,7 +32,7 @@
 
 #define PORTAL_PROF_ZONE(...)
 
-#define PORTAL_NAME_THREAD(...)
+#define PORTAL_PROF_NAME_THREAD(...)
 
 #define PORTAL_PROF_LOCK( type, varname ) type varname
 
