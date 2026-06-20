@@ -7,7 +7,7 @@
 
 #include <portal/engine/core/glm.h>
 
-#include "portal/core/flags.h"
+#include "portal/core/types/flag.h"
 
 namespace portal::renderer
 {

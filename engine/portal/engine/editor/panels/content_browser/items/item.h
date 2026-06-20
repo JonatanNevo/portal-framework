@@ -6,7 +6,7 @@
 #pragma once
 #include <filesystem>
 
-#include <portal/core/flags.h>
+#include <portal/core/types/flag.h>
 
 #include "portal/core/strings/string_id.h"
 #include "portal/engine/editor/editor_icons.h"

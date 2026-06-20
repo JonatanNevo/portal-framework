@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "portal/core/flags.h"
+#include "portal/core/types/flag.h"
 
 namespace portal
 {

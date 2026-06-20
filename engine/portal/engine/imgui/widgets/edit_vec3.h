@@ -4,7 +4,7 @@
 //
 
 #pragma once
-#include "portal/core/flags.h"
+#include "portal/core/types/flag.h"
 #include "portal/engine/editor/editor_context.h"
 
 namespace portal::imgui
