@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include <string>
+#include <cstring>
 #include <portal/core/common.h>
+#include <string>
 
 #include "rapidhash/rapidhash.h"
 
@@ -22,11 +23,11 @@
  *
  * TODO: Find a fully constexpr hash implementation compatible with MSVC.
  */
-# if !defined(PORTAL_COMPILER_MSVC)
-#   define PORTAL_HASH_CONSTEXPR PORTAL_FORCE_INLINE constexpr
-# else
-#   define PORTAL_HASH_CONSTEXPR PORTAL_FORCE_INLINE
-# endif
+#if !defined(PORTAL_COMPILER_MSVC)
+#define PORTAL_HASH_CONSTEXPR PORTAL_FORCE_INLINE constexpr
+#else
+#define PORTAL_HASH_CONSTEXPR PORTAL_FORCE_INLINE
+#endif
 
 /**
  * Hash function wrappers using rapidhash V3 algorithm.
@@ -54,10 +55,7 @@ namespace portal::hash
  * @param length Number of bytes to hash (excluding null terminator if present)
  * @return 64-bit hash value
  */
-PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* data, const size_t length)
-{
-    return ::rapidhash(data, length);
-}
+PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* data, const size_t length) { return ::rapidhash(data, length); }
 
 /**
  * Hashes a std::string_view.
@@ -68,10 +66,7 @@ PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* data, const size_t length)
  * @param str The string to hash
  * @return 64-bit hash value
  */
-PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string_view str)
-{
-    return ::rapidhash(str.data(), str.length());
-}
+PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string_view str) { return ::rapidhash(str.data(), str.length()); }
 
 /**
  * Hashes a std::string.
@@ -82,10 +77,7 @@ PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string_view str)
  * @param str The string to hash
  * @return 64-bit hash value
  */
-PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string& str)
-{
-    return ::rapidhash(str.c_str(), str.length());
-}
+PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string& str) { return ::rapidhash(str.c_str(), str.length()); }
 
 /**
  * Hashes a const char* using strlen for length.
@@ -96,10 +88,7 @@ PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const std::string& str)
  * @param str The string to hash
  * @return 64-bit hash value
  */
-PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* str)
-{
-    return ::rapidhash(str, std::strlen(str));
-}
+PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char* str) { return ::rapidhash(str, std::strlen(str)); }
 
 /**
  * Hashes a string literal with compile-time size deduction.
@@ -116,4 +105,4 @@ PORTAL_HASH_CONSTEXPR uint64_t rapidhash(const char (&data)[n])
     // Exclude null terminator from hash
     return ::rapidhash(data, n - 1);
 }
-}
+} // namespace portal::hash
