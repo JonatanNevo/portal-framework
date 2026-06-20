@@ -135,8 +135,7 @@ RAPIDHASH_CONSTEXPR uint64_t rapid_secret[8] = {
     0xa0761d6478bd642full,
     0xe7037ed1a0b428dbull,
     0x90ed1765281c388cull,
-    0xaaaaaaaaaaaaaaaaull
-};
+    0xaaaaaaaaaaaaaaaaull};
 
 /*
  *  64*64 -> 128bit multiply function.
@@ -157,11 +156,13 @@ RAPIDHASH_CONSTEXPR uint64_t rapid_secret[8] = {
 RAPIDHASH_INLINE_CONSTEXPR void rapid_mum(uint64_t* A, uint64_t* B) RAPIDHASH_NOEXCEPT
 {
 #if defined(__SIZEOF_INT128__)
-    __uint128_t r = *A; r *= *B;
+    __uint128_t r = *A;
+    r *= *B;
 #ifdef RAPIDHASH_PROTECTED
     *A ^= (uint64_t)r; *B ^= (uint64_t)(r >> 64);
 #else
-    *A = (uint64_t)r; *B = (uint64_t)(r >> 64);
+    *A = (uint64_t)r;
+    *B = (uint64_t)(r >> 64);
 #endif
 #elif defined(_MSC_VER) && (defined(_WIN64) || defined(_M_HYBRID_CHPE_ARM64))
 #if defined(_M_X64)
@@ -231,40 +232,40 @@ RAPIDHASH_INLINE uint64_t rapid_read32(const uint8_t* p) RAPIDHASH_NOEXCEPT
     return v;
 }
 #elif defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__clang__)
- RAPIDHASH_INLINE uint64_t rapid_read64(const uint8_t* p) RAPIDHASH_NOEXCEPT
+RAPIDHASH_INLINE uint64_t rapid_read64(const uint8_t* p) RAPIDHASH_NOEXCEPT
 {
     uint64_t v;
     memcpy(&v, p, sizeof(uint64_t));
     return __builtin_bswap64(v);
 }
- RAPIDHASH_INLINE uint64_t rapid_read32(const uint8_t* p) RAPIDHASH_NOEXCEPT
+RAPIDHASH_INLINE uint64_t rapid_read32(const uint8_t* p) RAPIDHASH_NOEXCEPT
 {
     uint32_t v;
     memcpy(&v, p, sizeof(uint32_t));
     return __builtin_bswap32(v);
 }
 #elif defined(_MSC_VER)
- RAPIDHASH_INLINE uint64_t rapid_read64(const uint8_t* p) RAPIDHASH_NOEXCEPT
+RAPIDHASH_INLINE uint64_t rapid_read64(const uint8_t* p) RAPIDHASH_NOEXCEPT
 {
     uint64_t v;
     memcpy(&v, p, sizeof(uint64_t));
     return _byteswap_uint64(v);
 }
- RAPIDHASH_INLINE uint64_t rapid_read32(const uint8_t* p) RAPIDHASH_NOEXCEPT
+RAPIDHASH_INLINE uint64_t rapid_read32(const uint8_t* p) RAPIDHASH_NOEXCEPT
 {
     uint32_t v;
     memcpy(&v, p, sizeof(uint32_t));
     return _byteswap_ulong(v);
 }
 #else
- RAPIDHASH_INLINE uint64_t rapid_read64(const uint8_t* p) RAPIDHASH_NOEXCEPT
+RAPIDHASH_INLINE uint64_t rapid_read64(const uint8_t* p) RAPIDHASH_NOEXCEPT
 {
     uint64_t v;
     memcpy(&v, p, 8);
     return (((v >> 56) & 0xff) | ((v >> 40) & 0xff00) | ((v >> 24) & 0xff0000) | ((v >> 8) & 0xff000000) | ((v << 8) & 0xff00000000) | ((v << 24) &
         0xff0000000000) | ((v << 40) & 0xff000000000000) | ((v << 56) & 0xff00000000000000));
 }
- RAPIDHASH_INLINE uint64_t rapid_read32(const uint8_t* p) RAPIDHASH_NOEXCEPT
+RAPIDHASH_INLINE uint64_t rapid_read32(const uint8_t* p) RAPIDHASH_NOEXCEPT
 {
     uint32_t v;
     memcpy(&v, p, 4);

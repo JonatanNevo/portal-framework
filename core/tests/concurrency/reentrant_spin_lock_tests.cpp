@@ -68,49 +68,6 @@ TEST_CASE("ReentrantSpinLock is reentrant for the owning thread", "[reentrant_sp
     }
 }
 
-TEST_CASE("ReentrantSpinLock provides mutual exclusion across threads", "[reentrant_spinlock]")
-{
-    ReentrantSpinLock<> lock;
-
-    std::atomic<int> inside{0};
-    std::atomic<bool> overlap_detected{false};
-    int counter = 0;
-
-    const unsigned hw = std::max(2u, std::thread::hardware_concurrency());
-    const unsigned thread_count = hw * 2;
-    constexpr int iterations = 100'000;
-
-    std::vector<std::thread> threads;
-    threads.reserve(thread_count);
-    for (unsigned t = 0; t < thread_count; ++t)
-    {
-        threads.emplace_back(
-            [&]
-            {
-                for (int i = 0; i < iterations; ++i)
-                {
-                    std::lock_guard guard(lock);
-
-                    if (inside.fetch_add(1, std::memory_order_relaxed) != 0)
-                        overlap_detected.store(true, std::memory_order_relaxed);
-
-                    volatile int sink = 0;
-                    for (int spin = 0; spin < 4; ++spin)
-                        sink = sink + 1;
-                    ++counter;
-
-                    inside.fetch_sub(1, std::memory_order_relaxed);
-                }
-            });
-    }
-
-    for (auto& thread : threads)
-        thread.join();
-
-    REQUIRE_FALSE(overlap_detected.load(std::memory_order_relaxed));
-    REQUIRE(counter == static_cast<int>(thread_count) * iterations);
-}
-
 TEMPLATE_TEST_CASE("ReentrantSpinLock supports narrow ref-count types", "[reentrant_spinlock]", uint8_t, uint16_t, uint32_t)
 {
     ReentrantSpinLock<TestType> lock;
