@@ -14,7 +14,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "portal/core/log.h"
 #include "portal/core/debug/profile.h"
-#include "portal/core/jobs/job.h"
+#include "portal/engine/core/jobs/job.h"
 #include "portal/core/memory/stack_allocator.h"
 
 namespace portal

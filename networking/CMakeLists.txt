@@ -24,7 +24,7 @@ portal_add_module(networking
         HEADERS ${NETWORKING_HEADERS}
 
         PORTAL_DEPENDENCIES
-        core
+            engine-core
 
         PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}
 

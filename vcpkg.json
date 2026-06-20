@@ -11,10 +11,6 @@
           "version>=": "0.2.0"
         },
         {
-          "name": "glm",
-          "version>=": "1.0.2"
-        },
-        {
           "name": "spdlog",
           "version>=": "1.16.0"
         },
@@ -27,10 +23,6 @@
           "version>=": "1.2.0"
         },
         {
-          "name": "concurrentqueue",
-          "version>=": "1.0.4"
-        },
-        {
           "name": "nativefiledialog-extended",
           "version>=": "1.2.1"
         }
@@ -39,7 +31,7 @@
     "serialization": {
       "description": [
         "The serialization interface for the Portal framework",
-        "depends: portal-core"
+        "depends: portal-engine-core"
       ],
       "dependencies": [
         {
@@ -52,10 +44,26 @@
         }
       ]
     },
+    "engine-core": {
+      "description": [
+        "Engine specific core",
+        "depends: portal-core"
+        ],
+      "dependencies": [
+        {
+          "name": "glm",
+          "version>=": "1.0.2"
+        },
+        {
+          "name": "concurrentqueue",
+          "version>=": "1.0.4"
+        }
+      ]
+    },
     "application": {
       "description": [
         "The application module for the Portal framework.",
-        "depends: portal-core,portal-serialization"
+        "depends: portal-engine-core,portal-serialization"
       ],
       "dependencies": [
         {
@@ -80,13 +88,13 @@
     "input": {
       "description": [
         "The input interface for the Portal framework",
-        "depends: portal-core,portal-application"
+        "depends: portal-engine-core,portal-application"
       ]
     },
     "networking": {
       "description": [
         "The networking interface for the Portal framework",
-        "depends: portal-core"
+        "depends: portal-engine-core"
       ],
       "dependencies": [
         {

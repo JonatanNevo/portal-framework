@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <portal/core/glm.h>
+#include <portal/engine/core/glm.h>
 
 #include "register_component.h"
 

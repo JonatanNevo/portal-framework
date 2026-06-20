@@ -4,17 +4,17 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
-#include <portal/core/jobs/job.h>
+#include <portal/engine/core/jobs/job.h>
 #include "portal/core/log.h"
-#include "portal/core/jobs/scheduler.h"
+#include "portal/engine/core/jobs/scheduler.h"
 
 #include "common.h"
 
 namespace portal
 {
 // ============================================================================
-// Section 7: Eager Workers
+// Section 10: Integration & Real-World Scenarios
 // ============================================================================
 
-// TODO: Implement Eager Workers tests according to JOB_SYSTEM_TEST_PLAN.md
+// TODO: Implement Integration tests according to JOB_SYSTEM_TEST_PLAN.md
 } // namespace portal

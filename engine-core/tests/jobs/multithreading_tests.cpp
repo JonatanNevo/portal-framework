@@ -4,9 +4,9 @@
 //
 
 #include <catch2/catch_test_macros.hpp>
-#include <portal/core/jobs/job.h>
+#include <portal/engine/core/jobs/job.h>
 #include "portal/core/log.h"
-#include "portal/core/jobs/scheduler.h"
+#include "portal/engine/core/jobs/scheduler.h"
 
 #include "common.h"
 

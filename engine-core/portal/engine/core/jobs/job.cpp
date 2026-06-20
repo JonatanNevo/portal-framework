@@ -11,7 +11,7 @@
 
 
 #include "portal/core/debug/assert.h"
-#include "portal/core/jobs/scheduler.h"
+#include "portal/engine/core/jobs/scheduler.h"
 #include "portal/core/memory/pool_allocator.h"
 
 namespace portal

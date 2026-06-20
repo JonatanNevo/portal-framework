@@ -11,8 +11,6 @@
 #include <cstdint>
 #include <random>
 
-#include "portal/core/glm.h"
-
 namespace portal
 {
 class Random
@@ -26,8 +24,5 @@ public:
     virtual uint32_t get_uint(uint32_t min, uint32_t max) = 0;
     virtual float get_float() = 0;
     virtual float get_float(float min, float max) = 0;
-
-    glm::vec3 get_vec3();
-    glm::vec3 get_vec3(float min, float max);
 };
 } // portal

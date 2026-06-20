@@ -5,8 +5,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "portal/core/jobs/basic_coroutine.h"
-#include "portal/core/jobs/task.h"
+#include "portal/engine/core/jobs/basic_coroutine.h"
+#include "portal/engine/core/jobs/task.h"
 
 namespace portal
 {

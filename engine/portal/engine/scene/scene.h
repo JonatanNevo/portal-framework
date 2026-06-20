@@ -8,6 +8,7 @@
 #include "portal/engine/ecs/entity.h"
 #include "portal/engine/ecs/registry.h"
 #include "portal/engine/resources/resources/resource.h"
+#include "portal/engine/core/glm.h"
 
 namespace portal
 {

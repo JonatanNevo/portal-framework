@@ -6,6 +6,8 @@
 #pragma once
 #include "input_types.h"
 
+#include <portal/engine/core/glm.h>
+
 
 namespace portal
 {

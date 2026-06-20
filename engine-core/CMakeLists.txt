@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.30)
 
 file(READ "version.txt" PROJECT_VERSION)
 string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
-project(portal-serialization VERSION ${PROJECT_VERSION})
+project(portal-engine-core VERSION ${PROJECT_VERSION})
 
 message(STATUS "Configuring ${PROJECT_NAME} - version: ${PROJECT_VERSION}")
 
@@ -17,23 +17,23 @@ if (PORTAL_FIND_PACKAGE)
     find_package(portal-core CONFIG REQUIRED)
 endif ()
 
-file(GLOB_RECURSE SER_SOURCES CONFIGURE_DEPENDS "portal/serialization/*.cpp")
-file(GLOB_RECURSE SER_HEADERS CONFIGURE_DEPENDS "portal/serialization/*.h")
+file(GLOB_RECURSE ENGINE_CORE_SOURCES CONFIGURE_DEPENDS "portal/engine/core/*.cpp")
+file(GLOB_RECURSE ENGINE_CORE_HEADERS CONFIGURE_DEPENDS "portal/engine/core/*.h")
 
-portal_add_module(serialization
-        SOURCES ${SER_SOURCES}
-        HEADERS ${SER_HEADERS}
+portal_add_module(engine-core
+        SOURCES ${ENGINE_CORE_SOURCES}
+        HEADERS ${ENGINE_CORE_HEADERS}
 
         DEPENDENCIES
-            nlohmann_json
-            glaze
+            glm
+            concurrentqueue
 
         PORTAL_DEPENDENCIES
-            engine-core
+            core
 
         PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}
 )
 
 portal_build_tests(tests)
 
-portal_install_module(serialization)
+portal_install_module(engine-core)

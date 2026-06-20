@@ -10,7 +10,7 @@
 #include <limits>
 #include <mutex>
 
-#include "portal/core/jobs/worker_queue.h"
+#include "portal/engine/core/jobs/worker_queue.h"
 
 #ifndef ENABLE_JOB_STATS
 #define ENABLE_JOB_STATS 0

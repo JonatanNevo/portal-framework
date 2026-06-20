@@ -7,7 +7,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include "portal/core/glm.h"
+#include "portal/engine/core/glm.h"
 #include "portal/core/common.h"
 
 namespace fmt

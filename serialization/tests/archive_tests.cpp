@@ -12,7 +12,7 @@
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 
-#include <portal/core/glm.h>
+#include <portal/engine/core/glm.h>
 #include "portal/core/buffer.h"
 #include "portal/serialization/archive.h"
 

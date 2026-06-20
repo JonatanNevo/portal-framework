@@ -13,7 +13,7 @@
 
 #include "portal/core/type_traits.h"
 #include "portal/core/debug/assert.h"
-#include "portal/core/jobs/scheduler.h"
+#include "portal/engine/core/jobs/scheduler.h"
 #include "portal/core/strings/string_id.h"
 
 namespace portal

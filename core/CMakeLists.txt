@@ -47,11 +47,9 @@ portal_add_module(core
         LINUX_HEADERS ${CORE_LINUX_HEADERS}
 
         DEPENDENCIES
-            glm
             spdlog
             enchantum
             frozen
-            concurrentqueue
             nfd
 
         COMPLEX_DEPENDENCIES

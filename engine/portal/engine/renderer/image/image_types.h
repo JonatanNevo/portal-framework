@@ -7,7 +7,7 @@
 
 #include <limits>
 
-#include <portal/core/glm.h>
+#include <portal/engine/core/glm.h>
 #include "portal/core/strings/string_id.h"
 
 namespace portal::renderer

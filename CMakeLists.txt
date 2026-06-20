@@ -72,6 +72,7 @@ endif()
 
 enable_testing()
 add_subdirectory(core)
+add_subdirectory(engine-core)
 add_subdirectory(serialization)
 add_subdirectory(application)
 add_subdirectory(input)

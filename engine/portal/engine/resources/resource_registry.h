@@ -20,7 +20,7 @@
 
 #include <llvm/ADT/DenseMap.h>
 #include <llvm/ADT/DenseSet.h>
-#include <portal/core/jobs/scheduler.h>
+#include <portal/engine/core/jobs/scheduler.h>
 
 #include "portal/engine/resources/utils.h"
 #include "reference_manager.h"

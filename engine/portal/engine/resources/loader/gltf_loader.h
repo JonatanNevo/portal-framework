@@ -16,7 +16,7 @@
 #pragma once
 #include <filesystem>
 
-#include "portal/core/jobs/job.h"
+#include "portal/engine/core/jobs/job.h"
 #include "portal/engine/renderer/vulkan/vulkan_context.h"
 #include "portal/engine/resources/loader/loader.h"
 #include "portal/engine/scene/scene.h"

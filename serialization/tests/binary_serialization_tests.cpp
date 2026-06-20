@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#include "portal/core/glm.h"
+#include "portal/engine/core/glm.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers.hpp>

@@ -16,7 +16,7 @@
 #include <catch2/matchers/catch_matchers.hpp>
 #include <catch2/matchers/catch_matchers_all.hpp>
 
-#include <portal/core/glm.h>
+#include <portal/engine/core/glm.h>
 
 #include "portal/serialization/archive/json_archive.h"
 #include "portal/core/files/file_system.h"

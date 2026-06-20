@@ -11,10 +11,10 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "portal/core/debug/profile.h"
-#include "portal/core/jobs/basic_coroutine.h"
-#include "portal/core/jobs/job.h"
-#include "portal/core/jobs/job_stats.h"
-#include "portal/core/jobs/worker_queue.h"
+#include "portal/engine/core/jobs/basic_coroutine.h"
+#include "portal/engine/core/jobs/job.h"
+#include "portal/engine/core/jobs/job_stats.h"
+#include "portal/engine/core/jobs/worker_queue.h"
 #include "portal/platform/core/hal/thread.h"
 
 

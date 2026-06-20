@@ -31,7 +31,7 @@ All other Portal modules depend on core.
 
 ```c++
 #include <portal/core/log.hpp>
-#include <portal/core/jobs/job_system.hpp>
+#include <portal/engine/core/jobs/job_system.hpp>
 
 portal::log::info("Hello from Portal!");
 ```

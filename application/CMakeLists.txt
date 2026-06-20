@@ -30,7 +30,7 @@ portal_add_module(application
             glfw3|LINK|glfw
 
         PORTAL_DEPENDENCIES
-            core
+            engine-core
             serialization
 
         PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}

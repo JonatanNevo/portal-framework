@@ -10,7 +10,7 @@
 #include <string>
 
 #include <llvm/ADT/SmallVector.h>
-#include <portal/core/glm.h>
+#include <portal/engine/core/glm.h>
 
 #include "portal/core/reflection/property.h"
 

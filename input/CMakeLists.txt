@@ -24,7 +24,7 @@ portal_add_module(input
         HEADERS ${INPUT_HEADERS}
 
         PORTAL_DEPENDENCIES
-            core
+            engine-core
             application
 
         PORTAL_FIND_PACKAGE ${PORTAL_FIND_PACKAGE}

@@ -11,8 +11,6 @@
 #include <spdlog/mdc.h>
 #include <spdlog/spdlog.h>
 
-#include "custom_logger_formatters.h"
-
 #define PORTAL_ASSERT_MESSAGE_BOX (!PORTAL_DIST && PORTAL_PLATFORM_WINDOWS)
 
 namespace portal

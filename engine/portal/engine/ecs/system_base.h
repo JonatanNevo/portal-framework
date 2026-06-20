@@ -6,7 +6,7 @@
 #pragma once
 #include "entity.h"
 #include "portal/core/type_traits.h"
-#include "portal/core/jobs/job.h"
+#include "portal/engine/core/jobs/job.h"
 
 namespace portal
 {
