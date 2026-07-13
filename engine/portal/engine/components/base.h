@@ -6,7 +6,7 @@
 #pragma once
 
 #include "portal/core/strings/string_id.h"
-#include "portal/third_party/font_awsome/IconsFontAwesome6.h"
+#include "portal/third_party/font_awesome/IconsFontAwesome6.h"
 
 namespace portal
 {

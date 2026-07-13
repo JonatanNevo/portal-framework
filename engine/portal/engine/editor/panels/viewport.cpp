@@ -21,7 +21,7 @@
 #include "portal/engine/renderer/vulkan/vulkan_enum.h"
 #include "portal/engine/renderer/vulkan/vulkan_swapchain.h"
 #include "portal/engine/scene/scene_context.h"
-#include "portal/third_party/font_awsome/IconsFontAwesome6.h"
+#include "portal/third_party/font_awesome/IconsFontAwesome6.h"
 
 
 namespace portal

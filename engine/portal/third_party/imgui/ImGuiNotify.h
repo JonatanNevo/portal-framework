@@ -22,7 +22,7 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 
-#include "portal/third_party/font_awsome/IconsFontAwesome6.h"
+#include "portal/third_party/font_awesome/IconsFontAwesome6.h"
 
 
 /**

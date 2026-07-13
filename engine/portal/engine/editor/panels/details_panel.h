@@ -14,7 +14,7 @@
 #include "portal/engine/editor/editor_context.h"
 #include "portal/engine/editor/selection_system.h"
 #include "portal/engine/imgui/utils.h"
-#include "portal/third_party/font_awsome/IconsFontAwesome6.h"
+#include "portal/third_party/font_awesome/IconsFontAwesome6.h"
 
 namespace portal
 {

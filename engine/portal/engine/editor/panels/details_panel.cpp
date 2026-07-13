@@ -21,7 +21,7 @@
 #include "portal/engine/scene/scene.h"
 #include "portal/engine/scene/scene_context.h"
 #include "portal/engine/systems/base_player_input_system.h"
-#include "portal/third_party/font_awsome/IconsFontAwesome6.h"
+#include "portal/third_party/font_awesome/IconsFontAwesome6.h"
 
 
 namespace portal
