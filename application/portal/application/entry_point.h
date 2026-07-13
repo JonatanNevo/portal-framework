@@ -28,6 +28,7 @@
 
 #include <portal/application/application.h>
 #include <portal/application/settings.h>
+#include <portal/core/scope_exit.h>
 
 #include "portal/core/defines/preprocessor.h"
 #include "portal/core/files/file_system.h"
@@ -59,6 +60,8 @@ int main(int argc, char** argv)
         }
     );
 
+    ScopeExit log_cleanup{[]() { Log::shutdown(); }};
+
     try
     {
         auto application = create_application(argc, argv);
@@ -68,13 +71,14 @@ int main(int argc, char** argv)
     catch (std::exception& e)
     {
         LOG_FATAL("Unhandled exception: {}", e.what());
+        return -1;
     }
     catch (...)
     {
         LOG_FATAL("Unhandled unknown exception");
+        return -1;
     }
 
-    Log::shutdown();
     return 0;
 }
 }

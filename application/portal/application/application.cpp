@@ -95,11 +95,13 @@ void Application::run()
     }
     catch (const std::exception& e)
     {
-        LOG_FATAL("Exception caught: {}", e.what());
+        LOG_FATAL("Exception in application loop: {}", e.what());
+        throw;
     }
     catch (...)
     {
-        LOG_FATAL("Fatal unknown exception caught");
+        LOG_FATAL("Fatal unknown exception in application loop");
+        throw;
     }
 }
 
