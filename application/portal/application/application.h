@@ -112,16 +112,18 @@ public:
     [[nodiscard]] virtual bool should_run() const;
 
 protected:
-    virtual ProjectSettings& get_settings() const = 0;
+    [[nodiscard]] virtual ProjectSettings& get_settings() const = 0;
 
 protected:
     ApplicationProperties properties;
     ModuleStack modules;
 
     size_t current_frame = 0;
-    float last_frame_time = 0;
-    float frame_time = 0;
-    float time_step = 0;
+    size_t absolute_frame = 0;
+
+    float frame_time = 0.f;
+    float time_step = 0.f;
+    float accumulator = 0.f;
 
     std::atomic_flag should_stop;
     entt::dispatcher engine_event_dispatcher;

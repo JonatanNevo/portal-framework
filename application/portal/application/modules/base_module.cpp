@@ -11,6 +11,8 @@ void BaseModule::begin_frame(FrameContext&) {}
 
 void BaseModule::update(FrameContext&) {}
 
+void BaseModule::fixed_update(FrameContext&) {}
+
 void BaseModule::post_update(FrameContext&) {}
 
 void BaseModule::end_frame(FrameContext&) {}

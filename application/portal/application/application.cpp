@@ -9,6 +9,7 @@
 
 #include "settings.h"
 #include "portal/core/log.h"
+#include "portal/core/timer.h"
 #include "portal/core/debug/profile.h"
 
 namespace portal
@@ -32,7 +33,11 @@ void Application::build_dependency_graph()
 
 void Application::run()
 {
-    auto frames_in_flight =  get_settings().get_setting<size_t>("application.frames_in_flight", 3);
+    auto& settings = get_settings();
+    const auto frames_in_flight = settings.get_setting<size_t>("application.frames_in_flight", 3);
+    const auto fixed_timestep = settings.get_setting<float>("application.fixed_timestep", 1.f / 60.f);
+
+    Timer application_timer;
     try
     {
         should_stop.clear();
@@ -42,6 +47,7 @@ void Application::run()
         LOGGER_INFO("Starting application");
         prepare();
 
+        application_timer.start();
         while (!should_stop.test())
         {
             process_events();
@@ -50,7 +56,9 @@ void Application::run()
             {
                 FrameContext context{
                     .frame_index = current_frame,
+                    .absolute_frame_index = absolute_frame,
                     .delta_time = time_step,
+                    .fixed_delta_time = fixed_timestep,
                     .stats = global_stats
                 };
 
@@ -59,7 +67,17 @@ void Application::run()
                     auto update_start = std::chrono::high_resolution_clock::now();
 
                     input_event_dispatcher.update();
-                    // Update scene, physics, input, ...
+
+                    /// Update scene, physics, input, ...
+                    // Fixed update
+                    accumulator += time_step;
+                    while (accumulator >= fixed_timestep) {
+                        modules.fixed_update(context);
+                        accumulator -= fixed_timestep;
+                    }
+                    context.interpolation_alpha = accumulator / fixed_timestep;
+
+                    // Per frame update
                     modules.update(context);
 
                     const auto update_end = std::chrono::high_resolution_clock::now();
@@ -81,11 +99,10 @@ void Application::run()
             }
 
             current_frame = (current_frame + 1) % frames_in_flight;
-            // TODO: in headless application I wont have `glfwGetTime` use counter instead?
-            const auto time = static_cast<float>(glfwGetTime());
-            frame_time = time - last_frame_time;
+            absolute_frame++;
+
+            frame_time = application_timer.tick<Timer::Seconds>();
             time_step = glm::min<float>(frame_time, 0.0333f);
-            last_frame_time = time;
 
             // Seconds to ms
             global_stats.frame_time = frame_time * 1000.f;

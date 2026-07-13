@@ -69,7 +69,12 @@ struct FrameStats
 struct FrameContext
 {
     size_t frame_index;
+    size_t absolute_frame_index;
+
     float delta_time;
+    float fixed_delta_time;
+    float interpolation_alpha;
+
     FrameStats stats = {};
     // TODO: have in `ecs_context` instead of in global context?
     ecs::Registry* ecs_registry = nullptr;

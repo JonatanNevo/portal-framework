@@ -62,6 +62,7 @@ void ModuleStack::build_dependency_graph()
 
     // Going over sorted modules to retain order
     update_modules.clear();
+    fixed_update_modules.clear();
     frame_lifecycle_modules.clear();
     gui_update_modules.clear();
     post_update_modules.clear();
@@ -70,6 +71,8 @@ void ModuleStack::build_dependency_graph()
     {
         if (module->has_tag<ModuleTags::Update>())
             update_modules.emplace_back(module.get());
+        if (module->has_tag<ModuleTags::FixedUpdate>())
+            fixed_update_modules.emplace_back(module.get());
         if (module->has_tag<ModuleTags::FrameLifecycle>())
             frame_lifecycle_modules.emplace_back(module.get());
         if (module->has_tag<ModuleTags::GuiUpdate>())
@@ -101,6 +104,14 @@ void ModuleStack::update(FrameContext& frame) const
     for (const auto& module : update_modules)
     {
         module->update(frame);
+    }
+}
+
+void ModuleStack::fixed_update(FrameContext& frame) const
+{
+    for (const auto& module : fixed_update_modules)
+    {
+        module->fixed_update(frame);
     }
 }
 

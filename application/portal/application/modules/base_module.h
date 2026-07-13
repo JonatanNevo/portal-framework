@@ -46,6 +46,12 @@ public:
     virtual void update(FrameContext& frame);
 
     /**
+     * Called during the fixed update phase for physics and other fixed-step logic.
+     * @param frame Per-frame context data
+     */
+    virtual void fixed_update(FrameContext& frame);
+
+    /**
      * Called during the post-update phase (typically rendering).
      * @param frame Per-frame context data
      */

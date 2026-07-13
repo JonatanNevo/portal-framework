@@ -29,8 +29,9 @@ enum class ModuleTags: uint8_t
     None           = 0b00000000,
     FrameLifecycle = 0b00000001,
     Update         = 0b00000010,
-    GuiUpdate      = 0b00000100,
-    PostUpdate     = 0b00001000
+    FixedUpdate    = 0b00000100,
+    GuiUpdate      = 0b00001000,
+    PostUpdate     = 0b00010000
 };
 
 /**

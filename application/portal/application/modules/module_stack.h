@@ -127,6 +127,12 @@ public:
     void update(FrameContext& frame) const;
 
     /**
+     * Call fixed_update() on all FixedUpdate-tagged modules in dependency order.
+     * @param frame Per-frame context data
+     */
+    void fixed_update(FrameContext& frame) const;
+
+    /**
      * Call post_update() on all PostUpdate-tagged modules in dependency order.
      * @param frame Per-frame context data
      */
@@ -169,6 +175,7 @@ private:
     // TODO: Split into multiple subclasses instead of having everything inside base_module
     std::vector<BaseModule*> frame_lifecycle_modules;
     std::vector<BaseModule*> update_modules;
+    std::vector<BaseModule*> fixed_update_modules;
     std::vector<BaseModule*> gui_update_modules;
     std::vector<BaseModule*> post_update_modules;
 };
