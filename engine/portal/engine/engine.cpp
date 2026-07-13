@@ -100,9 +100,16 @@ void Engine::prepare()
     }
     else
     {
-        // TODO: This will not be ordered, maybe use some default empty scene here instead
+        // TODO: This will not be ordered
         // Take the first scene
-        auto scene = engine_context->get_resource_registry().list_all_resources_of_type<Scene>() | std::ranges::views::take(1);
+        auto all_scenes = engine_context->get_resource_registry().list_all_resources_of_type<Scene>();
+        if (all_scenes.empty())
+        {
+            LOGGER_ERROR("Project has no starting scene configured and no scenes were found");
+            throw std::runtime_error("No scenes available to start the engine");
+        }
+
+        auto scene = all_scenes | std::ranges::views::take(1);
         scene.front()->set_viewport_bounds({0, 0, swapchain->get_width(), swapchain->get_height()});
         engine_context->get_system_orchestrator().set_active_scene(scene.front());
     }
