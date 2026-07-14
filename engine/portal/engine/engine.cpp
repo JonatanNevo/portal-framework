@@ -33,6 +33,11 @@ Engine::Engine(const Reference<Project>& project, const ApplicationProperties& p
     modules.add_module<SchedulerModule>(settings.get_setting<int32_t>("application.scheduler-threads", 0));
     auto& registry = modules.add_module<ecs::Registry>();
     auto& system_orchestrator = modules.add_module<SystemOrchestrator>();
+    // TODO: where should this be?
+    system_orchestrator.add_system<BasePlayerInputSystem>(SystemPhase::Input, input);
+    system_orchestrator.add_system<BaseCameraSystem>(SystemPhase::Update);
+    system_orchestrator.add_system<TransformHierarchySystem>(SystemPhase::Update);
+    system_orchestrator.add_system<SceneRenderingSystem>(SystemPhase::PreRender);
 
     // Creating vulkan context
     const WindowProperties window_properties{

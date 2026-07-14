@@ -105,7 +105,13 @@ public:
         group(registry);
     }
 
-    /**
+    void execute_erased(FrameContext& context, Registry& registry, jobs::Scheduler& scheduler, jobs::Counter* counter) override
+    {
+        _execute(context, registry, scheduler, counter);
+    }
+
+protected:
+     /**
      * @brief Internal execution dispatcher (called by system orchestrator).
      *
      * Dispatches to the derived system's execute() method based on the current execution
@@ -200,7 +206,6 @@ public:
         }
     }
 
-protected:
     /**
      * @brief Creates an EnTT group for iterating entities with the system's components.
      *

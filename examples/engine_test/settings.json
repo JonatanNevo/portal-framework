@@ -1,5 +1,6 @@
 {
     "application": {
+        "fixed_timestep_denominator": 60,
         "frames_in_flight": 3,
         "fullscreen": false,
         "scheduler-threads": 0,

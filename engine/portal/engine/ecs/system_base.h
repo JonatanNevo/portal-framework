@@ -278,6 +278,8 @@ public:
      */
     void set_policy(const ExecutionPolicy new_policy) { policy = new_policy; }
 
+    virtual void execute_erased(FrameContext& context, Registry& registry, jobs::Scheduler& scheduler, jobs::Counter* counter) = 0;
+
     /**
      * @brief Returns the current execution policy.
      *

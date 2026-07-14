@@ -35,7 +35,8 @@ void Application::run()
 {
     auto& settings = get_settings();
     const auto frames_in_flight = settings.get_setting<size_t>("application.frames_in_flight", 3);
-    const auto fixed_timestep = settings.get_setting<float>("application.fixed_timestep", 1.f / 60.f);
+    const auto denominator = settings.get_setting<size_t>("application.fixed_timestep_denominator", 60);
+    const auto fixed_timestep = 1.f / denominator;
 
     Timer application_timer;
     try
