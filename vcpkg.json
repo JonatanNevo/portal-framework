@@ -154,6 +154,10 @@
           "version>=": "3.11.0"
         },
         {
+          "name": "fakeit",
+          "version>=": "2.5.0"
+        },
+        {
           "name": "tracy",
           "version>=": "0.13.1"
         }

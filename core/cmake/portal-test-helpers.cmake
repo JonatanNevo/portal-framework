@@ -13,6 +13,7 @@ Synopsis
 .. code-block:: cmake
 
   portal_add_test_target(<target_name>
+                         [TARGET_NAME <test_target_name>]
                          [SOURCES <source>...]
                          [LIBRARIES <library>...])
 
@@ -21,7 +22,11 @@ Arguments
 
 ``<target_name>``
   Name of the module target to create tests for. The test executable will
-  be named ``<target_name>-test``.
+  be named ``<target_name>-test``, unless ``TARGET_NAME`` overrides it.
+
+``TARGET_NAME <test_target_name>``
+  Optional. Overrides the name of the generated test executable, allowing
+  multiple test targets to be created for the same module.
 
 ``SOURCES <source>...``
   Optional. List of source files for the test executable. If not provided,
@@ -39,6 +44,8 @@ The function performs the following operations:
 
 1. **Catch2 Setup**: Finds and imports Catch2 (v3+) if not already found.
 
+1a. **FakeIt Setup**: Finds and imports FakeIt (mocking framework) if not already found.
+
 2. **Testing Enabled**: Calls ``enable_testing()`` to enable CTest integration.
 
 3. **Source Discovery**: If ``SOURCES`` is not specified, automatically finds
@@ -48,7 +55,8 @@ The function performs the following operations:
    and links it with:
 
    - The module target (``<target_name>``)
-   - ``Catch2::Catch2`` and ``Catch2::Catch2WithMain``
+   - ``Catch2::Catch2WithMain``
+   - ``FakeIt::FakeIt-catch``
    - Any additional libraries specified via ``LIBRARIES``
 
 5. **Test Macro**: Defines ``PORTAL_TEST`` on the module target to enable
@@ -78,6 +86,7 @@ Notes
 ^^^^^
 
 - Requires Catch2 v3+ to be available via ``find_package(Catch2 CONFIG)``
+- Requires FakeIt to be available via ``find_package(FakeIt CONFIG)`` for mocking support
 - Test files are expected to follow the naming convention ``*tests.cpp``
 - The ``PORTAL_TEST`` define can be used to conditionally compile test-only code
 - All discovered tests are automatically registered with CTest
@@ -85,12 +94,16 @@ Notes
 #]=======================================================================]
 function(portal_add_test_target TARGET_NAME)
     set(options "")
-    set(oneValueArgs "")
+    set(oneValueArgs TARGET_NAME)
     set(multiValueArgs SOURCES LIBRARIES)
     cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if(NOT Catch2_FOUND)
         find_package(Catch2 CONFIG REQUIRED)
+    endif()
+
+    if(NOT FakeIt_FOUND)
+        find_package(FakeIt CONFIG REQUIRED)
     endif()
 
     enable_testing()
@@ -101,15 +114,19 @@ function(portal_add_test_target TARGET_NAME)
         set(ARG_SOURCES ${TEST_SOURCES} ${TEST_HEADERS})
     endif()
 
-    set(TEST_TARGET ${TARGET_NAME}-test)
+    if(ARG_TARGET_NAME)
+        set(TEST_TARGET ${ARG_TARGET_NAME})
+    else()
+        set(TEST_TARGET ${TARGET_NAME}-test)
+    endif()
     add_executable(${TEST_TARGET} ${ARG_SOURCES})
 
     message(STATUS "Adding test target ${TEST_TARGET}")
     target_link_libraries(${TEST_TARGET}
             PRIVATE
             ${TARGET_NAME}
-            Catch2::Catch2
             Catch2::Catch2WithMain
+            FakeIt::FakeIt-catch
             ${ARG_LIBRARIES}
     )
 
@@ -190,5 +207,4 @@ function(portal_build_tests FOLDER_NAME)
         enable_testing()
         add_subdirectory(${FOLDER_NAME})
     endif ()
-    unset(PORTAL_BUILD_TESTS CACHE)
 endfunction()
