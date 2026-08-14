@@ -8,7 +8,7 @@
 #include "portal/engine/components/base.h"
 #include "portal/engine/components/base_camera_controller.h"
 #include "portal/engine/ecs/system.h"
-#include "portal/input/input_events.h"
+#include "../../../../input/portal/input/old/input_events.h"
 
 namespace portal
 {

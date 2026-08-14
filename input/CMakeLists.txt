@@ -31,3 +31,5 @@ portal_add_module(input
 )
 
 portal_install_module(input)
+
+portal_build_tests(tests)

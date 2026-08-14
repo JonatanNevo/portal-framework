@@ -15,8 +15,8 @@
 #include "portal/engine/renderer/image/image.h"
 #include "portal/engine/renderer/vulkan/surface/vulkan_surface.h"
 #include "portal/engine/resources/resource_reference.h"
-#include "portal/input/input_events.h"
-#include "portal/input/input_types.h"
+#include "../../../../input/portal/input/old/input_events.h"
+#include "../../../../input/portal/input/old/input_types.h"
 
 namespace portal
 {

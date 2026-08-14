@@ -5,7 +5,7 @@
 
 #include "base_player_input_system.h"
 
-#include "portal/input/input_manager.h"
+#include "../../../../input/portal/input/old/input_manager.h"
 
 namespace portal
 {

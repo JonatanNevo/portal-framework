@@ -14,7 +14,7 @@
 #include "portal/engine/imgui/tree_node_with_icon.h"
 #include "portal/engine/imgui/widgets/search_widget.h"
 #include "portal/engine/scene/scene_context.h"
-#include "portal/input/input_manager.h"
+#include "../../../../../input/portal/input/old/input_manager.h"
 
 namespace portal
 {

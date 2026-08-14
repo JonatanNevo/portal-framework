@@ -9,7 +9,7 @@
 
 #include "scheduler_module.h"
 #include "portal/application/modules/module.h"
-#include "portal/input/input_manager.h"
+#include "../../../../input/portal/input/old/input_manager.h"
 #include "portal/engine/ecs/registry.h"
 #include "portal/engine/scene/scene.h"
 #include "portal/engine/systems/base_camera_system.h"
