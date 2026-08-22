@@ -379,6 +379,40 @@ void VulkanSwapchain::present(const FrameContext& frame)
 
     auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
 
+    // Presentation is not covered by VK_KHR_unified_image_layouts, so ePresentSrcKHR
+    // is still mandatory for vkQueuePresentKHR. This is the single deliberate exception
+    // to the engine-wide "resting layout is always eGeneral" rule, so it is recorded
+    // explicitly here instead of through the image_barrier helper (which always targets
+    // eGeneral as the new layout). Both the runtime path (draws directly into the
+    // swapchain image) and the editor path (ImGui composites into it) last write to
+    // this image as a color attachment, so a single set of masks covers both.
+    const vk::ImageMemoryBarrier2 present_barrier{
+        .srcStageMask = vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        .srcAccessMask = vk::AccessFlagBits2::eColorAttachmentWrite,
+        .dstStageMask = vk::PipelineStageFlagBits2::eBottomOfPipe,
+        .dstAccessMask = vk::AccessFlagBits2::eNone,
+        .oldLayout = vk::ImageLayout::eGeneral,
+        .newLayout = vk::ImageLayout::ePresentSrcKHR,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .image = images_data[current_image].image,
+        .subresourceRange = {
+            .aspectMask = vk::ImageAspectFlagBits::eColor,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+
+    const vk::DependencyInfo present_dependency_info{
+        .dependencyFlags = {},
+        .imageMemoryBarrierCount = 1,
+        .pImageMemoryBarriers = &present_barrier
+    };
+
+    rendering_context->global_command_buffer.pipelineBarrier2(present_dependency_info);
+
     rendering_context->global_command_buffer.end();
 
     auto& resources = frame_resources[frame.frame_index];

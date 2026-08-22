@@ -58,7 +58,8 @@ VulkanPhysicalDevice::VulkanPhysicalDevice(vk::raii::PhysicalDevice&& physical_d
         vulkan11_features,
         vulkan12_features,
         {.synchronization2 = true, .dynamicRendering = true},
-        {.extendedDynamicState = true}
+        {.extendedDynamicState = true},
+        {.unifiedImageLayouts = true}
     };
 
     properties = physical_device.getProperties();

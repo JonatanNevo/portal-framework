@@ -113,7 +113,7 @@ void VulkanRenderTarget::initialize()
         if (utils::is_depth_format(attachment_prop.format))
         {
             depth_rendering = vk::RenderingAttachmentInfo{
-                .imageLayout = vk::ImageLayout::eDepthAttachmentOptimal,
+                .imageLayout = vk::ImageLayout::eGeneral,
                 .loadOp = to_load_op(prop, attachment_prop),
                 .storeOp = vk::AttachmentStoreOp::eStore,
                 .clearValue = vk::ClearDepthStencilValue{prop.depth_clear_value, 0}
@@ -146,7 +146,7 @@ void VulkanRenderTarget::initialize()
 
             rendering_attachments.emplace_back(
                 vk::RenderingAttachmentInfo{
-                    .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+                    .imageLayout = vk::ImageLayout::eGeneral,
                     .loadOp = to_load_op(prop, attachment_prop),
                     .storeOp = vk::AttachmentStoreOp::eStore,
                     .clearValue = vk::ClearColorValue{prop.clear_color.r, prop.clear_color.g, prop.clear_color.b, prop.clear_color.a}

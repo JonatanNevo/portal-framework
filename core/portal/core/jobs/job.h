@@ -223,7 +223,14 @@ public:
     void initialize_result()
     {
         PORTAL_PROF_ZONE();
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
         result = allocate_result(sizeof(Result));
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
         new(result) Result();
     }
 

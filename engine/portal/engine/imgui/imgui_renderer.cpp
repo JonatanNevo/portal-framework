@@ -196,17 +196,17 @@ void ImGuiRenderer::end_frame(FrameContext& frame)
 
     auto* rendering_context = std::any_cast<renderer::FrameRenderingContext>(&frame.rendering_context);
 
-    // set swapchain image layout to Attachment Optimal so we can draw it
-    renderer::vulkan::transition_image_layout(
+    // Take the swapchain image back from the presentation engine. Its previous contents are
+    // irrelevant, so discard them rather than preserving the ePresentSrcKHR contents.
+    renderer::vulkan::image_barrier(
         rendering_context->global_command_buffer,
         current_render_target->get_image(0),
         1,
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::AccessFlagBits2::eNone,
-        vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
         vk::PipelineStageFlagBits2::eBottomOfPipe,
+        vk::AccessFlagBits2::eNone,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
+        true,
         vk::ImageAspectFlagBits::eColor
     );
 
@@ -217,7 +217,7 @@ void ImGuiRenderer::end_frame(FrameContext& frame)
 
     vk::RenderingAttachmentInfo color_attachment = {
         .imageView = reference_cast<renderer::vulkan::VulkanImageView>(current_render_target->get_image(0)->get_view())->get_vk_image_view(),
-        .imageLayout = vk::ImageLayout::eColorAttachmentOptimal,
+        .imageLayout = vk::ImageLayout::eGeneral,
         .loadOp = vk::AttachmentLoadOp::eLoad,
         .storeOp = vk::AttachmentStoreOp::eStore
     };
@@ -234,20 +234,6 @@ void ImGuiRenderer::end_frame(FrameContext& frame)
     rendering_context->global_command_buffer.beginRendering(rendering_info);
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), rendering_context->global_command_buffer);
     rendering_context->global_command_buffer.endRendering();
-
-    // set draw image layout to Present so we can present it
-    renderer::vulkan::transition_image_layout(
-        rendering_context->global_command_buffer,
-        current_render_target->get_image(0),
-        1,
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::ePresentSrcKHR,
-        vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
-        vk::AccessFlagBits2::eNone,
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits2::eBottomOfPipe,
-        vk::ImageAspectFlagBits::eColor
-    );
 }
 
 void ImGuiRenderer::render_subwindows()

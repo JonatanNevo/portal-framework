@@ -100,46 +100,43 @@ void Renderer::post_update(FrameContext& frame)
 {
     const auto* rendering_context = std::any_cast<FrameRenderingContext>(&frame.rendering_context);
 
-    auto vulkan_draw_image = reference_cast<vulkan::VulkanImage>(current_draw_image);
-
-    vulkan::transition_image_layout(
+    vulkan::image_barrier(
         rendering_context->global_command_buffer,
         current_draw_image,
         1,
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eColorAttachmentOptimal,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::AccessFlagBits2::eNone,
+        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
         vk::AccessFlagBits2::eColorAttachmentRead | vk::AccessFlagBits2::eColorAttachmentWrite,
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+        true,
         vk::ImageAspectFlagBits::eColor
     );
-    vulkan::transition_image_layout(
+    vulkan::image_barrier(
         rendering_context->global_command_buffer,
         current_depth_image,
         1,
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eDepthAttachmentOptimal,
-        vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
-        vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
         vk::PipelineStageFlagBits2::eLateFragmentTests,
+        vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
         vk::PipelineStageFlagBits2::eEarlyFragmentTests,
+        vk::AccessFlagBits2::eDepthStencilAttachmentRead | vk::AccessFlagBits2::eDepthStencilAttachmentWrite,
+        true,
         vk::ImageAspectFlagBits::eDepth
     );
 
     draw_geometry(frame, rendering_context->global_command_buffer);
 
-    // set draw image layout to Present so we can present it
-    vulkan::transition_image_layout(
+    // order the geometry pass against subsequent sampling of the draw image (e.g. the editor
+    // viewport panel reading it in a fragment shader); no layout transition needed under
+    // unified image layouts, the image stays General throughout
+    vulkan::image_barrier(
         rendering_context->global_command_buffer,
         current_draw_image,
         1,
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vulkan_draw_image->get_descriptor_image_info().imageLayout,
-        vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
-        vk::AccessFlagBits2::eNone,
         vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits2::eBottomOfPipe,
+        vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eColorAttachmentRead,
+        vk::PipelineStageFlagBits2::eFragmentShader,
+        vk::AccessFlagBits2::eShaderRead,
+        false,
         vk::ImageAspectFlagBits::eColor
     );
 }

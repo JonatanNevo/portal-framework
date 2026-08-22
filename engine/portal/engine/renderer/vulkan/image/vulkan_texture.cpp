@@ -245,16 +245,15 @@ void VulkanTexture::recreate()
                     .layerCount = layer_count
                 };
 
-                portal::renderer::vulkan::transition_image_layout(
+                portal::renderer::vulkan::image_barrier(
                     command_buffer,
                     info.image.get_handle(),
                     range,
-                    vk::ImageLayout::eUndefined,
-                    image->get_descriptor_image_info().imageLayout,
-                    vk::AccessFlagBits2::eNone,
-                    vk::AccessFlagBits2::eShaderRead,
                     vk::PipelineStageFlagBits2::eAllCommands,
-                    vk::PipelineStageFlagBits2::eAllCommands
+                    vk::AccessFlagBits2::eNone,
+                    vk::PipelineStageFlagBits2::eAllCommands,
+                    vk::AccessFlagBits2::eShaderRead,
+                    true
                 );
             }
         );
@@ -306,16 +305,15 @@ void VulkanTexture::set_data(const Buffer& data)
             };
 
             // Transition the texture image layout to transfer target, so we can safely copy our buffer data to it.
-            portal::renderer::vulkan::transition_image_layout(
+            portal::renderer::vulkan::image_barrier(
                 command_buffer,
                 info.image.get_handle(),
                 range,
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eTransferDstOptimal,
-                vk::AccessFlagBits2::eNone,
-                vk::AccessFlagBits2::eTransferWrite,
                 vk::PipelineStageFlagBits2::eHost,
-                vk::PipelineStageFlagBits2::eTransfer
+                vk::AccessFlagBits2::eNone,
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::AccessFlagBits2::eTransferWrite,
+                true
             );
 
             vk::BufferImageCopy copy_region{
@@ -337,7 +335,7 @@ void VulkanTexture::set_data(const Buffer& data)
             command_buffer.copyBufferToImage(
                 staging_buffer.get_handle(),
                 info.image.get_handle(),
-                vk::ImageLayout::eTransferDstOptimal,
+                vk::ImageLayout::eGeneral,
                 {copy_region}
             );
 
@@ -345,31 +343,27 @@ void VulkanTexture::set_data(const Buffer& data)
             if (mip_count > 1)
             {
                 // There are mips to generate, move to get ready to transfer
-                portal::renderer::vulkan::transition_image_layout(
+                portal::renderer::vulkan::image_barrier(
                     command_buffer,
                     info.image.get_handle(),
                     range,
-                    vk::ImageLayout::eTransferDstOptimal,
-                    vk::ImageLayout::eTransferSrcOptimal,
-                    vk::AccessFlagBits2::eTransferWrite,
-                    vk::AccessFlagBits2::eTransferRead,
                     vk::PipelineStageFlagBits2::eTransfer,
-                    vk::PipelineStageFlagBits2::eTransfer
+                    vk::AccessFlagBits2::eTransferWrite,
+                    vk::PipelineStageFlagBits2::eTransfer,
+                    vk::AccessFlagBits2::eTransferRead
                 );
             }
             else
             {
                 // There are mips to generate, move to get ready to transfer
-                portal::renderer::vulkan::transition_image_layout(
+                portal::renderer::vulkan::image_barrier(
                     command_buffer,
                     info.image.get_handle(),
                     range,
-                    vk::ImageLayout::eTransferDstOptimal,
-                    image->get_descriptor_image_info().imageLayout,
-                    vk::AccessFlagBits2::eTransferWrite,
-                    vk::AccessFlagBits2::eShaderRead,
                     vk::PipelineStageFlagBits2::eTransfer,
-                    vk::PipelineStageFlagBits2::eFragmentShader
+                    vk::AccessFlagBits2::eTransferWrite,
+                    vk::PipelineStageFlagBits2::eFragmentShader,
+                    vk::AccessFlagBits2::eShaderRead
                 );
             }
         }
@@ -434,44 +428,42 @@ void VulkanTexture::generate_mipmaps() const
                         .layerCount = 1
                     };
 
-                    portal::renderer::vulkan::transition_image_layout(
+                    portal::renderer::vulkan::image_barrier(
                         command_buffer,
                         info.image.get_handle(),
                         range,
-                        vk::ImageLayout::eUndefined,
-                        vk::ImageLayout::eTransferDstOptimal,
-                        vk::AccessFlagBits2::eNone,
-                        vk::AccessFlagBits2::eTransferWrite,
                         vk::PipelineStageFlagBits2::eTransfer,
-                        vk::PipelineStageFlagBits2::eTransfer
+                        vk::AccessFlagBits2::eNone,
+                        vk::PipelineStageFlagBits2::eTransfer,
+                        vk::AccessFlagBits2::eTransferWrite,
+                        true
                     );
 
                     vk::BlitImageInfo2 blit_info{
                         .srcImage = info.image.get_handle(),
-                        .srcImageLayout = vk::ImageLayout::eTransferSrcOptimal,
+                        .srcImageLayout = vk::ImageLayout::eGeneral,
                         .dstImage = info.image.get_handle(),
-                        .dstImageLayout = vk::ImageLayout::eTransferDstOptimal,
+                        .dstImageLayout = vk::ImageLayout::eGeneral,
                         .regionCount = 1,
                         .pRegions = &blit,
                         .filter = utils::to_filter(properties.sampler_prop.value_or(SamplerProperties{}).filter),
                     };
                     command_buffer.blitImage2(blit_info);
 
-                    portal::renderer::vulkan::transition_image_layout(
+                    portal::renderer::vulkan::image_barrier(
                         command_buffer,
                         info.image.get_handle(),
                         range,
-                        vk::ImageLayout::eTransferDstOptimal,
-                        vk::ImageLayout::eTransferSrcOptimal,
-                        vk::AccessFlagBits2::eTransferWrite,
-                        vk::AccessFlagBits2::eTransferRead,
                         vk::PipelineStageFlagBits2::eTransfer,
-                        vk::PipelineStageFlagBits2::eTransfer
+                        vk::AccessFlagBits2::eTransferWrite,
+                        vk::PipelineStageFlagBits2::eTransfer,
+                        vk::AccessFlagBits2::eTransferRead
                     );
                 }
             }
 
-            // After the loop, all mip layers are in TRANSFER_SRC layout, so transition all to SHADER_READ
+            // After the loop, every mip has been written by the blit chain, so make those
+            // transfer writes visible to shader reads across all mips at once
             const vk::ImageSubresourceRange range{
                 .aspectMask = vk::ImageAspectFlagBits::eColor,
                 .baseMipLevel = 0,
@@ -480,16 +472,14 @@ void VulkanTexture::generate_mipmaps() const
                 .layerCount = layer_count
             };
 
-            portal::renderer::vulkan::transition_image_layout(
+            portal::renderer::vulkan::image_barrier(
                 command_buffer,
                 info.image.get_handle(),
                 range,
-                vk::ImageLayout::eTransferSrcOptimal,
-                vk::ImageLayout::eShaderReadOnlyOptimal,
-                vk::AccessFlagBits2::eTransferRead,
-                vk::AccessFlagBits2::eShaderRead,
                 vk::PipelineStageFlagBits2::eTransfer,
-                vk::PipelineStageFlagBits2::eFragmentShader
+                vk::AccessFlagBits2::eTransferRead,
+                vk::PipelineStageFlagBits2::eFragmentShader,
+                vk::AccessFlagBits2::eShaderRead
             );
         }
     );

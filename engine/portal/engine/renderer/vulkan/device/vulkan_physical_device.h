@@ -33,13 +33,14 @@ public:
         int32_t transfer = -1;
     };
 
-    /** @brief Feature chain including Vulkan 1.1, 1.2, 1.3, and extended dynamic state features */
+    /** @brief Feature chain including Vulkan 1.1, 1.2, 1.3, extended dynamic state, and unified image layouts features */
     using Features = vk::StructureChain<
         vk::PhysicalDeviceFeatures2,
         vk::PhysicalDeviceVulkan11Features,
         vk::PhysicalDeviceVulkan12Features,
         vk::PhysicalDeviceVulkan13Features,
-        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT
+        vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT,
+        vk::PhysicalDeviceUnifiedImageLayoutsFeaturesKHR
     >;
 
 public:

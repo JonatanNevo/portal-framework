@@ -165,16 +165,15 @@ void VulkanImage::reallocate()
                     .layerCount = static_cast<uint32_t>(properties.layers)
                 };
 
-                vulkan::transition_image_layout(
+                vulkan::image_barrier(
                     command_buffer,
                     image_info.image.get_handle(),
                     range,
-                    vk::ImageLayout::eUndefined,
-                    vk::ImageLayout::eGeneral,
-                    vk::AccessFlagBits2::eNone,
+                    vk::PipelineStageFlagBits2::eAllCommands,
                     vk::AccessFlagBits2::eNone,
                     vk::PipelineStageFlagBits2::eAllCommands,
-                    vk::PipelineStageFlagBits2::eAllCommands
+                    vk::AccessFlagBits2::eNone,
+                    true
                 );
             }
         );
@@ -193,16 +192,15 @@ void VulkanImage::reallocate()
                     .layerCount = static_cast<uint32_t>(properties.layers)
                 };
 
-                vulkan::transition_image_layout(
+                vulkan::image_barrier(
                     command_buffer,
                     image_info.image.get_handle(),
                     range,
-                    vk::ImageLayout::eUndefined,
-                    vk::ImageLayout::eTransferDstOptimal,
-                    vk::AccessFlagBits2::eNone,
+                    vk::PipelineStageFlagBits2::eAllCommands,
                     vk::AccessFlagBits2::eNone,
                     vk::PipelineStageFlagBits2::eAllCommands,
-                    vk::PipelineStageFlagBits2::eAllCommands
+                    vk::AccessFlagBits2::eNone,
+                    true
                 );
             }
         );
@@ -381,16 +379,15 @@ void VulkanImage::set_data(const Buffer buffer)
                 .layerCount = 1
             };
 
-            portal::renderer::vulkan::transition_image_layout(
+            portal::renderer::vulkan::image_barrier(
                 command_buffer,
                 image_info.image.get_handle(),
                 range,
-                vk::ImageLayout::eUndefined,
-                vk::ImageLayout::eTransferDstOptimal,
-                vk::AccessFlagBits2::eNone,
-                vk::AccessFlagBits2::eTransferWrite,
                 vk::PipelineStageFlagBits2::eHost,
-                vk::PipelineStageFlagBits2::eTransfer
+                vk::AccessFlagBits2::eNone,
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::AccessFlagBits2::eTransferWrite,
+                true
             );
 
             vk::BufferImageCopy copy_region{
@@ -411,20 +408,20 @@ void VulkanImage::set_data(const Buffer buffer)
             command_buffer.copyBufferToImage(
                 staging_buffer.get_handle(),
                 image_info.image.get_handle(),
-                vk::ImageLayout::eTransferDstOptimal,
+                vk::ImageLayout::eGeneral,
                 {copy_region}
             );
 
-            portal::renderer::vulkan::transition_image_layout(
+            // the preceding copyBufferToImage is a transfer write; make it available before the
+            // fragment shader reads, otherwise the sampled texels can be stale
+            portal::renderer::vulkan::image_barrier(
                 command_buffer,
                 image_info.image.get_handle(),
                 range,
-                vk::ImageLayout::eTransferDstOptimal,
-                descriptor_image_info.imageLayout,
-                vk::AccessFlagBits2::eTransferRead,
-                vk::AccessFlagBits2::eShaderRead,
                 vk::PipelineStageFlagBits2::eTransfer,
-                vk::PipelineStageFlagBits2::eFragmentShader
+                vk::AccessFlagBits2::eTransferWrite,
+                vk::PipelineStageFlagBits2::eFragmentShader,
+                vk::AccessFlagBits2::eShaderRead
             );
         }
     );
@@ -461,16 +458,14 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
                 .layerCount = 1
             };
 
-            portal::renderer::vulkan::transition_image_layout(
+            portal::renderer::vulkan::image_barrier(
                 command_buffer,
                 image_info.image.get_handle(),
                 range,
-                descriptor_image_info.imageLayout,
-                vk::ImageLayout::eTransferSrcOptimal,
-                vk::AccessFlagBits2::eNone,
-                vk::AccessFlagBits2::eTransferRead,
                 vk::PipelineStageFlagBits2::eAllCommands,
-                vk::PipelineStageFlagBits2::eTransfer
+                vk::AccessFlagBits2::eNone,
+                vk::PipelineStageFlagBits2::eTransfer,
+                vk::AccessFlagBits2::eTransferRead
             );
 
             size_t mip_data_offset = 0;
@@ -493,7 +488,7 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
 
                 command_buffer.copyImageToBuffer(
                     image_info.image.get_handle(),
-                    vk::ImageLayout::eTransferSrcOptimal,
+                    vk::ImageLayout::eGeneral,
                     staging_buffer.get_handle(),
                     {copy_region}
                 );
@@ -503,17 +498,8 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
                 mip_height = std::max(1u, mip_height / 2);
             }
 
-            portal::renderer::vulkan::transition_image_layout(
-                command_buffer,
-                image_info.image.get_handle(),
-                range,
-                vk::ImageLayout::eTransferSrcOptimal,
-                descriptor_image_info.imageLayout,
-                vk::AccessFlagBits2::eTransferRead,
-                vk::AccessFlagBits2::eNone,
-                vk::PipelineStageFlagBits2::eTransfer,
-                vk::PipelineStageFlagBits2::eTopOfPipe
-            );
+            // no layout to restore here; the subsequent host read is covered by the
+            // immediate_submit fence
         }
     );
 
@@ -524,16 +510,11 @@ portal::Buffer VulkanImage::copy_to_host_buffer()
 
 void VulkanImage::update_descriptor()
 {
-    if (utils::is_depth_format(properties.format))
-        descriptor_image_info.imageLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal;
-    else if (properties.usage == ImageUsage::Storage)
-        descriptor_image_info.imageLayout = vk::ImageLayout::eGeneral;
-    else if (properties.usage == ImageUsage::HostRead)
-        descriptor_image_info.imageLayout = vk::ImageLayout::eTransferDstOptimal;
-    else if (properties.usage == ImageUsage::Attachment)
-        descriptor_image_info.imageLayout = vk::ImageLayout::ePresentSrcKHR;
-    else
-        descriptor_image_info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    // With VK_KHR_unified_image_layouts, eGeneral is valid and performance-equivalent
+    // for sampling, storage, color/depth attachment, transfer and blit, so there is no
+    // per-usage resting layout to select anymore. Presentation is the sole exception,
+    // handled separately by VulkanSwapchain::present().
+    descriptor_image_info.imageLayout = vk::ImageLayout::eGeneral;
 
     descriptor_image_info.imageView = image_info.view->get_vk_image_view();
     if (image_info.sampler)
