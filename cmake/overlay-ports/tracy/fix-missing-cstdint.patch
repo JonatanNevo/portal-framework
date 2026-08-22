@@ -1,0 +1,12 @@
+diff --git a/server/tracy_robin_hood.h b/server/tracy_robin_hood.h
+index 65f6fc1..2888c3c 100644
+--- a/server/tracy_robin_hood.h
++++ b/server/tracy_robin_hood.h
+@@ -41,6 +41,7 @@
+ #include <algorithm>
+ #include <cstdlib>
+ #include <cstring>
++#include <cstdint>
+ #include <functional>
+ #include <limits>
+ #include <memory> // only to support hash of smart pointers

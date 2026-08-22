@@ -22,5 +22,8 @@
   ],
   "overlay-triplets": [
     "cmake/overlay-triplets"
+  ],
+  "overlay-ports": [
+    "cmake/overlay-ports"
   ]
 }

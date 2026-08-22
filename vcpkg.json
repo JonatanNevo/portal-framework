@@ -155,6 +155,7 @@
         },
         {
           "name": "tracy",
+          "features": ["gui-tools"],
           "version>=": "0.13.1"
         }
       ]

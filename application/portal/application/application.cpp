@@ -44,10 +44,16 @@ void Application::run()
 
         while (!should_stop.test())
         {
-            process_events();
-            engine_event_dispatcher.update();
+            {
+                PORTAL_PROF_ZONE("Event Processing");
+
+                process_events();
+                engine_event_dispatcher.update();
+            }
 
             {
+                PORTAL_PROF_ZONE("Event Processing");
+
                 FrameContext context{
                     .frame_index = current_frame,
                     .delta_time = time_step,

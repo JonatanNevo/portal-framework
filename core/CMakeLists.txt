@@ -114,6 +114,7 @@ target_compile_definitions(portal-core
 )
 
 if (PORTAL_PROFILE)
+    find_package(Tracy CONFIG REQUIRED)
     target_compile_definitions(portal-core PUBLIC $<$<AND:$<CONFIG:RelWithDebInfo>,$<NOT:$<CONFIG:Release>>>:TRACY_ENABLE>)
     target_link_libraries(portal-core PUBLIC $<$<NOT:$<CONFIG:Release>>:Tracy::TracyClient>)
 endif ()
